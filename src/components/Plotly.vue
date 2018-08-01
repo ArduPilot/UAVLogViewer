@@ -1,14 +1,7 @@
 <template>
   <div>
-    <div class="tile is-ancestor">
-      <div class="tile is-parent is-4">
-        <article class="tile is-child box">
-          <h4 class="title">Line</h4>
-          <div ref="line"></div>
-        </article>
-      </div>
-
-    </div>
+    <h4 class="title">Line</h4>
+    <div ref="line"></div>
   </div>
 </template>
 
