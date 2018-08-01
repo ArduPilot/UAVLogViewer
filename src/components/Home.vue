@@ -16,9 +16,7 @@
           <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
           </h6>
 
-          <div id="drop_zone" @dragover.prevent @drop="process">
-            <p>Drag one or more files to this Drop Zone ...</p>
-          </div>
+          <Dropzone/>
 
         </div>
       </nav>
@@ -35,7 +33,8 @@
 </template>
 
 <script>
-import Plotly from './Plotly.vue'
+import Dropzone from './Dropzone'
+
 export default {
   name: 'Home',
   data () {
@@ -44,8 +43,7 @@ export default {
     }
   },
   components: {
-    Plotly
-  }
+    Dropzone}
 }
 </script>
 

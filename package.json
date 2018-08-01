@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "bootstrap-vue": "^2.0.0-rc.11",
+    "mavlink_common_v1.0": "^0.0.1",
     "jquery": "^3.3.1",
     "plotly.js": "^1.39.3",
     "vue": "^2.5.2",
