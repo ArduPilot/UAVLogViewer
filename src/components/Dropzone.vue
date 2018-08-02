@@ -8,16 +8,16 @@
 let mavlink = require('mavlink_common_v1.0')
 console.log(mavlink)
 let mavlinkParser = new MAVLink()
+let messages = {}
 
 mavlinkParser.on('message', function (message) {
   if (message.id !== -1) {
-    /* if (message.name in app.messages) {
-      app.messages[message.name].push(message)
+    if (message.name in messages) {
+      messages[message.name].push(message)
     } else {
-      app.messages[message.name] = [message]
-      app.message_types = Object.keys(app.messages)
-    } */
-    console.log(message)
+      messages[message.name] = [message]
+    }
+    // console.log(message)
   }
 })
 
@@ -26,6 +26,7 @@ export default {
   methods: {
     process: function (ev) {
       console.log('File(s) dropped')
+      let _this = this
       // Prevent default behavior (Prevent file from being opened)
       ev.preventDefault()
       if (ev.dataTransfer.items) {
@@ -43,6 +44,7 @@ export default {
               console.log(buffer)
               mavlinkParser.pushBuffer(Buffer.from(data))
               mavlinkParser.parseBuffer()
+              _this.$emit('messages', messages)
             }
             reader.readAsArrayBuffer(file)
           }

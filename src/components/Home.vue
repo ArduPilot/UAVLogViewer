@@ -10,13 +10,18 @@
       <nav class="col-md-2 d-none d-md-block bg-light sidebar">
         <div class="sidebar-sticky">
           <ul class="nav flex-column">
-
+            <li v-for="item in message_types.sort()" class="nav-item" :key="'li' + item">
+              <a :key="'a' + item" class="nav-link" href="#" @click="plot(item)">
+                <span :key="item" data-feather="file"></span>
+                {{item}}
+              </a>
+            </li>
           </ul>
 
           <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
           </h6>
 
-          <Dropzone/>
+          <Dropzone v-on:messages="updateData"/>
 
         </div>
       </nav>
@@ -39,7 +44,14 @@ export default {
   name: 'Home',
   data () {
     return {
-      msg: 'Welcome to Your Vue.js App'
+      messages: {},
+      message_types: []
+    }
+  },
+  methods: {
+    updateData (messages) {
+      this.messages = messages
+      this.message_types = Object.keys(messages)
     }
   },
   components: {
