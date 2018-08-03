@@ -1,40 +1,83 @@
 <template>
-  <div>
-    <h4 class="title">Line</h4>
-    <div ref="line"></div>
-  </div>
+  <div id="line" ref="line" style="width:100%;height: 100%"></div>
 </template>
 
 <script>
 import Plotly from 'plotly.js'
+
 export default {
   created () {
-    this.fetchData()
+    // this.fetchData()
   },
   mounted () {
-    Plotly.plot(
-      this.$refs.line,
-      [{
-        x: [1, 2, 3, 4, 5],
-        y: [1, 2, 4, 8, 16]
-      }],
-      {
-        margin: { t: 0, l: 0, b: 0, r: 0 }
-      }
-    )
+    let d3 = Plotly.d3
+    const WIDTH_IN_PERCENT_OF_PARENT = 90
+    const gd3 = d3.select('#line')
+      .append('div')
+      .style({
+        width: '90%',
+        'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
+        height: '100%',
+        'margin-top': '5%'
+      })
+
+    this.gd = gd3.node()
+    this.$nextTick(function () {
+      window.addEventListener('resize', this.resize)
+      this.resize()
+    })
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.getWindowWidth)
+    window.removeEventListener('resize', this.getWindowHeight)
   },
   data () {
     return {
-      rows: []
+      rows: [],
+      gd: null
     }
   },
   methods: {
+    resize () {
+      console.log(document.documentElement.clientWidth)
+      console.log(document.documentElement.clientHeight)
+      Plotly.Plots.resize(this.gd)
+    },
+    plot (data) {
+      let fields = data[0].fieldnames.slice(1)
+      let datasets = []
+      for (let i = 0; i < fields.length; i++) {
+        datasets.push({
+          name: '' + fields[i],
+          mode: 'lines',
+          x: [],
+          y: []
+        })
+      }
+
+      for (let msg in data) {
+        for (let field in fields) {
+          datasets[field].x.push(data[msg].time_boot_ms)
+          datasets[field].y.push(data[msg][fields[field]])
+        }
+      }
+      let plotData = datasets
+      let plotOptions = {
+        title: 'Adding Names to Line and Scatter Plot',
+        autosize: true,
+        margin: { t: 0, l: 0, b: 0, r: 0 }
+      }
+      console.log(plotData, plotOptions)
+      Plotly.plot(this.gd, plotData, plotOptions)
+    }
+  },
+  props: ['plotData'],
+  watch: {
+    plotData: function (newVal, oldVal) { // watch it
+      console.log('Prop changed: ', newVal, ' | was: ', oldVal)
+      this.plot(newVal)
+    }
   }
 }
-</script>
 
-<style scoped>
-  .js-plotly-plot {
-    max-width: 100%;
-  }
-</style>
+</script>
