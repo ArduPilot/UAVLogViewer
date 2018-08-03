@@ -10,7 +10,7 @@
       <nav class="col-md-2 d-none d-md-block bg-light sidebar">
         <div class="sidebar-sticky">
           <ul class="nav flex-column">
-            <li v-for="item in message_types.sort()" class="nav-item" :key="'li' + item">
+            <li v-for="item in message_types" class="nav-item" :key="'li' + item">
               <a :key="'a' + item" class="nav-link" href="#" @click="plot(item)">
                 <span :key="item" data-feather="file"></span>
                 {{item}}
@@ -51,7 +51,10 @@ export default {
   methods: {
     updateData (messages) {
       this.messages = messages
-      this.message_types = Object.keys(messages)
+      this.message_types = Object.keys(messages).sort()
+    },
+    plot (item) {
+      this.current_data = this.messages[item]
     }
   },
   components: {
