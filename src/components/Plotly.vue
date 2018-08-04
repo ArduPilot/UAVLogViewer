@@ -17,8 +17,7 @@ export default {
       .style({
         width: '90%',
         'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
-        height: '100%',
-        'margin-top': '5%'
+        height: '100%'
       })
 
     this.gd = gd3.node()
@@ -34,7 +33,8 @@ export default {
   data () {
     return {
       rows: [],
-      gd: null
+      gd: null,
+      plotInstance: null
     }
   },
   methods: {
@@ -68,7 +68,14 @@ export default {
         margin: { t: 0, l: 0, b: 0, r: 0 }
       }
       console.log(plotData, plotOptions)
-      Plotly.plot(this.gd, plotData, plotOptions)
+      this.plotInstance = Plotly.plot(this.gd, plotData, plotOptions)
+      this.gd.on('plotly_hover', function (data) {
+        var infotext = data.points.map(function (d) {
+          return (d.data.name + ': x= ' + d.x + ', y= ' + d.y.toPrecision(3))
+        })
+
+        console.log(infotext)
+      })
     }
   },
   props: ['plotData'],

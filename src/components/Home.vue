@@ -27,11 +27,11 @@
       </nav>
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
           <Plotly v-bind:plot-data="current_data"/>
         </div>
-        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <Cesium/>
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+          <Cesium v-bind:trajectory="current_trajectory"/>
         </div>
       </main>
     </div>
@@ -50,16 +50,32 @@ export default {
     return {
       messages: {},
       message_types: [],
-      current_data: []
+      current_data: [],
+      current_trajectory: []
     }
   },
   methods: {
     updateData (messages) {
       this.messages = messages
       this.message_types = Object.keys(messages).sort()
+      this.current_trajectory = this.extractTrajectory(messages)
     },
     plot (item) {
       this.current_data = this.messages[item]
+    },
+    extractTrajectory (messages) {
+      let gpsData = messages['GLOBAL_POSITION_INT']
+      console.log(gpsData)
+      let trajectory = []
+      for (var pos of gpsData) {
+        if (pos.lat !== 0) {
+          trajectory.push(pos.lon / 10000000)
+          trajectory.push(pos.lat / 10000000)
+          trajectory.push(pos.relative_alt / 1000)
+        }
+      }
+      console.log(trajectory)
+      return trajectory
     }
   },
   components: {
