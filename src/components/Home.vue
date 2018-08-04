@@ -30,7 +30,9 @@
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
           <Plotly v-bind:plot-data="current_data"/>
         </div>
-
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <Cesium/>
+        </div>
       </main>
     </div>
   </div>
@@ -40,6 +42,7 @@
 <script>
 import Dropzone from './Dropzone'
 import Plotly from './Plotly'
+import Cesium from './Cesium'
 
 export default {
   name: 'Home',
@@ -61,7 +64,8 @@ export default {
   },
   components: {
     Dropzone,
-    Plotly}
+    Plotly,
+    Cesium}
 }
 </script>
 
