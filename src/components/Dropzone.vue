@@ -45,12 +45,10 @@ export default {
           if (ev.dataTransfer.items[i].kind === 'file') {
             let file = ev.dataTransfer.items[i].getAsFile()
             console.log('... file[' + i + '].name = ' + file.name)
-            console.log(file)
             let reader = new FileReader()
             reader.onload = function (e) {
               let data = reader.result
               let buffer = Buffer.from(data)
-              console.log(buffer)
               mavlinkParser.pushBuffer(Buffer.from(data))
               mavlinkParser.parseBuffer()
               _this.$emit('messages', messages)
