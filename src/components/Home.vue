@@ -28,10 +28,10 @@
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-          <Plotly v-bind:plot-data="current_data"/>
+          <Plotly v-on:attitude="updateAttitude" v-bind:plot-data="current_data"/>
         </div>
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-          <Cesium v-bind:trajectory="current_trajectory"/>
+          <Cesium ref="cesium" v-bind:trajectory="current_trajectory"/>
         </div>
       </main>
     </div>
@@ -51,7 +51,9 @@ export default {
       messages: {},
       message_types: [],
       current_data: [],
-      current_trajectory: []
+      current_trajectory: [],
+      time_trajectory: {},
+      time_attitude: {}
     }
   },
   methods: {
@@ -59,23 +61,34 @@ export default {
       this.messages = messages
       this.message_types = Object.keys(messages).sort()
       this.current_trajectory = this.extractTrajectory(messages)
+      this.time_attitude = this.extractAttitudes(messages)
     },
     plot (item) {
       this.current_data = this.messages[item]
     },
     extractTrajectory (messages) {
       let gpsData = messages['GLOBAL_POSITION_INT']
-      console.log(gpsData)
       let trajectory = []
       for (var pos of gpsData) {
         if (pos.lat !== 0) {
-          trajectory.push(pos.lon / 10000000)
-          trajectory.push(pos.lat / 10000000)
-          trajectory.push(pos.relative_alt / 1000)
+          trajectory.push(pos.lon)
+          trajectory.push(pos.lat)
+          trajectory.push(pos.relative_alt)
+          this.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt]
         }
       }
-      console.log(trajectory)
       return trajectory
+    },
+    extractAttitudes (messages) {
+      let attitudeMsgs = messages['ATTITUDE']
+      let attitudes = {}
+      for (var att of attitudeMsgs) {
+        attitudes[att.time_boot_ms] = [att.roll, att.pitch, att.yaw]
+      }
+      return attitudes
+    },
+    updateAttitude (time) {
+      this.$refs.cesium.showAttitude(time, this.time_trajectory, this.time_attitude)
     }
   },
   components: {

@@ -44,6 +44,7 @@ export default {
       Plotly.Plots.resize(this.gd)
     },
     plot (data) {
+      let _this = this
       let fields = data[0].fieldnames.slice(1)
       let datasets = []
       for (let i = 0; i < fields.length; i++) {
@@ -71,10 +72,9 @@ export default {
       this.plotInstance = Plotly.plot(this.gd, plotData, plotOptions)
       this.gd.on('plotly_hover', function (data) {
         var infotext = data.points.map(function (d) {
-          return (d.data.name + ': x= ' + d.x + ', y= ' + d.y.toPrecision(3))
+          return d.x
         })
-
-        console.log(infotext)
+        _this.$emit('attitude', infotext[0])
       })
     }
   },
