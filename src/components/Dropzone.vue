@@ -1,9 +1,13 @@
 <template>
+  <div>
     <div id="drop_zone" @dragover.prevent @drop="process">
         <p>Drag one or more files to this Drop Zone ...</p>
     </div>
+    <VProgress v-bind:percent="percentage" v-if="percentage < 100"></VProgress>
+  </div>
 </template>
 <script>
+import VProgress from './VProgress'
 require('mavlink_common_v1.0')
 
 export default {
@@ -11,7 +15,9 @@ export default {
   data: function () {
     return {
       mavlinkParser: new MAVLink(),
-      messages: {}
+      messages: {},
+      percentage: 100,
+      totalSize: null
     }
   },
   methods: {
@@ -65,6 +71,9 @@ export default {
         }
       }
     })
+  },
+  components: {
+    VProgress
   }
 }
 </script>
