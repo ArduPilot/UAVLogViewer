@@ -22,8 +22,8 @@ export default {
           })
 
         this.position = Cesium.Cartesian3.fromDegrees(newVal[0], newVal[1], newVal[2])
-        this.hpRoll = new Cesium.HeadingPitchRoll(0,0,0)
-        this.fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west');
+        this.hpRoll = new Cesium.HeadingPitchRoll(0, 0, 0)
+        this.fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
         this.model = this.viewer.scene.primitives.add(Cesium.Model.fromGltf({
           url: require('../assets/Cesium_Air.glb'),
           modelMatrix: Cesium.Transforms.headingPitchRollToFixedFrame(this.position, this.hpRoll, Cesium.Ellipsoid.WGS84, this.fixedFrameTransform),
