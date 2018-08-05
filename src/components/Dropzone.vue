@@ -10,12 +10,21 @@ console.log(mavlink)
 let mavlinkParser = new MAVLink()
 let messages = {}
 
+function fixData (message) {
+  if (message.name === 'GLOBAL_POSITION_INT') {
+    message.lat = message.lat / 10000000
+    message.lon = message.lon / 10000000
+    message.relative_alt = message.relative_alt / 1000
+  }
+  return message
+}
+
 mavlinkParser.on('message', function (message) {
   if (message.id !== -1) {
     if (message.name in messages) {
-      messages[message.name].push(message)
+      messages[message.name].push(fixData(message))
     } else {
-      messages[message.name] = [message]
+      messages[message.name] = [fixData(message)]
     }
     // console.log(message)
   }

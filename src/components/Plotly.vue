@@ -81,7 +81,6 @@ export default {
   props: ['plotData'],
   watch: {
     plotData: function (newVal, oldVal) { // watch it
-      console.log('Prop changed: ', newVal, ' | was: ', oldVal)
       this.plot(newVal)
     }
   }
