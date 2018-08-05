@@ -4,34 +4,16 @@
     </div>
 </template>
 <script>
-/* eslint-disable no-undef */
-let mavlink = require('mavlink_common_v1.0')
-console.log(mavlink)
-let mavlinkParser = new MAVLink()
-let messages = {}
-
-function fixData (message) {
-  if (message.name === 'GLOBAL_POSITION_INT') {
-    message.lat = message.lat / 10000000
-    message.lon = message.lon / 10000000
-    message.relative_alt = message.relative_alt / 1000
-  }
-  return message
-}
-
-mavlinkParser.on('message', function (message) {
-  if (message.id !== -1) {
-    if (message.name in messages) {
-      messages[message.name].push(fixData(message))
-    } else {
-      messages[message.name] = [fixData(message)]
-    }
-    // console.log(message)
-  }
-})
+require('mavlink_common_v1.0')
 
 export default {
   name: 'Dropzone',
+  data: function () {
+    return {
+      mavlinkParser: new MAVLink(),
+      messages: {}
+    }
+  },
   methods: {
     process: function (ev) {
       console.log('File(s) dropped')
@@ -48,10 +30,9 @@ export default {
             let reader = new FileReader()
             reader.onload = function (e) {
               let data = reader.result
-              let buffer = Buffer.from(data)
-              mavlinkParser.pushBuffer(Buffer.from(data))
-              mavlinkParser.parseBuffer()
-              _this.$emit('messages', messages)
+              _this.mavlinkParser.pushBuffer(Buffer.from(data))
+              _this.mavlinkParser.parseBuffer()
+              _this.$emit('messages', _this.messages)
             }
             reader.readAsArrayBuffer(file)
           }
@@ -63,7 +44,27 @@ export default {
           console.log(ev.dataTransfer.files[i])
         }
       }
+    },
+    fixData (message) {
+      if (message.name === 'GLOBAL_POSITION_INT') {
+        message.lat = message.lat / 10000000
+        message.lon = message.lon / 10000000
+        message.relative_alt = message.relative_alt / 1000
+      }
+      return message
     }
+  },
+  mounted () {
+    let _this = this
+    this.mavlinkParser.on('message', function (message) {
+      if (message.id !== -1) {
+        if (message.name in _this.messages) {
+          _this.messages[message.name].push(_this.fixData(message))
+        } else {
+          _this.messages[message.name] = [_this.fixData(message)]
+        }
+      }
+    })
   }
 }
 </script>
