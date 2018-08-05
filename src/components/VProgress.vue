@@ -1,18 +1,13 @@
 <template>
-  <div class="progress">
-    <div class="progress-bar" role="progressbar" v-bind:style="widthstr" v-bind:aria-valuenow="percent" aria-valuemin="0" aria-valuemax="100">{{percent}}%</div>
+  <div>
+    <b-progress :max="100" height="20px" :value="percent" show-progress animated class="mb-3"></b-progress>
   </div>
 </template>
 
 <script>
 export default {
   name: 'Progress',
-  props: ['percent'],
-  computed: {
-    widthstr () {
-      return 'width: ' + this.percent + '%;'
-    }
-  }
+  props: ['percent']
 }
 </script>
 

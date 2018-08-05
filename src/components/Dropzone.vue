@@ -8,7 +8,12 @@
 </template>
 <script>
 import VProgress from './VProgress'
+import Worker from './parser.worker.js'
 require('mavlink_common_v1.0')
+
+const worker = new Worker()
+
+worker.addEventListener('message', function (event) {})
 
 export default {
   name: 'Dropzone',
@@ -36,9 +41,7 @@ export default {
             let reader = new FileReader()
             reader.onload = function (e) {
               let data = reader.result
-              _this.mavlinkParser.pushBuffer(Buffer.from(data))
-              _this.mavlinkParser.parseBuffer()
-              _this.$emit('messages')
+              worker.postMessage({action: 'parse', file: Buffer.from(data)})
             }
             reader.readAsArrayBuffer(file)
           }
@@ -62,15 +65,14 @@ export default {
   },
   mounted () {
     let _this = this
-    this.mavlinkParser.on('message', function (message) {
-      if (message.id !== -1) {
-        if (message.name in _this.messages) {
-          _this.messages[message.name].push(_this.fixData(message))
-        } else {
-          _this.messages[message.name] = [_this.fixData(message)]
-        }
+    worker.onmessage = function (event) {
+      if (event.data.hasOwnProperty('percentage')) {
+        _this.percentage = event.data.percentage
+      } else if (event.data.hasOwnProperty('messages')) {
+        _this.messages = event.data.messages
+        _this.$emit('messages')
       }
-    })
+    }
   },
   components: {
     VProgress
