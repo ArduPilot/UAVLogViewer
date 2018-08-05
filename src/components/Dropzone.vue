@@ -38,7 +38,7 @@ export default {
               let data = reader.result
               _this.mavlinkParser.pushBuffer(Buffer.from(data))
               _this.mavlinkParser.parseBuffer()
-              _this.$emit('messages', _this.messages)
+              _this.$emit('messages')
             }
             reader.readAsArrayBuffer(file)
           }

@@ -21,7 +21,7 @@
           <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
           </h6>
 
-          <Dropzone v-on:messages="updateData"/>
+          <Dropzone ref="dropzone" v-on:messages="updateData"/>
 
         </div>
       </nav>
@@ -57,11 +57,11 @@ export default {
     }
   },
   methods: {
-    updateData (messages) {
-      this.messages = messages
-      this.message_types = Object.keys(messages).sort()
-      this.current_trajectory = this.extractTrajectory(messages)
-      this.time_attitude = this.extractAttitudes(messages)
+    updateData () {
+      this.messages = this.$refs.dropzone.messages
+      this.message_types = Object.keys(this.messages).sort()
+      this.current_trajectory = this.extractTrajectory(this.messages)
+      this.time_attitude = this.extractAttitudes(this.messages)
     },
     plot (item) {
       this.current_data = this.messages[item]
