@@ -1,7 +1,8 @@
 <template>
   <div>
-    <div id="drop_zone" @dragover.prevent @drop="process">
-        <p>Drag one or more files to this Drop Zone ...</p>
+    <div id="drop_zone" @dragover.prevent @drop="onDrop" @click="browse">
+        <p>Drop *.tlog file here or click to browse</p>
+      <input type="file" id="choosefile" style="opacity: 0;" @change="onChange">
     </div>
     <VProgress v-bind:percent="percentage" v-if="percentage < 100"></VProgress>
   </div>
@@ -26,9 +27,12 @@ export default {
     }
   },
   methods: {
-    process: function (ev) {
-      console.log('File(s) dropped')
-      let _this = this
+    onChange (ev)
+    {
+      let fileinput = document.getElementById("choosefile")
+      this.process(fileinput.files[0])
+    },
+    onDrop (ev) {
       // Prevent default behavior (Prevent file from being opened)
       ev.preventDefault()
       if (ev.dataTransfer.items) {
@@ -37,13 +41,7 @@ export default {
           // If dropped items aren't files, reject them
           if (ev.dataTransfer.items[i].kind === 'file') {
             let file = ev.dataTransfer.items[i].getAsFile()
-            console.log('... file[' + i + '].name = ' + file.name)
-            let reader = new FileReader()
-            reader.onload = function (e) {
-              let data = reader.result
-              worker.postMessage({action: 'parse', file: Buffer.from(data)})
-            }
-            reader.readAsArrayBuffer(file)
+            this.process(file)
           }
         }
       } else {
@@ -54,6 +52,14 @@ export default {
         }
       }
     },
+    process: function (file) {
+      let reader = new FileReader()
+      reader.onload = function (e) {
+        let data = reader.result
+        worker.postMessage({action: 'parse', file: Buffer.from(data)})
+      }
+      reader.readAsArrayBuffer(file)
+    },
     fixData (message) {
       if (message.name === 'GLOBAL_POSITION_INT') {
         message.lat = message.lat / 10000000
@@ -61,6 +67,9 @@ export default {
         message.relative_alt = message.relative_alt / 1000
       }
       return message
+    },
+    browse () {
+      document.getElementById('choosefile').click()
     }
   },
   mounted () {
@@ -104,9 +113,16 @@ export default {
      */
 
     #drop_zone {
-      border: 1px solid blue;
-      width:  200px;
+      padding-top: 25px;
+      border: 1px solid dimgrey;
+      width:  auto;
       height: 100px;
-      margin: auto;
+      margin: 20px;
+      border-radius: 10px;
+      cursor: default;
+      background-color: rgba(0,0,0,0.0);
+    }
+    #drop_zone:hover {
+      background-color: rgba(0,0,0,0.05);
     }
 </style>
