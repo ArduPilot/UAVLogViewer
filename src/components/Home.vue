@@ -31,7 +31,7 @@
           <Plotly v-if="message_types.length" v-on:attitude="updateAttitude" v-bind:plot-data="current_data"/>
         </div>
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-          <Cesium ref="cesium" v-bind:trajectory="current_trajectory"/>
+          <Cesium ref="cesium" v-bind:trajectory="current_trajectory" v-bind:attitudes="time_attitude"/>
         </div>
       </main>
     </div>
@@ -60,8 +60,9 @@ export default {
     updateData () {
       this.messages = this.$refs.dropzone.messages
       this.message_types = Object.keys(this.messages).sort()
-      this.current_trajectory = this.extractTrajectory(this.messages)
       this.time_attitude = this.extractAttitudes(this.messages)
+      this.current_trajectory = this.extractTrajectory(this.messages)
+
     },
     plot (item) {
       this.current_data = this.messages[item]

@@ -8,7 +8,7 @@ import 'cesium/Widgets/widgets.css'
 
 export default {
   name: 'Cesium',
-  props: ['trajectory'],
+  props: ['trajectory', 'attitudes'],
   watch: {
     trajectory: function (newVal, oldVal) { // watch it
       if (this.viewer == null) {
@@ -24,8 +24,8 @@ export default {
           })
         let timespan = newVal[newVal.length - 1][3] - newVal[0][3]
         let viewer = this.viewer
-        var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
-        var stop = Cesium.JulianDate.addSeconds(start, Math.round(timespan/1000), new Cesium.JulianDate());
+        var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
+        var stop = Cesium.JulianDate.addSeconds(start, Math.round(timespan / 1000), new Cesium.JulianDate())
         console.log(start, stop)
 
         // Make sure viewer is at the desired time.
@@ -36,24 +36,24 @@ export default {
         viewer.clock.multiplier = 1
 
         // Set timeline to simulation bounds
-        viewer.timeline.zoomTo(start, stop);
+        viewer.timeline.zoomTo(start, stop)
 
         let sampledPos = new Cesium.SampledPositionProperty()
         for (let pos of newVal) {
           var position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
           let time = Cesium.JulianDate.addSeconds(start, (pos[3] - newVal[0][3]) / 1000, new Cesium.JulianDate())
           sampledPos.addSample(time, position)
-
-          // Also create a point for each sample we generate.
-          viewer.entities.add({
-            position: position,
-            point: {
-              pixelSize: 8,
-              color: Cesium.Color.TRANSPARENT,
-              outlineColor: Cesium.Color.YELLOW,
-              outlineWidth: 3
-            }
-          })
+        }
+        let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
+        let sampledOrientation = new Cesium.SampledProperty(Cesium.Quaternion)
+        for (var atti in this.attitudes) {
+          if (this.attitudes.hasOwnProperty(atti)) {
+            let att = this.attitudes[atti]
+            console.log(this.attitudes[atti])
+            let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(att[2], att[1], att[0]), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
+            let time = Cesium.JulianDate.addSeconds(start, (atti - newVal[0][3]) / 1000, new Cesium.JulianDate())
+            sampledOrientation.addSample(time, hpRoll)
+          }
         }
 
         let entity = viewer.entities.add({
@@ -66,7 +66,7 @@ export default {
           // Use our computed positions
           position: sampledPos,
           // Automatically compute orientation based on position movement.
-          orientation: new Cesium.VelocityOrientationProperty(sampledPos),
+          orientation: sampledOrientation,
           // Load the Cesium plane model to represent the entity
           model: {
             uri: require('../assets/Cesium_Air.glb'),
