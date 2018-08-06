@@ -10,7 +10,7 @@
       <nav class="col-md-2 d-none d-md-block bg-light sidebar">
         <div class="sidebar-sticky">
           <ul class="nav flex-column">
-            <li v-for="item in message_types" class="nav-item" :key="'li' + item">
+            <li v-for="item in filterPlottable" class="nav-item" :key="'li' + item">
               <a :key="'a' + item" class="nav-link" href="#" @click="plot(item)">
                 <span :key="item" data-feather="file"></span>
                 {{item}}
@@ -28,7 +28,7 @@
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-          <Plotly v-on:attitude="updateAttitude" v-bind:plot-data="current_data"/>
+          <Plotly v-if="message_types.length" v-on:attitude="updateAttitude" v-bind:plot-data="current_data"/>
         </div>
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
           <Cesium ref="cesium" v-bind:trajectory="current_trajectory"/>
@@ -89,6 +89,15 @@ export default {
     },
     updateAttitude (time) {
       this.$refs.cesium.showAttitude(time, this.time_trajectory, this.time_attitude)
+    }
+  },
+  computed: {
+    filterPlottable () {
+      return this.message_types.filter(function (message) {
+        let valid = ['ATTITUDE','GLOBAL_POSITION_INT','GPS_RAW_INT']
+        return true
+        // return valid.includes(message)
+      })
     }
   },
   components: {
@@ -169,7 +178,7 @@ export default {
    */
 
   [role="main"] {
-    padding-top: 48px; /* Space for fixed navbar */
+    padding-top: 12px; /* Space for fixed navbar */
   }
 
   /*

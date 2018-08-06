@@ -64,12 +64,21 @@ export default {
       }
       let plotData = datasets
       let plotOptions = {
-        title: 'Adding Names to Line and Scatter Plot',
         autosize: true,
         margin: { t: 0, l: 0, b: 0, r: 0 }
       }
       console.log(plotData, plotOptions)
-      this.plotInstance = Plotly.plot(this.gd, plotData, plotOptions)
+
+      if (this.plotInstance !== null)
+      {
+        plotOptions.xaxis = {range: this.gd._fullLayout.xaxis.range}
+        plotOptions.yaxis = {range: this.gd._fullLayout.yaxis.range}
+        Plotly.newPlot(this.gd, plotData, plotOptions)
+        window.gd = this.gd
+      }
+      else {
+        this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions)
+      }
       this.gd.on('plotly_hover', function (data) {
         var infotext = data.points.map(function (d) {
           return d.x
