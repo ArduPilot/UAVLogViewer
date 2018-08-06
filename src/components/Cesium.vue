@@ -1,5 +1,5 @@
 <template>
-  <div id="cesiumContainer"></div>
+    <div id="cesiumContainer"></div>
 </template>
 
 <script>
@@ -94,10 +94,12 @@ export default {
 
 <style scoped>
   #cesiumContainer {
-    width: 100%;
-    height: 100%;
+    height: 47%;
     margin: 0;
     padding: 0;
     overflow: hidden;
+    bottom: 0;
+    position: fixed;
+    width: 80%;
   }
 </style>
