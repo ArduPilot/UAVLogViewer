@@ -71,10 +71,8 @@ export default {
       let trajectory = []
       for (var pos of gpsData) {
         if (pos.lat !== 0) {
-          trajectory.push(pos.lon)
-          trajectory.push(pos.lat)
-          trajectory.push(pos.relative_alt)
-          this.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt]
+          trajectory.push([pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms])
+          this.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms]
         }
       }
       return trajectory
