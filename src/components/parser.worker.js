@@ -41,6 +41,7 @@ mavlinkParser.on('message', function (message) {
     // TODO: FIX THIS!
     // This a hack to detect the end of the buffer and only them message the main thread
     if (mavlinkParser.buf.length < 100 && sent === false) {
+      self.postMessage({percentage: 100})
       self.postMessage({messages: messages})
       sent = true
     }

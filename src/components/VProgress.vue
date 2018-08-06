@@ -1,6 +1,10 @@
 <template>
-  <div>
-    <b-progress :max="100" height="20px" :value="percent" show-progress animated class="mb-3"></b-progress>
+  <div class="progress1">
+    <b-progress  height="30px" :max="100">
+      <b-progress-bar :value="percent">
+        <strong>{{ percent.toFixed(1) }}</strong>
+      </b-progress-bar>
+    </b-progress>
   </div>
 </template>
 
@@ -12,5 +16,10 @@ export default {
 </script>
 
 <style scoped>
-
+.progress1 {
+  margin: 20px;
+}
+  strong {
+    font-size: 150%;
+  }
 </style>
