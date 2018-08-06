@@ -1,5 +1,5 @@
 <template>
-  <div id="line" ref="line" style="width:100%;height: 100%"></div>
+  <div id="line" ref="line" style="width:100%;height: 100%"> Click on one of the Messsage types on the left bar</div>
 </template>
 
 <script>
