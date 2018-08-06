@@ -1,5 +1,5 @@
 <template>
-  <div id="line" ref="line" style="width:100%;height: 100%"> Click on one of the Messsage types on the left bar</div>
+  <div id="line" ref="line" style="width:100%;height: 100%">{{ instruction }}</div>
 </template>
 
 <script>
@@ -34,7 +34,8 @@ export default {
     return {
       rows: [],
       gd: null,
-      plotInstance: null
+      plotInstance: null,
+      instruction: 'Click on a message type on the left panel to plot'
     }
   },
   methods: {
@@ -65,7 +66,7 @@ export default {
       let plotData = datasets
       let plotOptions = {
         autosize: true,
-        margin: { t: 0, l: 0, b: 0, r: 0 }
+        margin: { t: 0, l: 0, b: 20, r: 0 }
       }
       console.log(plotData, plotOptions)
 
@@ -90,6 +91,7 @@ export default {
   props: ['plotData'],
   watch: {
     plotData: function (newVal, oldVal) { // watch it
+      this.instruction = ''
       this.plot(newVal)
     }
   }
