@@ -1,12 +1,12 @@
 <template>
-  <div id='vuewrapper'>
+  <div id='vuewrapper' style="height: 100%;">
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
       <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Mav Viewer</a>
 
     </nav>
 
-  <div class="container-fluid">
-    <div class="row">
+  <div class="container-fluid" style="height: 100%; overflow-y: hidden;">
+    <div class="row" style="height: 100%;">
       <nav class="col-md-2 d-none d-md-block bg-light sidebar">
         <div class="sidebar-sticky">
           <ul class="nav flex-column">
@@ -26,16 +26,21 @@
         </div>
       </nav>
 
-      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-          <Plotly v-if="message_types.length" v-on:attitude="updateAttitude" v-bind:plot-data="current_data"/>
+      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4 flex-column d-sm-flex" style="height: 100%;">
+        <div class="row flex-grow-1" >
+          <div class="col-12">
+            <Cesium ref="cesium" v-bind:trajectory="current_trajectory" v-bind:attitudes="time_attitude"/>
+          </div>
         </div>
-        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
-          <Cesium ref="cesium" v-bind:trajectory="current_trajectory" v-bind:attitudes="time_attitude"/>
+        <div v-if="current_data" class="row h-50">
+          <div class="col-12">
+            <Plotly  v-on:attitude="updateAttitude" v-bind:plot-data="current_data"/>
+          </div>
         </div>
       </main>
+
+      </div>
     </div>
-  </div>
   </div>
 </template>
 
@@ -50,7 +55,7 @@ export default {
     return {
       messages: {},
       message_types: [],
-      current_data: [],
+      current_data: null,
       current_trajectory: [],
       time_trajectory: {},
       time_attitude: {}
@@ -112,11 +117,11 @@ export default {
     font-size: .875rem;
   }
 
-  .feather {
-    width: 16px;
-    height: 16px;
-    vertical-align: text-bottom;
+  .plotlycontainer,
+  .cesiumcontainer {
+    border: 1px solid;
   }
+
 
   /*
    * Sidebar
@@ -177,12 +182,8 @@ export default {
    */
 
   [role="main"] {
-    padding-top: 12px; /* Space for fixed navbar */
+    padding-top: 0px!important;
   }
-
-  /*
-   * Navbar
-   */
 
   .navbar-brand {
     padding-top: .75rem;

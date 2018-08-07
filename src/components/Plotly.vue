@@ -15,7 +15,7 @@ export default {
     const gd3 = d3.select('#line')
       .append('div')
       .style({
-        width: '90%',
+        width: '100%',
         'margin-left': (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + '%',
         height: '100%'
       })
@@ -25,6 +25,8 @@ export default {
       window.addEventListener('resize', this.resize)
       this.resize()
     })
+    this.instruction = ''
+    this.plot(this.plotData)
   },
   beforeDestroy () {
     window.removeEventListener('resize', this.getWindowWidth)
@@ -98,3 +100,8 @@ export default {
 }
 
 </script>
+<style>
+  .js-plotly-plot {
+    margin-left: 0!important;
+  }
+</style>
