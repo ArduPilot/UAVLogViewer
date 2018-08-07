@@ -92,7 +92,7 @@ export default {
       return attitudes
     },
     updateAttitude (time) {
-      this.$refs.cesium.showAttitude(time, this.time_trajectory, this.time_attitude)
+      this.$refs.cesium.showAttitude(time)
     }
   },
   computed: {

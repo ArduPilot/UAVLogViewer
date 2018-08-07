@@ -22,7 +22,8 @@ export default {
             shouldAnimate: false
 
           })
-        let timespan = newVal[newVal.length - 1][3] - newVal[0][3]
+        this.startTimeMs = newVal[0][3]
+        let timespan = newVal[newVal.length - 1][3] - this.startTimeMs
         let viewer = this.viewer
         var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
         var stop = Cesium.JulianDate.addSeconds(start, Math.round(timespan / 1000), new Cesium.JulianDate())
@@ -41,7 +42,7 @@ export default {
         let sampledPos = new Cesium.SampledPositionProperty()
         for (let pos of newVal) {
           var position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
-          let time = Cesium.JulianDate.addSeconds(start, (pos[3] - newVal[0][3]) / 1000, new Cesium.JulianDate())
+          let time = Cesium.JulianDate.addSeconds(start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
           sampledPos.addSample(time, position)
         }
         let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
@@ -51,7 +52,7 @@ export default {
             let att = this.attitudes[atti]
             console.log(this.attitudes[atti])
             let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(att[2], att[1], att[0]), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
-            let time = Cesium.JulianDate.addSeconds(start, (atti - newVal[0][3]) / 1000, new Cesium.JulianDate())
+            let time = Cesium.JulianDate.addSeconds(start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
             sampledOrientation.addSample(time, hpRoll)
           }
         }
@@ -112,7 +113,8 @@ export default {
       model: null,
       hpRoll: null,
       position: null,
-      fixedFrameTransform: null
+      fixedFrameTransform: null,
+      startTimeMs: 0
     }
   },
   mounted () {
@@ -139,14 +141,10 @@ export default {
         }
         return attitude[result]
       },
-      showAttitude: function (time, trajectory, attitudes) {
-        let closestPoint = this.closestTrajectoryPoint(time, trajectory)
-        let newpos = Cesium.Cartesian3.fromDegrees(closestPoint[0], closestPoint[1], closestPoint[2])
-        let closestAtt = this.closestAttitude(time, attitudes)
-        this.hpRoll.roll = closestAtt[0]
-        this.hpRoll.pitch = closestAtt[1]
-        this.hpRoll.heading = closestAtt[2]
-        this.model.modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(newpos, this.hpRoll, Cesium.Ellipsoid.WGS84, this.fixedFrameTransform)
+      showAttitude: function (time) {
+        let start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
+        let current = Cesium.JulianDate.addSeconds(start, (time - this.startTimeMs)/1000 , new Cesium.JulianDate())
+        this.viewer.clock.currentTime = current
         this.viewer.scene.requestRender()
       }
     }
