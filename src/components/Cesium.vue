@@ -6,6 +6,13 @@
 import Cesium from 'cesium/Cesium'
 import 'cesium/Widgets/widgets.css'
 
+function getMinY(data) {
+  return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3]);
+}
+function getMaxY(data) {
+  return data.reduce((max, p) => p[3] > max ? p[3] : max, data[0][3]);
+}
+
 export default {
   name: 'Cesium',
   props: ['trajectory', 'attitudes'],
@@ -22,8 +29,8 @@ export default {
             shouldAnimate: false
 
           })
-        this.startTimeMs = newVal[0][3]
-        let timespan = newVal[newVal.length - 1][3] - this.startTimeMs
+        this.startTimeMs = getMinY(newVal)
+        let timespan = getMaxY(newVal) - this.startTimeMs
         let viewer = this.viewer
         var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
         var stop = Cesium.JulianDate.addSeconds(start, Math.round(timespan / 1000), new Cesium.JulianDate())
