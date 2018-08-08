@@ -1,5 +1,5 @@
 <template>
-  <div id="line" ref="line" style="width:100%;height: 100%">{{ instruction }}</div>
+      <div id="line" ref="line" style="width:100%;height: 100%">{{ instruction }}</div>
 </template>
 
 <script>

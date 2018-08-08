@@ -13,13 +13,24 @@ let messages = {}
 let totalSize
 let lastPercentage = 0
 let sent = false
+let lastTime = 0
+let offset = 0
 
 function fixData (message) {
   if (message.name === 'GLOBAL_POSITION_INT') {
     message.lat = message.lat / 10000000
     message.lon = message.lon / 10000000
     message.relative_alt = message.relative_alt / 1000
+    if (message.time_boot_ms < lastTime-1000)
+    {
+      console.log("WTF???")
+      console.long("time_boot_ms: " + message.time_boot_ms + " last: "+ lastTime  )
+      // offset = lastTime - message.time_boot_ms + 1000
+    }
+    message.time_boot_ms = message.time_boot_ms + offset
   }
+  lastTime = message.time_boot_ms
+  //console.log(message.time_boot_ms)
   return message
 }
 

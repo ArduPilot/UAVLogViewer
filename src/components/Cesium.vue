@@ -25,7 +25,7 @@ export default {
             homeButton: false,
             timeline: true,
             animation: true,
-            requestRenderMode: false,
+            requestRenderMode: true,
             shouldAnimate: false
 
           })
