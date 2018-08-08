@@ -6,18 +6,18 @@
 import Cesium from 'cesium/Cesium'
 import 'cesium/Widgets/widgets.css'
 
-function getMinY(data) {
-  return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3]);
+function getMinTime (data) {
+  return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3])
 }
-function getMaxY(data) {
-  return data.reduce((max, p) => p[3] > max ? p[3] : max, data[0][3]);
+function getMaxTime (data) {
+  return data.reduce((max, p) => p[3] > max ? p[3] : max, data[0][3])
 }
 
 export default {
   name: 'Cesium',
   props: ['trajectory', 'attitudes'],
   watch: {
-    trajectory: function (newVal, oldVal) { // watch it
+    trajectory: function (newVal, oldVal) {
       if (this.viewer == null) {
         this.viewer = new Cesium.Viewer(
           'cesiumContainer',
@@ -29,12 +29,11 @@ export default {
             shouldAnimate: false
 
           })
-        this.startTimeMs = getMinY(newVal)
-        let timespan = getMaxY(newVal) - this.startTimeMs
+        this.startTimeMs = getMinTime(newVal)
+        let timespan = getMaxTime(newVal) - this.startTimeMs
         let viewer = this.viewer
         var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
         var stop = Cesium.JulianDate.addSeconds(start, Math.round(timespan / 1000), new Cesium.JulianDate())
-        console.log(start, stop)
 
         // Make sure viewer is at the desired time.
         viewer.clock.startTime = start.clone()
@@ -57,15 +56,13 @@ export default {
         for (var atti in this.attitudes) {
           if (this.attitudes.hasOwnProperty(atti)) {
             let att = this.attitudes[atti]
-            console.log(this.attitudes[atti])
             let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(att[2], att[1], att[0]), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
             let time = Cesium.JulianDate.addSeconds(start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
             sampledOrientation.addSample(time, hpRoll)
           }
         }
 
-        let entity = viewer.entities.add({
-
+        viewer.entities.add({
           // Set the entity availability to the same interval as the simulation time.
           availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
             start: start,
@@ -90,26 +87,7 @@ export default {
             width: 10
           }
         })
-
-        // this.hpRoll = new Cesium.HeadingPitchRoll(0, 0, 0)
-        // this.fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
-        // this.model = this.viewer.scene.primitives.add(Cesium.Model.fromGltf({
-        //   url: require('../assets/Cesium_Air.glb'),
-        //   modelMatrix: Cesium.Transforms.headingPitchRollToFixedFrame(this.position, this.hpRoll, Cesium.Ellipsoid.WGS84, this.fixedFrameTransform),
-        //   minimumPixelSize: 128
-        // }))
       }
-      // this.polyline = this.viewer.entities.add({
-      //   name: 'Orange line with black outline at height and following the surface',
-      //   polyline: {
-      //     positions: Cesium.Cartesian3.fromDegreesArrayHeights(newVal),
-      //     width: 5,
-      //     material: new Cesium.PolylineGlowMaterialProperty({
-      //       glowPower: 0.2,
-      //       color: Cesium.Color.BLUE
-      //     })
-      //   }
-      // })
       this.viewer.zoomTo(this.viewer.entities)
     }
   },
@@ -150,8 +128,7 @@ export default {
       },
       showAttitude: function (time) {
         let start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
-        let current = Cesium.JulianDate.addSeconds(start, (time - this.startTimeMs)/1000 , new Cesium.JulianDate())
-        this.viewer.clock.currentTime = current
+        this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(start, (time - this.startTimeMs) / 1000, new Cesium.JulianDate())
         this.viewer.scene.requestRender()
       }
     }
