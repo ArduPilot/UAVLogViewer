@@ -1,12 +1,6 @@
 // Worker.js
-const _ = require('lodash')
-
-// Respond to message from parent thread
-
-// Post data to parent thread
-self.postMessage({ foo: 'foo' })
-
 require('mavlink_common_v1.0')
+
 const mavlinkParser = new MAVLink()
 
 let messages = {}
@@ -16,21 +10,18 @@ let sent = false
 let lastTime = 0
 let offset = 0
 
+// TODO: fix case of restarting flight controller
 function fixData (message) {
   if (message.name === 'GLOBAL_POSITION_INT') {
     message.lat = message.lat / 10000000
     message.lon = message.lon / 10000000
     message.relative_alt = message.relative_alt / 1000
-    if (message.time_boot_ms < lastTime-1000)
-    {
-      console.log("WTF???")
-      console.long("time_boot_ms: " + message.time_boot_ms + " last: "+ lastTime  )
-      // offset = lastTime - message.time_boot_ms + 1000
+    if (message.time_boot_ms < lastTime - 1000) {
+      console.long('time_boot_ms: ' + message.time_boot_ms + ' last: ' + lastTime)
     }
     message.time_boot_ms = message.time_boot_ms + offset
   }
   lastTime = message.time_boot_ms
-  //console.log(message.time_boot_ms)
   return message
 }
 

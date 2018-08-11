@@ -32,8 +32,8 @@ export default {
         this.startTimeMs = getMinTime(newVal)
         let timespan = getMaxTime(newVal) - this.startTimeMs
         let viewer = this.viewer
-        var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
-        var stop = Cesium.JulianDate.addSeconds(start, Math.round(timespan / 1000), new Cesium.JulianDate())
+        let start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
+        let stop = Cesium.JulianDate.addSeconds(start, Math.round(timespan / 1000), new Cesium.JulianDate())
 
         // Make sure viewer is at the desired time.
         viewer.clock.startTime = start.clone()
@@ -44,16 +44,16 @@ export default {
 
         // Set timeline to simulation bounds
         viewer.timeline.zoomTo(start, stop)
-
+        let position
         let sampledPos = new Cesium.SampledPositionProperty()
         for (let pos of newVal) {
-          var position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
+          position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
           let time = Cesium.JulianDate.addSeconds(start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
           sampledPos.addSample(time, position)
         }
         let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
         let sampledOrientation = new Cesium.SampledProperty(Cesium.Quaternion)
-        for (var atti in this.attitudes) {
+        for (let atti in this.attitudes) {
           if (this.attitudes.hasOwnProperty(atti)) {
             let att = this.attitudes[atti]
             let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(att[2], att[1], att[0]), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
@@ -108,8 +108,8 @@ export default {
     {
       closestTrajectoryPoint (time, trajectory) {
         let result
-        for (var key in trajectory) {
-          var dist = key - time
+        for (let key in trajectory) {
+          let dist = key - time
           if ((dist < 0 && dist < result) || result === undefined) {
             result = key
           }
@@ -118,8 +118,8 @@ export default {
       },
       closestAttitude (time, attitude) {
         let result
-        for (var key in attitude) {
-          var dist = key - time
+        for (let key in attitude) {
+          let dist = key - time
           if ((dist < 0 && dist < result) || result === undefined) {
             result = key
           }

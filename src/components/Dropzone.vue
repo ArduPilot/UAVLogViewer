@@ -27,9 +27,8 @@ export default {
     }
   },
   methods: {
-    onChange (ev)
-    {
-      let fileinput = document.getElementById("choosefile")
+    onChange (ev) {
+      let fileinput = document.getElementById('choosefile')
       this.process(fileinput.files[0])
     },
     onDrop (ev) {

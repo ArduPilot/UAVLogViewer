@@ -72,18 +72,16 @@ export default {
       }
       console.log(plotData, plotOptions)
 
-      if (this.plotInstance !== null)
-      {
+      if (this.plotInstance !== null) {
         plotOptions.xaxis = {range: this.gd._fullLayout.xaxis.range}
         plotOptions.yaxis = {range: this.gd._fullLayout.yaxis.range}
         Plotly.newPlot(this.gd, plotData, plotOptions)
         window.gd = this.gd
-      }
-      else {
+      } else {
         this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions)
       }
       this.gd.on('plotly_hover', function (data) {
-        var infotext = data.points.map(function (d) {
+        let infotext = data.points.map(function (d) {
           return d.x
         })
         _this.$emit('attitude', infotext[0])

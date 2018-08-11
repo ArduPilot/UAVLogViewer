@@ -67,7 +67,6 @@ export default {
       this.message_types = Object.keys(this.messages).sort()
       this.time_attitude = this.extractAttitudes(this.messages)
       this.current_trajectory = this.extractTrajectory(this.messages)
-
     },
     plot (item) {
       this.current_data = this.messages[item]
@@ -75,7 +74,7 @@ export default {
     extractTrajectory (messages) {
       let gpsData = messages['GLOBAL_POSITION_INT']
       let trajectory = []
-      for (var pos of gpsData) {
+      for (let pos of gpsData) {
         if (pos.lat !== 0) {
           trajectory.push([pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms])
           this.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms]
@@ -86,7 +85,7 @@ export default {
     extractAttitudes (messages) {
       let attitudeMsgs = messages['ATTITUDE']
       let attitudes = {}
-      for (var att of attitudeMsgs) {
+      for (let att of attitudeMsgs) {
         attitudes[att.time_boot_ms] = [att.roll, att.pitch, att.yaw]
       }
       return attitudes
@@ -98,7 +97,7 @@ export default {
   computed: {
     filterPlottable () {
       return this.message_types.filter(function (message) {
-        let valid = ['ATTITUDE','GLOBAL_POSITION_INT','GPS_RAW_INT']
+        let valid = ['ATTITUDE', 'GLOBAL_POSITION_INT', 'GPS_RAW_INT']
         return true
         // return valid.includes(message)
       })
@@ -121,7 +120,6 @@ export default {
   .cesiumcontainer {
     border: 1px solid;
   }
-
 
   /*
    * Sidebar
@@ -182,7 +180,7 @@ export default {
    */
 
   [role="main"] {
-    padding-top: 0px!important;
+    padding-top: 0!important;
   }
 
   .navbar-brand {
