@@ -29,7 +29,7 @@
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4 flex-column d-sm-flex" style="height: 100%;">
         <div class="row flex-grow-1" >
           <div class="col-12">
-            <Cesium ref="cesium" v-on:cesiumhover="updateCursor" v-bind:trajectory="current_trajectory" v-bind:attitudes="time_attitude"/>
+            <Cesium ref="cesium" v-if="current_trajectory.length" v-on:cesiumhover="updateCursor" v-bind:trajectory="current_trajectory" v-bind:attitudes="time_attitude"/>
           </div>
         </div>
         <div v-if="current_data" class="row h-50">

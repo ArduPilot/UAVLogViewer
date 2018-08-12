@@ -16,22 +16,67 @@ function getMaxTime (data) {
 export default {
   name: 'Cesium',
   props: ['trajectory', 'attitudes'],
+  mounted () {
+    if (this.viewer == null) {
+      this.viewer = new Cesium.Viewer(
+        'cesiumContainer',
+        {
+          homeButton: false,
+          timeline: true,
+          animation: true,
+          requestRenderMode: true,
+          shouldAnimate: false
+        })
+    }
+    this.plotTrajectory(this.trajectory)
+  },
   watch: {
     trajectory: function (newVal, oldVal) {
-      let _this = this
-      if (this.viewer == null) {
-        this.viewer = new Cesium.Viewer(
-          'cesiumContainer',
-          {
-            homeButton: false,
-            timeline: true,
-            animation: true,
-            requestRenderMode: true,
-            shouldAnimate: false
-
-          })
-        this.startTimeMs = getMinTime(newVal)
-        let timespan = getMaxTime(newVal) - this.startTimeMs
+      this.plotTrajectory(newVal)
+    },
+    data () {
+      return {
+        viewer: null,
+        polyline: null,
+        model: null,
+        hpRoll: null,
+        position: null,
+        fixedFrameTransform: null,
+        startTimeMs: 0
+      }
+    }
+  },
+  methods:
+    {
+      closestTrajectoryPoint (time, trajectory) {
+        let result
+        for (let key in trajectory) {
+          let dist = key - time
+          if ((dist < 0 && dist < result) || result === undefined) {
+            result = key
+          }
+        }
+        return trajectory[result]
+      },
+      closestAttitude (time, attitude) {
+        let result
+        for (let key in attitude) {
+          let dist = key - time
+          if ((dist < 0 && dist < result) || result === undefined) {
+            result = key
+          }
+        }
+        return attitude[result]
+      },
+      showAttitude (time) {
+        let start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
+        this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(start, (time - this.startTimeMs) / 1000, new Cesium.JulianDate())
+        this.viewer.scene.requestRender()
+      },
+      plotTrajectory (points) {
+        let _this = this
+        this.startTimeMs = getMinTime(points)
+        let timespan = getMaxTime(points) - this.startTimeMs
         let viewer = this.viewer
         let start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
         let stop = Cesium.JulianDate.addSeconds(start, Math.round(timespan / 1000), new Cesium.JulianDate())
@@ -47,7 +92,7 @@ export default {
         viewer.timeline.zoomTo(start, stop)
         let position
         let sampledPos = new Cesium.SampledPositionProperty()
-        for (let pos of newVal) {
+        for (let pos of points) {
           position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
           let time = Cesium.JulianDate.addSeconds(start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
           sampledPos.addSample(time, position)
@@ -118,49 +163,7 @@ export default {
             width: 10
           }
         })
-      }
-      this.viewer.zoomTo(this.viewer.entities)
-    }
-  },
-  data () {
-    return {
-      viewer: null,
-      polyline: null,
-      model: null,
-      hpRoll: null,
-      position: null,
-      fixedFrameTransform: null,
-      startTimeMs: 0
-    }
-  },
-  mounted () {
-  },
-  methods:
-    {
-      closestTrajectoryPoint (time, trajectory) {
-        let result
-        for (let key in trajectory) {
-          let dist = key - time
-          if ((dist < 0 && dist < result) || result === undefined) {
-            result = key
-          }
-        }
-        return trajectory[result]
-      },
-      closestAttitude (time, attitude) {
-        let result
-        for (let key in attitude) {
-          let dist = key - time
-          if ((dist < 0 && dist < result) || result === undefined) {
-            result = key
-          }
-        }
-        return attitude[result]
-      },
-      showAttitude: function (time) {
-        let start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
-        this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(start, (time - this.startTimeMs) / 1000, new Cesium.JulianDate())
-        this.viewer.scene.requestRender()
+        this.viewer.zoomTo(this.viewer.entities)
       }
     }
 }
