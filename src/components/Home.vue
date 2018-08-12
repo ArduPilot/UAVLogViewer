@@ -21,7 +21,7 @@
           <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
           </h6>
 
-          <Dropzone ref="dropzone" v-on:messages="updateData"/>
+          <Dropzone ref="dropzone"  v-on:messages="updateData"/>
 
         </div>
       </nav>
@@ -29,12 +29,12 @@
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4 flex-column d-sm-flex" style="height: 100%;">
         <div class="row flex-grow-1" >
           <div class="col-12">
-            <Cesium ref="cesium" v-bind:trajectory="current_trajectory" v-bind:attitudes="time_attitude"/>
+            <Cesium ref="cesium" v-on:cesiumhover="updateCursor" v-bind:trajectory="current_trajectory" v-bind:attitudes="time_attitude"/>
           </div>
         </div>
         <div v-if="current_data" class="row h-50">
           <div class="col-12">
-            <Plotly  v-on:attitude="updateAttitude" v-bind:plot-data="current_data"/>
+            <Plotly  v-on:attitude="updateAttitude" v-bind:cursor="plot_cursor" v-bind:plot-data="current_data"/>
           </div>
         </div>
       </main>
@@ -58,7 +58,8 @@ export default {
       current_data: null,
       current_trajectory: [],
       time_trajectory: {},
-      time_attitude: {}
+      time_attitude: {},
+      plot_cursor: null
     }
   },
   methods: {
@@ -92,6 +93,9 @@ export default {
     },
     updateAttitude (time) {
       this.$refs.cesium.showAttitude(time)
+    },
+    updateCursor (time) {
+      this.plot_cursor = time
     }
   },
   computed: {

@@ -68,7 +68,20 @@ export default {
       let plotData = datasets
       let plotOptions = {
         autosize: true,
-        margin: { t: 0, l: 0, b: 20, r: 0 }
+        margin: { t: 0, l: 0, b: 20, r: 0 },
+        shapes: [ {
+          type: 'line',
+          y0: 0,
+          x0: data[0].time_boot_ms,
+          yref: 'paper',
+          y1: 1,
+          x1: data[0].time_boot_ms,
+          line: {
+            color: 'rgb(0, 0, 0)',
+            width: 2,
+            dash: 'dot'
+          }
+        }]
       }
       console.log(plotData, plotOptions)
 
@@ -88,11 +101,17 @@ export default {
       })
     }
   },
-  props: ['plotData'],
+  props: ['plotData', 'cursor'],
   watch: {
     plotData: function (newVal, oldVal) { // watch it
       this.instruction = ''
       this.plot(newVal)
+    },
+    cursor: function (newVal, oldVal) {
+      Plotly.relayout(this.gd, {
+        'shapes[0].x0': newVal,
+        'shapes[0].x1': newVal
+      })
     }
   }
 }

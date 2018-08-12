@@ -18,6 +18,7 @@ export default {
   props: ['trajectory', 'attitudes'],
   watch: {
     trajectory: function (newVal, oldVal) {
+      let _this = this
       if (this.viewer == null) {
         this.viewer = new Cesium.Viewer(
           'cesiumContainer',
@@ -50,7 +51,36 @@ export default {
           position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
           let time = Cesium.JulianDate.addSeconds(start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
           sampledPos.addSample(time, position)
+          viewer.entities.add({
+            position: position,
+            point: {
+              pixelSize: 8,
+              color: Cesium.Color.BLUE
+            },
+            properties: {
+              time: pos[3]
+            }
+          })
         }
+
+        let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
+        handler.setInputAction(function (movement) {
+          // get an array of all primitives at the mouse position
+          var pickedObjects = viewer.scene.drillPick(movement.endPosition)
+          if (Cesium.defined(pickedObjects)) {
+            // Update the collection of picked entities.
+            for (let entity of pickedObjects) {
+              try {
+                _this.$emit('cesiumhover', entity.id.properties.getValue('time').time)
+                console.log(entity)
+                window.entity = entity
+                return
+              } catch (e) {
+              }
+            }
+          }
+        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+
         let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
         let sampledOrientation = new Cesium.SampledProperty(Cesium.Quaternion)
         for (let atti in this.attitudes) {
