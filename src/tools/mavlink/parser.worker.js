@@ -1,5 +1,5 @@
 // Worker.js
-require('mavlink_common_v1.0')
+require('mavlink_common_v1.0/mavlink')
 
 const mavlinkParser = new MAVLink()
 

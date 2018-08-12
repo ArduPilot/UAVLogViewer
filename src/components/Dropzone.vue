@@ -9,7 +9,7 @@
 </template>
 <script>
 import VProgress from './VProgress'
-import Worker from './parser.worker.js'
+import Worker from '../tools/mavlink/parser.worker.js'
 require('mavlink_common_v1.0')
 
 const worker = new Worker()
