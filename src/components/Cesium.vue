@@ -71,8 +71,9 @@ export default {
             // Update the collection of picked entities.
             for (let entity of pickedObjects) {
               try {
-                _this.$emit('cesiumhover', entity.id.properties.getValue('time').time)
-                console.log(entity)
+                let time = entity.id.properties.getValue('time').time
+                _this.$emit('cesiumhover', time)
+                viewer.clock.currentTime = Cesium.JulianDate.addSeconds(start, (time - _this.startTimeMs) / 1000, new Cesium.JulianDate())
                 window.entity = entity
                 return
               } catch (e) {
