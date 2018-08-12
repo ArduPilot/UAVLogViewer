@@ -98,6 +98,13 @@ export default {
           return d.x
         })
         _this.$emit('attitude', infotext[0])
+        _this.setCursor(infotext[0])
+      })
+    },
+    setCursor (time) {
+      Plotly.relayout(this.gd, {
+        'shapes[0].x0': time,
+        'shapes[0].x1': time
       })
     }
   },
@@ -108,10 +115,7 @@ export default {
       this.plot(newVal)
     },
     cursor: function (newVal, oldVal) {
-      Plotly.relayout(this.gd, {
-        'shapes[0].x0': newVal,
-        'shapes[0].x1': newVal
-      })
+      this.setCursor(newVal)
     }
   }
 }
