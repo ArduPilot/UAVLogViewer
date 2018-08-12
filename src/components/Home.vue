@@ -101,9 +101,16 @@ export default {
   computed: {
     filterPlottable () {
       return this.message_types.filter(function (message) {
-        let valid = ['ATTITUDE', 'GLOBAL_POSITION_INT', 'GPS_RAW_INT']
-        return true
-        // return valid.includes(message)
+        let valid = [
+          'ATTITUDE',
+          'GLOBAL_POSITION_INT',
+          'GPS_RAW_INT',
+          'NAV_CONTROLLER_OUTPUT',
+          'SCALED_IMU2',
+          'RC_CHANNELS',
+          'RC_CHANNELS_RAW',
+          'SCALED_PRESSURE']
+        return valid.includes(message)
       })
     }
   },
