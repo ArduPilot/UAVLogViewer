@@ -69,6 +69,9 @@ export default {
       let plotOptions = {
         autosize: true,
         margin: { t: 0, l: 0, b: 20, r: 0 },
+        xaxis: {
+          rangeslider: {}
+        },
         shapes: [ {
           type: 'line',
           y0: 0,
@@ -87,7 +90,7 @@ export default {
 
       if (this.plotInstance !== null) {
         plotOptions.xaxis = {range: this.gd._fullLayout.xaxis.range}
-        plotOptions.yaxis = {range: this.gd._fullLayout.yaxis.range}
+        // plotOptions.yaxis = {range: this.gd._fullLayout.yaxis.range}
         Plotly.newPlot(this.gd, plotData, plotOptions)
         window.gd = this.gd
       } else {

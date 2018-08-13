@@ -6,6 +6,23 @@
 import Cesium from 'cesium/Cesium'
 import 'cesium/Widgets/widgets.css'
 
+let colors = [Cesium.Color.BLUE,
+  Cesium.Color.BLUEVIOLET,
+  Cesium.Color.BROWN,
+  Cesium.Color.CHARTREUSE,
+  Cesium.Color.DARKORANGE,
+  Cesium.Color.GREENYELLOW,
+  Cesium.Color.RED,
+  Cesium.Color.AQUA,
+  Cesium.Color.FUCHSIA]
+
+function getModeColor (time, modes) {
+  for (let mode in modes) {
+    if (modes[mode][0] > time) {
+      return colors[mode]
+    }
+  }
+}
 function getMinTime (data) {
   return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3])
 }
@@ -15,7 +32,7 @@ function getMaxTime (data) {
 
 export default {
   name: 'Cesium',
-  props: ['trajectory', 'attitudes'],
+  props: ['trajectory', 'attitudes', 'modes'],
   mounted () {
     if (this.viewer == null) {
       this.viewer = new Cesium.Viewer(
@@ -99,8 +116,8 @@ export default {
           viewer.entities.add({
             position: position,
             point: {
-              pixelSize: 8,
-              color: Cesium.Color.BLUE
+              pixelSize: 10,
+              color: getModeColor(pos[3], this.modes)
             },
             properties: {
               time: pos[3]
@@ -158,7 +175,7 @@ export default {
             resolution: 1,
             material: new Cesium.PolylineGlowMaterialProperty({
               glowPower: 0.1,
-              color: Cesium.Color.YELLOW
+              color: Cesium.Color.GREY
             }),
             width: 10
           }
