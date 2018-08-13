@@ -1,6 +1,7 @@
 # tlogviewer
 
-> A js viewer for mavlink telemetry logs
+ This is a Javascript based log viewer for mavlink telemetry logs and (soon) dataflash logs.
+ The latest version can be seen [here](http://tlog.ibexcps.com)
 
 ## Build Setup
 
