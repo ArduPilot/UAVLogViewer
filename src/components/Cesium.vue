@@ -106,12 +106,14 @@ export default {
         // Set timeline to simulation bounds
         viewer.timeline.zoomTo(start, stop)
         let position
+        let positions = []
         let sampledPos = new Cesium.SampledPositionProperty()
 
         let pointCollection = viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
 
         for (let pos of points) {
           position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
+          positions.push(position)
           let time = Cesium.JulianDate.addSeconds(start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
           sampledPos.addSample(time, position)
           pointCollection.add({
@@ -168,16 +170,13 @@ export default {
           model: {
             uri: require('../assets/Cesium_Air.glb'),
             minimumPixelSize: 64
-          },
-          // Show the path as a pink line sampled in 1 second increments.
-          path: {
-            resolution: 1,
-            material: new Cesium.PolylineGlowMaterialProperty({
-              glowPower: 0.1,
-              color: Cesium.Color.GREY
-            }),
-            width: 10
           }
+        })
+        this.viewer.entities.add({
+          polyline: {
+            positions: positions
+          },
+          width: 2
         })
         this.viewer.zoomTo(this.viewer.entities)
       },
