@@ -107,19 +107,18 @@ export default {
         viewer.timeline.zoomTo(start, stop)
         let position
         let sampledPos = new Cesium.SampledPositionProperty()
+
+        let pointCollection = viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
+
         for (let pos of points) {
           position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
           let time = Cesium.JulianDate.addSeconds(start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
           sampledPos.addSample(time, position)
-          viewer.entities.add({
+          pointCollection.add({
             position: position,
-            point: {
-              pixelSize: 10,
-              color: this.getModeColor(pos[3])
-            },
-            properties: {
-              time: pos[3]
-            }
+            pixelSize: 10,
+            color: this.getModeColor(pos[3]),
+            id: {time: pos[3]}
           })
         }
 
@@ -131,10 +130,12 @@ export default {
             // Update the collection of picked entities.
             for (let entity of pickedObjects) {
               try {
-                let time = entity.id.properties.getValue('time').time
-                _this.$emit('cesiumhover', time)
-                viewer.clock.currentTime = Cesium.JulianDate.addSeconds(start, (time - _this.startTimeMs) / 1000, new Cesium.JulianDate())
-                window.entity = entity
+                let time = entity.id.time
+                if (time !== undefined) {
+                  _this.$emit('cesiumhover', time)
+                  viewer.clock.currentTime = Cesium.JulianDate.addSeconds(start, (time - _this.startTimeMs) / 1000, new Cesium.JulianDate())
+                  window.entity = entity
+                }
                 return
               } catch (e) {
               }
