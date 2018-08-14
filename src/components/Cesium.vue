@@ -38,6 +38,7 @@ export default {
           requestRenderMode: true,
           shouldAnimate: false
         })
+      this.viewer.scene.debugShowFramesPerSecond = true
     }
     this.plotTrajectory(this.trajectory)
   },
