@@ -65,26 +65,6 @@ export default {
   },
   methods:
     {
-      closestTrajectoryPoint (time, trajectory) {
-        let result
-        for (let key in trajectory) {
-          let dist = key - time
-          if ((dist < 0 && dist < result) || result === undefined) {
-            result = key
-          }
-        }
-        return trajectory[result]
-      },
-      closestAttitude (time, attitude) {
-        let result
-        for (let key in attitude) {
-          let dist = key - time
-          if ((dist < 0 && dist < result) || result === undefined) {
-            result = key
-          }
-        }
-        return attitude[result]
-      },
       showAttitude (time) {
         let start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
         this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(start, (time - this.startTimeMs) / 1000, new Cesium.JulianDate())
