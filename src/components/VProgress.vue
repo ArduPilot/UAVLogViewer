@@ -22,4 +22,11 @@ export default {
   strong {
     font-size: 150%;
   }
+
+.progress .progress-bar {
+  -webkit-transition: none;
+  -o-transition: none;
+  transition: none;
+}
+
 </style>
