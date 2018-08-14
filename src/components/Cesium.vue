@@ -1,28 +1,22 @@
 <template>
+  <div>
     <div id="cesiumContainer"></div>
+    <div id="toolbar">
+      <table class="infoPanel">
+        <tbody>
+          <tr v-for="(mode, index) in modes" v-bind:key="mode">
+            <td   v-bind:style="{ color: cssColors[index] } ">{{ mode[1] }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </template>
 
 <script>
 import Cesium from 'cesium/Cesium'
 import 'cesium/Widgets/widgets.css'
 
-let colors = [Cesium.Color.BLUE,
-  Cesium.Color.BLUEVIOLET,
-  Cesium.Color.BROWN,
-  Cesium.Color.CHARTREUSE,
-  Cesium.Color.DARKORANGE,
-  Cesium.Color.GREENYELLOW,
-  Cesium.Color.RED,
-  Cesium.Color.AQUA,
-  Cesium.Color.FUCHSIA]
-
-function getModeColor (time, modes) {
-  for (let mode in modes) {
-    if (modes[mode][0] > time) {
-      return colors[mode]
-    }
-  }
-}
 function getMinTime (data) {
   return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3])
 }
@@ -50,17 +44,40 @@ export default {
   watch: {
     trajectory: function (newVal, oldVal) {
       this.plotTrajectory(newVal)
-    },
-    data () {
-      return {
-        viewer: null,
-        polyline: null,
-        model: null,
-        hpRoll: null,
-        position: null,
-        fixedFrameTransform: null,
-        startTimeMs: 0
-      }
+    }
+  },
+  data () {
+    return {
+      viewer: null,
+      polyline: null,
+      model: null,
+      hpRoll: null,
+      position: null,
+      fixedFrameTransform: null,
+      startTimeMs: 0,
+
+      colors: [
+        Cesium.Color.BLUE,
+        Cesium.Color.BLUEVIOLET,
+        Cesium.Color.BROWN,
+        Cesium.Color.DARKORANGE,
+        Cesium.Color.GREENYELLOW,
+        Cesium.Color.RED,
+        Cesium.Color.AQUA,
+        Cesium.Color.FUCHSIA
+      ],
+
+      cssColors: [
+        '#0000FF',
+        '#8A2BE2',
+        '#A52A2A',
+        '#FF8C00',
+        '#ADFF2F',
+        '#FF0000',
+        '#00FFFF',
+        '#FF00FF'
+      ]
+
     }
   },
   methods:
@@ -97,7 +114,7 @@ export default {
             position: position,
             point: {
               pixelSize: 10,
-              color: getModeColor(pos[3], this.modes)
+              color: this.getModeColor(pos[3])
             },
             properties: {
               time: pos[3]
@@ -161,6 +178,16 @@ export default {
           }
         })
         this.viewer.zoomTo(this.viewer.entities)
+      },
+      getModeColor (time) {
+        for (let mode in this.modes) {
+          if (this.modes.hasOwnProperty(mode)) {
+            if (this.modes[mode][0] > time) {
+              return this.colors[mode - 1]
+            }
+          }
+        }
+        return this.colors[this.modes.length]
       }
     }
 }
@@ -171,4 +198,36 @@ export default {
     display: flex;
     height: 100%;
   }
+
+  #loadingOverlay h1 {
+    text-align: center;
+    position: relative;
+    top: 50%;
+    margin-top: -0.5em;
+  }
+
+  .sandcastle-loading #loadingOverlay {
+    display: block;
+  }
+
+  .sandcastle-loading #toolbar {
+    display: none;
+  }
+
+  #toolbar {
+    margin: 5px;
+    padding: 2px 5px;
+    position: absolute;
+    top: 0;
+  }
+
+  .infoPanel {
+    background: rgba(42, 42, 42, 0.8);
+    padding: 4px;
+    border: 1px solid #444;
+    border-radius: 4px;
+    font-size:150%;
+    font-weight: bold;
+  }
+
 </style>
