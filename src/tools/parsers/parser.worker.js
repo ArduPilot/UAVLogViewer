@@ -1,5 +1,5 @@
 // Worker.js
-//import MavlinkParser from 'mavlinkParser'
+// import MavlinkParser from 'mavlinkParser'
 let mavparser = require('./mavlinkParser')
 
 self.addEventListener('message', function (event) {

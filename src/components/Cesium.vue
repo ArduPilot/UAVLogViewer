@@ -4,8 +4,8 @@
     <div id="toolbar">
       <table class="infoPanel">
         <tbody>
-          <tr v-for="(mode, index) in modes" v-bind:key="index">
-            <td class="mode"  v-bind:style="{ color: cssColors[index] } ">{{ mode[1] }}</td>
+          <tr v-for="(mode, index) in setOfModes" v-bind:key="index">
+            <td class="mode"  v-bind:style="{ color: cssColors[index] } ">{{ mode }}</td>
           </tr>
         </tbody>
       </table>
@@ -66,6 +66,18 @@ export default {
 
     }
   },
+  computed:
+    {
+      setOfModes () {
+        let set = []
+        for (let mode of this.modes) {
+          if (!set.includes(mode[1])){
+            set.push(mode[1])
+          }
+        }
+        return set
+      }
+    },
   methods:
     {
       onHover (movement) {
