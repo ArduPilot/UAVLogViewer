@@ -195,7 +195,7 @@ export default {
             }
           }
         }
-        return this.colors[this.modes.length]
+        return this.colors[this.modes.length-1]
       }
     }
 }
