@@ -74,6 +74,7 @@ export default {
       this.time_attitude = this.extractAttitudes(this.messages)
       this.current_trajectory = this.extractTrajectory(this.messages)
       this.flight_modes = this.extractFlightModes(this.messages)
+      this.current_data = null
     },
     plot (item) {
       this.current_data = this.messages[item]

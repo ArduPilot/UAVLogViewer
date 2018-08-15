@@ -39,6 +39,7 @@ export default {
           shouldAnimate: false
         })
       this.viewer.scene.debugShowFramesPerSecond = true
+      this.pointCollection = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
     }
     this.plotTrajectory(this.trajectory)
   },
@@ -56,6 +57,7 @@ export default {
       position: null,
       fixedFrameTransform: null,
       startTimeMs: 0,
+      pointsCollection: null,
 
       colors: [
         Cesium.Color.BLUE,
@@ -109,14 +111,19 @@ export default {
         let positions = []
         let sampledPos = new Cesium.SampledPositionProperty()
 
-        let pointCollection = viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
+        // clean entities
+        if (this.pointCollection !== null)
+        {
+          this.pointCollection.removeAll()
+        }
+        this.viewer.entities.removeAll()
 
         for (let pos of points) {
           position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
           positions.push(position)
           let time = Cesium.JulianDate.addSeconds(start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
           sampledPos.addSample(time, position)
-          pointCollection.add({
+          this.pointCollection.add({
             position: position,
             pixelSize: 10,
             color: this.getModeColor(pos[3]),
