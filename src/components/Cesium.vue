@@ -1,11 +1,11 @@
 <template>
-  <div>
+  <div id="wrapper">
     <div id="cesiumContainer"></div>
     <div id="toolbar">
       <table class="infoPanel">
         <tbody>
           <tr v-for="(mode, index) in modes" v-bind:key="index">
-            <td   v-bind:style="{ color: cssColors[index] } ">{{ mode[1] }}</td>
+            <td class="mode"  v-bind:style="{ color: cssColors[index] } ">{{ mode[1] }}</td>
           </tr>
         </tbody>
       </table>
@@ -224,11 +224,23 @@ export default {
 
   .infoPanel {
     background: rgba(42, 42, 42, 0.8);
-    padding: 4px;
+    margin: 5px;
     border: 1px solid #444;
-    border-radius: 4px;
-    font-size:150%;
+    border-radius: 10px;
+    font-size:100%;
     font-weight: bold;
+  }
+  .infoPanel > tbody{
+    padding:15px;
+  }
+
+  #wrapper{
+    width: 100%;
+    height: 100%;
+  }
+  .mode {
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
 </style>

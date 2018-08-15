@@ -1,34 +1,33 @@
 <template>
   <div id='vuewrapper' style="height: 100%;">
-    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Mav Viewer</a>
 
-    </nav>
+    <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
-  <div class="container-fluid" style="height: 100%; overflow-y: hidden;">
-    <div class="row" style="height: 100%;">
-      <nav class="col-md-2 d-none d-md-block bg-light sidebar">
-        <div class="sidebar-sticky">
-          <ul class="nav flex-column">
-            <li v-for="item in filterPlottable" class="nav-item" :key="'li' + item">
-              <a :key="'a' + item" class="nav-link" href="#" @click="plot(item)">
-                <span :key="item" data-feather="file"></span>
-                {{item}}
-              </a>
+    <div class="nav-side-menu col-md-3 col-lg-2">
+      <div class="brand">TLog Viewer</div>
+      <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
+
+      <div class="menu-list">
+
+        <b-collapse visible id="menucontent" class="menu-content collapse out">
+          <li v-if="filterPlottable.length"  v-b-toggle.products >
+            <a class="section" href="#"><i class="fas fa-signature fa-lg"></i> Plot <i class="fas fa-caret-down"></i></a>
+          </li>
+          <b-collapse  class="sub-menu collapse" id="products">
+            <li v-for="item in filterPlottable" :key="'li' + item">
+              <a :key="'a' + item" href="#" @click="plot(item)">{{ item }}</a>
             </li>
-          </ul>
-
-          <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
-          </h6>
-
+          </b-collapse>
           <Dropzone ref="dropzone"  v-on:messages="updateData"/>
+        </b-collapse>
 
-        </div>
-      </nav>
+      </div>
+    </div>
 
-      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4 flex-column d-sm-flex" style="height: 100%;">
+
+      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex" style="height: 100%;">
         <div class="row flex-grow-1" >
-          <div class="col-12">
+          <div class="col-12 noPadding">
             <Cesium ref="cesium"
                     v-if="current_trajectory.length"
                     v-on:cesiumhover="updateCursor"
@@ -38,13 +37,13 @@
           </div>
         </div>
         <div v-if="current_data" class="row h-50">
-          <div class="col-12">
+          <div class="col-12 noPadding">
             <Plotly  v-on:attitude="updateAttitude" v-bind:cursor="plot_cursor" v-bind:plot-data="current_data"/>
           </div>
         </div>
       </main>
 
-      </div>
+
     </div>
   </div>
 </template>
@@ -139,100 +138,180 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-  body {
-    font-size: .875rem;
-  }
-
-  .plotlycontainer,
-  .cesiumcontainer {
-    border: 1px solid;
-  }
-
-  /*
-   * Sidebar
-   */
-
-  .sidebar {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 100; /* Behind the navbar */
-    padding: 48px 0 0; /* Height of navbar */
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-  }
-
-  .sidebar-sticky {
-    position: relative;
-    top: 0;
-    height: calc(100vh - 48px);
-    padding-top: .5rem;
+  .nav-side-menu {
     overflow-x: hidden;
-    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    overflow-y: auto;
+    font-family: verdana;
+    font-size: 14px;
+    font-weight: 200;
+    background-color: #2e353d;
+    position: fixed;
+    top: 0px;
+    /*width: 300px;*/
+    height: 100%;
+    color: #e1ffff;
   }
-
-  @supports ((position: -webkit-sticky) or (position: sticky)) {
-    .sidebar-sticky {
-      position: -webkit-sticky;
-      position: sticky;
+  .nav-side-menu .brand {
+    background-color: #23282e;
+    line-height: 50px;
+    display: block;
+    text-align: center;
+    font-size: 17px;
+    font-weight: bold;
+  }
+  .nav-side-menu .toggle-btn {
+    display: none;
+  }
+  .nav-side-menu ul,
+  .nav-side-menu li {
+    list-style: none;
+    padding: 0px;
+    margin: 0px;
+    line-height: 35px;
+    cursor: pointer;
+    /*
+      .collapsed{
+         .arrow:before{
+                   font-family: FontAwesome;
+                   content: "\f053";
+                   display: inline-block;
+                   padding-left:10px;
+                   padding-right: 10px;
+                   vertical-align: middle;
+                   float:right;
+              }
+       }
+  */
+  }
+  .nav-side-menu ul :not(collapsed) .arrow:before,
+  .nav-side-menu li :not(collapsed) .arrow:before {
+    font-family: FontAwesome;
+    content: "\f078";
+    display: inline-block;
+    padding-left: 10px;
+    padding-right: 10px;
+    vertical-align: middle;
+    float: right;
+  }
+  .nav-side-menu ul .active,
+  .nav-side-menu li .active {
+    border-left: 3px solid #d19b3d;
+    background-color: #4f5b69;
+  }
+  .nav-side-menu ul .sub-menu li.active,
+  .nav-side-menu li .sub-menu li.active {
+    color: #d19b3d;
+  }
+  .nav-side-menu ul .sub-menu li.active a,
+  .nav-side-menu li .sub-menu li.active a {
+    color: #d19b3d;
+  }
+  .nav-side-menu ul .sub-menu li,
+  .nav-side-menu li .sub-menu li {
+    background-color: #181c20;
+    border: none;
+    line-height: 28px;
+    border-bottom: 1px solid #23282e;
+    margin-left: 0px;
+  }
+  .nav-side-menu ul .sub-menu li:hover,
+  .nav-side-menu li .sub-menu li:hover {
+    background-color: #020203;
+  }
+  .nav-side-menu ul .sub-menu li:before,
+  .nav-side-menu li .sub-menu li:before {
+    font-family: FontAwesome;
+    content: "\f105";
+    display: inline-block;
+    padding-left: 10px;
+    padding-right: 10px;
+    vertical-align: middle;
+  }
+  .nav-side-menu li {
+    padding-left: 0px;
+    border-left: 3px solid #2e353d;
+    border-bottom: 1px solid #23282e;
+  }
+  .nav-side-menu li a {
+    text-decoration: none;
+    color: #e1ffff;
+  }
+  .nav-side-menu li a i {
+    padding-left: 10px;
+    width: 20px;
+    padding-right: 20px;
+  }
+  .nav-side-menu li:hover {
+    border-left: 3px solid #d19b3d;
+    background-color: #4f5b69;
+    -webkit-transition: all 1s ease;
+    -moz-transition: all 1s ease;
+    -o-transition: all 1s ease;
+    -ms-transition: all 1s ease;
+    transition: all 1s ease;
+  }
+  @media (max-width: 767px) {
+    .nav-side-menu {
+      position: relative;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .nav-side-menu .toggle-btn {
+      display: block;
+      cursor: pointer;
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      z-index: 10 !important;
+      padding: 3px;
+      background-color: #ffffff;
+      color: #000;
+      width: 40px;
+      text-align: center;
+    }
+    .brand {
+      text-align: left !important;
+      font-size: 22px;
+      padding-left: 20px;
+      line-height: 50px !important;
     }
   }
 
-  .sidebar .nav-link {
-    font-weight: 500;
-    color: #333;
+  @media (min-width: 767px) {
+    .nav-side-menu .menu-list .menu-content {
+      display: block;
+    }
+  }
+  body {
+    margin: 0px;
+    padding: 0px;
   }
 
-  .sidebar .nav-link .feather {
-    margin-right: 4px;
-    color: #999;
+  .section {
+    font-size: 130%;
+    /*font-weight: bold;  */
   }
 
-  .sidebar .nav-link.active {
-    color: #007bff;
+  i {
+    margin:10px;
   }
 
-  .sidebar .nav-link:hover .feather,
-  .sidebar .nav-link.active .feather {
-    color: inherit;
+  i .dropdown{
+    float: right;
   }
 
-  .sidebar-heading {
-    font-size: .75rem;
-    text-transform: uppercase;
-  }
+  ,noPadding {
+    padding-left: 4px;
+    padding-right: 6px;
+   }
+  ::-webkit-scrollbar {
+    width: 12px;
+    background-color: rgba(0,0,0,0); }
 
-  /*
-   * Content
-   */
+  ::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+    background-color: #1c437f; }
 
-  [role="main"] {
-    padding-top: 0!important;
-  }
-
-  .navbar-brand {
-    padding-top: .75rem;
-    padding-bottom: .75rem;
-    font-size: 1rem;
-    background-color: rgba(0, 0, 0, .25);
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
-  }
-
-  .navbar .form-control {
-    padding: .75rem 1rem;
-    border-width: 0;
-    border-radius: 0;
-  }
-
-  .form-control-dark {
-    color: #fff;
-    background-color: rgba(255, 255, 255, .1);
-    border-color: rgba(255, 255, 255, .1);
-  }
-
-  .form-control-dark:focus {
-    border-color: transparent;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
-  }
 
 </style>

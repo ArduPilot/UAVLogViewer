@@ -113,6 +113,7 @@ export default {
 
     #drop_zone {
       padding-top: 25px;
+      padding-left: 10px;
       border: 1px solid dimgrey;
       width:  auto;
       height: 100px;
