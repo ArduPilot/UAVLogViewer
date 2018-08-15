@@ -41,6 +41,7 @@ export default {
         })
       this.viewer.scene.debugShowFramesPerSecond = true
       this.pointCollection = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
+      this.viewer.scene.postRender.addEventListener(this.onFrameUpdate);
     }
     this.plotTrajectory(this.trajectory)
   },
@@ -76,7 +77,7 @@ export default {
             try {
               let time = entity.id.time
               if (time !== undefined) {
-                this.$emit('cesiumhover', time)
+                this.$emit('cesium-time-changed', time)
                 this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16)), (time - this.startTimeMs) / 1000, new Cesium.JulianDate())
                 window.entity = entity
               }
@@ -85,6 +86,10 @@ export default {
             }
           }
         }
+      },
+      onFrameUpdate() {
+        // emits in "boot_time_ms" units.
+        this.$emit('cesium-time-changed', (this.viewer.clock.currentTime.secondsOfDay - this.viewer.clock.startTime.secondsOfDay)*1000 + this.startTimeMs)
       },
       generateColorMMap() {
         let colorMapOptions = {

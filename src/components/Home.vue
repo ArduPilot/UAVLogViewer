@@ -30,7 +30,7 @@
           <div class="col-12 noPadding">
             <Cesium ref="cesium"
                     v-if="current_trajectory.length"
-                    v-on:cesiumhover="updateCursor"
+                    v-on:cesium-time-changed="updateCursor"
                     v-bind:modes="flight_modes"
                     v-bind:trajectory="current_trajectory"
                     v-bind:attitudes="time_attitude"/>
