@@ -16,6 +16,7 @@
 <script>
 import Cesium from 'cesium/Cesium'
 import 'cesium/Widgets/widgets.css'
+import colormap from 'colormap'
 
 function getMinTime (data) {
   return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3])
@@ -59,38 +60,37 @@ export default {
       startTimeMs: 0,
       pointsCollection: null,
 
-      colors: [
-        Cesium.Color.BLUE,
-        Cesium.Color.BLUEVIOLET,
-        Cesium.Color.BROWN,
-        Cesium.Color.DARKORANGE,
-        Cesium.Color.GREENYELLOW,
-        Cesium.Color.RED,
-        Cesium.Color.AQUA,
-        Cesium.Color.FUCHSIA
-      ],
-
-      cssColors: [
-        '#0000FF',
-        '#8A2BE2',
-        '#A52A2A',
-        '#FF8C00',
-        '#ADFF2F',
-        '#FF0000',
-        '#00FFFF',
-        '#FF00FF'
-      ]
+      colors: [],
+      cssColors: []
 
     }
   },
   methods:
     {
+      generateColorMMap() {
+        let colorMapOptions = {
+          colormap: 'hsv',
+          nshades: Math.max(12, this.modes.length),
+          format: 'rgbaString',
+          alpha: 1
+        }
+        // colormap used on legend.
+        this.cssColors = colormap(colorMapOptions)
+
+        // colormap used on Cesium
+        colorMapOptions.format = 'float'
+        this.colors = []
+        for (let rgba of colormap(colorMapOptions)) {
+          this.colors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2]))
+        }
+      },
       showAttitude (time) {
         let start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
         this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(start, (time - this.startTimeMs) / 1000, new Cesium.JulianDate())
         this.viewer.scene.requestRender()
       },
       plotTrajectory (points) {
+        this.generateColorMMap()
         let _this = this
         this.startTimeMs = getMinTime(points)
         let timespan = getMaxTime(points) - this.startTimeMs
