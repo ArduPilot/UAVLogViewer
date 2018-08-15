@@ -67,6 +67,25 @@ export default {
   },
   methods:
     {
+      onHover (movement) {
+        // get an array of all primitives at the mouse position
+        let pickedObjects = this.viewer.scene.drillPick(movement.endPosition)
+        if (Cesium.defined(pickedObjects)) {
+          // tries to read the time of each entioty under the mouse, returns once one is found.
+          for (let entity of pickedObjects) {
+            try {
+              let time = entity.id.time
+              if (time !== undefined) {
+                this.$emit('cesiumhover', time)
+                this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16)), (time - this.startTimeMs) / 1000, new Cesium.JulianDate())
+                window.entity = entity
+              }
+              return
+            } catch (e) {
+            }
+          }
+        }
+      },
       generateColorMMap() {
         let colorMapOptions = {
           colormap: 'hsv',
@@ -91,7 +110,6 @@ export default {
       },
       plotTrajectory (points) {
         this.generateColorMMap()
-        let _this = this
         this.startTimeMs = getMinTime(points)
         let timespan = getMaxTime(points) - this.startTimeMs
         let viewer = this.viewer
@@ -118,6 +136,7 @@ export default {
         }
         this.viewer.entities.removeAll()
 
+        // Plot new points
         for (let pos of points) {
           position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
           positions.push(position)
@@ -131,27 +150,11 @@ export default {
           })
         }
 
+        // Attach hover handler
         let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
-        handler.setInputAction(function (movement) {
-          // get an array of all primitives at the mouse position
-          var pickedObjects = viewer.scene.drillPick(movement.endPosition)
-          if (Cesium.defined(pickedObjects)) {
-            // Update the collection of picked entities.
-            for (let entity of pickedObjects) {
-              try {
-                let time = entity.id.time
-                if (time !== undefined) {
-                  _this.$emit('cesiumhover', time)
-                  viewer.clock.currentTime = Cesium.JulianDate.addSeconds(start, (time - _this.startTimeMs) / 1000, new Cesium.JulianDate())
-                  window.entity = entity
-                }
-                return
-              } catch (e) {
-              }
-            }
-          }
-        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+        handler.setInputAction(this.onHover, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
 
+        // Create polyline
         let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
         let sampledOrientation = new Cesium.SampledProperty(Cesium.Quaternion)
         for (let atti in this.attitudes) {
