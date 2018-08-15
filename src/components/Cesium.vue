@@ -4,7 +4,7 @@
     <div id="toolbar">
       <table class="infoPanel">
         <tbody>
-          <tr v-for="(mode, index) in modes" v-bind:key="mode">
+          <tr v-for="(mode, index) in modes" v-bind:key="index">
             <td   v-bind:style="{ color: cssColors[index] } ">{{ mode[1] }}</td>
           </tr>
         </tbody>
