@@ -67,10 +67,37 @@ export default {
       }
       let plotData = datasets
       let plotOptions = {
+        legend: {
+          x: 0,
+          y: 1,
+          traceorder: 'normal',
+          font: {
+            color: '#FFF'
+          },
+          bgcolor: '#5b5b5b',
+          bordercolor: '#FFFFFF',
+          borderwidth: 2
+        },
+        plot_bgcolor:"#f8f8f8",
+        paper_bgcolor:"black",
         autosize: true,
         margin: { t: 0, l: 0, b: 20, r: 0 },
         xaxis: {
-          rangeslider: {}
+          rangeslider: {},
+          titlefont: {
+            color: '#fff'
+          },
+          tickfont: {
+            color: '#fff'
+          },
+        },
+        yaxis: {
+          titlefont: {
+            color: '#fff'
+          },
+          tickfont: {
+            color: '#fff'
+          },
         },
         shapes: [ {
           type: 'line',

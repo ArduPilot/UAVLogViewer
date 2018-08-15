@@ -37,7 +37,7 @@
           </div>
         </div>
         <div v-if="current_data" class="row h-50">
-          <div class="col-12 noPadding">
+          <div class="col-12">
             <Plotly  v-on:attitude="updateAttitude" v-bind:cursor="plot_cursor" v-bind:plot-data="current_data"/>
           </div>
         </div>
