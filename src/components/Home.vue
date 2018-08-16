@@ -15,7 +15,7 @@
           </li>
           <b-collapse  class="sub-menu collapse" id="products">
             <li v-for="item in filterPlottable" :key="'li' + item">
-              <a :key="'a' + item" href="#" @click="plot(item)">{{ item }}</a>
+              <a :key="'a' + item" href="#" @click="plot(item)" v-b-toggle.products >{{ item }}</a>
             </li>
           </b-collapse>
           <Dropzone ref="dropzone"  v-on:messages="updateData"/>
@@ -148,7 +148,6 @@ export default {
 <style scoped>
   .nav-side-menu {
     overflow-x: hidden;
-    overflow-y: auto;
     font-family: verdana;
     font-size: 14px;
     font-weight: 200;
@@ -263,19 +262,25 @@ export default {
       position: relative;
       width: 100%;
       margin-bottom: 10px;
+      height: auto;
+      overflow-y: hidden;
     }
     .nav-side-menu .toggle-btn {
       display: block;
       cursor: pointer;
       position: absolute;
       right: 10px;
-      top: 10px;
+      top: 0px;
       z-index: 10 !important;
       padding: 3px;
       background-color: #ffffff;
       color: #000;
+      height: auto;
       width: 40px;
       text-align: center;
+      -webkit-border-radius: 3px;
+      -moz-border-radius: 3px;
+      border-radius: 3px;
     }
     .brand {
       text-align: left !important;
@@ -288,6 +293,7 @@ export default {
   @media (min-width: 767px) {
     .nav-side-menu .menu-list .menu-content {
       display: block;
+      height: 100%;
     }
   }
   body {
@@ -308,7 +314,12 @@ export default {
     float: right;
   }
 
-  ,noPadding {
+  .container-fluid {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .noPadding {
     padding-left: 4px;
     padding-right: 6px;
    }
