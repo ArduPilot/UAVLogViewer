@@ -21,8 +21,9 @@ export default {
       })
 
     this.gd = gd3.node()
+    let _this = this
     this.$nextTick(function () {
-      window.addEventListener('resize', this.resize)
+      window.addEventListener('resize', _this.resize)
       this.resize()
     })
     this.instruction = ''
@@ -42,8 +43,6 @@ export default {
   },
   methods: {
     resize () {
-      console.log(document.documentElement.clientWidth)
-      console.log(document.documentElement.clientHeight)
       Plotly.Plots.resize(this.gd)
     },
     plot (data) {
