@@ -60,6 +60,8 @@ export default {
       handler.setInputAction(this.onMove, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
       handler.setInputAction(this.onLeftDown, Cesium.ScreenSpaceEventType.LEFT_DOWN)
       handler.setInputAction(this.onLeftUp, Cesium.ScreenSpaceEventType.LEFT_UP)
+
+      Cesium.knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
     }
     this.plotTrajectory(this.trajectory)
   },
@@ -84,6 +86,10 @@ export default {
           }
         }
         return false
+      },
+
+      onAnimationChange (isAnimating) {
+        this.$emit('animation-changed', isAnimating)
       },
 
       onLeftDown (movement) {

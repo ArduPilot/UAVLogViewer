@@ -136,9 +136,20 @@ export default {
         'shapes[0].x0': time,
         'shapes[0].x1': time
       })
+    },
+    setCursorState (state) {
+      let stateStr
+      if (state) {
+        stateStr = "x"
+      }else {
+        stateStr = false
+      }
+      Plotly.relayout(this.gd, {
+        hovermode: stateStr
+      })
     }
   },
-  props: ['plotData', 'cursor'],
+  props: ['plotData', 'cursor', 'cursorState'],
   watch: {
     plotData: function (newVal, oldVal) { // watch it
       this.instruction = ''
@@ -146,6 +157,9 @@ export default {
     },
     cursor: function (newVal, oldVal) {
       this.setCursor(newVal)
+    },
+    cursorState: function (newVal, oldVal) {
+      this.setCursorState(newVal)
     }
   }
 }
