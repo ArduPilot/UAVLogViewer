@@ -24,8 +24,8 @@
       </div>
     </div>
 
-      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex" style="height: 100%;">
-        <div class="row flex-grow-1" >
+      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex">
+        <div class="row" v-bind:class="[hasPlot ? 'h-50' : 'h-100']" >
           <div class="col-12 noPadding">
             <Cesium ref="cesium"
                     v-if="current_trajectory.length"
@@ -135,6 +135,9 @@ export default {
           'SCALED_PRESSURE']
         return valid.includes(message)
       })
+    },
+    hasPlot () {
+      return this.current_data !== null
     }
   },
   components: {
@@ -259,11 +262,13 @@ export default {
   }
   @media (max-width: 767px) {
     .nav-side-menu {
-      position: relative;
+      position: fixed;
       width: 100%;
       margin-bottom: 10px;
       height: auto;
       overflow-y: hidden;
+      z-index: 2;
+      opacity: 0.8;
     }
     .nav-side-menu .toggle-btn {
       display: block;
@@ -288,11 +293,18 @@ export default {
       padding-left: 20px;
       line-height: 50px !important;
     }
+    main {
+      height: 90%;
+      margin-top: 50px;
+    }
   }
 
   @media (min-width: 767px) {
     .nav-side-menu .menu-list .menu-content {
       display: block;
+      height: 100%;
+    }
+    main {
       height: 100%;
     }
   }
