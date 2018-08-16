@@ -118,7 +118,7 @@ export default {
         plotOptions.xaxis = {range: this.gd._fullLayout.xaxis.range}
         // plotOptions.yaxis = {range: this.gd._fullLayout.yaxis.range}
         Plotly.newPlot(this.gd, plotData, plotOptions)
-        window.gd = this.gd
+
       } else {
         this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions)
       }
