@@ -41,7 +41,13 @@ export default {
         })
       this.viewer.scene.debugShowFramesPerSecond = true
       this.pointCollection = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
-      this.viewer.scene.postRender.addEventListener(this.onFrameUpdate);
+      this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
+
+      // Attach hover handler
+      let handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas)
+      handler.setInputAction(this.onMove, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+      handler.setInputAction(this.onLeftDown, Cesium.ScreenSpaceEventType.LEFT_DOWN)
+      handler.setInputAction(this.onLeftUp, Cesium.ScreenSpaceEventType.LEFT_UP)
     }
     this.plotTrajectory(this.trajectory)
   },
@@ -62,7 +68,8 @@ export default {
       pointsCollection: null,
 
       colors: [],
-      cssColors: []
+      cssColors: [],
+      lastHoveredTime: 0
 
     }
   },
@@ -80,22 +87,48 @@ export default {
     },
   methods:
     {
-      onHover (movement) {
-        // get an array of all primitives at the mouse position
-        let pickedObjects = this.viewer.scene.drillPick(movement.endPosition)
+      mouseIsOnPoint (point) {
+        let pickedObjects = this.viewer.scene.drillPick(point)
         if (Cesium.defined(pickedObjects)) {
           // tries to read the time of each entioty under the mouse, returns once one is found.
           for (let entity of pickedObjects) {
             try {
               let time = entity.id.time
               if (time !== undefined) {
-                this.$emit('cesium-time-changed', time)
-                this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16)), (time - this.startTimeMs) / 1000, new Cesium.JulianDate())
-                window.entity = entity
+                this.lastHoveredTime = time
+                return true
               }
               return
             } catch (e) {
             }
+          }
+        }
+        return false
+      },
+
+      onLeftDown (movement) {
+        if (this.mouseIsOnPoint(movement.position)) {
+          this.isDragging = true
+          this.viewer.scene.screenSpaceCameraController.enableInputs = false
+        }
+      },
+
+      onLeftUp (movement) {
+        this.isDragging = false
+        this.viewer.container.style.cursor = 'default'
+        this.viewer.scene.screenSpaceCameraController.enableInputs = true
+      },
+      onMove (movement) {
+        if (this.isDragging) {
+          if (this.mouseIsOnPoint(movement.endPosition)) {
+            this.$emit('cesium-time-changed', this.lastHoveredTime)
+            this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16)), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
+          }
+        } else {
+          if (this.mouseIsOnPoint(movement.endPosition)) {
+            this.viewer.container.style.cursor = 'pointer'
+          } else {
+            this.viewer.container.style.cursor = 'default'
           }
         }
       },
@@ -166,10 +199,6 @@ export default {
             id: {time: pos[3]}
           })
         }
-
-        // Attach hover handler
-        let handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas)
-        handler.setInputAction(this.onHover, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
 
         // Create polyline
         let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
