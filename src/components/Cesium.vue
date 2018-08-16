@@ -27,7 +27,19 @@ function getMaxTime (data) {
 
 export default {
   name: 'Cesium',
+
   props: ['trajectory', 'attitudes', 'modes'],
+
+  data () {
+    return {
+      viewer: null,
+      startTimeMs: 0,
+      colors: [],
+      cssColors: [],
+      lastHoveredTime: 0
+    }
+  },
+
   mounted () {
     if (this.viewer == null) {
       this.viewer = new Cesium.Viewer(
@@ -51,43 +63,11 @@ export default {
     }
     this.plotTrajectory(this.trajectory)
   },
-  watch: {
-    trajectory: function (newVal, oldVal) {
-      this.plotTrajectory(newVal)
-    }
-  },
-  data () {
-    return {
-      viewer: null,
-      polyline: null,
-      model: null,
-      hpRoll: null,
-      position: null,
-      fixedFrameTransform: null,
-      startTimeMs: 0,
-      pointsCollection: null,
 
-      colors: [],
-      cssColors: [],
-      lastHoveredTime: 0
-
-    }
-  },
-  computed:
-    {
-      setOfModes () {
-        let set = []
-        for (let mode of this.modes) {
-          if (!set.includes(mode[1])){
-            set.push(mode[1])
-          }
-        }
-        return set
-      }
-    },
   methods:
     {
       mouseIsOnPoint (point) {
+        // Checks if there is a trajectory point under the coordinate "point"
         let pickedObjects = this.viewer.scene.drillPick(point)
         if (Cesium.defined(pickedObjects)) {
           // tries to read the time of each entioty under the mouse, returns once one is found.
@@ -118,6 +98,7 @@ export default {
         this.viewer.container.style.cursor = 'default'
         this.viewer.scene.screenSpaceCameraController.enableInputs = true
       },
+
       onMove (movement) {
         if (this.isDragging) {
           if (this.mouseIsOnPoint(movement.endPosition)) {
@@ -132,11 +113,13 @@ export default {
           }
         }
       },
-      onFrameUpdate() {
+
+      onFrameUpdate () {
         // emits in "boot_time_ms" units.
-        this.$emit('cesium-time-changed', (this.viewer.clock.currentTime.secondsOfDay - this.viewer.clock.startTime.secondsOfDay)*1000 + this.startTimeMs)
+        this.$emit('cesium-time-changed', (this.viewer.clock.currentTime.secondsOfDay - this.viewer.clock.startTime.secondsOfDay) * 1000 + this.startTimeMs)
       },
-      generateColorMMap() {
+
+      generateColorMMap () {
         let colorMapOptions = {
           colormap: 'hsv',
           nshades: Math.max(12, this.modes.length),
@@ -153,13 +136,17 @@ export default {
           this.colors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2]))
         }
       },
+
       showAttitude (time) {
         let start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
         this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(start, (time - this.startTimeMs) / 1000, new Cesium.JulianDate())
         this.viewer.scene.requestRender()
       },
+
       plotTrajectory (points) {
         this.generateColorMMap()
+
+        // process time_boot_ms into cesium time
         this.startTimeMs = getMinTime(points)
         let timespan = getMaxTime(points) - this.startTimeMs
         let viewer = this.viewer
@@ -180,13 +167,12 @@ export default {
         let sampledPos = new Cesium.SampledPositionProperty()
 
         // clean entities
-        if (this.pointCollection !== null)
-        {
+        if (this.pointCollection !== null) {
           this.pointCollection.removeAll()
         }
         this.viewer.entities.removeAll()
 
-        // Plot new points
+        // Create sampled position
         for (let pos of points) {
           position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
           positions.push(position)
@@ -200,7 +186,7 @@ export default {
           })
         }
 
-        // Create polyline
+        // Create sampled aircraft orientation
         let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
         let sampledOrientation = new Cesium.SampledProperty(Cesium.Quaternion)
         for (let atti in this.attitudes) {
@@ -212,22 +198,21 @@ export default {
           }
         }
 
+        // Add airplane model with interpolated position and orientation
         viewer.entities.add({
-          // Set the entity availability to the same interval as the simulation time.
           availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
             start: start,
             stop: stop
           })]),
-          // Use our computed positions
           position: sampledPos,
-          // Automatically compute orientation based on position movement.
           orientation: sampledOrientation,
-          // Load the Cesium plane model to represent the entity
           model: {
             uri: require('../assets/Cesium_Air.glb'),
             minimumPixelSize: 64
           }
         })
+
+        // Add polyline representing the path under the points
         this.viewer.entities.add({
           polyline: {
             positions: positions
@@ -236,6 +221,7 @@ export default {
         })
         this.viewer.zoomTo(this.viewer.entities)
       },
+
       getModeColor (time) {
         for (let mode in this.modes) {
           if (this.modes.hasOwnProperty(mode)) {
@@ -244,10 +230,29 @@ export default {
             }
           }
         }
-        return this.colors[this.modes.length-1]
+        return this.colors[this.modes.length - 1]
       }
+    },
+
+  watch: {
+    trajectory: function (newVal, oldVal) {
+      this.plotTrajectory(newVal)
     }
+  },
+
+  computed: {
+    setOfModes () {
+      let set = []
+      for (let mode of this.modes) {
+        if (!set.includes(mode[1])) {
+          set.push(mode[1])
+        }
+      }
+      return set
+    }
+  }
 }
+
 </script>
 
 <style scoped>

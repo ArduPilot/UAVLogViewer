@@ -24,14 +24,13 @@
       </div>
     </div>
 
-
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex" style="height: 100%;">
         <div class="row flex-grow-1" >
           <div class="col-12 noPadding">
             <Cesium ref="cesium"
                     v-if="current_trajectory.length"
                     v-on:cesium-time-changed="updateCursor"
-                    v-bind:modes="flight_modes"
+                    v-bind:modes="flight_mode_changes"
                     v-bind:trajectory="current_trajectory"
                     v-bind:attitudes="time_attitude"/>
           </div>
@@ -42,7 +41,6 @@
           </div>
         </div>
       </main>
-
 
     </div>
   </div>
@@ -64,7 +62,7 @@ export default {
       time_trajectory: {},
       time_attitude: {},
       plot_cursor: null,
-      flight_modes: []
+      flight_mode_changes: []
     }
   },
   methods: {
@@ -73,7 +71,7 @@ export default {
       this.message_types = Object.keys(this.messages).sort()
       this.time_attitude = this.extractAttitudes(this.messages)
       this.current_trajectory = this.extractTrajectory(this.messages)
-      this.flight_modes = this.extractFlightModes(this.messages)
+      this.flight_mode_changes = this.extractFlightModes(this.messages)
       this.current_data = null
     },
     plot (item) {
@@ -313,6 +311,5 @@ export default {
     border-radius: 5px;
     -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
     background-color: #1c437f; }
-
 
 </style>
