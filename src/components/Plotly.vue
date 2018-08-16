@@ -78,8 +78,8 @@ export default {
           bordercolor: '#FFFFFF',
           borderwidth: 2
         },
-        plot_bgcolor:"#f8f8f8",
-        paper_bgcolor:"black",
+        plot_bgcolor: '#f8f8f8',
+        paper_bgcolor: 'black',
         autosize: true,
         margin: { t: 0, l: 0, b: 20, r: 0 },
         xaxis: {
@@ -89,7 +89,7 @@ export default {
           },
           tickfont: {
             color: '#fff'
-          },
+          }
         },
         yaxis: {
           titlefont: {
@@ -97,7 +97,7 @@ export default {
           },
           tickfont: {
             color: '#fff'
-          },
+          }
         },
         shapes: [ {
           type: 'line',
@@ -140,8 +140,8 @@ export default {
     setCursorState (state) {
       let stateStr
       if (state) {
-        stateStr = "x"
-      }else {
+        stateStr = 'x'
+      } else {
         stateStr = false
       }
       Plotly.relayout(this.gd, {
