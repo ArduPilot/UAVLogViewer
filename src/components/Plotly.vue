@@ -156,6 +156,13 @@ export default {
     },
     cursor: function (newVal, oldVal) {
       this.setCursor(newVal)
+      let xrange = this.gd.layout.xaxis.range
+      if (newVal < xrange[0] || newVal > xrange[1])
+      {
+        let interval = xrange[1] - xrange[0]
+        this.gd.layout.xaxis.range[0] = newVal - interval /2
+        this.gd.layout.xaxis.range[1] = newVal + interval /2
+      }
     },
     cursorState: function (newVal, oldVal) {
       this.setCursorState(newVal)
