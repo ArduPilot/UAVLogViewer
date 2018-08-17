@@ -7,7 +7,9 @@ import Plotly from 'plotly.js'
 
 export default {
   created () {
-    // this.fetchData()
+    this.$eventHub.$on('animation-changed', this.setCursorState)
+    this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
+
   },
   mounted () {
     let d3 = Plotly.d3
@@ -32,6 +34,8 @@ export default {
   beforeDestroy () {
     window.removeEventListener('resize', this.getWindowWidth)
     window.removeEventListener('resize', this.getWindowHeight)
+    this.$eventHub.$off('animation-changed')
+    this.$eventHub.$off('cesium-time-changed')
   },
   data () {
     return {
@@ -126,17 +130,25 @@ export default {
         let infotext = data.points.map(function (d) {
           return d.x
         })
-        _this.$emit('attitude', infotext[0])
-        _this.setCursor(infotext[0])
+        _this.$eventHub.$emit('hoveredTime', infotext[0])
+        _this.setCursorTime(infotext[0])
       })
     },
-    setCursor (time) {
+    setCursorTime (time) {
       Plotly.relayout(this.gd, {
         'shapes[0].x0': time,
         'shapes[0].x1': time
       })
+      let xrange = this.gd.layout.xaxis.range
+      if (time < xrange[0] || time > xrange[1]) {
+        let interval = xrange[1] - xrange[0]
+        this.gd.layout.xaxis.range[0] = time - interval / 2
+        this.gd.layout.xaxis.range[1] = time + interval / 2
+      }
     },
-    setCursorState (state) {
+    setCursorState (animationState)
+    {
+      let state = !animationState
       let stateStr
       if (state) {
         stateStr = 'x'
@@ -148,25 +160,13 @@ export default {
       })
     }
   },
-  props: ['plotData', 'cursor', 'cursorState'],
+  props: ['plotData', 'cursorState'],
   watch: {
     plotData: function (newVal, oldVal) { // watch it
       this.instruction = ''
       this.plot(newVal)
     },
-    cursor: function (newVal, oldVal) {
-      this.setCursor(newVal)
-      let xrange = this.gd.layout.xaxis.range
-      if (newVal < xrange[0] || newVal > xrange[1])
-      {
-        let interval = xrange[1] - xrange[0]
-        this.gd.layout.xaxis.range[0] = newVal - interval /2
-        this.gd.layout.xaxis.range[1] = newVal + interval /2
-      }
-    },
-    cursorState: function (newVal, oldVal) {
-      this.setCursorState(newVal)
-    }
+
   }
 }
 

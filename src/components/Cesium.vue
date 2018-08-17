@@ -39,7 +39,12 @@ export default {
       lastHoveredTime: 0
     }
   },
-
+  created () {
+    this.$eventHub.$on('hoveredTime', this.showAttitude)
+  },
+  beforeDestroy () {
+    this.$eventHub.$off('hoveredTime')
+  },
   mounted () {
     if (this.viewer == null) {
       this.viewer = new Cesium.Viewer(
@@ -89,7 +94,7 @@ export default {
       },
 
       onAnimationChange (isAnimating) {
-        this.$emit('animation-changed', isAnimating)
+        this.$eventHub.$emit('animation-changed', isAnimating)
       },
 
       onLeftDown (movement) {
@@ -108,7 +113,7 @@ export default {
       onMove (movement) {
         if (this.isDragging) {
           if (this.mouseIsOnPoint(movement.endPosition)) {
-            this.$emit('cesium-time-changed', this.lastHoveredTime)
+            this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
             this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16)), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
           }
         } else {
@@ -122,7 +127,7 @@ export default {
 
       onFrameUpdate () {
         // emits in "boot_time_ms" units.
-        this.$emit('cesium-time-changed', (this.viewer.clock.currentTime.secondsOfDay - this.viewer.clock.startTime.secondsOfDay) * 1000 + this.startTimeMs)
+        this.$eventHub.$emit('cesium-time-changed', (this.viewer.clock.currentTime.secondsOfDay - this.viewer.clock.startTime.secondsOfDay) * 1000 + this.startTimeMs)
       },
 
       generateColorMMap () {

@@ -29,8 +29,6 @@
           <div class="col-12 noPadding">
             <Cesium ref="cesium"
                     v-if="current_trajectory.length"
-                    v-on:cesium-time-changed="updateCursor"
-                    v-on:animation-changed="setCursorStatus"
                     v-bind:modes="flight_mode_changes"
                     v-bind:trajectory="current_trajectory"
                     v-bind:attitudes="time_attitude"/>
@@ -38,10 +36,7 @@
         </div>
         <div v-if="current_data" class="row h-50">
           <div class="col-12">
-            <Plotly  v-on:attitude="updateAttitude"
-                     v-bind:cursor="plot_cursor"
-                     v-bind:cursor-state="cursorStatus"
-                     v-bind:plot-data="current_data"/>
+            <Plotly v-bind:plot-data="current_data"/>
           </div>
         </div>
       </main>
@@ -65,9 +60,7 @@ export default {
       current_trajectory: [],
       time_trajectory: {},
       time_attitude: {},
-      plot_cursor: null,
       flight_mode_changes: [],
-      cursorStatus: "x"
     }
   },
   methods: {
@@ -100,16 +93,6 @@ export default {
         attitudes[att.time_boot_ms] = [att.roll, att.pitch, att.yaw]
       }
       return attitudes
-    },
-    updateAttitude (time) {
-      this.$refs.cesium.showAttitude(time)
-    },
-    updateCursor (time) {
-      this.plot_cursor = time
-    },
-    setCursorStatus( animationStatus )
-    {
-      this.cursorStatus = !animationStatus
     },
     extractFlightModes (messages) {
       let modes = [[messages['HEARTBEAT'][0].time_boot_ms, messages['HEARTBEAT'][0].asText]]
