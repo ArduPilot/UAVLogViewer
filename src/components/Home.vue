@@ -251,7 +251,6 @@ export default {
       height: auto;
       overflow-y: hidden;
       z-index: 2;
-      opacity: 0.8;
     }
     .nav-side-menu .toggle-btn {
       display: block;
