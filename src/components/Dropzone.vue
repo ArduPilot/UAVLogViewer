@@ -26,7 +26,25 @@ export default {
       totalSize: null
     }
   },
+  created () {
+    this.$eventHub.$on("open-sample", this.onLoadSample)
+  },
+  beforeDestroy () {
+    this.$eventHub.$off("open-sample")
+  },
   methods: {
+    onLoadSample () {
+      let url = require('../assets/vtol.tlog')
+      let oReq = new XMLHttpRequest()
+      oReq.open('GET', url, true)
+      oReq.responseType = 'arraybuffer'
+
+      oReq.onload = function (oEvent) {
+        var arrayBuffer = oReq.response
+        worker.postMessage({action: 'parse', file: arrayBuffer})
+      }
+      oReq.send();
+    },
     onChange (ev) {
       let fileinput = document.getElementById('choosefile')
       this.process(fileinput.files[0])

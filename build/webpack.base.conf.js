@@ -80,7 +80,7 @@ module.exports = {
         }
       },
       {
-        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac|glb)(\?.*)?$/,
+        test: /\.(mp4|webm|ogg|mp3|wav|flac|aac|glb|tlog)(\?.*)?$/,
         loader: 'url-loader',
         options: {
           limit: 10000,
