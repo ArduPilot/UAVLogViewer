@@ -32,8 +32,7 @@ export default {
     this.plot(this.plotData)
   },
   beforeDestroy () {
-    window.removeEventListener('resize', this.getWindowWidth)
-    window.removeEventListener('resize', this.getWindowHeight)
+    window.removeEventListener('resize', this.resize)
     this.$eventHub.$off('animation-changed')
     this.$eventHub.$off('cesium-time-changed')
   },
