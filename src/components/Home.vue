@@ -18,6 +18,12 @@
               <a :key="'a' + item" href="#" @click="plot(item)" v-b-toggle.products >{{ item }}</a>
             </li>
           </b-collapse>
+          <li v-if="!current_trajectory.length">
+            <a href="/vtol.log"><i class="fas fa-file-download "></i> Download Sample file </a>
+          </li>
+          <li v-if="current_trajectory.length">
+            <a href="#" @click="changeCamera"><i class="fas fa-video "></i> Camera Mode </a>
+          </li>
           <Dropzone ref="dropzone"  v-on:messages="updateData"/>
         </b-collapse>
 
@@ -102,6 +108,9 @@ export default {
         }
       }
       return modes
+    },
+    changeCamera (){
+      this.$eventHub.$emit('change-camera')
     }
   },
   computed: {

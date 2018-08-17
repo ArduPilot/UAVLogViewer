@@ -36,11 +36,13 @@ export default {
       startTimeMs: 0,
       colors: [],
       cssColors: [],
-      lastHoveredTime: 0
+      lastHoveredTime: 0,
+      model: undefined
     }
   },
   created () {
     this.$eventHub.$on('hoveredTime', this.showAttitude)
+    this.$eventHub.$on('change-camera', this.changeCamera)
   },
   beforeDestroy () {
     this.$eventHub.$off('hoveredTime')
@@ -91,6 +93,13 @@ export default {
           }
         }
         return false
+      },
+      changeCamera (){
+        if(this.viewer.trackedEntity === undefined) {
+          this.viewer.trackedEntity = this.model
+        }else {
+          this.viewer.trackedEntity = undefined
+        }
       },
 
       onAnimationChange (isAnimating) {
@@ -210,7 +219,7 @@ export default {
         }
 
         // Add airplane model with interpolated position and orientation
-        viewer.entities.add({
+        this.model = viewer.entities.add({
           availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
             start: start,
             stop: stop
