@@ -1,16 +1,17 @@
 <template>
-  <div>
-    <li >
+  <div v-if="hasMessages">
+    <li v-b-toggle="'messages'">
       <a class="section" href="#">
         <i class="fas fa-signature fa-lg"></i> Plot
         <i class="fas fa-caret-down"></i></a>
     </li>
+    <b-collapse id="messages" >
     <template v-for="(message, key) in messages">
-      <li >
-        <a class="section" href="#">
-          <i class="fas fa-signature fa-lg"></i> {{key}}
+      <li v-b-toggle="'type' + message">
+        <a class="section" href="#">{{key}}
           <i class="fas fa-caret-down"></i></a>
       </li>
+      <b-collapse :id="'type' + message" >
       <template v-for="item in message">
         <li class="msgfield">
           <a href="#">
@@ -18,8 +19,9 @@
           </a>
         </li>
         </template>
+      </b-collapse>
     </template>
-
+    </b-collapse>
   </div>
 </template>
 <script>
@@ -28,7 +30,7 @@ export default {
   data () {
     return {
       msg: 'Batata',
-      messages: {batata: ['doce', 'azul', 'penis']}
+      messages: {}
     }
   },
   created(){
@@ -56,6 +58,11 @@ export default {
         }
       }
       return numberFields
+    }
+  },
+  computed: {
+    hasMessages () {
+      return Object.keys(this.messages).length > 0
     }
   }
 }
