@@ -66,7 +66,7 @@ export default {
       let handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas)
       handler.setInputAction(this.onMove, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
       handler.setInputAction(this.onLeftDown, Cesium.ScreenSpaceEventType.LEFT_DOWN)
-      handler.setInputAction(this.onLeftUp, Cesium.ScreenSpaceEventType.LEFT_UP)
+      handler.setInputAction(this.onClick, Cesium.ScreenSpaceEventType.LEFT_CLICK)
 
       Cesium.knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
     }
@@ -117,6 +117,14 @@ export default {
         this.isDragging = false
         this.viewer.container.style.cursor = 'default'
         this.viewer.scene.screenSpaceCameraController.enableInputs = true
+      },
+
+      onClick (movement) {
+        if (this.mouseIsOnPoint(movement.position)) {
+          this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
+          this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16)), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
+        }
+        this.onLeftUp()
       },
 
       onMove (movement) {
