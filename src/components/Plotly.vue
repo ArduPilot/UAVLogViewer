@@ -41,7 +41,6 @@ export default {
       rows: [],
       gd: null,
       plotInstance: null,
-      instruction: 'Click on a message type on the left panel to plot'
     }
   },
   methods: {

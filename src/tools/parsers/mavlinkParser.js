@@ -120,12 +120,12 @@ export class MavlinkParser {
     this.lastTime = 0
     this.mavlinkParser = new MAVLink()
     this.mavlinkParser.on('message', this.onMessage)
+    this.maxPercentageInterval = 0.1
     instance = this
   }
 
   onMessage (message) {
     if (instance.totalSize == null) { // for percentage calculation
-      console.log(this)
       instance.totalSize = this.buf.byteLength
     }
     if (message.id !== -1) {

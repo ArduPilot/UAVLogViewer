@@ -23,7 +23,6 @@ export default {
       mavlinkParser: new MAVLink(),
       messages: {},
       percentage: 100,
-      totalSize: null
     }
   },
   created () {
