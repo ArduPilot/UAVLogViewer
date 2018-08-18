@@ -95,7 +95,7 @@ export default {
         _this.percentage = event.data.percentage
       } else if (event.data.hasOwnProperty('messages')) {
         _this.messages = event.data.messages
-        _this.$emit('messages')
+        _this.$eventHub.$emit('messages', _this.messages)
       }
     }
   },
