@@ -5,11 +5,57 @@
 <script>
 import Plotly from 'plotly.js'
 
+let plotOptions = {
+  legend: {
+    x: 0,
+    y: 1,
+    traceorder: 'normal',
+    font: {
+      color: '#FFF'
+    },
+    bgcolor: '#5b5b5b',
+    bordercolor: '#FFFFFF',
+    borderwidth: 2
+  },
+  plot_bgcolor: '#f8f8f8',
+  paper_bgcolor: 'black',
+  autosize: true,
+  margin: { t: 0, l: 0, b: 20, r: 0 },
+  xaxis: {
+    rangeslider: {},
+    titlefont: {
+      color: '#fff'
+    },
+    tickfont: {
+      color: '#fff'
+    }
+  },
+  yaxis: {
+    titlefont: {
+      color: '#fff'
+    },
+    tickfont: {
+      color: '#fff'
+    }
+  },
+  shapes: [ { // plot cursor line
+    type: 'line',
+    y0: 0,
+    x0: 0,
+    yref: 'paper',
+    y1: 1,
+    x1: 0,
+    line: {
+      color: 'rgb(0, 0, 0)',
+      width: 2,
+      dash: 'dot'
+    }
+  }]
+}
 export default {
   created () {
     this.$eventHub.$on('animation-changed', this.setCursorState)
     this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
-
   },
   mounted () {
     let d3 = Plotly.d3
@@ -67,60 +113,14 @@ export default {
         }
       }
       let plotData = datasets
-      let plotOptions = {
-        legend: {
-          x: 0,
-          y: 1,
-          traceorder: 'normal',
-          font: {
-            color: '#FFF'
-          },
-          bgcolor: '#5b5b5b',
-          bordercolor: '#FFFFFF',
-          borderwidth: 2
-        },
-        plot_bgcolor: '#f8f8f8',
-        paper_bgcolor: 'black',
-        autosize: true,
-        margin: { t: 0, l: 0, b: 20, r: 0 },
-        xaxis: {
-          rangeslider: {},
-          titlefont: {
-            color: '#fff'
-          },
-          tickfont: {
-            color: '#fff'
-          }
-        },
-        yaxis: {
-          titlefont: {
-            color: '#fff'
-          },
-          tickfont: {
-            color: '#fff'
-          }
-        },
-        shapes: [ {
-          type: 'line',
-          y0: 0,
-          x0: data[0].time_boot_ms,
-          yref: 'paper',
-          y1: 1,
-          x1: data[0].time_boot_ms,
-          line: {
-            color: 'rgb(0, 0, 0)',
-            width: 2,
-            dash: 'dot'
-          }
-        }]
-      }
+      plotOptions.shapes.x0 = data[0].time_boot_ms
+      plotOptions.shapes.x1 = data[0].time_boot_ms
       console.log(plotData, plotOptions)
 
       if (this.plotInstance !== null) {
         plotOptions.xaxis = {range: this.gd._fullLayout.xaxis.range}
         // plotOptions.yaxis = {range: this.gd._fullLayout.yaxis.range}
         Plotly.newPlot(this.gd, plotData, plotOptions)
-
       } else {
         this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions)
       }
