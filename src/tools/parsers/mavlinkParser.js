@@ -140,8 +140,10 @@ export class MavlinkParser {
         instance.messages[message.name] = [MavlinkParser.fixData(message)]
       }
       let percentage = 100 * (instance.totalSize - this.buf.byteLength) / instance.totalSize
-      self.postMessage({percentage: percentage})
-      instance.lastPercentage = percentage
+      if ((percentage - instance.lastPercentage) > instance.maxPercentageInterval) {
+        self.postMessage({percentage: percentage})
+        instance.lastPercentage = percentage
+      }
 
       // TODO: FIX THIS!
       // This a hack to detect the end of the buffer and only them message the main thread
