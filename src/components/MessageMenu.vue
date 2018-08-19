@@ -7,15 +7,19 @@
     </li>
     <b-collapse id="messages" >
     <template v-for="(message, key) in messages">
-      <li v-b-toggle="'type' + message">
-        <a class="section" href="#">{{key}}
+      <li >
+        <b-form-checkbox v-model="checkboxes[key].state"
+                         :indeterminate.sync="checkboxes[key].indeterminate"
+                         @change="toggleType($event, key)">
+        </b-form-checkbox>
+        <a v-b-toggle="'type' + message" class="section" href="#">{{key}}
           <i class="fas fa-caret-down"></i></a>
       </li>
       <b-collapse :id="'type' + message" >
       <template v-for="item in message">
         <li class="msgfield">
           <a href="#">
-             {{item}}
+            <b-form-checkbox v-model="checkboxes[key].fields[item]" @change="toggle($event, key, item)"> {{item}}</b-form-checkbox>
           </a>
         </li>
         </template>
@@ -58,6 +62,48 @@ export default {
         }
       }
       return numberFields
+    },
+    toggle (state, message, item) {
+      if (state) {
+        this.$eventHub.$emit('showPlot', message + '.' + item)
+      } else {
+        this.$eventHub.$emit('hidePlot', message + '.' + item)
+      }
+      Vue.nextTick(function () {
+        for (let messagekey of Object.keys(this.checkboxes)) {
+          let message = this.checkboxes[messagekey]
+          let allTrue = true
+          let allFalse = true
+          for (let fieldkey of Object.keys(message.fields)) {
+            let field = message.fields[fieldkey]
+            if (field) {
+              allFalse = false
+            } else {
+              allTrue = false
+            }
+          }
+          if (allTrue) {
+            this.checkboxes[messagekey].state = true
+            this.checkboxes[messagekey].indeterminate = false
+          } else if (allFalse) {
+            this.checkboxes[messagekey].state = false
+            this.checkboxes[messagekey].indeterminate = false
+          } else {
+            this.checkboxes[messagekey].indeterminate = true
+          }
+        }
+      }.bind(this))
+    },
+    toggleType (state, message) {
+      for (let field of this.messages[message])
+      {
+        this.checkboxes[message].fields[field] = state
+        if (state) {
+          this.$eventHub.$emit('showPlot', message+'.'+field)
+        } else {
+          this.$eventHub.$emit('hidePlot', message+'.'+field)}
+
+      }
     }
   },
   computed: {
@@ -183,6 +229,13 @@ export default {
     }
   li.msgfield {
     line-height: 20px;
+    margin-left: 20px;
+  }
+  .checkplot {
+    position: static
+  }
+  .custom-control-label {
+    margin-bottom: .5rem;
   }
 
 </style>

@@ -1,5 +1,5 @@
 <template>
-      <div id="line" ref="line" style="width:100%;height: 100%">{{ instruction }}</div>
+      <div id="line" ref="line" style="width:100%;height: 100%"></div>
 </template>
 
 <script>
@@ -56,6 +56,9 @@ export default {
   created () {
     this.$eventHub.$on('animation-changed', this.setCursorState)
     this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
+    this.$eventHub.$on('messages', this.updateMessages)
+    this.$eventHub.$on('showPlot', this.addPlot)
+    this.$eventHub.$on('hidePlot', this.removePlot)
   },
   mounted () {
     let d3 = Plotly.d3
@@ -75,46 +78,71 @@ export default {
       this.resize()
     })
     this.instruction = ''
-    this.plot(this.plotData)
+    this.plot(this.plotData, plotOptions)
   },
   beforeDestroy () {
     window.removeEventListener('resize', this.resize)
     this.$eventHub.$off('animation-changed')
     this.$eventHub.$off('cesium-time-changed')
+    this.$eventHub.$off('messages')
   },
   data () {
     return {
       rows: [],
       gd: null,
       plotInstance: null,
+      allData: {},
+      fields: []
     }
   },
   methods: {
+    updateMessages (messages) {
+      this.allData = messages
+    },
     resize () {
       Plotly.Plots.resize(this.gd)
     },
-    plot (data) {
-      let _this = this
-      let fields = data[0].fieldnames.slice(1)
-      let datasets = []
-      for (let i = 0; i < fields.length; i++) {
-        datasets.push({
-          name: '' + fields[i],
-          mode: 'lines',
-          x: [],
-          y: []
-        })
+    addPlot (fieldname) {
+      if (!this.fields.includes(fieldname)) {
+        this.fields.push(fieldname)
+        this.plot()
       }
+    },
+    removePlot (fieldname) {
+      var index = this.fields.indexOf(fieldname) // <-- Not supported in <IE9
+      if (index !== -1) {
+        this.fields.splice(index, 1)
+      }
+      this.plot()
+    },
+    plot () {
+      let _this = this
+      let datasets = []
 
-      for (let msg in data) {
-        for (let field in fields) {
-          datasets[field].x.push(data[msg].time_boot_ms)
-          datasets[field].y.push(data[msg][fields[field]])
+      for (let msgtype of Object.keys(this.allData)) {
+        for (let msgfield of this.allData[msgtype][0].fieldnames) {
+          if (this.fields.includes(msgtype + '.' + msgfield)) {
+            console.log('chegou aqui')
+            let x = []
+            let y = []
+            for (let message of this.allData[msgtype]) {
+              x.push(message['time_boot_ms'])
+              y.push(message[msgfield])
+            }
+
+            datasets.push({
+              name: '' + msgfield,
+              mode: 'lines',
+              x: x,
+              y: y
+            })
+          }
         }
       }
+
       let plotData = datasets
-      plotOptions.shapes.x0 = data[0].time_boot_ms
-      plotOptions.shapes.x1 = data[0].time_boot_ms
+      plotOptions.shapes.x0 = 0 // allData[0].time_boot_ms
+      plotOptions.shapes.x1 = 0 // AllData[0].time_boot_ms
       console.log(plotData, plotOptions)
 
       if (this.plotInstance !== null) {
@@ -133,19 +161,22 @@ export default {
       })
     },
     setCursorTime (time) {
-      Plotly.relayout(this.gd, {
-        'shapes[0].x0': time,
-        'shapes[0].x1': time
-      })
-      let xrange = this.gd.layout.xaxis.range
-      if (time < xrange[0] || time > xrange[1]) {
-        let interval = xrange[1] - xrange[0]
-        this.gd.layout.xaxis.range[0] = time - interval / 2
-        this.gd.layout.xaxis.range[1] = time + interval / 2
+      try {
+        Plotly.relayout(this.gd, {
+          'shapes[0].x0': time,
+          'shapes[0].x1': time
+        })
+        let xrange = this.gd.layout.xaxis.range
+        if (time < xrange[0] || time > xrange[1]) {
+          let interval = xrange[1] - xrange[0]
+          this.gd.layout.xaxis.range[0] = time - interval / 2
+          this.gd.layout.xaxis.range[1] = time + interval / 2
+        }
+      } catch (err) {
+        console.log(err)
       }
     },
-    setCursorState (animationState)
-    {
+    setCursorState (animationState) {
       let state = !animationState
       let stateStr
       if (state) {
@@ -157,14 +188,6 @@ export default {
         hovermode: stateStr
       })
     }
-  },
-  props: ['plotData', 'cursorState'],
-  watch: {
-    plotData: function (newVal, oldVal) { // watch it
-      this.instruction = ''
-      this.plot(newVal)
-    },
-
   }
 }
 
