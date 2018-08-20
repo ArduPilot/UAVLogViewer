@@ -133,7 +133,7 @@ export default {
             width: 100%;
             margin-bottom: 10px;
             height: auto;
-            overflow-y: hidden;
+            max-height: 100%;
             z-index: 2;
         }
 
