@@ -3,35 +3,10 @@
 
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
-    <div class="nav-side-menu col-md-3 col-lg-2">
-      <div class="brand">TLog Viewer</div>
-      <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
-
-      <div class="menu-list">
-
-        <b-collapse visible id="menucontent" class="menu-content collapse out">
-          <li v-if="filterPlottable.length"  v-b-toggle.products >
-            <a class="section" href="#"><i class="fas fa-signature fa-lg"></i> Plot <i class="fas fa-caret-down"></i></a>
-          </li>
-          <b-collapse  class="sub-menu collapse" id="products">
-            <li v-for="item in filterPlottable" :key="'li' + item">
-              <a :key="'a' + item" href="#" @click="plot(item)" v-b-toggle.products >{{ item }}</a>
-            </li>
-          </b-collapse>
-          <li v-if="current_trajectory.length">
-            <a href="#" @click="changeCamera"><i class="fas fa-video "></i> Camera Mode </a>
-          </li>
-          <li v-if="!current_trajectory.length">
-            <a href="#" @click="openSample"><i class="fas fa-play "></i> Open Sample </a>
-          </li>
-          <Dropzone ref="dropzone"  v-on:messages="updateData"/>
-        </b-collapse>
-
-      </div>
-    </div>
+      <sidebar />
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex">
-        <div class="row" v-bind:class="[hasPlot ? 'h-50' : 'h-100']" >
+        <div class="row" v-if="map_on" v-bind:class="[plot_on ? 'h-50' : 'h-100']" >
           <div class="col-12 noPadding">
             <Cesium ref="cesium"
                     v-if="current_trajectory.length"
@@ -40,9 +15,11 @@
                     v-bind:attitudes="time_attitude"/>
           </div>
         </div>
-        <div v-if="current_data" class="row h-50">
+        <div class="row"
+             v-if="plot_on"
+             v-bind:class="[map_on ? 'h-50' : 'h-100']">
           <div class="col-12">
-            <Plotly v-bind:plot-data="current_data"/>
+            <Plotly v-bind:alldata="messages" />
           </div>
         </div>
       </main>
@@ -52,35 +29,43 @@
 </template>
 
 <script>
-import Dropzone from './Dropzone'
 import Plotly from './Plotly'
 import Cesium from './Cesium'
+import Sidebar from './Sidebar'
 
 export default {
   name: 'Home',
+  created () {
+    this.$eventHub.$on('messages', this.updateData)
+    this.$eventHub.$on('show-map', function () { this.map_on = true }.bind(this))
+    this.$eventHub.$on('hide-map', function () { this.map_on = false }.bind(this))
+    this.$eventHub.$on('showPlot', function () { this.plot_on = true }.bind(this))
+    this.$eventHub.$on('plotEmpty', function () { this.plot_on = false }.bind(this))
+
+  },
+  beforeDestroy () {
+    this.$eventHub.$off('messages')
+  },
   data () {
     return {
       messages: {},
-      message_types: [],
-      current_data: null,
       current_trajectory: [],
       time_trajectory: {},
       time_attitude: {},
       flight_mode_changes: [],
+      map_on: false,
+      plot_on: false
     }
   },
   methods: {
-    updateData () {
-      this.messages = this.$refs.dropzone.messages
-      this.message_types = Object.keys(this.messages).sort()
+    updateData (messages) {
+      this.messages = messages
       this.time_attitude = this.extractAttitudes(this.messages)
       this.current_trajectory = this.extractTrajectory(this.messages)
       this.flight_mode_changes = this.extractFlightModes(this.messages)
-      this.current_data = null
+      this.map_on = true
     },
-    plot (item) {
-      this.current_data = this.messages[item]
-    },
+
     extractTrajectory (messages) {
       let gpsData = messages['GLOBAL_POSITION_INT']
       let trajectory = []
@@ -108,35 +93,10 @@ export default {
         }
       }
       return modes
-    },
-    changeCamera (){
-      this.$eventHub.$emit('change-camera')
-    },
-    openSample (){
-      this.$eventHub.$emit('open-sample')
-    }
-  },
-  computed: {
-    filterPlottable () {
-      return this.message_types.filter(function (message) {
-        let valid = [
-          'ATTITUDE',
-          'GLOBAL_POSITION_INT',
-          'GPS_RAW_INT',
-          'NAV_CONTROLLER_OUTPUT',
-          'SCALED_IMU2',
-          'RC_CHANNELS',
-          'RC_CHANNELS_RAW',
-          'SCALED_PRESSURE']
-        return valid.includes(message)
-      })
-    },
-    hasPlot () {
-      return this.current_data !== null
     }
   },
   components: {
-    Dropzone,
+    Sidebar,
     Plotly,
     Cesium}
 }
@@ -144,29 +104,6 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-  .nav-side-menu {
-    overflow-x: hidden;
-    font-family: verdana;
-    font-size: 14px;
-    font-weight: 200;
-    background-color: #2e353d;
-    position: fixed;
-    top: 0px;
-    /*width: 300px;*/
-    height: 100%;
-    color: #e1ffff;
-  }
-  .nav-side-menu .brand {
-    background-color: #23282e;
-    line-height: 50px;
-    display: block;
-    text-align: center;
-    font-size: 17px;
-    font-weight: bold;
-  }
-  .nav-side-menu .toggle-btn {
-    display: none;
-  }
   .nav-side-menu ul,
   .nav-side-menu li {
     list-style: none;
@@ -256,37 +193,6 @@ export default {
     transition: all 1s ease;
   }
   @media (max-width: 767px) {
-    .nav-side-menu {
-      position: fixed;
-      width: 100%;
-      margin-bottom: 10px;
-      height: auto;
-      overflow-y: hidden;
-      z-index: 2;
-    }
-    .nav-side-menu .toggle-btn {
-      display: block;
-      cursor: pointer;
-      position: absolute;
-      right: 10px;
-      top: 0px;
-      z-index: 10 !important;
-      padding: 3px;
-      background-color: #ffffff;
-      color: #000;
-      height: auto;
-      width: 40px;
-      text-align: center;
-      -webkit-border-radius: 3px;
-      -moz-border-radius: 3px;
-      border-radius: 3px;
-    }
-    .brand {
-      text-align: left !important;
-      font-size: 22px;
-      padding-left: 20px;
-      line-height: 50px !important;
-    }
     main {
       height: 90%;
       margin-top: 50px;
@@ -294,10 +200,6 @@ export default {
   }
 
   @media (min-width: 767px) {
-    .nav-side-menu .menu-list .menu-content {
-      display: block;
-      height: 100%;
-    }
     main {
       height: 100%;
     }
@@ -305,11 +207,6 @@ export default {
   body {
     margin: 0px;
     padding: 0px;
-  }
-
-  .section {
-    font-size: 130%;
-    /*font-weight: bold;  */
   }
 
   i {
