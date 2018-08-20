@@ -24,7 +24,7 @@
     </li>
     <b-collapse id="messages" >
     <template v-for="(message, key) in messages">
-      <li >
+      <li class="type">
         <b-form-checkbox v-model="checkboxes[key].state"
                          :indeterminate="checkboxes[key].indeterminate"
                          @change="toggleType($event, key)">
@@ -34,7 +34,7 @@
       </li>
       <b-collapse :id="'type' + message" >
       <template v-for="item in message">
-        <li class="msgfield">
+        <li class="field">
           <a href="#">
             <b-form-checkbox v-model="checkboxes[key].fields[item]" @change="toggle($event, key, item)"> {{item}}</b-form-checkbox>
           </a>
@@ -281,15 +281,24 @@ export default {
         -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
         background-color: #1c437f;
     }
-  li.msgfield {
-    line-height: 20px;
-    margin-left: 20px;
-  }
+    li.field {
+      line-height: 20px;
+      padding-left: 40px;
+      font-size: 90%;
+    }
+
+    li .field > a {
+
+    }
+    li.type {
+      line-height: 25px;
+      padding-left: 30px;
+      font-size: 90%;
+    }
 
 </style>
 <style>
   .custom-control-label {
     margin-bottom: 8px
   }
-
 </style>
