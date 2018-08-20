@@ -285,11 +285,11 @@ export default {
     line-height: 20px;
     margin-left: 20px;
   }
-  .checkplot {
-    position: static
-  }
+
+</style>
+<style>
   .custom-control-label {
-    margin-bottom: .5rem;
+    margin-bottom: 8px
   }
 
 </style>
