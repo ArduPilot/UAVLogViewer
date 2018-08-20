@@ -6,9 +6,6 @@
             <b-collapse visible id="menucontent" class="menu-content collapse out">
               <message-menu />
                 <li >
-                    <a href="#" @click="$eventHub.$emit('change-camera')"><i class="fas fa-video "></i> Camera Mode </a>
-                </li>
-                <li >
                     <a href="#" @click="$eventHub.$emit('open-sample')"><i class="fas fa-play "></i> Open Sample </a>
                 </li>
                 <Dropzone/>

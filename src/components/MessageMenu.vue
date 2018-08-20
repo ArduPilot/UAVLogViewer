@@ -1,5 +1,22 @@
 <template>
   <div v-if="hasMessages">
+
+    <li  v-if="!$parent.$parent.$parent.map_on" @click="$eventHub.$emit('show-map')">
+      <a class="section" href="#">
+        <i class="fas fa-globe fa-lg"></i> Show 3D View</a>
+    </li>
+    <li v-if="$parent.$parent.$parent.map_on" @click="$eventHub.$emit('hide-map')">
+      <a class="section" href="#" >
+        <i class="fas fa-globe fa-lg"></i> Hide 3D View</a>
+    </li>
+    <li v-if="$parent.$parent.$parent.map_on">
+      <a href="#" @click="$eventHub.$emit('change-camera')"><i class="fas fa-video "></i> Camera Mode </a>
+    </li>
+    <li v-if="$parent.$parent.$parent.plot_on" @click="hidePlots" >
+    <a class="section" href="#">
+      <i class="fas fa-globe fa-lg"></i> Hide Plot</a>
+    </li>
+
     <li v-b-toggle="'messages'">
       <a class="section" href="#">
         <i class="fas fa-signature fa-lg"></i> Plot
@@ -9,7 +26,7 @@
     <template v-for="(message, key) in messages">
       <li >
         <b-form-checkbox v-model="checkboxes[key].state"
-                         :indeterminate.sync="checkboxes[key].indeterminate"
+                         :indeterminate="checkboxes[key].indeterminate"
                          @change="toggleType($event, key)">
         </b-form-checkbox>
         <a v-b-toggle="'type' + message" class="section" href="#">{{key}}
@@ -29,32 +46,45 @@
   </div>
 </template>
 <script>
+
+import Vue from 'vue'
+
 export default {
   name: 'message-menu',
   data () {
     return {
-      msg: 'Batata',
-      messages: {}
+      messages: {},
+      checkboxes: {}
     }
   },
-  created(){
-    this.$eventHub.$on("messages", this.handleMessages)
+  created () {
+    this.$eventHub.$on('messages', this.handleMessages)
   },
-  beforeDestroy(){
-    this.$eventHub.$off("messages")
+  beforeDestroy () {
+    this.$eventHub.$off('messages')
   },
   methods: {
-    handleMessages (messages){
-      console.log(this)
+    handleMessages (messages) {
+      console.log(this.checkboxes)
       let newMessages = {}
+      // populate list of message types
       for (let messageType of Object.keys(messages)) {
+        this.$set(this.checkboxes, messageType, this.getMessageNumericField(messages[messageType][0]))
         newMessages[messageType] = this.getMessageNumericField(messages[messageType][0])
       }
+
+      // populate checkbox status
+      for (let messageType of Object.keys(messages)) {
+        this.checkboxes[messageType] = {state: false, indeterminate: false, fields: {}}
+        for (let field of this.getMessageNumericField(messages[messageType][0])) {
+          this.checkboxes[messageType].fields[field] = false
+        }
+      }
+
       this.messages = newMessages
       console.log(newMessages)
     },
-    getMessageNumericField(message)
-    {
+    getMessageNumericField (message) {
       let numberFields = []
       for (let field of message.fieldnames) {
         if (!isNaN(message[field])) {
@@ -65,7 +95,10 @@ export default {
     },
     toggle (state, message, item) {
       if (state) {
-        this.$eventHub.$emit('showPlot', message + '.' + item)
+        this.$eventHub.$emit('showPlot')
+        Vue.nextTick(function () {
+          this.$eventHub.$emit('addPlot', message + '.' + item)
+        }.bind(this))
       } else {
         this.$eventHub.$emit('hidePlot', message + '.' + item)
       }
@@ -82,6 +115,7 @@ export default {
               allTrue = false
             }
           }
+          console.log(messagekey, allFalse, allTrue )
           if (allTrue) {
             this.checkboxes[messagekey].state = true
             this.checkboxes[messagekey].indeterminate = false
@@ -95,15 +129,35 @@ export default {
       }.bind(this))
     },
     toggleType (state, message) {
-      for (let field of this.messages[message])
-      {
+      for (let field of this.messages[message]) {
         this.checkboxes[message].fields[field] = state
-        if (state) {
-          this.$eventHub.$emit('showPlot', message+'.'+field)
-        } else {
-          this.$eventHub.$emit('hidePlot', message+'.'+field)}
-
       }
+      if (state) {
+        this.$eventHub.$emit('showPlot')
+      }
+      Vue.nextTick(function () {
+        for (let field of this.messages[message]) {
+          this.checkboxes[message].fields[field] = state
+          if (state) {
+            this.$eventHub.$emit('addPlot', message + '.' + field)
+          } else {
+            this.$eventHub.$emit('hidePlot', message + '.' + field)
+          }
+        }
+      }.bind(this))
+    },
+    hidePlots () {
+      console.log("batat")
+      for (let message of Object.keys(this.checkboxes)) {
+        this.checkboxes[message].state = false
+        this.checkboxes[message].indeterminate = false
+
+        console.log(this.checkboxes[message])
+        for (let field of Object.keys(this.checkboxes[message].fields)) {
+          this.checkboxes[message].fields[field] = false
+        }
+      }
+      this.$eventHub.$emit('plotEmpty')
     }
   },
   computed: {

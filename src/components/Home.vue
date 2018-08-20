@@ -6,7 +6,7 @@
       <sidebar />
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex">
-        <div class="row" v-bind:class="[hasPlot ? 'h-50' : 'h-100']" >
+        <div class="row" v-if="map_on" v-bind:class="[plot_on ? 'h-50' : 'h-100']" >
           <div class="col-12 noPadding">
             <Cesium ref="cesium"
                     v-if="current_trajectory.length"
@@ -15,9 +15,11 @@
                     v-bind:attitudes="time_attitude"/>
           </div>
         </div>
-        <div v-if="current_data" class="row h-50">
+        <div class="row"
+             v-if="plot_on"
+             v-bind:class="[map_on ? 'h-50' : 'h-100']">
           <div class="col-12">
-            <Plotly v-bind:plot-data="current_data"/>
+            <Plotly v-bind:alldata="messages" />
           </div>
         </div>
       </main>
@@ -35,6 +37,11 @@ export default {
   name: 'Home',
   created () {
     this.$eventHub.$on('messages', this.updateData)
+    this.$eventHub.$on('show-map', function () { this.map_on = true }.bind(this))
+    this.$eventHub.$on('hide-map', function () { this.map_on = false }.bind(this))
+    this.$eventHub.$on('showPlot', function () { this.plot_on = true }.bind(this))
+    this.$eventHub.$on('plotEmpty', function () { this.plot_on = false }.bind(this))
+
   },
   beforeDestroy () {
     this.$eventHub.$off('messages')
@@ -42,26 +49,23 @@ export default {
   data () {
     return {
       messages: {},
-      message_types: [],
-      current_data: null,
       current_trajectory: [],
       time_trajectory: {},
       time_attitude: {},
       flight_mode_changes: [],
+      map_on: false,
+      plot_on: false
     }
   },
   methods: {
     updateData (messages) {
       this.messages = messages
-      this.message_types = Object.keys(this.messages).sort()
       this.time_attitude = this.extractAttitudes(this.messages)
       this.current_trajectory = this.extractTrajectory(this.messages)
       this.flight_mode_changes = this.extractFlightModes(this.messages)
-      this.current_data = null
+      this.map_on = true
     },
-    plot (item) {
-      this.current_data = this.messages[item]
-    },
+
     extractTrajectory (messages) {
       let gpsData = messages['GLOBAL_POSITION_INT']
       let trajectory = []
@@ -89,25 +93,6 @@ export default {
         }
       }
       return modes
-    }
-  },
-  computed: {
-    filterPlottable () {
-      return this.message_types.filter(function (message) {
-        let valid = [
-          'ATTITUDE',
-          'GLOBAL_POSITION_INT',
-          'GPS_RAW_INT',
-          'NAV_CONTROLLER_OUTPUT',
-          'SCALED_IMU2',
-          'RC_CHANNELS',
-          'RC_CHANNELS_RAW',
-          'SCALED_PRESSURE']
-        return valid.includes(message)
-      })
-    },
-    hasPlot () {
-      return this.current_data !== null
     }
   },
   components: {

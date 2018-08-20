@@ -23,6 +23,7 @@ let plotOptions = {
   margin: { t: 0, l: 0, b: 20, r: 0 },
   xaxis: {
     rangeslider: {},
+    autorange: true,
     titlefont: {
       color: '#fff'
     },
@@ -41,10 +42,10 @@ let plotOptions = {
   shapes: [ { // plot cursor line
     type: 'line',
     y0: 0,
-    x0: 0,
+    x0: null,
     yref: 'paper',
     y1: 1,
-    x1: 0,
+    x1: null,
     line: {
       color: 'rgb(0, 0, 0)',
       width: 2,
@@ -56,8 +57,7 @@ export default {
   created () {
     this.$eventHub.$on('animation-changed', this.setCursorState)
     this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
-    this.$eventHub.$on('messages', this.updateMessages)
-    this.$eventHub.$on('showPlot', this.addPlot)
+    this.$eventHub.$on('addPlot', this.addPlot)
     this.$eventHub.$on('hidePlot', this.removePlot)
   },
   mounted () {
@@ -78,7 +78,6 @@ export default {
       this.resize()
     })
     this.instruction = ''
-    this.plot(this.plotData, plotOptions)
   },
   beforeDestroy () {
     window.removeEventListener('resize', this.resize)
@@ -88,17 +87,12 @@ export default {
   },
   data () {
     return {
-      rows: [],
       gd: null,
       plotInstance: null,
-      allData: {},
       fields: []
     }
   },
   methods: {
-    updateMessages (messages) {
-      this.allData = messages
-    },
     resize () {
       Plotly.Plots.resize(this.gd)
     },
@@ -114,18 +108,20 @@ export default {
         this.fields.splice(index, 1)
       }
       this.plot()
+      if (this.fields.length === 0) {
+        this.$eventHub.$emit("plotEmpty")
+      }
     },
     plot () {
       let _this = this
       let datasets = []
 
-      for (let msgtype of Object.keys(this.allData)) {
-        for (let msgfield of this.allData[msgtype][0].fieldnames) {
+      for (let msgtype of Object.keys(this.alldata)) {
+        for (let msgfield of this.alldata[msgtype][0].fieldnames) {
           if (this.fields.includes(msgtype + '.' + msgfield)) {
-            console.log('chegou aqui')
             let x = []
             let y = []
-            for (let message of this.allData[msgtype]) {
+            for (let message of this.alldata[msgtype]) {
               x.push(message['time_boot_ms'])
               y.push(message[msgfield])
             }
@@ -141,9 +137,10 @@ export default {
       }
 
       let plotData = datasets
-      plotOptions.shapes.x0 = 0 // allData[0].time_boot_ms
-      plotOptions.shapes.x1 = 0 // AllData[0].time_boot_ms
-      console.log(plotData, plotOptions)
+      if (plotOptions.shapes[0].x0 === null) {
+        plotOptions.shapes[0].x0 = datasets[0].x[1]
+        plotOptions.shapes[0].x1 = datasets[0].x[1]
+      }
 
       if (this.plotInstance !== null) {
         plotOptions.xaxis = {range: this.gd._fullLayout.xaxis.range}
@@ -188,7 +185,8 @@ export default {
         hovermode: stateStr
       })
     }
-  }
+  },
+  props: ['alldata']
 }
 
 </script>
