@@ -232,7 +232,7 @@ export default {
     }
 
     .nav-side-menu li a i {
-        padding-left: 10px;
+        padding-left: 0px;
         width: 20px;
         padding-right: 20px;
     }

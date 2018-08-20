@@ -205,3 +205,8 @@ export default {
     }
 
 </style>
+<style>
+  .custom-control-inline {
+    margin-right: 0;
+  }
+</style>
