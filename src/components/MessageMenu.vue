@@ -3,18 +3,18 @@
 
     <li  v-if="!$parent.$parent.$parent.map_on" @click="$eventHub.$emit('show-map')">
       <a class="section" href="#">
-        <i class="fas fa-globe fa-lg"></i> Show 3D View</a>
+        <i class="fas fa-eye fa-lg"></i> Show 3D View</a>
     </li>
     <li v-if="$parent.$parent.$parent.map_on" @click="$eventHub.$emit('hide-map')">
       <a class="section" href="#" >
-        <i class="fas fa-globe fa-lg"></i> Hide 3D View</a>
+        <i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>
     </li>
     <li v-if="$parent.$parent.$parent.map_on">
       <a href="#" @click="$eventHub.$emit('change-camera')"><i class="fas fa-video "></i> Camera Mode </a>
     </li>
     <li v-if="$parent.$parent.$parent.plot_on" @click="hidePlots" >
     <a class="section" href="#">
-      <i class="fas fa-globe fa-lg"></i> Hide Plot</a>
+      <i class="fas fa-eye-slash fa-lg"></i> Hide Plot</a>
     </li>
 
     <li v-b-toggle="'messages'">
