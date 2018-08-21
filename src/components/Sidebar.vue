@@ -5,9 +5,6 @@
         <div class="menu-list">
             <b-collapse visible id="menucontent" class="menu-content collapse out">
               <message-menu />
-                <li >
-                    <a href="#" @click="$eventHub.$emit('open-sample')"><i class="fas fa-play "></i> Open Sample </a>
-                </li>
                 <Dropzone/>
             </b-collapse>
         </div>

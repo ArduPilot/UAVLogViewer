@@ -1,5 +1,8 @@
 <template>
   <div>
+    <li  v-if="!sampleLoaded">
+      <a class="section" href="#" @click="onLoadSample"><i class="fas fa-play "></i> Open Sample </a>
+    </li>
     <div id="drop_zone" @dragover.prevent @drop="onDrop" @click="browse">
         <p>Drop *.tlog file here or click to browse</p>
       <input type="file" id="choosefile" style="opacity: 0;" @change="onChange">
@@ -22,17 +25,19 @@ export default {
     return {
       mavlinkParser: new MAVLink(),
       messages: {},
-      percentage: 100
+      percentage: 100,
+      sampleLoaded: false
     }
   },
   created () {
-    this.$eventHub.$on('open-sample', this.onLoadSample)
+
   },
   beforeDestroy () {
     this.$eventHub.$off('open-sample')
   },
   methods: {
     onLoadSample () {
+      this.sampleLoaded = true
       let url = require('../assets/vtol.tlog')
       let oReq = new XMLHttpRequest()
       oReq.open('GET', url, true)
@@ -142,4 +147,37 @@ export default {
     #drop_zone:hover {
       background-color: rgba(0,0,0,0.05);
     }
+
+    .nav-side-menu ul,
+    .nav-side-menu li {
+      list-style: none;
+      padding: 0px;
+      margin: 0px;
+      line-height: 35px;
+      cursor: pointer;
+      /*
+        .collapsed{
+           .arrow:before{
+                     font-family: FontAwesome;
+                     content: "\f053";
+                     display: inline-block;
+                     padding-left:10px;
+                     padding-right: 10px;
+                     vertical-align: middle;
+                     float:right;
+                }
+         }
+    */
+    }
+    .nav-side-menu li {
+      padding-left: 0px;
+      border-left: 3px solid #2e353d;
+      border-bottom: 1px solid #23282e;
+    }
+
+    .nav-side-menu li a {
+      text-decoration: none;
+      color: #e1ffff;
+    }
+
 </style>
