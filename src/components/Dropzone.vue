@@ -22,14 +22,14 @@ export default {
     return {
       mavlinkParser: new MAVLink(),
       messages: {},
-      percentage: 100,
+      percentage: 100
     }
   },
   created () {
-    this.$eventHub.$on("open-sample", this.onLoadSample)
+    this.$eventHub.$on('open-sample', this.onLoadSample)
   },
   beforeDestroy () {
-    this.$eventHub.$off("open-sample")
+    this.$eventHub.$off('open-sample')
   },
   methods: {
     onLoadSample () {
@@ -42,7 +42,7 @@ export default {
         var arrayBuffer = oReq.response
         worker.postMessage({action: 'parse', file: arrayBuffer})
       }
-      oReq.send();
+      oReq.send()
     },
     onChange (ev) {
       let fileinput = document.getElementById('choosefile')

@@ -159,6 +159,7 @@ export default {
       return Object.keys(this.messages).length > 0
     }
   }
+
 }
 </script>
 <style scoped>

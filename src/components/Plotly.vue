@@ -109,7 +109,7 @@ export default {
       }
       this.plot()
       if (this.fields.length === 0) {
-        this.$eventHub.$emit("plotEmpty")
+        this.$eventHub.$emit('plotEmpty')
       }
     },
     plot () {

@@ -94,10 +94,10 @@ export default {
         }
         return false
       },
-      changeCamera (){
-        if(this.viewer.trackedEntity === undefined) {
+      changeCamera () {
+        if (this.viewer.trackedEntity === undefined) {
           this.viewer.trackedEntity = this.model
-        }else {
+        } else {
           this.viewer.trackedEntity = undefined
         }
       },

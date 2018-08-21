@@ -41,7 +41,6 @@ export default {
     this.$eventHub.$on('hide-map', function () { this.map_on = false }.bind(this))
     this.$eventHub.$on('showPlot', function () { this.plot_on = true }.bind(this))
     this.$eventHub.$on('plotEmpty', function () { this.plot_on = false }.bind(this))
-
   },
   beforeDestroy () {
     this.$eventHub.$off('messages')
