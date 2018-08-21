@@ -3,11 +3,21 @@
     <li  v-if="!sampleLoaded">
       <a class="section" href="#" @click="onLoadSample"><i class="fas fa-play "></i> Open Sample </a>
     </li>
+    <li  v-if="url">
+      <a class="section" @click="share" href="#"><i class="fas fa-share-alt"></i> {{ shared ? 'Copied to clipboard!' : 'Share link'}}</a>
+    </li>
     <div id="drop_zone" @dragover.prevent @drop="onDrop" @click="browse">
-        <p>Drop *.tlog file here or click to browse</p>
+      <p>Drop *.tlog file here or click to browse</p>
       <input type="file" id="choosefile" style="opacity: 0;" @change="onChange">
     </div>
-    <VProgress v-bind:percent="percentage" v-if="percentage < 100"></VProgress>
+    <VProgress v-bind:percent="percentage"
+               v-if="percentage > -1"
+               v-bind:complete="'Processing done'"
+    ></VProgress>
+    <VProgress v-bind:percent="uploadpercentage"
+               v-bind:complete="'Upload Done'"
+               v-if="uploadpercentage > -1">
+    </VProgress>
   </div>
 </template>
 <script>
@@ -25,8 +35,11 @@ export default {
     return {
       mavlinkParser: new MAVLink(),
       messages: {},
-      percentage: 100,
-      sampleLoaded: false
+      percentage: -1,
+      uploadpercentage: -1,
+      sampleLoaded: false,
+      shared: false,
+      url: null
     }
   },
   created () {
@@ -36,9 +49,15 @@ export default {
     this.$eventHub.$off('open-sample')
   },
   methods: {
-    onLoadSample () {
+    onLoadSample (file) {
+      let url
+      if (file === 'sample') {
+        url = require('../assets/vtol.tlog')
+      } else {
+        url = ('/uploaded/' + file)
+      }
       this.sampleLoaded = true
-      let url = require('../assets/vtol.tlog')
+      this.url = url
       let oReq = new XMLHttpRequest()
       oReq.open('GET', url, true)
       oReq.responseType = 'arraybuffer'
@@ -74,12 +93,40 @@ export default {
       }
     },
     process: function (file) {
+      this.upload(file)
       let reader = new FileReader()
       reader.onload = function (e) {
         let data = reader.result
         worker.postMessage({action: 'parse', file: Buffer.from(data)})
       }
+
       reader.readAsArrayBuffer(file)
+    },
+    upload (file) {
+      this.uploadpercentage = 0
+      let formData = new FormData()
+      formData.append('file', file)
+
+      let request = new XMLHttpRequest()
+      request.onload = function () {
+        console.log(request)
+        if (request.status >= 200 && request.status < 400) {
+          this.uploadpercentage = 100
+          this.url = request.responseText
+        } else {
+          alert('error! ' + request.status)
+          console.log(request)
+        }
+      }.bind(this)
+      request.onprogress = function (e) {
+        if (e.lengthComputable) {
+          console.log(e.loaded + ' / ' + e.total)
+          this.uploadpercentage = 100 * e.loaded / e.total
+        }
+      }.bind(this)
+
+      request.open('POST', '/upload')
+      request.send(formData)
     },
     fixData (message) {
       if (message.name === 'GLOBAL_POSITION_INT') {
@@ -91,17 +138,29 @@ export default {
     },
     browse () {
       document.getElementById('choosefile').click()
+    },
+    share () {
+      const el = document.createElement('textarea');
+      el.value = window.location.host + '/#/v/' + this.url
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el)
+      this.shared = true
     }
   },
   mounted () {
-    let _this = this
     worker.onmessage = function (event) {
       if (event.data.hasOwnProperty('percentage')) {
-        _this.percentage = event.data.percentage
+        this.percentage = event.data.percentage
       } else if (event.data.hasOwnProperty('messages')) {
-        _this.messages = event.data.messages
-        _this.$eventHub.$emit('messages', _this.messages)
+        this.messages = event.data.messages
+        this.$eventHub.$emit('messages', this.messages)
       }
+    }.bind(this)
+    if (this.$route.params.hasOwnProperty('id'))
+    {
+      this.onLoadSample(this.$route.params.id)
     }
   },
   components: {
@@ -180,4 +239,13 @@ export default {
       color: #e1ffff;
     }
 
+    .nav-side-menu li a i{
+      padding-left: 0px;
+      width: 20px;
+      padding-right: 20px;
+    }
+
+    i {
+      margin: 10px;
+    }
 </style>

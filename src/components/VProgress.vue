@@ -2,7 +2,7 @@
   <div class="progress1">
     <b-progress  height="30px" :max="100">
       <b-progress-bar :value="percent">
-        <strong>{{ percent.toFixed(1) }}</strong>
+        <strong>{{ percent < 100 ? percent.toFixed(1): complete }}</strong>
       </b-progress-bar>
     </b-progress>
   </div>
@@ -11,7 +11,7 @@
 <script>
 export default {
   name: 'Progress',
-  props: ['percent']
+  props: ['percent', 'complete']
 }
 </script>
 
