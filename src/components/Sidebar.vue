@@ -134,7 +134,7 @@ export default {
             margin-bottom: 10px;
             height: auto;
             max-height: 100%;
-            z-index: 2;
+            z-index: 1002;
         }
 
         .nav-side-menu .toggle-btn {
