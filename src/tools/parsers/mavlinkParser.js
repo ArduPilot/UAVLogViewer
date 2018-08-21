@@ -165,6 +165,14 @@ export class MavlinkParser {
       message.asText = getModeString(message.type, message.custom_mode)
       return message
     }
+    delete message.crc
+    delete message.crc_extra
+    delete message.format
+    delete message.header
+    delete message.msgbuf
+    delete message.id
+    delete message.payload
+    delete message.order_map
     return message
   }
 
