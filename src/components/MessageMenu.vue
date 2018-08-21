@@ -65,7 +65,6 @@ export default {
   },
   methods: {
     handleMessages (messages) {
-      console.log(this.checkboxes)
       let newMessages = {}
       // populate list of message types
       for (let messageType of Object.keys(messages)) {
@@ -82,7 +81,6 @@ export default {
       }
 
       this.messages = newMessages
-      console.log(newMessages)
     },
     getMessageNumericField (message) {
       let numberFields = []
@@ -115,7 +113,6 @@ export default {
               allTrue = false
             }
           }
-          console.log(messagekey, allFalse, allTrue )
           if (allTrue) {
             this.checkboxes[messagekey].state = true
             this.checkboxes[messagekey].indeterminate = false
@@ -147,12 +144,9 @@ export default {
       }.bind(this))
     },
     hidePlots () {
-      console.log("batat")
       for (let message of Object.keys(this.checkboxes)) {
         this.checkboxes[message].state = false
         this.checkboxes[message].indeterminate = false
-
-        console.log(this.checkboxes[message])
         for (let field of Object.keys(this.checkboxes[message].fields)) {
           this.checkboxes[message].fields[field] = false
         }
