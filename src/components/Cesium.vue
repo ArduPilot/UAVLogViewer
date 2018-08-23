@@ -46,6 +46,7 @@ export default {
   },
   beforeDestroy () {
     this.$eventHub.$off('hoveredTime')
+    this.$eventHub.$off('change-camera')
   },
   mounted () {
     if (this.viewer == null) {
