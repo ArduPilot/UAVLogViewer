@@ -69,6 +69,7 @@ export default {
       handler.setInputAction(this.onMove, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
       handler.setInputAction(this.onLeftDown, Cesium.ScreenSpaceEventType.LEFT_DOWN)
       handler.setInputAction(this.onClick, Cesium.ScreenSpaceEventType.LEFT_CLICK)
+      handler.setInputAction(this.onLeftUp, Cesium.ScreenSpaceEventType.LEFT_UP)
 
       Cesium.knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
     }
