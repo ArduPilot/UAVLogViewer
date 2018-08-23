@@ -1,7 +1,7 @@
 <template>
   <div>
     <li  v-if="!sampleLoaded">
-      <a class="section" href="#" @click="onLoadSample"><i class="fas fa-play "></i> Open Sample </a>
+      <a class="section" href="#" @click="onLoadSample('sample')"><i class="fas fa-play "></i> Open Sample </a>
     </li>
     <li  v-if="url">
       <a class="section" @click="share" href="#"><i class="fas fa-share-alt"></i> {{ shared ? 'Copied to clipboard!' : 'Share link'}}</a>

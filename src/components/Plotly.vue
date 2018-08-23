@@ -4,6 +4,7 @@
 
 <script>
 import Plotly from 'plotly.js'
+import {store} from './Global.js'
 
 let plotOptions = {
   legend: {
@@ -90,7 +91,8 @@ export default {
     return {
       gd: null,
       plotInstance: null,
-      fields: []
+      fields: [],
+      state: store
     }
   },
   methods: {
@@ -110,19 +112,19 @@ export default {
       }
       this.plot()
       if (this.fields.length === 0) {
-        this.$eventHub.$emit('plotEmpty')
+        this.state.plot_on = false
       }
     },
     plot () {
       let _this = this
       let datasets = []
 
-      for (let msgtype of Object.keys(this.alldata)) {
-        for (let msgfield of this.alldata[msgtype][0].fieldnames) {
+      for (let msgtype of Object.keys(this.state.messages)) {
+        for (let msgfield of this.state.messages[msgtype][0].fieldnames) {
           if (this.fields.includes(msgtype + '.' + msgfield)) {
             let x = []
             let y = []
-            for (let message of this.alldata[msgtype]) {
+            for (let message of this.state.messages[msgtype]) {
               x.push(message['time_boot_ms'])
               y.push(message[msgfield])
             }
@@ -186,8 +188,7 @@ export default {
         hovermode: stateStr
       })
     }
-  },
-  props: ['alldata']
+  }
 }
 
 </script>

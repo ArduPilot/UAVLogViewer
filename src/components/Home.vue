@@ -6,20 +6,17 @@
       <sidebar />
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex">
-        <div class="row" v-if="map_on" v-bind:class="[plot_on ? 'h-50' : 'h-100']" >
+        <div class="row" v-if="state.map_on" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
           <div class="col-12 noPadding">
             <Cesium ref="cesium"
-                    v-if="current_trajectory.length"
-                    v-bind:modes="flight_mode_changes"
-                    v-bind:trajectory="current_trajectory"
-                    v-bind:attitudes="time_attitude"/>
+                    v-if="state.current_trajectory.length"/>
           </div>
         </div>
         <div class="row"
-             v-if="plot_on"
-             v-bind:class="[map_on ? 'h-50' : 'h-100']">
+             v-if="state.plot_on"
+             v-bind:class="[state.map_on ? 'h-50' : 'h-100']">
           <div class="col-12">
-            <Plotly v-bind:alldata="messages" />
+            <Plotly />
           </div>
         </div>
       </main>
@@ -32,41 +29,28 @@
 import Plotly from './Plotly'
 import Cesium from './Cesium'
 import Sidebar from './Sidebar'
+import {store} from './Global.js'
 
 export default {
   name: 'Home',
   created () {
     this.$eventHub.$on('messages', this.updateData)
-    this.$eventHub.$on('show-map', function () { this.map_on = true }.bind(this))
-    this.$eventHub.$on('hide-map', function () { this.map_on = false }.bind(this))
-    this.$eventHub.$on('showPlot', function () { this.plot_on = true }.bind(this))
-    this.$eventHub.$on('plotEmpty', function () { this.plot_on = false }.bind(this))
   },
   beforeDestroy () {
     this.$eventHub.$off('messages')
-    this.$eventHub.$off('show-map')
-    this.$eventHub.$off('hide-map')
-    this.$eventHub.$off('showPlot')
-    this.$eventHub.$off('plotEmpty')
   },
   data () {
     return {
-      messages: {},
-      current_trajectory: [],
-      time_trajectory: {},
-      time_attitude: {},
-      flight_mode_changes: [],
-      map_on: false,
-      plot_on: false
+      state: store
     }
   },
   methods: {
     updateData (messages) {
-      this.messages = messages
-      this.time_attitude = this.extractAttitudes(this.messages)
-      this.current_trajectory = this.extractTrajectory(this.messages)
-      this.flight_mode_changes = this.extractFlightModes(this.messages)
-      this.map_on = true
+      this.state.messages = messages
+      this.state.time_attitude = this.extractAttitudes(this.state.messages)
+      this.state.current_trajectory = this.extractTrajectory(this.state.messages)
+      this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
+      this.state.map_on = true
     },
 
     extractTrajectory (messages) {
@@ -75,7 +59,7 @@ export default {
       for (let pos of gpsData) {
         if (pos.lat !== 0) {
           trajectory.push([pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms])
-          this.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms]
+          this.state.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms]
         }
       }
       return trajectory

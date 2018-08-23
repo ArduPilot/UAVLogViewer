@@ -1,18 +1,18 @@
 <template>
   <div v-if="hasMessages">
 
-    <li  v-if="!$parent.$parent.$parent.map_on" @click="$eventHub.$emit('show-map')">
+    <li  v-if="!state.map_on" @click="state.map_on=true">
       <a class="section" href="#">
         <i class="fas fa-eye fa-lg"></i> Show 3D View</a>
     </li>
-    <li v-if="$parent.$parent.$parent.map_on" @click="$eventHub.$emit('hide-map')">
+    <li v-if="state.map_on" @click="state.map_on=false">
       <a class="section" href="#" >
         <i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>
     </li>
-    <li v-if="$parent.$parent.$parent.map_on">
+    <li v-if="state.map_on">
       <a href="#" @click="$eventHub.$emit('change-camera')"><i class="fas fa-video "></i> Camera Mode </a>
     </li>
-    <li v-if="$parent.$parent.$parent.plot_on" @click="hidePlots" >
+    <li v-if="state.plot_on" @click="state.plot_on=false" >
     <a class="section" href="#">
       <i class="fas fa-eye-slash fa-lg"></i> Hide Plot</a>
     </li>
@@ -48,13 +48,15 @@
 <script>
 
 import Vue from 'vue'
+import {store} from './Global.js'
 
 export default {
   name: 'message-menu',
   data () {
     return {
       messages: {},
-      checkboxes: {}
+      checkboxes: {},
+      state: store
     }
   },
   created () {
@@ -93,7 +95,7 @@ export default {
     },
     toggle (state, message, item) {
       if (state) {
-        this.$eventHub.$emit('showPlot')
+        this.state.plot_on = true
         Vue.nextTick(function () {
           this.$eventHub.$emit('addPlot', message + '.' + item)
         }.bind(this))
@@ -130,7 +132,7 @@ export default {
         this.checkboxes[message].fields[field] = state
       }
       if (state) {
-        this.$eventHub.$emit('showPlot')
+        this.state.plot_on = true
       }
       Vue.nextTick(function () {
         for (let field of this.messages[message]) {
@@ -151,7 +153,7 @@ export default {
           this.checkboxes[message].fields[field] = false
         }
       }
-      this.$eventHub.$emit('plotEmpty')
+      this.state.plot_on = false
     }
   },
   computed: {

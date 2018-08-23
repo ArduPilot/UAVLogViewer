@@ -17,6 +17,7 @@
 import Cesium from 'cesium/Cesium'
 import 'cesium/Widgets/widgets.css'
 import colormap from 'colormap'
+import {store} from './Global.js'
 
 function getMinTime (data) {
   return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3])
@@ -28,10 +29,9 @@ function getMaxTime (data) {
 export default {
   name: 'Cesium',
 
-  props: ['trajectory', 'attitudes', 'modes'],
-
   data () {
     return {
+      state: store,
       viewer: null,
       startTimeMs: 0,
       colors: [],
@@ -72,7 +72,7 @@ export default {
 
       Cesium.knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
     }
-    this.plotTrajectory(this.trajectory)
+    this.plotTrajectory(this.state.current_trajectory)
   },
 
   methods:
@@ -152,7 +152,7 @@ export default {
       generateColorMMap () {
         let colorMapOptions = {
           colormap: 'hsv',
-          nshades: Math.max(12, this.modes.length),
+          nshades: Math.max(12, this.setOfModes.length),
           format: 'rgbaString',
           alpha: 1
         }
@@ -219,9 +219,9 @@ export default {
         // Create sampled aircraft orientation
         let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
         let sampledOrientation = new Cesium.SampledProperty(Cesium.Quaternion)
-        for (let atti in this.attitudes) {
-          if (this.attitudes.hasOwnProperty(atti)) {
-            let att = this.attitudes[atti]
+        for (let atti in this.state.time_attitude) {
+          if (this.state.time_attitude.hasOwnProperty(atti)) {
+            let att = this.state.time_attitude[atti]
             let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(att[2], att[1], att[0]), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
             let time = Cesium.JulianDate.addSeconds(start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
             sampledOrientation.addSample(time, hpRoll)
@@ -253,14 +253,14 @@ export default {
       },
 
       getModeColor (time) {
-        for (let mode in this.modes) {
-          if (this.modes.hasOwnProperty(mode)) {
-            if (this.modes[mode][0] > time) {
+        for (let mode in this.state.flight_mode_changes) {
+          if (this.state.flight_mode_changes.hasOwnProperty(mode)) {
+            if (this.state.flight_mode_changes[mode][0] > time) {
               return this.colors[mode - 1]
             }
           }
         }
-        return this.colors[this.modes.length - 1]
+        return this.colors[this.state.flight_mode_changes.length - 1]
       }
     },
 
@@ -273,7 +273,7 @@ export default {
   computed: {
     setOfModes () {
       let set = []
-      for (let mode of this.modes) {
+      for (let mode of this.state.flight_mode_changes) {
         if (!set.includes(mode[1])) {
           set.push(mode[1])
         }
