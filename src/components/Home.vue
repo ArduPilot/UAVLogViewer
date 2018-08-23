@@ -44,6 +44,10 @@ export default {
   },
   beforeDestroy () {
     this.$eventHub.$off('messages')
+    this.$eventHub.$off('show-map')
+    this.$eventHub.$off('hide-map')
+    this.$eventHub.$off('showPlot')
+    this.$eventHub.$off('plotEmpty')
   },
   data () {
     return {
