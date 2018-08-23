@@ -83,7 +83,8 @@ export default {
     window.removeEventListener('resize', this.resize)
     this.$eventHub.$off('animation-changed')
     this.$eventHub.$off('cesium-time-changed')
-    this.$eventHub.$off('messages')
+    this.$eventHub.$off('addPlot')
+    this.$eventHub.$off('hidePlot')
   },
   data () {
     return {
