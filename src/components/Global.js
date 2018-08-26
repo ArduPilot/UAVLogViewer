@@ -1,5 +1,4 @@
 export var store = {
-  messages: {},
   current_trajectory: [],
   time_trajectory: {},
   time_attitude: {},
