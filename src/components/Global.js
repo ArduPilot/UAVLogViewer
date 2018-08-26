@@ -4,5 +4,7 @@ export var store = {
   time_attitude: {},
   flight_mode_changes: [],
   map_on: false,
-  plot_on: false
+  plot_on: false,
+  processStatus: 'Formatting...',
+  processPercentage: -1
 }

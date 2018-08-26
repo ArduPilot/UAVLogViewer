@@ -10,9 +10,9 @@
       <p>Drop *.tlog file here or click to browse</p>
       <input type="file" id="choosefile" style="opacity: 0;" @change="onChange">
     </div>
-    <VProgress v-bind:percent="percentage"
-               v-if="percentage > -1"
-               v-bind:complete="'Processing done'"
+    <VProgress v-bind:percent="state.processPercentage"
+               v-if="state.processPercentage > -1"
+               v-bind:complete="state.processStatus"
     ></VProgress>
     <VProgress v-bind:percent="uploadpercentage"
                v-bind:complete="'Upload Done'"
@@ -36,7 +36,6 @@ export default {
   data: function () {
     return {
       mavlinkParser: new MAVLink(),
-      percentage: -1,
       uploadpercentage: -1,
       sampleLoaded: false,
       shared: false,
@@ -142,11 +141,11 @@ export default {
       document.getElementById('choosefile').click()
     },
     share () {
-      const el = document.createElement('textarea');
+      const el = document.createElement('textarea')
       el.value = window.location.host + '/#/v/' + this.url
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
       document.body.removeChild(el)
       this.shared = true
     }
@@ -154,15 +153,14 @@ export default {
   mounted () {
     worker.onmessage = function (event) {
       if (event.data.hasOwnProperty('percentage')) {
-        this.percentage = event.data.percentage
+        this.state.processPercentage = event.data.percentage
       } else if (event.data.hasOwnProperty('messages')) {
         worker.terminate()
         this.state.messages = event.data.messages
         this.$eventHub.$emit('messages')
       }
     }.bind(this)
-    if (this.$route.params.hasOwnProperty('id'))
-    {
+    if (this.$route.params.hasOwnProperty('id')) {
       this.onLoadSample(this.$route.params.id)
     }
   },
