@@ -239,7 +239,8 @@ export default {
           orientation: sampledOrientation,
           model: {
             uri: require('../assets/Cesium_Air.glb'),
-            minimumPixelSize: 64
+            minimumPixelSize: 64,
+            scale: 0.2
           }
         })
 
