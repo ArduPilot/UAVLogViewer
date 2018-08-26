@@ -120,13 +120,13 @@ export default {
           console.log(request)
         }
       }.bind(this)
-      request.onprogress = function (e) {
+      request.upload.addEventListener('progress', function (e) {
         if (e.lengthComputable) {
           console.log(e.loaded + ' / ' + e.total)
           this.uploadpercentage = 100 * e.loaded / e.total
         }
       }.bind(this)
-
+        , false)
       request.open('POST', '/upload')
       request.send(formData)
     },
