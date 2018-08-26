@@ -66,7 +66,7 @@ export default {
 
       oReq.onload = function (oEvent) {
         var arrayBuffer = oReq.response
-        worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: true})
+        worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: (url.indexOf('.tlog') > -1)})
       }
       oReq.send()
     },
