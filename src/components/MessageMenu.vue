@@ -54,9 +54,9 @@ export default {
   name: 'message-menu',
   data () {
     return {
-      messages: {},
       checkboxes: {},
-      state: store
+      state: store,
+      messages: {}
     }
   },
   created () {
@@ -66,22 +66,21 @@ export default {
     this.$eventHub.$off('messages')
   },
   methods: {
-    handleMessages (messages) {
+    handleMessages () {
       let newMessages = {}
       // populate list of message types
-      for (let messageType of Object.keys(messages)) {
-        this.$set(this.checkboxes, messageType, this.getMessageNumericField(messages[messageType][0]))
-        newMessages[messageType] = this.getMessageNumericField(messages[messageType][0])
+      for (let messageType of Object.keys(this.state.messages)) {
+        this.$set(this.checkboxes, messageType, this.getMessageNumericField(this.state.messages[messageType][0]))
+        newMessages[messageType] = this.getMessageNumericField(this.state.messages[messageType][0])
       }
 
       // populate checkbox status
-      for (let messageType of Object.keys(messages)) {
+      for (let messageType of Object.keys(this.state.messages)) {
         this.checkboxes[messageType] = {state: false, indeterminate: false, fields: {}}
-        for (let field of this.getMessageNumericField(messages[messageType][0])) {
+        for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
           this.checkboxes[messageType].fields[field] = false
         }
       }
-
       this.messages = newMessages
     },
     getMessageNumericField (message) {

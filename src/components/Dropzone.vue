@@ -23,6 +23,8 @@
 <script>
 import VProgress from './VProgress'
 import Worker from '../tools/parsers/parser.worker.js'
+import {store} from './Global'
+
 require('mavlink_common_v1.0')
 
 const worker = new Worker()
@@ -34,12 +36,12 @@ export default {
   data: function () {
     return {
       mavlinkParser: new MAVLink(),
-      messages: {},
       percentage: -1,
       uploadpercentage: -1,
       sampleLoaded: false,
       shared: false,
-      url: null
+      url: null,
+      state: store
     }
   },
   created () {
@@ -64,7 +66,7 @@ export default {
 
       oReq.onload = function (oEvent) {
         var arrayBuffer = oReq.response
-        worker.postMessage({action: 'parse', file: arrayBuffer})
+        worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: true})
       }
       oReq.send()
     },
@@ -97,7 +99,7 @@ export default {
       let reader = new FileReader()
       reader.onload = function (e) {
         let data = reader.result
-        worker.postMessage({action: 'parse', file: Buffer.from(data)})
+        worker.postMessage({action: 'parse', file: Buffer.from(data), isTlog: (file.name.indexOf('tlog') > 1)})
       }
 
       reader.readAsArrayBuffer(file)
@@ -154,8 +156,9 @@ export default {
       if (event.data.hasOwnProperty('percentage')) {
         this.percentage = event.data.percentage
       } else if (event.data.hasOwnProperty('messages')) {
-        this.messages = event.data.messages
-        this.$eventHub.$emit('messages', this.messages)
+        worker.terminate()
+        this.state.messages = event.data.messages
+        this.$eventHub.$emit('messages')
       }
     }.bind(this)
     if (this.$route.params.hasOwnProperty('id'))

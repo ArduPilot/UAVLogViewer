@@ -31,6 +31,11 @@ import Cesium from './Cesium'
 import Sidebar from './Sidebar'
 import {store} from './Global.js'
 
+function getMinAlt (data) {
+  return data.reduce((min, p) => p.Alt < min ? p.Alt : min, data[0].Alt)
+}
+
+
 export default {
   name: 'Home',
   created () {
@@ -45,38 +50,66 @@ export default {
     }
   },
   methods: {
-    updateData (messages) {
-      this.state.messages = messages
+    updateData () {
       this.state.time_attitude = this.extractAttitudes(this.state.messages)
       this.state.current_trajectory = this.extractTrajectory(this.state.messages)
       this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
-      this.state.map_on = true
     },
 
     extractTrajectory (messages) {
-      let gpsData = messages['GLOBAL_POSITION_INT']
       let trajectory = []
-      for (let pos of gpsData) {
-        if (pos.lat !== 0) {
-          trajectory.push([pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms])
-          this.state.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms]
+
+      if ('GLOBAL_POSITION_INT' in messages) {
+        let gpsData = messages['GLOBAL_POSITION_INT']
+        for (let pos of gpsData) {
+          if (pos.lat !== 0) {
+            trajectory.push([pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms])
+            this.state.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms]
+          }
+        }
+      } else if ('GPS' in messages) {
+        let gpsData = messages['GPS']
+        let min = getMinAlt(messages['GPS'])
+        console.log("min alt: " + min)
+        for (let pos of gpsData) {
+          if (pos.lat !== 0) {
+            trajectory.push([pos.Lng, pos.Lat, pos.Alt-min, pos.time_boot_ms])
+            this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, pos.Alt-min, pos.time_boot_ms]
+          }
         }
       }
       return trajectory
     },
     extractAttitudes (messages) {
-      let attitudeMsgs = messages['ATTITUDE']
       let attitudes = {}
-      for (let att of attitudeMsgs) {
-        attitudes[att.time_boot_ms] = [att.roll, att.pitch, att.yaw]
+      if ('ATTITUDE' in messages) {
+        let attitudeMsgs = messages['ATTITUDE']
+        for (let att of attitudeMsgs) {
+          attitudes[att.time_boot_ms] = [att.roll, att.pitch, att.yaw]
+        }
+      } else if ('ATT' in messages) {
+        let attitudeMsgs = messages['ATT']
+        for (let att of attitudeMsgs) {
+          attitudes[att.time_boot_ms] = [att.Roll, att.Pitch, att.Yaw]
+        }
       }
       return attitudes
     },
     extractFlightModes (messages) {
-      let modes = [[messages['HEARTBEAT'][0].time_boot_ms, messages['HEARTBEAT'][0].asText]]
-      for (let message of messages['HEARTBEAT']) {
-        if (message.asText !== modes[modes.length - 1][1]) {
-          modes.push([message.time_boot_ms, message.asText])
+      let modes
+      if ('HEARTBEAT' in messages) {
+        modes = [[messages['HEARTBEAT'][0].time_boot_ms, messages['HEARTBEAT'][0].asText]]
+        for (let message of messages['HEARTBEAT']) {
+          if (message.asText !== modes[modes.length - 1][1]) {
+            modes.push([message.time_boot_ms, message.asText])
+          }
+        }
+      } else if ('MODE' in messages) {
+        modes = [[messages['MODE'][0].time_boot_ms, messages['MODE'][0].asText]]
+        for (let message of messages['MODE']) {
+          if (message.asText !== modes[modes.length - 1][1]) {
+            modes.push([message.time_boot_ms, message.asText])
+          }
         }
       }
       return modes
