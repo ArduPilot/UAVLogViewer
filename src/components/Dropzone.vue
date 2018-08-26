@@ -6,7 +6,7 @@
     <li  v-if="url">
       <a class="section" @click="share" href="#"><i class="fas fa-share-alt"></i> {{ shared ? 'Copied to clipboard!' : 'Share link'}}</a>
     </li>
-    <div id="drop_zone" @dragover.prevent @drop="onDrop" @click="browse">
+    <div id="drop_zone" v-if="uploadpercentage===-1" @dragover.prevent @drop="onDrop" @click="browse">
       <p>Drop *.tlog file here or click to browse</p>
       <input type="file" id="choosefile" style="opacity: 0;" @change="onChange">
     </div>
