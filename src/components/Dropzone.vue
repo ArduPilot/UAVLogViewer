@@ -15,7 +15,7 @@
                v-bind:complete="state.processStatus"
     ></VProgress>
     <VProgress v-bind:percent="uploadpercentage"
-               v-bind:complete="'Upload Done'"
+               v-bind:complete="transferMessage"
                v-if="uploadpercentage > -1">
     </VProgress>
   </div>
@@ -40,6 +40,7 @@ export default {
       sampleLoaded: false,
       shared: false,
       url: null,
+      transferMessage: '',
       state: store
     }
   },
@@ -57,6 +58,7 @@ export default {
       } else {
         url = ('/uploaded/' + file)
       }
+      this.transferMessage = 'Download Done'
       this.sampleLoaded = true
       this.url = url
       let oReq = new XMLHttpRequest()
@@ -67,6 +69,14 @@ export default {
         var arrayBuffer = oReq.response
         worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: (url.indexOf('.tlog') > -1)})
       }
+      oReq.addEventListener('progress', function (e) {
+        if (e.lengthComputable) {
+          console.log(e.loaded + ' / ' + e.total)
+          this.uploadpercentage = 100 * e.loaded / e.total
+        }
+      }.bind(this)
+        , false)
+
       oReq.send()
     },
     onChange (ev) {
@@ -104,6 +114,7 @@ export default {
       reader.readAsArrayBuffer(file)
     },
     upload (file) {
+      this.transferMessage = 'Upload Done!'
       this.uploadpercentage = 0
       let formData = new FormData()
       formData.append('file', file)
