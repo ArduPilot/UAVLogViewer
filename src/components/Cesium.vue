@@ -220,12 +220,24 @@ export default {
         // Create sampled aircraft orientation
         let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
         let sampledOrientation = new Cesium.SampledProperty(Cesium.Quaternion)
-        for (let atti in this.state.time_attitude) {
-          if (this.state.time_attitude.hasOwnProperty(atti)) {
-            let att = this.state.time_attitude[atti]
-            let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(att[2], att[1], att[0]), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
-            let time = Cesium.JulianDate.addSeconds(start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
-            sampledOrientation.addSample(time, hpRoll)
+        if (Object.keys(this.state.time_attitudeQ).length === 0) {
+          for (let atti in this.state.time_attitude) {
+            if (this.state.time_attitude.hasOwnProperty(atti)) {
+              let att = this.state.time_attitude[atti]
+              let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(att[2], att[1], att[0]), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
+              let time = Cesium.JulianDate.addSeconds(start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
+              sampledOrientation.addSample(time, hpRoll)
+            }
+          }
+        } else {
+          for (let atti in this.state.time_attitudeQ) {
+            if (this.state.time_attitudeQ.hasOwnProperty(atti)) {
+              let att = this.state.time_attitudeQ[atti]
+              let temp = Cesium.HeadingPitchRoll.fromQuaternion(new Cesium.Quaternion(att[0], att[1], att[2], att[3]))
+              let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(temp.heading, temp.pitch, temp.roll), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
+              let time = Cesium.JulianDate.addSeconds(start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
+              sampledOrientation.addSample(time, hpRoll)
+            }
           }
         }
 

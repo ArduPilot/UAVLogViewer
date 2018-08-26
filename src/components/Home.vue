@@ -35,7 +35,6 @@ function getMinAlt (data) {
   return data.reduce((min, p) => p.Alt < min ? p.Alt : min, data[0].Alt)
 }
 
-
 export default {
   name: 'Home',
   created () {
@@ -52,6 +51,7 @@ export default {
   methods: {
     updateData () {
       this.state.time_attitude = this.extractAttitudes(this.state.messages)
+      this.state.time_attitudeQ = this.extractAttitudesQ(this.state.messages)
       this.state.current_trajectory = this.extractTrajectory(this.state.messages)
       this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
       this.state.map_on = true
@@ -75,8 +75,8 @@ export default {
         console.log("min alt: " + min)
         for (let pos of gpsData) {
           if (pos.lat !== 0) {
-            trajectory.push([pos.Lng, pos.Lat, pos.Alt-min, pos.time_boot_ms])
-            this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, pos.Alt-min, pos.time_boot_ms]
+            trajectory.push([pos.Lng, pos.Lat, pos.Alt - min, pos.time_boot_ms])
+            this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, pos.Alt - min, pos.time_boot_ms]
           }
         }
       }
@@ -93,6 +93,16 @@ export default {
         let attitudeMsgs = messages['ATT']
         for (let att of attitudeMsgs) {
           attitudes[att.time_boot_ms] = [att.Roll, att.Pitch, att.Yaw]
+        }
+      }
+      return attitudes
+    },
+    extractAttitudesQ (messages) {
+      let attitudes = {}
+      if ('XKQ1' in messages) {
+        let attitudeMsgs = messages['XKQ1']
+        for (let att of attitudeMsgs) {
+          attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
         }
       }
       return attitudes
