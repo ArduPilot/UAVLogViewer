@@ -54,6 +54,7 @@ export default {
       this.state.time_attitude = this.extractAttitudes(this.state.messages)
       this.state.current_trajectory = this.extractTrajectory(this.state.messages)
       this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
+      this.state.map_on = true
     },
 
     extractTrajectory (messages) {
