@@ -19,7 +19,7 @@ export default {
   components: {MessageMenu, Dropzone}
 }
 </script>
-<style scoped>
+<style>
     .nav-side-menu {
         overflow-x: hidden;
         font-family: verdana;
@@ -176,16 +176,6 @@ export default {
         }
     }
 
-    body {
-        margin: 0px;
-        padding: 0px;
-    }
-
-    .section {
-        font-size: 130%;
-        /*font-weight: bold;  */
-    }
-
     i {
         margin: 10px;
     }
@@ -201,9 +191,7 @@ export default {
         background-color: #1c437f;
     }
 
-</style>
-<style>
-  .custom-control-inline {
-    margin-right: 0;
-  }
+    .custom-control-inline {
+      margin-right: 0;
+    }
 </style>

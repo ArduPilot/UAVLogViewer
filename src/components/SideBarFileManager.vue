@@ -181,25 +181,6 @@ export default {
 }
 </script>
 <style scoped>
-    body {
-        font-size: .875rem;
-    }
-
-    /*
-     * Sidebar
-     */
-
-    @supports ((position: -webkit-sticky) or (position: sticky)) {
-    }
-
-    /*
-     * Content
-     */
-
-    [role="main"] {
-        padding-top: 48px; /* Space for fixed navbar */
-    }
-
     /*
      * Navbar
      */
@@ -219,45 +200,5 @@ export default {
       background-color: rgba(0,0,0,0.05);
     }
 
-    .nav-side-menu ul,
-    .nav-side-menu li {
-      list-style: none;
-      padding: 0px;
-      margin: 0px;
-      line-height: 35px;
-      cursor: pointer;
-      /*
-        .collapsed{
-           .arrow:before{
-                     font-family: FontAwesome;
-                     content: "\f053";
-                     display: inline-block;
-                     padding-left:10px;
-                     padding-right: 10px;
-                     vertical-align: middle;
-                     float:right;
-                }
-         }
-    */
-    }
-    .nav-side-menu li {
-      padding-left: 0px;
-      border-left: 3px solid #2e353d;
-      border-bottom: 1px solid #23282e;
-    }
 
-    .nav-side-menu li a {
-      text-decoration: none;
-      color: #e1ffff;
-    }
-
-    .nav-side-menu li a i{
-      padding-left: 0px;
-      width: 20px;
-      padding-right: 20px;
-    }
-
-    i {
-      margin: 10px;
-    }
 </style>
