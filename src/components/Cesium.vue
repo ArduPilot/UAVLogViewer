@@ -267,12 +267,19 @@ export default {
       },
 
       getModeColor (time) {
-        for (let mode of this.state.flight_mode_changes) {
-          if (mode[0] > time) {
-            return this.colors[this.setOfModes.indexOf(mode[1])-1]
+        return this.colors[this.setOfModes.indexOf(this.getMode(time))]
+      },
+      getMode (time) {
+        for (let mode in this.state.flight_mode_changes) {
+          if (this.state.flight_mode_changes[mode][0] > time) {
+            if ( mode - 1 < 0)
+            {
+              return this.state.flight_mode_changes[0][1]
+            }
+            return this.state.flight_mode_changes[mode - 1][1]
           }
         }
-        return this.colors[this.setOfModes.indexOf(this.state.flight_mode_changes[this.state.flight_mode_changes.length-1][1])]
+        return this.state.flight_mode_changes[this.state.flight_mode_changes.length-1][1]
       }
     },
 
