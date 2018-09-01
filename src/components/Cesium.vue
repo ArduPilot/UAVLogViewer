@@ -220,7 +220,8 @@ export default {
         // Create sampled aircraft orientation
         let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
         let sampledOrientation = new Cesium.SampledProperty(Cesium.Quaternion)
-        if (Object.keys(this.state.time_attitudeQ).length === 0) {
+        if (Object.keys(this.state.time_attitude).length > 0) {
+          console.log('plotting with attitude')
           for (let atti in this.state.time_attitude) {
             if (this.state.time_attitude.hasOwnProperty(atti)) {
               let att = this.state.time_attitude[atti]

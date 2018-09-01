@@ -89,7 +89,12 @@ export default {
         for (let att of attitudeMsgs) {
           attitudes[att.time_boot_ms] = [att.roll, att.pitch, att.yaw]
         }
-      } else if ('ATT' in messages) {
+      } else if ('AHR2' in messages) {
+        let attitudeMsgs = messages['AHR2']
+        for (let att of attitudeMsgs) {
+          attitudes[att.time_boot_ms] = [att.Roll, att.Pitch, att.Yaw]
+        }
+      }else if ('ATT' in messages) {
         let attitudeMsgs = messages['ATT']
         for (let att of attitudeMsgs) {
           attitudes[att.time_boot_ms] = [att.Roll, att.Pitch, att.Yaw]
