@@ -4,7 +4,7 @@
 
 <script>
 import Plotly from 'plotly.js'
-import {store} from './Global.js'
+import {store} from './Globals.js'
 
 let plotOptions = {
   legend: {

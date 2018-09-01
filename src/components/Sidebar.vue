@@ -11,8 +11,8 @@
     </div>
 </template>
 <script>
-import Dropzone from './Dropzone'
-import MessageMenu from './MessageMenu'
+import Dropzone from './SideBarFileManager'
+import MessageMenu from './SideBarMessageMenu'
 
 export default {
   name: 'sidebar',

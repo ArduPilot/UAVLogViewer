@@ -21,9 +21,9 @@
   </div>
 </template>
 <script>
-import VProgress from './VProgress'
+import VProgress from './SideBarFileManagerProgressBar'
 import Worker from '../tools/parsers/parser.worker.js'
-import {store} from './Global'
+import {store} from './Globals'
 
 require('mavlink_common_v1.0')
 

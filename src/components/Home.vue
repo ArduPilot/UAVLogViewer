@@ -29,7 +29,7 @@
 import Plotly from './Plotly'
 import Cesium from './Cesium'
 import Sidebar from './Sidebar'
-import {store} from './Global.js'
+import {store} from './Globals.js'
 
 function getMinAlt (data) {
   return data.reduce((min, p) => p.Alt < min ? p.Alt : min, data[0].Alt)

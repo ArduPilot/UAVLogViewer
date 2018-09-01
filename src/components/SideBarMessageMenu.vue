@@ -48,7 +48,7 @@
 <script>
 
 import Vue from 'vue'
-import {store} from './Global.js'
+import {store} from './Globals.js'
 
 export default {
   name: 'message-menu',

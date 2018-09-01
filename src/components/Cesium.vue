@@ -17,7 +17,7 @@
 import Cesium from 'cesium/Cesium'
 import 'cesium/Widgets/widgets.css'
 import colormap from 'colormap'
-import {store} from './Global.js'
+import {store} from './Globals.js'
 
 function getMinTime (data) {
   return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3])
