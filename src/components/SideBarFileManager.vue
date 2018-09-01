@@ -10,14 +10,14 @@
       <p>Drop *.tlog file here or click to browse</p>
       <input type="file" id="choosefile" style="opacity: 0;" @change="onChange">
     </div>
-    <VProgress v-bind:percent="state.processPercentage"
-               v-if="state.processPercentage > -1"
-               v-bind:complete="state.processStatus"
-    ></VProgress>
     <VProgress v-bind:percent="uploadpercentage"
                v-bind:complete="transferMessage"
                v-if="uploadpercentage > -1">
     </VProgress>
+    <VProgress v-bind:percent="state.processPercentage"
+               v-if="state.processPercentage > -1"
+               v-bind:complete="state.processStatus"
+    ></VProgress>
   </div>
 </template>
 <script>
