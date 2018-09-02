@@ -128,6 +128,8 @@ export default {
           this.url = request.responseText
         } else {
           alert('error! ' + request.status)
+          this.uploadpercentage = 100
+          this.transferMessage = "Error Uploading"
           console.log(request)
         }
       }.bind(this)
