@@ -24,15 +24,15 @@
     </li>
     <b-collapse id="messages" >
     <template v-for="(message, key) in messages">
-      <li class="type">
+      <li class="type" v-bind:key="key">
         <b-form-checkbox v-model="checkboxes[key].state"
                          :indeterminate="checkboxes[key].indeterminate"
                          @change="toggleType($event, key)">
         </b-form-checkbox>
-        <a v-b-toggle="'type' + message" class="section" href="#">{{key}}
+        <a v-b-toggle="'type' + key" class="section" href="#">{{key}}
           <i class="fas fa-caret-down"></i></a>
       </li>
-      <b-collapse :id="'type' + message" >
+      <b-collapse :id="'type' + key" >
       <template v-for="item in message">
         <li class="field">
           <a href="#">
