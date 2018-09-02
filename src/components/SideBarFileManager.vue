@@ -74,7 +74,6 @@ export default {
       }
       oReq.addEventListener('progress', function (e) {
         if (e.lengthComputable) {
-          console.log(e.loaded + ' / ' + e.total)
           this.uploadpercentage = 100 * e.loaded / e.total
         }
       }.bind(this)
@@ -124,7 +123,6 @@ export default {
 
       let request = new XMLHttpRequest()
       request.onload = function () {
-        console.log(request)
         if (request.status >= 200 && request.status < 400) {
           this.uploadpercentage = 100
           this.url = request.responseText
@@ -135,7 +133,6 @@ export default {
       }.bind(this)
       request.upload.addEventListener('progress', function (e) {
         if (e.lengthComputable) {
-          console.log(e.loaded + ' / ' + e.total)
           this.uploadpercentage = 100 * e.loaded / e.total
         }
       }.bind(this)
