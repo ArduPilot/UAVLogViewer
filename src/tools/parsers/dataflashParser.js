@@ -380,7 +380,7 @@ export class DataflashParser {
       message.Lat = message.Lat / 1e7
       message.Lng = message.Lng / 1e7
       message.Alt = message.Alt / 1e4
-    } else if (message.name === 'ATT') {
+    } else if (message.name === 'ATT' || message.name === 'AHR2') {
       message.Roll = Math.radians(message.Roll / 1e4)
       message.Pitch = Math.radians(message.Pitch / 1e4)
       message.Yaw = Math.radians(message.Yaw / 1e4)
@@ -388,6 +388,7 @@ export class DataflashParser {
       message.asText = this.getModeString(message.Mode)
     }
     message.time_boot_ms = message.TimeUS / 1000
+    delete message.TimeUS
     return message
   }
 
