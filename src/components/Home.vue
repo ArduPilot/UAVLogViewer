@@ -6,17 +6,17 @@
       <sidebar />
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex">
-        <div class="row" v-if="state.map_on" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
-          <div class="col-12 noPadding">
-            <Cesium ref="cesium"
-                    v-if="state.current_trajectory.length"/>
-          </div>
-        </div>
         <div class="row"
              v-if="state.plot_on"
              v-bind:class="[state.map_on ? 'h-50' : 'h-100']">
           <div class="col-12">
             <Plotly />
+          </div>
+        </div>
+        <div class="row" v-if="state.map_on" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
+          <div class="col-12 noPadding">
+            <Cesium ref="cesium"
+                    v-if="state.current_trajectory.length"/>
           </div>
         </div>
       </main>
