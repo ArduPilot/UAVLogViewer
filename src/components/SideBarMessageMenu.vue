@@ -169,6 +169,14 @@ export default {
     i {
         margin: 10px;
     }
+    i.expand {
+      float:right;
+    }
+
+    li>div {
+      display: inline-block;
+      width: 100%;
+    }
     li.field {
       line-height: 20px;
       padding-left: 40px;
