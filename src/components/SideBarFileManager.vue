@@ -13,6 +13,8 @@
       <p>Drop *.tlog file here or click to browse</p>
       <input type="file" id="choosefile" style="opacity: 0;" @change="onChange">
     </div>
+    <b-form-checkbox class="uploadCheckbox" v-if="file!=null && !uploadStarted" @change="uploadFile()"> Upload
+    </b-form-checkbox>
     <VProgress v-bind:percent="uploadpercentage"
                v-bind:complete="transferMessage"
                v-if="uploadpercentage > -1">
@@ -44,7 +46,9 @@ export default {
       shared: false,
       url: null,
       transferMessage: '',
-      state: store
+      state: store,
+      file: null,
+      uploadStarted: false
     }
   },
   created () {
@@ -106,7 +110,7 @@ export default {
       }
     },
     process: function (file) {
-      this.upload(file)
+      this.file = file
       let reader = new FileReader()
       reader.onload = function (e) {
         let data = reader.result
@@ -115,11 +119,12 @@ export default {
 
       reader.readAsArrayBuffer(file)
     },
-    upload (file) {
+    uploadFile () {
+      this.uploadStarted = true
       this.transferMessage = 'Upload Done!'
       this.uploadpercentage = 0
       let formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', this.file)
 
       let request = new XMLHttpRequest()
       request.onload = function () {
@@ -202,5 +207,8 @@ export default {
       background-color: rgba(0,0,0,0.05);
     }
 
+    .uploadCheckbox {
+      margin-left: 20px;
+    }
 
 </style>
