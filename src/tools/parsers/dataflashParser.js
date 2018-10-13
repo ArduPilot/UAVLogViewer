@@ -361,18 +361,26 @@ export class DataflashParser {
   }
   getModeString (cmode) {
     let mavtype
-    if (this.messages['MSG'][0].Message.indexOf('ArduPlane')>-1) {
-      mavtype = mavlink.MAV_TYPE_FIXED_WING
-    } else if (this.messages['MSG'][0].indexOf('ArduCopter')>-1) {
-      mavtype = mavlink.MAV_TYPE_QUADROTOR
-    } else if (this.messages['MSG'][0].indexOf('ArduSub')>-1) {
-      mavtype = mavlink.MAV_TYPE_SUBMARINE
-    } else if (this.messages['MSG'][0].indexOf('Rover')>-1) {
-      mavtype = mavlink.MAV_TYPE_GROUND_ROVER
-    } else if (this.messages['MSG'][0].indexOf('Tracker')>-1) {
-      mavtype = mavlink.MAV_TYPE_ANTENNA_TRACKER
+    for(let msg of this.messages['MSG']) {
+      if (msg.Message.indexOf('ArduPlane') > -1) {
+        mavtype = mavlink.MAV_TYPE_FIXED_WING
+        return getModeMap(mavtype)[cmode]
+      } else if (msg.Message.indexOf('ArduCopter') > -1) {
+        mavtype = mavlink.MAV_TYPE_QUADROTOR
+        return getModeMap(mavtype)[cmode]
+      } else if (msg.Message.indexOf('ArduSub') > -1) {
+        mavtype = mavlink.MAV_TYPE_SUBMARINE
+        return getModeMap(mavtype)[cmode]
+      } else if (msg.Message.indexOf('Rover') > -1) {
+        mavtype = mavlink.MAV_TYPE_GROUND_ROVER
+        return getModeMap(mavtype)[cmode]
+      } else if (msg.Message.indexOf('Tracker') > -1) {
+        mavtype = mavlink.MAV_TYPE_ANTENNA_TRACKER
+        return getModeMap(mavtype)[cmode]
+      }
     }
-    return getModeMap(mavtype)[cmode]
+    console.log("defaulting to quadcopter")
+    return getModeMap(mavlink.MAV_TYPE_QUADROTOR)[cmode]
   }
 
   fixData (message) {
