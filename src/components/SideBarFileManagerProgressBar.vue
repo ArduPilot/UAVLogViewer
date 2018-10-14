@@ -10,8 +10,8 @@
 
 <script>
 export default {
-  name: 'Progress',
-  props: ['percent', 'complete']
+    name: 'Progress',
+    props: ['percent', 'complete']
 }
 </script>
 

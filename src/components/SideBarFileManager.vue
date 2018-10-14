@@ -37,154 +37,156 @@ const worker = new Worker()
 worker.addEventListener('message', function (event) {})
 
 export default {
-  name: 'Dropzone',
-  data: function () {
-    return {
-      mavlinkParser: new MAVLink(),
-      uploadpercentage: -1,
-      sampleLoaded: false,
-      shared: false,
-      url: null,
-      transferMessage: '',
-      state: store,
-      file: null,
-      uploadStarted: false
+    name: 'Dropzone',
+    data: function () {
+        return {
+            mavlinkParser: new MAVLink(),
+            uploadpercentage: -1,
+            sampleLoaded: false,
+            shared: false,
+            url: null,
+            transferMessage: '',
+            state: store,
+            file: null,
+            uploadStarted: false
+        }
+    },
+    created () {
+
+    },
+    beforeDestroy () {
+        this.$eventHub.$off('open-sample')
+    },
+    methods: {
+        onLoadSample (file) {
+            let url
+            if (file === 'sample') {
+                url = require('../assets/vtol.tlog')
+            } else {
+                url = ('/uploaded/' + file)
+            }
+            this.transferMessage = 'Download Done'
+            this.sampleLoaded = true
+            this.url = url
+            let oReq = new XMLHttpRequest()
+            oReq.open('GET', url, true)
+            oReq.responseType = 'arraybuffer'
+
+            oReq.onload = function (oEvent) {
+                var arrayBuffer = oReq.response
+                worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: (url.indexOf('.tlog') > -1)})
+            }
+            oReq.addEventListener('progress', function (e) {
+                if (e.lengthComputable) {
+                    this.uploadpercentage = 100 * e.loaded / e.total
+                }
+            }.bind(this)
+                , false)
+
+            oReq.send()
+        },
+        onChange (ev) {
+            let fileinput = document.getElementById('choosefile')
+            this.process(fileinput.files[0])
+        },
+        onDrop (ev) {
+            // Prevent default behavior (Prevent file from being opened)
+            ev.preventDefault()
+            if (ev.dataTransfer.items) {
+                // Use DataTransferItemList interface to access the file(s)
+                for (let i = 0; i < ev.dataTransfer.items.length; i++) {
+                    // If dropped items aren't files, reject them
+                    if (ev.dataTransfer.items[i].kind === 'file') {
+                        let file = ev.dataTransfer.items[i].getAsFile()
+                        this.process(file)
+                    }
+                }
+            } else {
+                // Use DataTransfer interface to access the file(s)
+                for (let i = 0; i < ev.dataTransfer.files.length; i++) {
+                    console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name)
+                    console.log(ev.dataTransfer.files[i])
+                }
+            }
+        },
+        process: function (file) {
+            this.file = file
+            let reader = new FileReader()
+            reader.onload = function (e) {
+                let data = reader.result
+                worker.postMessage({action: 'parse',
+                    file: Buffer.from(data),
+                    isTlog: (file.name.indexOf('tlog') > 1)})
+            }
+
+            reader.readAsArrayBuffer(file)
+        },
+        uploadFile () {
+            this.uploadStarted = true
+            this.transferMessage = 'Upload Done!'
+            this.uploadpercentage = 0
+            let formData = new FormData()
+            formData.append('file', this.file)
+
+            let request = new XMLHttpRequest()
+            request.onload = function () {
+                if (request.status >= 200 && request.status < 400) {
+                    this.uploadpercentage = 100
+                    this.url = request.responseText
+                } else {
+                    alert('error! ' + request.status)
+                    this.uploadpercentage = 100
+                    this.transferMessage = 'Error Uploading'
+                    console.log(request)
+                }
+            }.bind(this)
+            request.upload.addEventListener('progress', function (e) {
+                if (e.lengthComputable) {
+                    this.uploadpercentage = 100 * e.loaded / e.total
+                }
+            }.bind(this)
+                , false)
+            request.open('POST', '/upload')
+            request.send(formData)
+        },
+        fixData (message) {
+            if (message.name === 'GLOBAL_POSITION_INT') {
+                message.lat = message.lat / 10000000
+                message.lon = message.lon / 10000000
+                message.relative_alt = message.relative_alt / 1000
+            }
+            return message
+        },
+        browse () {
+            document.getElementById('choosefile').click()
+        },
+        share () {
+            const el = document.createElement('textarea')
+            el.value = window.location.host + '/#/v/' + this.url
+            document.body.appendChild(el)
+            el.select()
+            document.execCommand('copy')
+            document.body.removeChild(el)
+            this.shared = true
+        }
+    },
+    mounted () {
+        worker.onmessage = function (event) {
+            if (event.data.hasOwnProperty('percentage')) {
+                this.state.processPercentage = event.data.percentage
+            } else if (event.data.hasOwnProperty('messages')) {
+                worker.terminate()
+                this.state.messages = event.data.messages
+                this.$eventHub.$emit('messages')
+            }
+        }.bind(this)
+        if (this.$route.params.hasOwnProperty('id')) {
+            this.onLoadSample(this.$route.params.id)
+        }
+    },
+    components: {
+        VProgress
     }
-  },
-  created () {
-
-  },
-  beforeDestroy () {
-    this.$eventHub.$off('open-sample')
-  },
-  methods: {
-    onLoadSample (file) {
-      let url
-      if (file === 'sample') {
-        url = require('../assets/vtol.tlog')
-      } else {
-        url = ('/uploaded/' + file)
-      }
-      this.transferMessage = 'Download Done'
-      this.sampleLoaded = true
-      this.url = url
-      let oReq = new XMLHttpRequest()
-      oReq.open('GET', url, true)
-      oReq.responseType = 'arraybuffer'
-
-      oReq.onload = function (oEvent) {
-        var arrayBuffer = oReq.response
-        worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: (url.indexOf('.tlog') > -1)})
-      }
-      oReq.addEventListener('progress', function (e) {
-        if (e.lengthComputable) {
-          this.uploadpercentage = 100 * e.loaded / e.total
-        }
-      }.bind(this)
-        , false)
-
-      oReq.send()
-    },
-    onChange (ev) {
-      let fileinput = document.getElementById('choosefile')
-      this.process(fileinput.files[0])
-    },
-    onDrop (ev) {
-      // Prevent default behavior (Prevent file from being opened)
-      ev.preventDefault()
-      if (ev.dataTransfer.items) {
-        // Use DataTransferItemList interface to access the file(s)
-        for (let i = 0; i < ev.dataTransfer.items.length; i++) {
-          // If dropped items aren't files, reject them
-          if (ev.dataTransfer.items[i].kind === 'file') {
-            let file = ev.dataTransfer.items[i].getAsFile()
-            this.process(file)
-          }
-        }
-      } else {
-        // Use DataTransfer interface to access the file(s)
-        for (let i = 0; i < ev.dataTransfer.files.length; i++) {
-          console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name)
-          console.log(ev.dataTransfer.files[i])
-        }
-      }
-    },
-    process: function (file) {
-      this.file = file
-      let reader = new FileReader()
-      reader.onload = function (e) {
-        let data = reader.result
-        worker.postMessage({action: 'parse', file: Buffer.from(data), isTlog: (file.name.indexOf('tlog') > 1)})
-      }
-
-      reader.readAsArrayBuffer(file)
-    },
-    uploadFile () {
-      this.uploadStarted = true
-      this.transferMessage = 'Upload Done!'
-      this.uploadpercentage = 0
-      let formData = new FormData()
-      formData.append('file', this.file)
-
-      let request = new XMLHttpRequest()
-      request.onload = function () {
-        if (request.status >= 200 && request.status < 400) {
-          this.uploadpercentage = 100
-          this.url = request.responseText
-        } else {
-          alert('error! ' + request.status)
-          this.uploadpercentage = 100
-          this.transferMessage = "Error Uploading"
-          console.log(request)
-        }
-      }.bind(this)
-      request.upload.addEventListener('progress', function (e) {
-        if (e.lengthComputable) {
-          this.uploadpercentage = 100 * e.loaded / e.total
-        }
-      }.bind(this)
-        , false)
-      request.open('POST', '/upload')
-      request.send(formData)
-    },
-    fixData (message) {
-      if (message.name === 'GLOBAL_POSITION_INT') {
-        message.lat = message.lat / 10000000
-        message.lon = message.lon / 10000000
-        message.relative_alt = message.relative_alt / 1000
-      }
-      return message
-    },
-    browse () {
-      document.getElementById('choosefile').click()
-    },
-    share () {
-      const el = document.createElement('textarea')
-      el.value = window.location.host + '/#/v/' + this.url
-      document.body.appendChild(el)
-      el.select()
-      document.execCommand('copy')
-      document.body.removeChild(el)
-      this.shared = true
-    }
-  },
-  mounted () {
-    worker.onmessage = function (event) {
-      if (event.data.hasOwnProperty('percentage')) {
-        this.state.processPercentage = event.data.percentage
-      } else if (event.data.hasOwnProperty('messages')) {
-        worker.terminate()
-        this.state.messages = event.data.messages
-        this.$eventHub.$emit('messages')
-      }
-    }.bind(this)
-    if (this.$route.params.hasOwnProperty('id')) {
-      this.onLoadSample(this.$route.params.id)
-    }
-  },
-  components: {
-    VProgress
-  }
 }
 </script>
 <style scoped>

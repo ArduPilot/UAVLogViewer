@@ -53,115 +53,115 @@ import Vue from 'vue'
 import {store} from './Globals.js'
 
 export default {
-  name: 'message-menu',
-  data () {
-    return {
-      checkboxes: {},
-      state: store,
-      messages: {}
-    }
-  },
-  created () {
-    this.$eventHub.$on('messages', this.handleMessages)
-  },
-  beforeDestroy () {
-    this.$eventHub.$off('messages')
-  },
-  methods: {
-    handleMessages () {
-      let newMessages = {}
-      // populate list of message types
-      for (let messageType of Object.keys(this.state.messages)) {
-        this.$set(this.checkboxes, messageType, this.getMessageNumericField(this.state.messages[messageType][0]))
-        newMessages[messageType] = this.getMessageNumericField(this.state.messages[messageType][0])
-      }
-
-      // populate checkbox status
-      for (let messageType of Object.keys(this.state.messages)) {
-        this.checkboxes[messageType] = {state: false, indeterminate: false, fields: {}}
-        for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
-          this.checkboxes[messageType].fields[field] = false
+    name: 'message-menu',
+    data () {
+        return {
+            checkboxes: {},
+            state: store,
+            messages: {}
         }
-      }
-      this.messages = newMessages
     },
-    getMessageNumericField (message) {
-      let numberFields = []
-      for (let field of message.fieldnames) {
-        if (!isNaN(message[field])) {
-          numberFields.push(field)
-        }
-      }
-      return numberFields
+    created () {
+        this.$eventHub.$on('messages', this.handleMessages)
     },
-    toggle (state, message, item) {
-      if (state) {
-        this.state.plot_on = true
-        Vue.nextTick(function () {
-          this.$eventHub.$emit('addPlot', message + '.' + item)
-        }.bind(this))
-      } else {
-        this.$eventHub.$emit('hidePlot', message + '.' + item)
-      }
-      Vue.nextTick(function () {
-        for (let messagekey of Object.keys(this.checkboxes)) {
-          let message = this.checkboxes[messagekey]
-          let allTrue = true
-          let allFalse = true
-          for (let fieldkey of Object.keys(message.fields)) {
-            let field = message.fields[fieldkey]
-            if (field) {
-              allFalse = false
-            } else {
-              allTrue = false
+    beforeDestroy () {
+        this.$eventHub.$off('messages')
+    },
+    methods: {
+        handleMessages () {
+            let newMessages = {}
+            // populate list of message types
+            for (let messageType of Object.keys(this.state.messages)) {
+                this.$set(this.checkboxes, messageType, this.getMessageNumericField(this.state.messages[messageType][0]))
+                newMessages[messageType] = this.getMessageNumericField(this.state.messages[messageType][0])
             }
-          }
-          if (allTrue) {
-            this.checkboxes[messagekey].state = true
-            this.checkboxes[messagekey].indeterminate = false
-          } else if (allFalse) {
-            this.checkboxes[messagekey].state = false
-            this.checkboxes[messagekey].indeterminate = false
-          } else {
-            this.checkboxes[messagekey].indeterminate = true
-          }
+
+            // populate checkbox status
+            for (let messageType of Object.keys(this.state.messages)) {
+                this.checkboxes[messageType] = {state: false, indeterminate: false, fields: {}}
+                for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
+                    this.checkboxes[messageType].fields[field] = false
+                }
+            }
+            this.messages = newMessages
+        },
+        getMessageNumericField (message) {
+            let numberFields = []
+            for (let field of message.fieldnames) {
+                if (!isNaN(message[field])) {
+                    numberFields.push(field)
+                }
+            }
+            return numberFields
+        },
+        toggle (state, message, item) {
+            if (state) {
+                this.state.plot_on = true
+                Vue.nextTick(function () {
+                    this.$eventHub.$emit('addPlot', message + '.' + item)
+                }.bind(this))
+            } else {
+                this.$eventHub.$emit('hidePlot', message + '.' + item)
+            }
+            Vue.nextTick(function () {
+                for (let messagekey of Object.keys(this.checkboxes)) {
+                    let message = this.checkboxes[messagekey]
+                    let allTrue = true
+                    let allFalse = true
+                    for (let fieldkey of Object.keys(message.fields)) {
+                        let field = message.fields[fieldkey]
+                        if (field) {
+                            allFalse = false
+                        } else {
+                            allTrue = false
+                        }
+                    }
+                    if (allTrue) {
+                        this.checkboxes[messagekey].state = true
+                        this.checkboxes[messagekey].indeterminate = false
+                    } else if (allFalse) {
+                        this.checkboxes[messagekey].state = false
+                        this.checkboxes[messagekey].indeterminate = false
+                    } else {
+                        this.checkboxes[messagekey].indeterminate = true
+                    }
+                }
+            }.bind(this))
+        },
+        toggleType (state, message) {
+            for (let field of this.messages[message]) {
+                this.checkboxes[message].fields[field] = state
+            }
+            if (state) {
+                this.state.plot_on = true
+            }
+            Vue.nextTick(function () {
+                for (let field of this.messages[message]) {
+                    this.checkboxes[message].fields[field] = state
+                    if (state) {
+                        this.$eventHub.$emit('addPlot', message + '.' + field)
+                    } else {
+                        this.$eventHub.$emit('hidePlot', message + '.' + field)
+                    }
+                }
+            }.bind(this))
+        },
+        hidePlots () {
+            for (let message of Object.keys(this.checkboxes)) {
+                this.checkboxes[message].state = false
+                this.checkboxes[message].indeterminate = false
+                for (let field of Object.keys(this.checkboxes[message].fields)) {
+                    this.checkboxes[message].fields[field] = false
+                }
+            }
+            this.state.plot_on = false
         }
-      }.bind(this))
     },
-    toggleType (state, message) {
-      for (let field of this.messages[message]) {
-        this.checkboxes[message].fields[field] = state
-      }
-      if (state) {
-        this.state.plot_on = true
-      }
-      Vue.nextTick(function () {
-        for (let field of this.messages[message]) {
-          this.checkboxes[message].fields[field] = state
-          if (state) {
-            this.$eventHub.$emit('addPlot', message + '.' + field)
-          } else {
-            this.$eventHub.$emit('hidePlot', message + '.' + field)
-          }
+    computed: {
+        hasMessages () {
+            return Object.keys(this.messages).length > 0
         }
-      }.bind(this))
-    },
-    hidePlots () {
-      for (let message of Object.keys(this.checkboxes)) {
-        this.checkboxes[message].state = false
-        this.checkboxes[message].indeterminate = false
-        for (let field of Object.keys(this.checkboxes[message].fields)) {
-          this.checkboxes[message].fields[field] = false
-        }
-      }
-      this.state.plot_on = false
     }
-  },
-  computed: {
-    hasMessages () {
-      return Object.keys(this.messages).length > 0
-    }
-  }
 
 }
 </script>

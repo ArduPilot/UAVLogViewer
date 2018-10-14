@@ -15,8 +15,8 @@ import Dropzone from './SideBarFileManager'
 import MessageMenu from './SideBarMessageMenu'
 
 export default {
-  name: 'sidebar',
-  components: {MessageMenu, Dropzone}
+    name: 'sidebar',
+    components: {MessageMenu, Dropzone}
 }
 </script>
 <style>

@@ -11,12 +11,12 @@ Vue.use(BootstrapVue)
 
 Vue.config.productionTip = false
 
-Vue.prototype.$eventHub = new Vue(); // Global event bus
+Vue.prototype.$eventHub = new Vue() // Global event bus
 
 /* eslint-disable no-new */
 new Vue({
-  el: '#app',
-  router,
-  components: { App },
-  template: '<App/>'
+    el: '#app',
+    router,
+    components: { App },
+    template: '<App/>'
 })
