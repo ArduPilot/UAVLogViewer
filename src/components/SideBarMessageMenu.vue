@@ -23,7 +23,7 @@
         <i class="fas fa-caret-down"></i></a>
     </li>
     <b-collapse id="messages" >
-    <template v-for="(message, key) in messages">
+    <template v-for="(message, key) in messageTypes">
       <li class="type" v-bind:key="key">
         <div v-b-toggle="'type' + key" >
           <b-form-checkbox v-model="checkboxes[key].state"
@@ -58,11 +58,13 @@ export default {
         return {
             checkboxes: {},
             state: store,
-            messages: {}
+            messages: {},
+            messageTypes: []
         }
     },
     created () {
         this.$eventHub.$on('messages', this.handleMessages)
+        this.$eventHub.$on('messageTypes', this.handleMessageTypes)
     },
     beforeDestroy () {
         this.$eventHub.$off('messages')
@@ -72,6 +74,7 @@ export default {
             let newMessages = {}
             // populate list of message types
             for (let messageType of Object.keys(this.state.messages)) {
+                this.$set(this.checkboxes, messageType, this.getMessageNumericField(this.state.messages[messageType][0]))
                 this.$set(this.checkboxes, messageType, this.getMessageNumericField(this.state.messages[messageType][0]))
                 newMessages[messageType] = this.getMessageNumericField(this.state.messages[messageType][0])
             }
@@ -85,11 +88,33 @@ export default {
             }
             this.messages = newMessages
         },
+        handleMessageTypes (messageTypes) {
+            console.log(messageTypes)
+            let newMessages = {}
+            // populate list of message types
+            for (let messageType of Object.keys(messageTypes)) {
+                //this.$set(this.checkboxes, messageType, this.getMessageNumericField(this.state.messages[messageType][0]))
+                this.$set(this.checkboxes, messageType, messageTypes[messageType])
+                newMessages[messageType] = messageTypes[messageType]
+            }
+
+            // populate checkbox status
+            for (let messageType of Object.keys(messageTypes)) {
+                this.checkboxes[messageType] = {state: false, indeterminate: false, fields: {}}
+                // for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
+                for (let field of messageType) {
+                    this.checkboxes[messageType].fields[field] = false
+                }
+            }
+            this.messageTypes = newMessages
+        },
         getMessageNumericField (message) {
             let numberFields = []
-            for (let field of message.fieldnames) {
-                if (!isNaN(message[field])) {
-                    numberFields.push(field)
+            if (message && message.hasOwnProperty('fieldnames')) {
+                for (let field of message.fieldnames) {
+                    if (!isNaN(message[field])) {
+                        numberFields.push(field)
+                    }
                 }
             }
             return numberFields

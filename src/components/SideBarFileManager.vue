@@ -174,10 +174,17 @@ export default {
         worker.onmessage = function (event) {
             if (event.data.hasOwnProperty('percentage')) {
                 this.state.processPercentage = event.data.percentage
+            } else if (event.data.hasOwnProperty('availableMessages')) {
+                console.log(event.data.availableMessages)
+                this.$eventHub.$emit('messageTypes', event.data.availableMessages)
             } else if (event.data.hasOwnProperty('messages')) {
-                worker.terminate()
                 this.state.messages = event.data.messages
                 this.$eventHub.$emit('messages')
+            } else if (event.data.hasOwnProperty('messageType')) {
+                this.state.messages[event.data.messageType] = event.data.messageList
+                this.$eventHub.$emit('messages')
+            } else if (event.data.hasOwnProperty('done')) {
+                worker.terminate()
             }
         }.bind(this)
         if (this.$route.params.hasOwnProperty('id')) {

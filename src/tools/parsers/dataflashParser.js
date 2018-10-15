@@ -258,150 +258,167 @@ export class DataflashParser {
         this.setTimeBase(parseInt(temp - gps['TimeUS'] * 0.000001))
     }
 
-  getMsgType=function (element) {
-      for (i = 0; i < this.FMT.length; i++) {
-          if (this.FMT[i] != null) {
-              if (this.FMT[i].Name == element) {
-                  return i
-              }
+    getMsgType (element) {
+        for (let i = 0; i < this.FMT.length; i++) {
+            if (this.FMT[i] != null) {
+                if (this.FMT[i].Name == element) {
+                    return i
+                }
+            }
+        }
+    }
+
+    onMessage (message) {
+        if (this.totalSize == null) { // for percentage calculation
+            this.totalSize = this.buffer.byteLength
+        }
+
+        if (message.name in this.messages) {
+            this.messages[message.name].push(this.fixData(message))
+        } else {
+            this.messages[message.name] = [this.fixData(message)]
+        }
+        let percentage = 100 * this.offset / this.totalSize
+        if ((percentage - this.lastPercentage) > this.maxPercentageInterval) {
+            self.postMessage({percentage: percentage})
+            this.lastPercentage = percentage
+        }
+
+        // TODO: FIX THIS!
+        // This a hack to detect the end of the buffer and only them message the main thread
+        if ((this.totalSize - this.offset) < 100 && this.sent === false) {
+            self.postMessage({percentage: 100})
+            self.postMessage({messages: this.messages})
+            this.sent = true
+        }
+    }
+
+    parse_atOffset (name) {
+        let type = this.getMsgType(name)
+        var parsed = []
+        console.log(type)
+        for (var i = 0; i < this.msgType.length; i++) {
+            if (type === this.msgType[i]) {
+                this.offset = this.offsetArray[i]
+                let temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
+                if (name === 'TimeUS' && temp['name'] != null) {
+                    parsed.push(this.time_stamp(temp['name']))
+                } else if (temp['name'] != null) {
+                    parsed.push(this.fixData(temp))
+                }
+            }
+        }
+        self.postMessage({messageType: name, messageList: parsed})
+        this.messages[name] = parsed
+        return parsed
+    }
+
+    time_stamp (TimeUs) {
+        var temp = 0
+        temp = this.timebase + TimeUs * 0.000001
+        if (temp > 0) { TimeUs = temp }
+        var date = new Date(TimeUs * 1000)
+        var day = date.getDate()
+        var month = date.getMonth()
+        var year = date.getFullYear()
+        var hours = date.getHours()
+        var minutes = '0' + date.getMinutes()
+        var seconds = '0' + date.getSeconds()
+        var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2)
+        var date = date.toString()
+        var time = date.split(' ')
+        if (time[0] !== 'Invalid') {
+            this.time = time[0] + ' ' + time[1] + ' ' + time[2] + ' ' + time[3]
+        }
+        return formattedTime
+    }
+
+    DF_reader () {
+        while (this.offset < (this.buffer.byteLength - 20)) {
+            this.offset += 2
+            var attribute = this.data.getUint8(this.offset)
+            if (this.FMT[attribute] != null) {
+                this.offset += 1
+                this.offsetArray.push(this.offset)
+                this.msgType.push(attribute)
+                var value = this.FORMAT_TO_STRUCT(this.FMT[attribute])
+                if (this.FMT[attribute].Name == 'GPS') {
+                    this.findTimeBase(value)
+                }
+                if (attribute == '128') {
+                    this.FMT[value['Type']] = {
+                        'Type': value['Type'],
+                        'length': value['Length'],
+                        'Name': value['Name'],
+                        'Format': value['Format'],
+                        'Columns': value['Columns']
+                    }
+                }
+                //this.onMessage(value)
+            } else {
+                this.offset += 1
+            }
+        }
+    }
+    getModeString (cmode) {
+        let mavtype
+        for (let msg of this.messages['MSG']) {
+            if (msg.Message.indexOf('ArduPlane') > -1) {
+                mavtype = mavlink.MAV_TYPE_FIXED_WING
+                return getModeMap(mavtype)[cmode]
+            } else if (msg.Message.indexOf('ArduCopter') > -1) {
+                mavtype = mavlink.MAV_TYPE_QUADROTOR
+                return getModeMap(mavtype)[cmode]
+            } else if (msg.Message.indexOf('ArduSub') > -1) {
+                mavtype = mavlink.MAV_TYPE_SUBMARINE
+                return getModeMap(mavtype)[cmode]
+            } else if (msg.Message.indexOf('Rover') > -1) {
+                mavtype = mavlink.MAV_TYPE_GROUND_ROVER
+                return getModeMap(mavtype)[cmode]
+            } else if (msg.Message.indexOf('Tracker') > -1) {
+                mavtype = mavlink.MAV_TYPE_ANTENNA_TRACKER
+                return getModeMap(mavtype)[cmode]
+            }
+        }
+        console.log('defaulting to quadcopter')
+        return getModeMap(mavlink.MAV_TYPE_QUADROTOR)[cmode]
+    }
+
+    fixData (message) {
+        if (message.name === 'GPS') {
+            message.Lat = message.Lat / 1e7
+            message.Lng = message.Lng / 1e7
+            message.Alt = message.Alt / 1e4
+        } else if (message.name === 'ATT' || message.name === 'AHR2') {
+            message.Roll = Math.radians(message.Roll / 1e4)
+            message.Pitch = Math.radians(message.Pitch / 1e4)
+            message.Pitch = Math.radians(message.Pitch / 1e4)
+            message.Yaw = Math.radians(message.Yaw / 1e4)
+        } else if (message.name === 'MODE') {
+            message.asText = this.getModeString(message['Mode'])
+        }
+        message.time_boot_ms = message.TimeUS / 1000
+        delete message.TimeUS
+        return message
+    }
+
+    processData (data) {
+        this.buffer = Buffer.from(data).buffer
+        this.data = new DataView(this.buffer)
+        this.DF_reader()
+        let messageTypes = {}
+        for (let msg of this.FMT) {
+          if (msg) {
+            console.log(msg)
+            messageTypes[msg.Name] = msg.Columns.split(',')
           }
-      }
-  }
-
-  onMessage (message) {
-      if (this.totalSize == null) { // for percentage calculation
-          this.totalSize = this.buffer.byteLength
-      }
-
-      if (message.name in this.messages) {
-          this.messages[message.name].push(this.fixData(message))
-      } else {
-          this.messages[message.name] = [this.fixData(message)]
-      }
-      let percentage = 100 * this.offset / this.totalSize
-      if ((percentage - this.lastPercentage) > this.maxPercentageInterval) {
-          self.postMessage({percentage: percentage})
-          this.lastPercentage = percentage
-      }
-
-      // TODO: FIX THIS!
-      // This a hack to detect the end of the buffer and only them message the main thread
-      if ((this.totalSize - this.offset) < 100 && this.sent === false) {
-          self.postMessage({percentage: 100})
-          self.postMessage({messages: this.messages})
-          this.sent = true
-      }
-  }
-
-  parse_atOffset (type, name) {
-      type = this.getMsgType(type)
-      var parsed = []
-      var num = 0
-      for (var i = 0; i < this.msgType.length; i++) {
-          if (type == this.msgType[i]) {
-              this.offset = this.offsetArray[i]
-              var temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
-              if (name == 'TimeUS' && temp[name] != null) {
-                  parsed.push(this.time_stamp(temp[name]))
-              } else if (temp[name] != null) {
-                  parsed.push(temp[name])
-              }
-          }
-      }
-      return parsed
-  }
-
-  time_stamp (TimeUs) {
-      var temp = 0
-      temp = this.timebase + TimeUs * 0.000001
-      if (temp > 0) { TimeUs = temp }
-      var date = new Date(TimeUs * 1000)
-      var day = date.getDate()
-      var month = date.getMonth()
-      var year = date.getFullYear()
-      var hours = date.getHours()
-      var minutes = '0' + date.getMinutes()
-      var seconds = '0' + date.getSeconds()
-      var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2)
-      var date = date.toString()
-      var time = date.split(' ')
-      if (time[0] !== 'Invalid') {
-          this.time = time[0] + ' ' + time[1] + ' ' + time[2] + ' ' + time[3]
-      }
-      return formattedTime
-  }
-
-  DF_reader () {
-      while (this.offset < (this.buffer.byteLength - 20)) {
-          this.offset += 2
-          var attribute = this.data.getUint8(this.offset)
-          if (this.FMT[attribute] != null) {
-              this.offset += 1
-              this.offsetArray.push(this.offset)
-              this.msgType.push(attribute)
-              var value = this.FORMAT_TO_STRUCT(this.FMT[attribute])
-              if (this.FMT[attribute].Name == 'GPS') {
-                  this.findTimeBase(value)
-              }
-              if (attribute == '128') {
-                  this.FMT[value['Type']] = {
-                      'Type': value['Type'],
-                      'length': value['Length'],
-                      'Name': value['Name'],
-                      'Format': value['Format'],
-                      'Columns': value['Columns']
-                  }
-              }
-              this.onMessage(value)
-          } else {
-              this.offset += 1
-          }
-      }
-  }
-  getModeString (cmode) {
-      let mavtype
-      for (let msg of this.messages['MSG']) {
-          if (msg.Message.indexOf('ArduPlane') > -1) {
-              mavtype = mavlink.MAV_TYPE_FIXED_WING
-              return getModeMap(mavtype)[cmode]
-          } else if (msg.Message.indexOf('ArduCopter') > -1) {
-              mavtype = mavlink.MAV_TYPE_QUADROTOR
-              return getModeMap(mavtype)[cmode]
-          } else if (msg.Message.indexOf('ArduSub') > -1) {
-              mavtype = mavlink.MAV_TYPE_SUBMARINE
-              return getModeMap(mavtype)[cmode]
-          } else if (msg.Message.indexOf('Rover') > -1) {
-              mavtype = mavlink.MAV_TYPE_GROUND_ROVER
-              return getModeMap(mavtype)[cmode]
-          } else if (msg.Message.indexOf('Tracker') > -1) {
-              mavtype = mavlink.MAV_TYPE_ANTENNA_TRACKER
-              return getModeMap(mavtype)[cmode]
-          }
-      }
-      console.log('defaulting to quadcopter')
-      return getModeMap(mavlink.MAV_TYPE_QUADROTOR)[cmode]
-  }
-
-  fixData (message) {
-      if (message.name === 'GPS') {
-          message.Lat = message.Lat / 1e7
-          message.Lng = message.Lng / 1e7
-          message.Alt = message.Alt / 1e4
-      } else if (message.name === 'ATT' || message.name === 'AHR2') {
-          message.Roll = Math.radians(message.Roll / 1e4)
-          message.Pitch = Math.radians(message.Pitch / 1e4)
-          message.Yaw = Math.radians(message.Yaw / 1e4)
-      } else if (message.name === 'MODE') {
-          message.asText = this.getModeString(message.Mode)
-      }
-      message.time_boot_ms = message.TimeUS / 1000
-      delete message.TimeUS
-      return message
-  }
-
-  processData (data) {
-      this.buffer = Buffer.from(data).buffer
-      this.data = new DataView(this.buffer)
-      this.DF_reader()
-  }
+        }
+        self.postMessage({availableMessages: messageTypes})
+        this.parse_atOffset('MSG')
+        this.parse_atOffset('TimeUS')
+        this.parse_atOffset('MODE')
+        this.parse_atOffset('ATT')
+        this.parse_atOffset('GPS')
+        //self.postMessage({done: true})
+    }
 }

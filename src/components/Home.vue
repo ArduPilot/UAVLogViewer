@@ -39,6 +39,7 @@ export default {
     name: 'Home',
     created () {
         this.$eventHub.$on('messages', this.updateData)
+        this.state.messages = {}
     },
     beforeDestroy () {
         this.$eventHub.$off('messages')

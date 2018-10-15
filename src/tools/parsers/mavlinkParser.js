@@ -179,5 +179,6 @@ export class MavlinkParser {
     processData (data) {
         this.mavlinkParser.pushBuffer(Buffer.from(data))
         this.mavlinkParser.parseBuffer()
+        this.postMessage({done: true})
     }
 }
