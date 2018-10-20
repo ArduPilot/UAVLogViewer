@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 require('mavlink_common_v1.0/mavlink')
 
 let modeMappingApm = {
@@ -145,8 +146,10 @@ export class DataflashParser {
             fieldnames: obj.Columns.split(',')
         }
 
-        var column = assign_column(obj.Columns)
-        for (var i = 0; i < obj.Format.length; i++) {
+        let column = assign_column(obj.Columns)
+        let low
+        let n
+        for (let i = 0; i < obj.Format.length; i++) {
             temp = obj.Format.charAt(i)
             switch (temp) {
             case 'b':
@@ -182,17 +185,17 @@ export class DataflashParser {
                 this.offset += 8
                 break
             case 'Q':
-                var low = this.data.getUint32(this.offset, true)
+                low = this.data.getUint32(this.offset, true)
                 this.offset += 4
-                var n = this.data.getUint32(this.offset, true) * 4294967296.0 + low
+                n = this.data.getUint32(this.offset, true) * 4294967296.0 + low
                 if (low < 0) n += 4294967296
                 dict[column[i]] = n
                 this.offset += 4
                 break
             case 'q':
-                var low = this.data.getInt32(this.offset, true)
+                low = this.data.getInt32(this.offset, true)
                 this.offset += 4
-                var n = this.data.getInt32(this.offset, true) * 4294967296.0 + low
+                n = this.data.getInt32(this.offset, true) * 4294967296.0 + low
                 if (low < 0) n += 4294967296
                 dict[column[i]] = n
                 this.offset += 4
@@ -254,7 +257,7 @@ export class DataflashParser {
     }
 
     findTimeBase (gps) {
-        var temp = this.gpstimetoTime(parseInt(gps['GWk']), parseInt(gps['GMS']))
+        const temp = this.gpstimetoTime(parseInt(gps['GWk']), parseInt(gps['GMS']))
         this.setTimeBase(parseInt(temp - gps['TimeUS'] * 0.000001))
     }
 
@@ -296,7 +299,6 @@ export class DataflashParser {
     parse_atOffset (name) {
         let type = this.getMsgType(name)
         var parsed = []
-        //console.log(type)
         for (var i = 0; i < this.msgType.length; i++) {
             if (type === this.msgType[i]) {
                 this.offset = this.offsetArray[i]
@@ -317,19 +319,15 @@ export class DataflashParser {
     }
 
     time_stamp (TimeUs) {
-        var temp = 0
-        temp = this.timebase + TimeUs * 0.000001
+        let temp = this.timebase + TimeUs * 0.000001
         if (temp > 0) { TimeUs = temp }
-        var date = new Date(TimeUs * 1000)
-        var day = date.getDate()
-        var month = date.getMonth()
-        var year = date.getFullYear()
-        var hours = date.getHours()
-        var minutes = '0' + date.getMinutes()
-        var seconds = '0' + date.getSeconds()
-        var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2)
-        var date = date.toString()
-        var time = date.split(' ')
+        let date = new Date(TimeUs * 1000)
+        let hours = date.getHours()
+        let minutes = '0' + date.getMinutes()
+        let seconds = '0' + date.getSeconds()
+        let formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2)
+        date = date.toString()
+        let time = date.split(' ')
         if (time[0] !== 'Invalid') {
             this.time = time[0] + ' ' + time[1] + ' ' + time[2] + ' ' + time[3]
         }
@@ -337,16 +335,16 @@ export class DataflashParser {
     }
 
     DF_reader () {
-        var lastOffset = 0
+        let lastOffset = 0
         while (this.offset < (this.buffer.byteLength - 50)) {
             this.offset += 2
-            var attribute = this.data.getUint8(this.offset)
+            let attribute = this.data.getUint8(this.offset)
             if (this.FMT[attribute] != null) {
                 this.offset += 1
                 this.offsetArray.push(this.offset)
                 this.msgType.push(attribute)
                 var value = this.FORMAT_TO_STRUCT(this.FMT[attribute])
-                if (this.FMT[attribute].Name == 'GPS') {
+                if (this.FMT[attribute].Name === 'GPS') {
                     this.findTimeBase(value)
                 }
                 if (attribute == '128') {
@@ -437,5 +435,6 @@ export class DataflashParser {
 
     loadType (type) {
         this.parse_atOffset(type)
+        console.log("done")
     }
 }

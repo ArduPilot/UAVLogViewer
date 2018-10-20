@@ -92,7 +92,6 @@ export default {
             let newMessages = {}
             // populate list of message types
             for (let messageType of Object.keys(messageTypes)) {
-                //this.$set(this.checkboxes, messageType, this.getMessageNumericField(this.state.messages[messageType][0]))
                 this.$set(this.checkboxes, messageType, messageTypes[messageType])
                 newMessages[messageType] = messageTypes[messageType]
             }
