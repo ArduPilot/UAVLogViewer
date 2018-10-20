@@ -190,8 +190,6 @@ export default {
             } else if (event.data.hasOwnProperty('messageType')) {
                 this.state.messages[event.data.messageType] = event.data.messageList
                 this.$eventHub.$emit('messages')
-            } else if (event.data.hasOwnProperty('done')) {
-                worker.terminate()
             }
         }.bind(this)
         if (this.$route.params.hasOwnProperty('id')) {
