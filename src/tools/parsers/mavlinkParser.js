@@ -179,6 +179,13 @@ export class MavlinkParser {
     processData (data) {
         this.mavlinkParser.pushBuffer(Buffer.from(data))
         this.mavlinkParser.parseBuffer()
-        this.postMessage({done: true})
+        let messageTypes = {}
+        for (let msg of Object.keys(this.messages)) {
+            let fields = this.messages[msg][0].fieldnames
+            fields = fields.filter(e => e !== 'time_usec').filter(e => e !== 'time_boot_ms')
+            messageTypes[msg] = fields
+        }
+        self.postMessage({availableMessages: messageTypes})
+        //self.postMessage({done: true})
     }
 }

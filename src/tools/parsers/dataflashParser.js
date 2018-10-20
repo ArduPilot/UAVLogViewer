@@ -407,11 +407,14 @@ export class DataflashParser {
         this.data = new DataView(this.buffer)
         this.DF_reader()
         let messageTypes = {}
+        console.log(this.FMT)
+        let typeSet = new Set(this.msgType)
         for (let msg of this.FMT) {
-          if (msg) {
-            console.log(msg)
-            messageTypes[msg.Name] = msg.Columns.split(',')
-          }
+            if (msg) {
+                if (typeSet.has(msg.Type)){
+                    messageTypes[msg.Name] = msg.Columns.split(',')
+                }
+            }
         }
         self.postMessage({availableMessages: messageTypes})
         this.parse_atOffset('MSG')
@@ -419,6 +422,10 @@ export class DataflashParser {
         this.parse_atOffset('MODE')
         this.parse_atOffset('ATT')
         this.parse_atOffset('GPS')
-        //self.postMessage({done: true})
+        // self.postMessage({done: true})
+    }
+
+    loadType (type) {
+        this.parse_atOffset(type)
     }
 }

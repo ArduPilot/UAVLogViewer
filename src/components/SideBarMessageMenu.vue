@@ -24,7 +24,7 @@
     </li>
     <b-collapse id="messages" >
     <template v-for="(message, key) in messageTypes">
-      <li class="type" v-bind:key="key">
+      <li class="type" v-bind:key="key" @click="updateType(key)">
         <div v-b-toggle="'type' + key" >
           <b-form-checkbox v-model="checkboxes[key].state"
                          :indeterminate="checkboxes[key].indeterminate"
@@ -118,6 +118,11 @@ export default {
                 }
             }
             return numberFields
+        },
+        updateType (type) {
+            if (Object.keys(this.messages).indexOf(type) < 0) {
+                this.$eventHub.$emit('loadType', type)
+            }
         },
         toggle (state, message, item) {
             if (state) {

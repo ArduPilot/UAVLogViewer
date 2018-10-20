@@ -52,7 +52,7 @@ export default {
         }
     },
     created () {
-
+        this.$eventHub.$on('loadType', this.loadType)
     },
     beforeDestroy () {
         this.$eventHub.$off('open-sample')
@@ -108,6 +108,13 @@ export default {
                     console.log(ev.dataTransfer.files[i])
                 }
             }
+        },
+        loadType: function (type) {
+            console.log("asking worker")
+            worker.postMessage({
+                action: 'loadType',
+                type: type
+            })
         },
         process: function (file) {
             this.file = file
