@@ -296,18 +296,21 @@ export class DataflashParser {
     parse_atOffset (name) {
         let type = this.getMsgType(name)
         var parsed = []
-        console.log(type)
+        //console.log(type)
         for (var i = 0; i < this.msgType.length; i++) {
             if (type === this.msgType[i]) {
                 this.offset = this.offsetArray[i]
                 let temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
-                if (name === 'TimeUS' && temp['name'] != null) {
-                    parsed.push(this.time_stamp(temp['name']))
-                } else if (temp['name'] != null) {
+                if (temp['name'] != null) {
                     parsed.push(this.fixData(temp))
                 }
             }
+            if (i % 100000 === 0) {
+                let perc = 100* i/this.msgType.length
+                self.postMessage({percentage: perc})
+            }
         }
+        self.postMessage({percentage: 100})
         self.postMessage({messageType: name, messageList: parsed})
         this.messages[name] = parsed
         return parsed
@@ -334,7 +337,8 @@ export class DataflashParser {
     }
 
     DF_reader () {
-        while (this.offset < (this.buffer.byteLength - 20)) {
+        var lastOffset = 0
+        while (this.offset < (this.buffer.byteLength - 50)) {
             this.offset += 2
             var attribute = this.data.getUint8(this.offset)
             if (this.FMT[attribute] != null) {
@@ -354,9 +358,14 @@ export class DataflashParser {
                         'Columns': value['Columns']
                     }
                 }
-                //this.onMessage(value)
+                // this.onMessage(value)
             } else {
                 this.offset += 1
+            }
+            if (this.offset - lastOffset > 50000) {
+                let perc = 100 * this.offset / this.buffer.byteLength
+                self.postMessage({percentage: perc})
+                lastOffset = this.offset
             }
         }
     }
