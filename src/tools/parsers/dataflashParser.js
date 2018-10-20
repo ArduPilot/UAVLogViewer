@@ -421,7 +421,9 @@ export class DataflashParser {
         for (let msg of this.FMT) {
             if (msg) {
                 if (typeSet.has(msg.Type)){
-                    messageTypes[msg.Name] = msg.Columns.split(',')
+                    let fields = msg.Columns.split(',')
+                    fields = fields.filter(e => e !== 'TimeUS')
+                    messageTypes[msg.Name] = fields
                 }
             }
         }
