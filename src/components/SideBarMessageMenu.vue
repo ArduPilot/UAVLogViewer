@@ -24,7 +24,7 @@
     </li>
     <b-collapse id="messages" >
     <template v-for="(message, key) in messageTypes">
-      <li class="type" v-bind:key="key" @click="updateType(key)">
+      <li class="type" v-bind:key="key">
         <div v-b-toggle="'type' + key" >
           <b-form-checkbox v-model="checkboxes[key].state"
                          :indeterminate="checkboxes[key].indeterminate"

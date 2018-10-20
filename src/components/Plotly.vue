@@ -99,10 +99,37 @@ export default {
         resize () {
             Plotly.Plots.resize(this.gd)
         },
+        waitForMessage (fieldname) {
+            this.$eventHub.$emit('loadType', fieldname.split('.')[0])
+            let interval
+            let _this = this
+            let counter = 0
+            return new Promise((resolve, reject) => {
+                interval = setInterval(function () {
+                    if (_this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
+                        clearInterval(interval)
+                        counter += 1
+                        resolve()
+                    } else {
+                        if (counter > 6) {
+                            console.log('not resolving')
+                            clearInterval(interval)
+                            reject('Could not load messageType')
+                        }
+                    }
+                }, 2000)
+            })
+        },
         addPlot (fieldname) {
-            if (!this.fields.includes(fieldname)) {
-                this.fields.push(fieldname)
-                this.plot()
+            if (!this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
+                this.waitForMessage(fieldname).then(function () {
+                    this.addPlot(fieldname)
+                }.bind(this))
+            } else {
+                if (!this.fields.includes(fieldname)) {
+                    this.fields.push(fieldname)
+                    this.plot()
+                }
             }
         },
         removePlot (fieldname) {
