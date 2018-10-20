@@ -57,10 +57,14 @@ export default {
                     timeline: true,
                     animation: true,
                     requestRenderMode: true,
-                    shouldAnimate: false
+                    shouldAnimate: false,
+                    scene3DOnly: true
                 })
+
             this.viewer.scene.debugShowFramesPerSecond = true
-            this.viewer.scene.fxaa = false
+            this.viewer.scene.postProcessStages.fxaa.enabled = false
+            this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
+            this.viewer.scene.postProcessStages.bloom.enabled = false
             this.pointCollection = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
 
             this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
