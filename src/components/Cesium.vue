@@ -9,7 +9,28 @@
           </tr>
         </tbody>
       </table>
+
+      <div class="demo-container">
+          <div>
+            <label>Camera</label>
+              <select class="cesium-button" v-model="cameraType" @change="changeCamera()">
+                  <option value="free">Free</option>
+                  <option value="follow">Follow</option>
+              </select>
+          </div>
+          <div>
+              <label><input @change="updateVisibility()" type="checkbox" v-model="showWaypoints">Waypoints</label>
+          </div>
+          <div>
+              <label><input @change="updateVisibility()" type="checkbox" v-model="showTrajectory">Trajectory</label>
+          </div>
+          <div>
+              <label><input @change="updateVisibility()" type="checkbox" v-model="showClickableTrajectory">Clickable Trajectory</label>
+          </div>
+
+      </div>
     </div>
+
   </div>
 </template>
 
@@ -37,16 +58,21 @@ export default {
             colors: [],
             cssColors: [],
             lastHoveredTime: 0,
-            model: undefined
+            model: undefined,
+            cameraType: 'free',
+            waypoints: null,
+            showWaypoints: true,
+            trajectory: null,
+            showTrajectory: true,
+            clickableTrajectory: null,
+            showClickableTrajectory: true
         }
     },
     created () {
         this.$eventHub.$on('hoveredTime', this.showAttitude)
-        this.$eventHub.$on('change-camera', this.changeCamera)
     },
     beforeDestroy () {
         this.$eventHub.$off('hoveredTime')
-        this.$eventHub.$off('change-camera')
     },
     mounted () {
         if (this.viewer == null) {
@@ -65,7 +91,7 @@ export default {
             this.viewer.scene.postProcessStages.fxaa.enabled = false
             this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
             this.viewer.scene.postProcessStages.bloom.enabled = false
-            this.pointCollection = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
+            this.clickableTrajectory = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
 
             this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
             this.viewer.animation.viewModel.setShuttleRingTicks([0.1, 0.25, 0.5, 0.75, 1, 2, 5, 10, 15])
@@ -105,13 +131,12 @@ export default {
             return false
         },
         changeCamera () {
-            if (this.viewer.trackedEntity === undefined) {
+            if (this.cameraType === 'follow') {
                 this.viewer.trackedEntity = this.model
             } else {
                 this.viewer.trackedEntity = undefined
             }
         },
-
         onAnimationChange (isAnimating) {
             this.$eventHub.$emit('animation-changed', isAnimating)
         },
@@ -205,8 +230,8 @@ export default {
             let sampledPos = new Cesium.SampledPositionProperty()
 
             // clean entities
-            if (this.pointCollection !== null) {
-                this.pointCollection.removeAll()
+            if (this.clickableTrajectory !== null) {
+                this.clickableTrajectory.removeAll()
             }
             this.viewer.entities.removeAll()
 
@@ -216,7 +241,7 @@ export default {
                 positions.push(position)
                 let time = Cesium.JulianDate.addSeconds(start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
                 sampledPos.addSample(time, position)
-                this.pointCollection.add({
+                this.clickableTrajectory.add({
                     position: position,
                     pixelSize: 10,
                     color: this.getModeColor(pos[3]),
@@ -265,7 +290,7 @@ export default {
             })
 
             // Add polyline representing the path under the points
-            this.viewer.entities.add({
+            this.trajectory = this.viewer.entities.add({
                 polyline: {
                     positions: positions
                 },
@@ -280,7 +305,7 @@ export default {
                 cesiumPoints.push(position)
             }
             // Add polyline representing the path under the points
-            this.viewer.entities.add({
+            this.waypoints = this.viewer.entities.add({
                 polyline: {
                     positions: cesiumPoints,
                     width : 5,
@@ -305,13 +330,19 @@ export default {
                 }
             }
             return this.state.flight_mode_changes[this.state.flight_mode_changes.length - 1][1]
-        }
-    },
+        },
+        updateVisibility () {
+            this.waypoints.show = this.showWaypoints
+            this.trajectory.show = this.showTrajectory
 
-    watch: {
-        trajectory: function (newVal, oldVal) {
-            this.plotTrajectory(newVal)
-        }
+            var len = this.clickableTrajectory.length;
+            for (var i = 0; i < len; ++i) {
+                this.clickableTrajectory.get(i).show = this.showClickableTrajectory
+
+            }
+            this.viewer.scene.requestRender()
+            console.log(this.clickableTrajectory.show)
+        },
     },
 
     computed: {
@@ -355,6 +386,9 @@ export default {
     padding: 2px 5px;
     position: absolute;
     top: 0;
+    color: #eee;
+    font-family: sans-serif;
+    font-size: 9pt;
   }
 
   .infoPanel {
@@ -364,6 +398,7 @@ export default {
     border-radius: 10px;
     font-size:100%;
     font-weight: bold;
+    float: left;
   }
   .infoPanel > tbody{
     padding:15px;
@@ -378,4 +413,38 @@ export default {
     padding-right: 10px;
   }
 
+  .cesium-button {
+
+      display: inline-block;
+      position: relative;
+      background: #303336;
+      border: 1px solid #444;
+      color: #edffff;
+      fill: #edffff;
+      border-radius: 4px;
+      padding: 5px 12px;
+      margin: 2px 3px;
+      cursor: pointer;
+      overflow: hidden;
+      -moz-user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+  }
+
+  .demo-container {
+      background-color: #303336;
+      border-radius: 5px;
+      padding: 5px;
+      margin: 5px 3px;
+      float: left;
+  }
+  .demo-container input {
+      vertical-align: middle;
+      margin-top: 0;
+      margin-right: 5px;
+  }
+    .demo-container div {
+        margin: 3px;
+    }
 </style>

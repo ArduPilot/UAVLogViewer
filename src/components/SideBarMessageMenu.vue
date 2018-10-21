@@ -9,9 +9,6 @@
       <a class="section" href="#" >
         <i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>
     </li>
-    <li v-if="state.map_on">
-      <a href="#" @click="$eventHub.$emit('change-camera')"><i class="fas fa-video "></i> Camera Mode </a>
-    </li>
     <li v-if="state.plot_on" @click="state.plot_on=false" >
     <a class="section" href="#">
       <i class="fas fa-eye-slash fa-lg"></i> Hide Plot</a>
