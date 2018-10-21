@@ -55,6 +55,7 @@ export default {
             this.state.time_attitudeQ = this.extractAttitudesQ(this.state.messages)
             this.state.current_trajectory = this.extractTrajectory(this.state.messages)
             this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
+            this.state.mission = this.extractMission(this.state.messages)
             this.state.map_on = true
             this.state.processStatus = 'Processed!'
         },
@@ -131,6 +132,18 @@ export default {
                 }
             }
             return modes
+        },
+        extractMission (messages) {
+            let wps = []
+            if ('CMD' in messages) {
+                let cmdMsgs = messages['CMD']
+                for (let cmd of cmdMsgs) {
+                    if (cmd.Lat !== 0) {
+                        wps.push([cmd.Lng, cmd.Lat, cmd.Alt])
+                    }
+                }
+            }
+            return wps
         }
     },
     components: {

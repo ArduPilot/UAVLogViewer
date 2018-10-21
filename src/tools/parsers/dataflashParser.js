@@ -425,10 +425,12 @@ export class DataflashParser {
             }
         }
         self.postMessage({availableMessages: messageTypes})
+        this.parse_atOffset('CMD')
         this.parse_atOffset('MSG')
         this.parse_atOffset('MODE')
         this.parse_atOffset('ATT')
         this.parse_atOffset('GPS')
+
         // self.postMessage({done: true})
     }
 

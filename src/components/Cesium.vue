@@ -80,6 +80,7 @@ export default {
             Cesium.knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
         }
         this.plotTrajectory(this.state.current_trajectory)
+        this.plotMission(this.state.mission)
     },
 
     methods:
@@ -271,6 +272,24 @@ export default {
                 width: 2
             })
             this.viewer.zoomTo(this.viewer.entities)
+        },
+        plotMission (points) {
+            let cesiumPoints = []
+            for (let pos of points) {
+                let position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
+                cesiumPoints.push(position)
+            }
+            // Add polyline representing the path under the points
+            this.viewer.entities.add({
+                polyline: {
+                    positions: cesiumPoints,
+                    width : 5,
+                    material : new Cesium.PolylineGlowMaterialProperty({
+                        glowPower : 0.2,
+                        color : Cesium.Color.RED
+                    })
+                },
+            })
         },
 
         getModeColor (time) {
