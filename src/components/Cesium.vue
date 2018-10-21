@@ -84,7 +84,8 @@ export default {
                     animation: true,
                     requestRenderMode: true,
                     shouldAnimate: false,
-                    scene3DOnly: true
+                    scene3DOnly: true,
+                    selectionIndicator: false
                 })
 
             this.viewer.scene.debugShowFramesPerSecond = true
