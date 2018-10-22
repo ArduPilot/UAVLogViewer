@@ -65,7 +65,7 @@ export default {
             trajectory: null,
             showTrajectory: true,
             clickableTrajectory: null,
-            showClickableTrajectory: true
+            showClickableTrajectory: false
         }
     },
     created () {
@@ -246,6 +246,7 @@ export default {
                 this.clickableTrajectory.add({
                     position: position,
                     pixelSize: 10,
+                    show: false,
                     color: this.getModeColor(pos[3]),
                     id: {time: pos[3]}
                 })
