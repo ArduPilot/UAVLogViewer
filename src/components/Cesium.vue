@@ -315,7 +315,7 @@ export default {
                         }
                     })
                     oldColor = color
-                    trajectory = []
+                    trajectory = [position]
                 }
             }
             this.viewer.entities.add({
