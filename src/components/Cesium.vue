@@ -309,12 +309,12 @@ export default {
             this.waypoints = this.viewer.entities.add({
                 polyline: {
                     positions: cesiumPoints,
-                    width : 5,
-                    material : new Cesium.PolylineGlowMaterialProperty({
-                        glowPower : 0.2,
-                        color : Cesium.Color.RED
+                    width: 5,
+                    material: new Cesium.PolylineGlowMaterialProperty({
+                        glowPower: 0.2,
+                        color: Cesium.Color.RED
                     })
-                },
+                }
             })
         },
 
@@ -336,14 +336,13 @@ export default {
             this.waypoints.show = this.showWaypoints
             this.trajectory.show = this.showTrajectory
 
-            var len = this.clickableTrajectory.length;
-            for (var i = 0; i < len; ++i) {
+            let len = this.clickableTrajectory.length
+            for (let i = 0; i < len; ++i) {
                 this.clickableTrajectory.get(i).show = this.showClickableTrajectory
-
             }
             this.viewer.scene.requestRender()
             console.log(this.clickableTrajectory.show)
-        },
+        }
     },
 
     computed: {

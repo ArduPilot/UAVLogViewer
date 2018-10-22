@@ -110,7 +110,6 @@ export default {
             }
         },
         loadType: function (type) {
-            console.log("asking worker")
             worker.postMessage({
                 action: 'loadType',
                 type: type

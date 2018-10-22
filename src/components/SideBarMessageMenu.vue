@@ -31,9 +31,9 @@
             <i class="expand fas fa-caret-down"></i></a>
         </div>
       </li>
-      <b-collapse :id="'type' + key" >
+      <b-collapse :id="'type' + key" v-bind:key="key+'1'">
       <template v-for="item in message">
-        <li class="field">
+        <li class="field" v-bind:key="key+'.'+item">
           <a href="#">
             <b-form-checkbox v-model="checkboxes[key].fields[item]" @change="toggle($event, key, item)"> {{item}}</b-form-checkbox>
           </a>

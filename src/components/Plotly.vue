@@ -114,7 +114,7 @@ export default {
                         if (counter > 6) {
                             console.log('not resolving')
                             clearInterval(interval)
-                            reject('Could not load messageType')
+                            reject(new Error('Could not load messageType'))
                         }
                     }
                 }, 2000)
