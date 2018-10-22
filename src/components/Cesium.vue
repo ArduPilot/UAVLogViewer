@@ -93,6 +93,7 @@ export default {
             this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
             this.viewer.scene.postProcessStages.bloom.enabled = false
             this.clickableTrajectory = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
+            this.trajectory = this.viewer.entities.add(new Cesium.Entity())
 
             this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
             this.viewer.animation.viewModel.setShuttleRingTicks([0.1, 0.25, 0.5, 0.75, 1, 2, 5, 10, 15])
@@ -291,12 +292,46 @@ export default {
             })
 
             // Add polyline representing the path under the points
-            this.trajectory = this.viewer.entities.add({
+
+            let oldColor = this.getModeColor(positions[0][3])
+            let trajectory = []
+            for (let pos of points) {
+                position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
+                trajectory.push(position)
+
+                let color = this.getModeColor(pos[3])
+
+                if (color !== oldColor) {
+                    this.viewer.entities.add({
+                        parent: this.trajectory,
+                        polyline: {
+                            positions: trajectory,
+                            width: 5,
+                            material : new Cesium.PolylineOutlineMaterialProperty({
+                                color: oldColor,
+                                outlineWidth: 1,
+                                outlineColor: Cesium.Color.BLACK
+                            })
+                        }
+                    })
+                    oldColor = color
+                    trajectory = []
+                }
+            }
+            this.viewer.entities.add({
+                parent: this.trajectory,
                 polyline: {
-                    positions: positions
-                },
-                width: 2
+                    positions: trajectory,
+                    width: 5,
+                    material : new Cesium.PolylineOutlineMaterialProperty({
+                        color: oldColor,
+                        outlineWidth: 1,
+                        outlineColor: Cesium.Color.BLACK
+                    })
+                }
             })
+
+
             this.viewer.zoomTo(this.viewer.entities)
         },
         plotMission (points) {
@@ -309,11 +344,8 @@ export default {
             this.waypoints = this.viewer.entities.add({
                 polyline: {
                     positions: cesiumPoints,
-                    width: 5,
-                    material: new Cesium.PolylineGlowMaterialProperty({
-                        glowPower: 0.2,
-                        color: Cesium.Color.RED
-                    })
+                    width: 3,
+                    material : Cesium.Color.WHITE
                 }
             })
         },
@@ -341,7 +373,6 @@ export default {
                 this.clickableTrajectory.get(i).show = this.showClickableTrajectory
             }
             this.viewer.scene.requestRender()
-            console.log(this.clickableTrajectory.show)
         }
     },
 
