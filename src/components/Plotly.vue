@@ -76,7 +76,10 @@ export default {
         let _this = this
         this.$nextTick(function () {
             window.addEventListener('resize', _this.resize)
-            this.resize()
+            _this.resize()
+            for (let field of this.$route.query.plots.split(',')) {
+                _this.addPlot(field)
+            }
         })
         this.instruction = ''
     },
@@ -120,14 +123,21 @@ export default {
                 }, 2000)
             })
         },
+        updateUrl() {
+            let query = Object.create(this.$route.query) // clone it
+            query['plots'] = this.fields.join(',')
+            this.$router.push({query: query})
+        },
         addPlot (fieldname) {
             if (!this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
                 this.waitForMessage(fieldname).then(function () {
                     this.addPlot(fieldname)
+                    console.log("got message " + fieldname)
                 }.bind(this))
             } else {
                 if (!this.fields.includes(fieldname)) {
                     this.fields.push(fieldname)
+                    this.updateUrl()
                     this.plot()
                 }
             }
@@ -141,6 +151,7 @@ export default {
             if (this.fields.length === 0) {
                 this.state.plot_on = false
             }
+            this.updateUrl()
         },
         plot () {
             let _this = this

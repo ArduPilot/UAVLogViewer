@@ -60,7 +60,6 @@ export default {
         }
     },
     created () {
-        this.$eventHub.$on('messages', this.handleMessages)
         this.$eventHub.$on('messageTypes', this.handleMessageTypes)
     },
     beforeDestroy () {
@@ -85,6 +84,9 @@ export default {
             this.messages = newMessages
         },
         handleMessageTypes (messageTypes) {
+            if (this.$route.query.hasOwnProperty('plots')) {
+                this.state.plot_on = true
+            }
             console.log(messageTypes)
             let newMessages = {}
             // populate list of message types
@@ -97,8 +99,15 @@ export default {
             for (let messageType of Object.keys(messageTypes)) {
                 this.checkboxes[messageType] = {state: false, indeterminate: false, fields: {}}
                 // for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
-                for (let field of messageType) {
-                    this.checkboxes[messageType].fields[field] = false
+                for (let field of messageTypes[messageType]) {
+                    if (this.state.plot_on) {
+                        if (this.$route.query.plots.indexOf(messageType + '.' + field) !== -1) {
+                            this.checkboxes[messageType].fields[field] = true
+                            this.checkboxes[messageType].indeterminate = true
+                        }
+                    } else {
+                        this.checkboxes[messageType].fields[field] = false
+                    }
                 }
             }
             this.messageTypes = newMessages
@@ -184,7 +193,7 @@ export default {
     },
     computed: {
         hasMessages () {
-            return Object.keys(this.messages).length > 0
+            return Object.keys(this.messageTypes).length > 0
         }
     }
 
