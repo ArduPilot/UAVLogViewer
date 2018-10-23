@@ -2,20 +2,20 @@
   <div v-if="hasMessages">
 
     <li  v-if="!state.map_on" @click="state.map_on=true">
-      <a class="section" href="#">
+      <a class="section" >
         <i class="fas fa-eye fa-lg"></i> Show 3D View</a>
     </li>
     <li v-if="state.map_on" @click="state.map_on=false">
-      <a class="section" href="#" >
+      <a class="section"  >
         <i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>
     </li>
     <li v-if="state.plot_on" @click="state.plot_on=false" >
-    <a class="section" href="#">
+    <a class="section" >
       <i class="fas fa-eye-slash fa-lg"></i> Hide Plot</a>
     </li>
 
     <li v-b-toggle="'messages'">
-      <a class="section" href="#">
+      <a class="section" >
         <i class="fas fa-signature fa-lg"></i> Plot
         <i class="fas fa-caret-down"></i></a>
     </li>
@@ -27,14 +27,14 @@
                          :indeterminate="checkboxes[key].indeterminate"
                          @change="toggleType($event, key)">
         </b-form-checkbox>
-          <a class="section" href="#">{{key}}
+          <a class="section" >{{key}}
             <i class="expand fas fa-caret-down"></i></a>
         </div>
       </li>
       <b-collapse :id="'type' + key" v-bind:key="key+'1'">
       <template v-for="item in message">
         <li class="field" v-bind:key="key+'.'+item">
-          <a href="#">
+          <a >
             <b-form-checkbox v-model="checkboxes[key].fields[item]" @change="toggle($event, key, item)"> {{item}}</b-form-checkbox>
           </a>
         </li>
