@@ -104,15 +104,58 @@ export default {
             handler.setInputAction(this.onLeftDown, Cesium.ScreenSpaceEventType.LEFT_DOWN)
             handler.setInputAction(this.onClick, Cesium.ScreenSpaceEventType.LEFT_CLICK)
             handler.setInputAction(this.onLeftUp, Cesium.ScreenSpaceEventType.LEFT_UP)
+            this.viewer.camera.moveEnd.addEventListener(this.onCameraUpdate)
 
             Cesium.knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
         }
         this.plotTrajectory(this.state.current_trajectory)
         this.plotMission(this.state.mission)
+        if (this.$route.query.hasOwnProperty('cam')) {
+            let data = this.$route.query.cam.split(',')
+            let position = new Cesium.Cartesian3(
+                parseFloat(data[0]),
+                parseFloat(data[1]),
+                parseFloat(data[2]),
+            )
+            let direction = new Cesium.Cartesian3(
+                parseFloat(data[3]),
+                parseFloat(data[4]),
+                parseFloat(data[5]),
+            )
+            let up = new Cesium.Cartesian3(
+                parseFloat(data[6]),
+                parseFloat(data[7]),
+                parseFloat(data[8]),
+            )
+            this.cameraType = data[9]
+            this.changeCamera()
+            console.log("setting camera to " + position + ' ' + direction)
+            this.viewer.camera.up = up
+            this.viewer.camera.position = position
+            this.viewer.camera.direction = direction
+
+        }
     },
 
     methods:
     {
+        onCameraUpdate () {
+            console.log(this.viewer.camera)
+            let query = Object.create(this.$route.query) // clone it
+            let cam = this.viewer.camera
+            query['cam'] = [
+                cam.position.x.toFixed(2),
+                cam.position.y.toFixed(2),
+                cam.position.z.toFixed(2),
+                cam.direction.x.toFixed(2),
+                cam.direction.y.toFixed(2),
+                cam.direction.z.toFixed(2),
+                cam.up.x.toFixed(2),
+                cam.up.y.toFixed(2),
+                cam.up.z.toFixed(2),
+                this.cameraType].join(',')
+            this.$router.push({query: query})
+        },
         mouseIsOnPoint (point) {
         // Checks if there is a trajectory point under the coordinate "point"
             let pickedObjects = this.viewer.scene.drillPick(point)
@@ -324,16 +367,16 @@ export default {
                 polyline: {
                     positions: trajectory,
                     width: 5,
-                    material : new Cesium.PolylineOutlineMaterialProperty({
+                    material: new Cesium.PolylineOutlineMaterialProperty({
                         color: oldColor,
                         outlineWidth: 1,
                         outlineColor: Cesium.Color.BLACK
                     })
                 }
             })
-
-
-            this.viewer.zoomTo(this.viewer.entities)
+            if (!this.$route.query.hasOwnProperty('cam')) {
+                this.viewer.zoomTo(this.viewer.entities)
+            }
         },
         plotMission (points) {
             let cesiumPoints = []
