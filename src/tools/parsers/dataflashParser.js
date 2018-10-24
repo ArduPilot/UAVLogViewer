@@ -78,6 +78,60 @@ let modeMappingSub = {
     19: 'MANUAL'
 }
 
+const multipliers = {
+    '-': 0, // no multiplier e.g. a string
+    '?': 1, // multipliers which haven't been worked out yet....
+    // <leave a gap here, just in case....>
+    '2': 1e2,
+    '1': 1e1,
+    '0': 1e0,
+    'A': 1e-1,
+    'B': 1e-2,
+    'C': 1e-3,
+    'D': 1e-4,
+    'E': 1e-5,
+    'F': 1e-6,
+    'G': 1e-7,
+    // <leave a gap here, just in case....>
+    '!': 3.6, // (ampere*second => milliampere*hour) and (km/h => m/s)
+    '/': 3600 // (ampere*second => ampere*hour)
+}
+
+const units = {
+    '-': '', // no units e.g. Pi, or a string
+    '?': 'UNKNOWN', // Units which haven't been worked out yet....
+    'A': 'A', // Ampere
+    'd': 'deg', // of the angular variety, -180 to 180
+    'b': 'B', // bytes
+    'k': 'deg/s', // degrees per second. Degrees are NOT SI, but is some situations more user-friendly than radians
+    'D': 'deglatitude', // degrees of latitude
+    'e': 'deg/s/s', // degrees per second per second. Degrees are NOT SI, but is some situations more user-friendly than radians
+    'E': 'rad/s', // radians per second
+    'G': 'Gauss', // Gauss is not an SI unit, but 1 tesla = 10000 gauss so a simple replacement is not possible here
+    'h': 'degheading', // 0.? to 359.?
+    'i': 'A.s', // Ampere second
+    'J': 'W.s', // Joule (Watt second)
+    // { 'l', "l" },          // litres
+    'L': 'rad/s/s', // radians per second per second
+    'm': 'm', // metres
+    'n': 'm/s', // metres per second
+    // { 'N', "N" },          // Newton
+    'o': 'm/s/s', // metres per second per second
+    'O': 'degC', // degrees Celsius. Not SI, but Kelvin is too cumbersome for most users
+    '%': '%', // percent
+    'S': 'satellites', // number of satellites
+    's': 's', // seconds
+    'q': 'rpm', // rounds per minute. Not SI, but sometimes more intuitive than Hertz
+    'r': 'rad', // radians
+    'U': 'deglongitude', // degrees of longitude
+    'u': 'ppm', // pulses per minute
+    'v': 'V', // Volt
+    'P': 'Pa', // Pascal
+    'w': 'Ohm', // Ohm
+    'Y': 'us', // pulse width modulation in microseconds
+    'z': 'Hz' // Hertz
+}
+
 function getModeMap (mavType) {
     let map
     if ([mavlink.MAV_TYPE_QUADROTOR,
@@ -137,6 +191,7 @@ export class DataflashParser {
         this.lastPercentage = 0
         this.sent = false
         this.maxPercentageInterval = 0.05
+        this.messageTypes = {}
     }
 
     FORMAT_TO_STRUCT (obj) {
@@ -214,22 +269,22 @@ export class DataflashParser {
                 break
             case 'c':
                 // this.this.data.setInt16(offset,true);
-                dict[column[i]] = this.data.getInt16(this.offset, true) * 100
+                dict[column[i]] = this.data.getInt16(this.offset, true) / 100
                 this.offset += 2
                 break
             case 'C':
                 // this.data.setUint16(offset,true);
-                dict[column[i]] = this.data.getUint16(this.offset, true) * 100
+                dict[column[i]] = this.data.getUint16(this.offset, true) / 100
                 this.offset += 2
                 break
             case 'E':
                 // this.data.setUint32(offset,true);
-                dict[column[i]] = this.data.getUint32(this.offset, true) * 100
+                dict[column[i]] = this.data.getUint32(this.offset, true) / 100
                 this.offset += 4
                 break
             case 'e':
                 // this.data.setInt32(offset,true);
-                dict[column[i]] = this.data.getInt32(this.offset, true) * 100
+                dict[column[i]] = this.data.getInt32(this.offset, true) / 100
                 this.offset += 4
                 break
             case 'L':
@@ -308,13 +363,14 @@ export class DataflashParser {
                 }
             }
             if (i % 100000 === 0) {
-                let perc = 100* i/this.msgType.length
+                let perc = 100 * i / this.msgType.length
                 self.postMessage({percentage: perc})
             }
         }
-        self.postMessage({percentage: 100})
-        self.postMessage({messageType: name, messageList: parsed})
         this.messages[name] = parsed
+        this.fixDataOnce(name)
+        self.postMessage({percentage: 100})
+        self.postMessage({messageType: name, messageList: this.messages[name]})
         return parsed
     }
 
@@ -408,23 +464,84 @@ export class DataflashParser {
         return message
     }
 
+    fixDataOnce (name) {
+        if (['GPS', 'ATT', 'AHRS2', 'MODE'].indexOf(name) === -1) {
+            if (this.messageTypes.hasOwnProperty(name)) {
+                let fields = this.messages[name][0].fieldnames
+                if (this.messageTypes[name].hasOwnProperty('multipliers')) {
+                    for (let message in this.messages[name]) {
+                        for (let i = 1; i < fields.length; i++) {
+                            let fieldname = fields[i]
+                            if (!isNaN(this.messageTypes[name].multipliers[i])) {
+                                this.messages[name][message][fieldname] *= this.messageTypes[name].multipliers[i]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            console.log('skipping ' + name)
+        }
+    }
+
+    populateUnits () {
+        console.log(this.messages['FMTU'])
+        for (let msg of this.messages['FMTU']) {
+            this.FMT[msg.FmtType]['units'] = []
+            for (let unit of msg.UnitIds) {
+                this.FMT[msg.FmtType]['units'].push(units[unit])
+            }
+            this.FMT[msg.FmtType]['multipliers'] = []
+            for (let mult of msg.MultIds) {
+                this.FMT[msg.FmtType]['multipliers'].push(multipliers[mult])
+            }
+        }
+    }
+
     processData (data) {
         this.buffer = Buffer.from(data).buffer
         this.data = new DataView(this.buffer)
         this.DF_reader()
         let messageTypes = {}
         console.log(this.FMT)
+        this.parse_atOffset('FMTU')
+        this.populateUnits()
         let typeSet = new Set(this.msgType)
         for (let msg of this.FMT) {
             if (msg) {
-                if (typeSet.has(msg.Type)){
+                if (typeSet.has(msg.Type)) {
                     let fields = msg.Columns.split(',')
-                    fields = fields.filter(e => e !== 'TimeUS')
-                    messageTypes[msg.Name] = fields
+                    // fields = fields.filter(e => e !== 'TimeUS')
+                    let complexFields = {}
+                    if (msg.hasOwnProperty('units')) {
+                        for (let field in fields) {
+                            complexFields[fields[field]] = {
+                                name: fields[field],
+                                units: msg.units[field],
+                                multiplier: msg.multipliers[field]
+                            }
+                        }
+                    } else {
+                        for (let field in fields) {
+                            complexFields[fields[field]] = {
+                                name: fields[field],
+                                units: '?',
+                                multiplier: 1
+                            }
+                        }
+                    }
+                    messageTypes[msg.Name] = {
+                        fields: fields,
+                        units: msg.units,
+                        multipiers: msg.multipliers,
+                        complexFields: complexFields
+                    }
                 }
             }
         }
         self.postMessage({availableMessages: messageTypes})
+        this.messageTypes = messageTypes
         this.parse_atOffset('CMD')
         this.parse_atOffset('MSG')
         this.parse_atOffset('MODE')
@@ -436,6 +553,6 @@ export class DataflashParser {
 
     loadType (type) {
         this.parse_atOffset(type)
-        console.log("done")
+        console.log('done')
     }
 }
