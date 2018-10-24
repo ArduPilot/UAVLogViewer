@@ -17,9 +17,7 @@ let plotOptions = {
     paper_bgcolor: 'white',
     // autosize: true,
     margin: { t: 20, l: 0, b: 30, r: 10 },
-    xaxis: {
-        domain: [0.3, 0.7]
-    },
+    xaxis: {domain: [0.1, 0.9]},
     yaxis: {
         // title: 'axis1',
         titlefont: {
@@ -189,7 +187,7 @@ export default {
                             }
 
                             datasets.push({
-                                name: '' + msgfield,
+                                name: msgtype + '.' + msgfield,
                                 mode: 'scatter',
                                 x: x,
                                 y: y,
