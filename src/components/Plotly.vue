@@ -15,12 +15,13 @@ let plotOptions = {
     },
     plot_bgcolor: '#f8f8f8',
     paper_bgcolor: 'white',
-    //autosize: true,
+    // autosize: true,
     margin: { t: 20, l: 0, b: 30, r: 10 },
     xaxis: {
         domain: [0.3, 0.7]
     },
     yaxis: {
+        // title: 'axis1',
         titlefont: {
             color: '#1f77b4'
         },
@@ -29,7 +30,7 @@ let plotOptions = {
         }
     },
     yaxis2: {
-        //title: 'yaxis2 title',
+        // title: 'yaxis2 title',
         titlefont: {color: '#ff7f0e'},
         tickfont: {color: '#ff7f0e'},
         anchor: 'free',
@@ -38,7 +39,7 @@ let plotOptions = {
         position: 0.05
     },
     yaxis3: {
-        //title: 'yaxis4 title',
+        // title: 'yaxis4 title',
         titlefont: {color: '#2ca02c'},
         tickfont: {color: '#2ca02c'},
         anchor: 'x',
@@ -46,7 +47,7 @@ let plotOptions = {
         side: 'right'
     },
     yaxis4: {
-       // title: 'yaxis5 title',
+        // title: 'yaxis5 title',
         titlefont: {color: '#d62728'},
         tickfont: {color: '#d62728'},
         anchor: 'free',
@@ -68,6 +69,9 @@ let plotOptions = {
         }
     }] */
 }
+
+Plotly.editable = true
+Plotly.edits = {legendPosition: true}
 export default {
     created () {
         this.$eventHub.$on('animation-changed', this.setCursorState)
@@ -139,7 +143,7 @@ export default {
                 }, 2000)
             })
         },
-        updateUrl() {
+        updateUrl () {
             let query = Object.create(this.$route.query) // clone it
             query['plots'] = this.fields.join(',')
             this.$router.push({query: query})
@@ -148,7 +152,7 @@ export default {
             if (!this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
                 this.waitForMessage(fieldname).then(function () {
                     this.addPlot(fieldname)
-                    console.log("got message " + fieldname)
+                    console.log('got message ' + fieldname)
                 }.bind(this))
             } else {
                 if (!this.fields.includes(fieldname)) {
@@ -251,7 +255,7 @@ export default {
 
 </script>
 <style>
-  .js-plotly-plot {
-    margin-left: 0!important;
-  }
+      .js-plotly-plot {
+        margin-left: 0!important;
+      }
 </style>
