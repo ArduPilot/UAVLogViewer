@@ -260,6 +260,11 @@ export default {
     padding: 0px;
   }
 
+  div .col-12 {
+      padding-left: 0;
+      padding-right: 0;
+  }
+
   i {
     margin:10px;
   }
