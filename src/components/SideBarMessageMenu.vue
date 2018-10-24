@@ -23,19 +23,15 @@
     <template v-for="(message, key) in messageTypes">
       <li class="type" v-bind:key="key">
         <div v-b-toggle="'type' + key" >
-          <b-form-checkbox v-model="checkboxes[key].state"
-                         :indeterminate="checkboxes[key].indeterminate"
-                         @change="toggleType($event, key)">
-        </b-form-checkbox>
           <a class="section" >{{key}}
             <i class="expand fas fa-caret-down"></i></a>
         </div>
       </li>
       <b-collapse :id="'type' + key" v-bind:key="key+'1'">
-      <template v-for="item in message">
-        <li class="field" v-bind:key="key+'.'+item">
+      <template v-for="item in message.complexFields">
+        <li class="field" v-bind:key="key+'.'+item.name">
           <a >
-            <b-form-checkbox v-model="checkboxes[key].fields[item]" @change="toggle($event, key, item)"> {{item}}</b-form-checkbox>
+            <b-form-checkbox v-if="isPlottable(key,item.name)" v-model="checkboxes[key].fields[item.name]" @change="toggle($event, key, item.name)"> {{item.name}} ({{item.units}})</b-form-checkbox>
           </a>
         </li>
         </template>
@@ -77,7 +73,7 @@ export default {
             // populate checkbox status
             for (let messageType of Object.keys(this.state.messages)) {
                 this.checkboxes[messageType] = {state: false, indeterminate: false, fields: {}}
-                for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
+                for (let field of this.getMessageNumericField(this.state.messages[messageType].fields[0])) {
                     this.checkboxes[messageType].fields[field] = false
                 }
             }
@@ -87,23 +83,26 @@ export default {
             if (this.$route.query.hasOwnProperty('plots')) {
                 this.state.plot_on = true
             }
-            console.log(messageTypes)
+
             let newMessages = {}
             // populate list of message types
             for (let messageType of Object.keys(messageTypes)) {
-                this.$set(this.checkboxes, messageType, messageTypes[messageType])
+                this.$set(this.checkboxes, messageType, messageTypes[messageType].fields.fields)
                 newMessages[messageType] = messageTypes[messageType]
             }
 
             // populate checkbox status
             for (let messageType of Object.keys(messageTypes)) {
-                this.checkboxes[messageType] = {state: false, indeterminate: false, fields: {}}
+                this.checkboxes[messageType] = {fields: {}}
                 // for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
-                for (let field of messageTypes[messageType]) {
+                for (let field of messageTypes[messageType].fields) {
                     if (this.state.plot_on) {
                         if (this.$route.query.plots.indexOf(messageType + '.' + field) !== -1) {
                             this.checkboxes[messageType].fields[field] = true
-                            this.checkboxes[messageType].indeterminate = true
+                            // this.checkboxes[messageType].indeterminate = true
+                        }
+                        else {
+                            this.checkboxes[messageType].fields[field] = false
                         }
                     } else {
                         this.checkboxes[messageType].fields[field] = false
@@ -111,6 +110,7 @@ export default {
                 }
             }
             this.messageTypes = newMessages
+            this.state.messageTypes = newMessages
         },
         getMessageNumericField (message) {
             let numberFields = []
@@ -137,49 +137,15 @@ export default {
             } else {
                 this.$eventHub.$emit('hidePlot', message + '.' + item)
             }
-            Vue.nextTick(function () {
-                for (let messagekey of Object.keys(this.checkboxes)) {
-                    let message = this.checkboxes[messagekey]
-                    let allTrue = true
-                    let allFalse = true
-                    for (let fieldkey of Object.keys(message.fields)) {
-                        let field = message.fields[fieldkey]
-                        if (field) {
-                            allFalse = false
-                        } else {
-                            allTrue = false
-                        }
-                    }
-                    if (allTrue) {
-                        this.checkboxes[messagekey].state = true
-                        this.checkboxes[messagekey].indeterminate = false
-                    } else if (allFalse) {
-                        this.checkboxes[messagekey].state = false
-                        this.checkboxes[messagekey].indeterminate = false
-                    } else {
-                        this.checkboxes[messagekey].indeterminate = true
-                    }
-                }
-            }.bind(this))
         },
-        toggleType (state, message) {
-            for (let field of this.messages[message]) {
-                this.checkboxes[message].fields[field] = state
+
+        isPlottable(msgtype, item) {
+            if ( item === 'TimeUS') {
+                return false
             }
-            if (state) {
-                this.state.plot_on = true
-            }
-            Vue.nextTick(function () {
-                for (let field of this.messages[message]) {
-                    this.checkboxes[message].fields[field] = state
-                    if (state) {
-                        this.$eventHub.$emit('addPlot', message + '.' + field)
-                    } else {
-                        this.$eventHub.$emit('hidePlot', message + '.' + field)
-                    }
-                }
-            }.bind(this))
+            return true
         },
+
         hidePlots () {
             for (let message of Object.keys(this.checkboxes)) {
                 this.checkboxes[message].state = false

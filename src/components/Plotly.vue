@@ -195,7 +195,9 @@ export default {
                                 y: y,
                                 yaxis: 'y' + axis
                             })
+                            let axisname = axis > 1 ? 'yaxis' + axis : 'yaxis'
                             axis += 1
+                            plotOptions[axisname].title = msgfield + ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
                         }
                     }
                 }
