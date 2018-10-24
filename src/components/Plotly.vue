@@ -11,36 +11,50 @@ let plotOptions = {
         x: 0,
         y: 1,
         traceorder: 'normal',
-        font: {
-            color: '#FFF'
-        },
-        bgcolor: '#5b5b5b',
-        bordercolor: '#FFFFFF',
-        borderwidth: 2
+        borderwidth: 1
     },
     plot_bgcolor: '#f8f8f8',
-    paper_bgcolor: 'black',
-    autosize: true,
-    margin: { t: 0, l: 0, b: 20, r: 0 },
+    paper_bgcolor: 'white',
+    //autosize: true,
+    margin: { t: 20, l: 0, b: 30, r: 10 },
     xaxis: {
-        rangeslider: {},
-        autorange: true,
-        titlefont: {
-            color: '#fff'
-        },
-        tickfont: {
-            color: '#fff'
-        }
+        domain: [0.3, 0.7]
     },
     yaxis: {
         titlefont: {
-            color: '#fff'
+            color: '#1f77b4'
         },
         tickfont: {
-            color: '#fff'
+            color: '#1f77b4'
         }
     },
-    shapes: [ { // plot cursor line
+    yaxis2: {
+        //title: 'yaxis2 title',
+        titlefont: {color: '#ff7f0e'},
+        tickfont: {color: '#ff7f0e'},
+        anchor: 'free',
+        overlaying: 'y',
+        side: 'left',
+        position: 0.05
+    },
+    yaxis3: {
+        //title: 'yaxis4 title',
+        titlefont: {color: '#2ca02c'},
+        tickfont: {color: '#2ca02c'},
+        anchor: 'x',
+        overlaying: 'y',
+        side: 'right'
+    },
+    yaxis4: {
+       // title: 'yaxis5 title',
+        titlefont: {color: '#d62728'},
+        tickfont: {color: '#d62728'},
+        anchor: 'free',
+        overlaying: 'y',
+        side: 'right',
+        position: 0.95
+    }
+    /* shapes: [ { // plot cursor lin0.15
         type: 'line',
         y0: 0,
         x0: null,
@@ -52,7 +66,7 @@ let plotOptions = {
             width: 2,
             dash: 'dot'
         }
-    }]
+    }] */
 }
 export default {
     created () {
@@ -158,35 +172,39 @@ export default {
         plot () {
             let _this = this
             let datasets = []
-
+            let axis = 1
             for (let msgtype of Object.keys(this.state.messages)) {
-                for (let msgfield of this.state.messages[msgtype][0].fieldnames) {
-                    if (this.fields.includes(msgtype + '.' + msgfield)) {
-                        let x = []
-                        let y = []
-                        for (let message of this.state.messages[msgtype]) {
-                            x.push(message['time_boot_ms'])
-                            y.push(message[msgfield])
-                        }
+                if (this.state.messages[msgtype].length > 0) {
+                    for (let msgfield of this.state.messages[msgtype][0].fieldnames) {
+                        if (this.fields.includes(msgtype + '.' + msgfield)) {
+                            let x = []
+                            let y = []
+                            for (let message of this.state.messages[msgtype]) {
+                                x.push(message['time_boot_ms'])
+                                y.push(message[msgfield])
+                            }
 
-                        datasets.push({
-                            name: '' + msgfield,
-                            mode: 'lines',
-                            x: x,
-                            y: y
-                        })
+                            datasets.push({
+                                name: '' + msgfield,
+                                mode: 'scatter',
+                                x: x,
+                                y: y,
+                                yaxis: 'y' + axis
+                            })
+                            axis += 1
+                        }
                     }
                 }
             }
 
             let plotData = datasets
-            if (plotOptions.shapes[0].x0 === null) {
+            /*  if (plotOptions.shapes[0].x0 === null) {
                 plotOptions.shapes[0].x0 = datasets[0].x[1]
                 plotOptions.shapes[0].x1 = datasets[0].x[1]
-            }
+            } */
 
             if (this.plotInstance !== null) {
-                plotOptions.xaxis = {range: this.gd._fullLayout.xaxis.range}
+                plotOptions.xaxis = { range: this.gd._fullLayout.xaxis.range, domain: [0.1, 0.9]}
                 // plotOptions.yaxis = {range: this.gd._fullLayout.yaxis.range}
                 Plotly.newPlot(this.gd, plotData, plotOptions)
             } else {
