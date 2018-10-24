@@ -77,8 +77,10 @@ export default {
         this.$nextTick(function () {
             window.addEventListener('resize', _this.resize)
             _this.resize()
-            for (let field of this.$route.query.plots.split(',')) {
-                _this.addPlot(field)
+            if (this.$route.query.hasOwnProperty('plots')) {
+                for (let field of this.$route.query.plots.split(',')) {
+                    _this.addPlot(field)
+                }
             }
         })
         this.instruction = ''
