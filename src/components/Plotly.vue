@@ -144,6 +144,16 @@ export default {
         updateUrl () {
             let query = Object.create(this.$route.query) // clone it
             query['plots'] = this.fields.join(',')
+            try {
+                query['ranges'] = [
+                    this.gd._fullLayout.yaxis.range[0].toFixed(0),
+                    this.gd._fullLayout.yaxis.range[1].toFixed(0)
+                ].join(',')
+                console.log(this.gd._fullLayout)
+            } catch (e) {
+                console.log(e)
+            }
+
             this.$router.push({query: query})
         },
         addPlot (fieldname) {
