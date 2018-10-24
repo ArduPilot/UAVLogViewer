@@ -115,25 +115,24 @@ export default {
             let position = new Cesium.Cartesian3(
                 parseFloat(data[0]),
                 parseFloat(data[1]),
-                parseFloat(data[2]),
+                parseFloat(data[2])
             )
             let direction = new Cesium.Cartesian3(
                 parseFloat(data[3]),
                 parseFloat(data[4]),
-                parseFloat(data[5]),
+                parseFloat(data[5])
             )
             let up = new Cesium.Cartesian3(
                 parseFloat(data[6]),
                 parseFloat(data[7]),
-                parseFloat(data[8]),
+                parseFloat(data[8])
             )
             this.cameraType = data[9]
             this.changeCamera()
-            console.log("setting camera to " + position + ' ' + direction)
+            console.log('setting camera to ' + position + ' ' + direction)
             this.viewer.camera.up = up
             this.viewer.camera.position = position
             this.viewer.camera.direction = direction
-
         }
     },
 
@@ -351,7 +350,7 @@ export default {
                         polyline: {
                             positions: trajectory,
                             width: 5,
-                            material : new Cesium.PolylineOutlineMaterialProperty({
+                            material: new Cesium.PolylineOutlineMaterialProperty({
                                 color: oldColor,
                                 outlineWidth: 1,
                                 outlineColor: Cesium.Color.BLACK
@@ -389,7 +388,7 @@ export default {
                 polyline: {
                     positions: cesiumPoints,
                     width: 3,
-                    material : Cesium.Color.WHITE
+                    material: Cesium.Color.WHITE
                 }
             })
         },
