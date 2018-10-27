@@ -183,7 +183,20 @@ export class MavlinkParser {
         for (let msg of Object.keys(this.messages)) {
             let fields = this.messages[msg][0].fieldnames
             fields = fields.filter(e => e !== 'time_usec').filter(e => e !== 'time_boot_ms')
-            messageTypes[msg] = fields
+            let complexFields = {}
+            for (let field in fields) {
+                complexFields[fields[field]] = {
+                    name: fields[field],
+                    units: '?',
+                    multiplier: 1
+                }
+            }
+            messageTypes[msg] = {
+                fields: fields,
+                units: null,
+                multipiers: null,
+                complexFields: complexFields
+            }
         }
         self.postMessage({availableMessages: messageTypes})
         //self.postMessage({done: true})
