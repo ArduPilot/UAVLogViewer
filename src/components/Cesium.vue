@@ -328,9 +328,9 @@ export default {
                 position: sampledPos,
                 orientation: sampledOrientation,
                 model: {
-                    uri: require('../assets/Cesium_Air.glb'),
+                    uri: this.getVehicleModel(),
                     minimumPixelSize: 64,
-                    scale: 0.2
+                    scale: 0.5
                 }
             })
 
@@ -416,6 +416,16 @@ export default {
                 this.clickableTrajectory.get(i).show = this.showClickableTrajectory
             }
             this.viewer.scene.requestRender()
+        },
+        getVehicleModel() {
+            let type = this.state.vehicle
+            if (type === 'submarine') {
+                return require('../assets/bluerovsimple.glb')
+            }
+            if (type === 'quadcopter') {
+                return require('../assets/quad.glb')
+            }
+            return require('../assets/plane.glb')
         }
     },
 

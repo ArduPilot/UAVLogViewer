@@ -56,6 +56,7 @@ export default {
             this.state.current_trajectory = this.extractTrajectory(this.state.messages)
             this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
             this.state.mission = this.extractMission(this.state.messages)
+            this.state.vehicle = this.extractVehicleType(this.state.messages)
             this.state.map_on = true
             this.state.processStatus = 'Processed!'
         },
@@ -144,6 +145,29 @@ export default {
                 }
             }
             return wps
+        },
+        extractVehicleType (messages) {
+            if ('MSG' in messages) {
+                for (let msg of messages['MSG']) {
+                    console.log(msg)
+                    if (msg.Message.indexOf('ArduPlane') > -1) {
+                        return 'airplane'
+                    }
+                    if (msg.Message.indexOf('ArduSub') > -1) {
+                        return 'submarine'
+                    }
+                    if (msg.Message.indexOf('Rover') > -1) {
+                        return 'rover'
+                    }
+                    if (msg.Message.indexOf('Tracker') > -1) {
+                        return 'tracker'
+                    }
+                }
+                return 'quadcopter'
+            }
+            if ('HEARTBEAT' in messages) {
+                return messages['HEARTBEAT'][0].craft
+            }
         }
     },
     components: {

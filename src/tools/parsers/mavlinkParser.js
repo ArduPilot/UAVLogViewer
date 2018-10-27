@@ -77,6 +77,24 @@ let modeMappingSub = {
     19: 'MANUAL'
 }
 
+let vehicles = {
+    1: 'airplane', // Fixed wing aircraft.
+    2: 'quadcopter', // Quadrotor
+    3: 'quadcopter', // Coaxial helicopter
+    4: 'quadcopter', // Normal helicopter with tail rotor.
+    5: 'tracker', // Ground installation
+    10: 'rover', // Ground rover
+    11: 'boat', // Surface vessel, boat, ship
+    12: 'submarine', // Submarine
+    13: 'quadcopter', // Hexarotor
+    14: 'quadcopter', // Octorotor
+    15: 'quadcopter', // Tricopter
+    19: 'airplane', // Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.
+    20: 'airplane', // Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.
+    21: 'quadcopter', // Tiltrotor VTOL
+    29: 'quadcopter' // Dodecarotor
+}
+
 function getModeMap (mavType) {
     let map
     if ([mavlink.MAV_TYPE_QUADROTOR,
@@ -163,6 +181,7 @@ export class MavlinkParser {
             return message
         } else if (message.name === 'HEARTBEAT') {
             message.asText = getModeString(message.type, message.custom_mode)
+            message.craft = vehicles[message.type]
             return message
         }
         delete message.crc
