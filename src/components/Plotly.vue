@@ -73,7 +73,7 @@ Plotly.edits = {legendPosition: true}
 export default {
     created () {
         this.$eventHub.$on('animation-changed', this.setCursorState)
-        this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
+        // this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
         this.$eventHub.$on('addPlot', this.addPlot)
         this.$eventHub.$on('hidePlot', this.removePlot)
     },
@@ -229,7 +229,7 @@ export default {
                     return d.x
                 })
                 _this.$eventHub.$emit('hoveredTime', infotext[0])
-                _this.setCursorTime(infotext[0])
+                // _this.setCursorTime(infotext[0])
             })
         },
         setCursorTime (time) {
