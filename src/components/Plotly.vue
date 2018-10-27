@@ -220,9 +220,9 @@ export default {
             if (this.plotInstance !== null) {
                 plotOptions.xaxis = { range: this.gd._fullLayout.xaxis.range, domain: [0.1, 0.9]}
                 // plotOptions.yaxis = {range: this.gd._fullLayout.yaxis.range}
-                Plotly.newPlot(this.gd, plotData, plotOptions)
+                Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
             } else {
-                this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions)
+                this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
             }
             this.gd.on('plotly_hover', function (data) {
                 let infotext = data.points.map(function (d) {

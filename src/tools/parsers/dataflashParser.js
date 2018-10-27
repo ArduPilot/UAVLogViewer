@@ -452,11 +452,11 @@ export class DataflashParser {
         if (message.name === 'GPS') {
             message.Lat = message.Lat / 1e7
             message.Lng = message.Lng / 1e7
-            message.Alt = message.Alt / 1e4
+            // message.Alt = message.Alt / 1e4
         } else if (message.name === 'ATT' || message.name === 'AHR2') {
-            message.Roll = Math.radians(message.Roll / 1e4)
-            message.Pitch = Math.radians(message.Pitch / 1e4)
-            message.Yaw = Math.radians(message.Yaw / 1e4)
+            message.Roll = Math.radians(message.Roll)
+            message.Pitch = Math.radians(message.Pitch)
+            message.Yaw = Math.radians(message.Yaw)
         } else if (message.name === 'MODE') {
             message.asText = this.getModeString(message['Mode'])
         }
@@ -466,7 +466,7 @@ export class DataflashParser {
     }
 
     fixDataOnce (name) {
-        if (['GPS', 'ATT', 'AHRS2', 'MODE'].indexOf(name) === -1) {
+        if (['GPS', 'ATT', 'AHR2', 'MODE'].indexOf(name) === -1) {
             if (this.messageTypes.hasOwnProperty(name)) {
                 let fields = this.messages[name][0].fieldnames
                 if (this.messageTypes[name].hasOwnProperty('multipliers')) {
