@@ -17,7 +17,10 @@ let plotOptions = {
     paper_bgcolor: 'white',
     // autosize: true,
     margin: { t: 20, l: 0, b: 30, r: 10 },
-    xaxis: {domain: [0.1, 0.9]},
+    xaxis: {
+        domain: [0.1, 0.9],
+        rangeslider: {},
+    },
     yaxis: {
         // title: 'axis1',
         titlefont: {
@@ -25,7 +28,9 @@ let plotOptions = {
         },
         tickfont: {
             color: '#1f77b4'
-        }
+        },
+        anchor: 'free',
+        position: 0.1
     },
     yaxis2: {
         // title: 'yaxis2 title',
@@ -40,9 +45,10 @@ let plotOptions = {
         // title: 'yaxis4 title',
         titlefont: {color: '#2ca02c'},
         tickfont: {color: '#2ca02c'},
-        anchor: 'x',
+        anchor: 'free',
         overlaying: 'y',
-        side: 'right'
+        side: 'right',
+        position: 0.9
     },
     yaxis4: {
         // title: 'yaxis5 title',
@@ -256,7 +262,7 @@ export default {
             } */
 
             if (this.plotInstance !== null) {
-                plotOptions.xaxis = { range: this.gd._fullLayout.xaxis.range, domain: [0.1, 0.9]}
+                plotOptions.xaxis = {rangeslider: {}, range: this.gd._fullLayout.xaxis.range, domain: [0.1, 0.9]}
                 // plotOptions.yaxis = {range: this.gd._fullLayout.yaxis.range}
                 Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
             } else {
