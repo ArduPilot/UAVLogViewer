@@ -89,6 +89,7 @@ export default {
                 })
 
             this.viewer.scene.debugShowFramesPerSecond = true
+            this.viewer.terrainProvider = Cesium.createWorldTerrain()
             this.viewer.scene.postProcessStages.fxaa.enabled = false
             this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
             this.viewer.scene.postProcessStages.bloom.enabled = false
@@ -108,32 +109,38 @@ export default {
 
             Cesium.knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
         }
-        this.plotTrajectory(this.state.current_trajectory)
-        this.plotMission(this.state.mission)
-        if (this.$route.query.hasOwnProperty('cam')) {
-            let data = this.$route.query.cam.split(',')
-            let position = new Cesium.Cartesian3(
-                parseFloat(data[0]),
-                parseFloat(data[1]),
-                parseFloat(data[2])
-            )
-            let direction = new Cesium.Cartesian3(
-                parseFloat(data[3]),
-                parseFloat(data[4]),
-                parseFloat(data[5])
-            )
-            let up = new Cesium.Cartesian3(
-                parseFloat(data[6]),
-                parseFloat(data[7]),
-                parseFloat(data[8])
-            )
-            this.cameraType = data[9]
-            this.changeCamera()
-            console.log('setting camera to ' + position + ' ' + direction)
-            this.viewer.camera.up = up
-            this.viewer.camera.position = position
-            this.viewer.camera.direction = direction
-        }
+        let start = [Cesium.Cartographic.fromDegrees(this.state.current_trajectory[0][0],
+                                                    this.state.current_trajectory[0][1])]
+        var promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, start);
+        Cesium.when(promise, function(updatedPositions) {
+            this.heightOffset = updatedPositions[0].height
+            this.plotTrajectory(this.state.current_trajectory)
+            this.plotMission(this.state.mission)
+            if (this.$route.query.hasOwnProperty('cam')) {
+                let data = this.$route.query.cam.split(',')
+                let position = new Cesium.Cartesian3(
+                    parseFloat(data[0]),
+                    parseFloat(data[1]),
+                    parseFloat(data[2])
+                )
+                let direction = new Cesium.Cartesian3(
+                    parseFloat(data[3]),
+                    parseFloat(data[4]),
+                    parseFloat(data[5])
+                )
+                let up = new Cesium.Cartesian3(
+                    parseFloat(data[6]),
+                    parseFloat(data[7]),
+                    parseFloat(data[8])
+                )
+                this.cameraType = data[9]
+                this.changeCamera()
+                console.log('setting camera to ' + position + ' ' + direction)
+                this.viewer.camera.up = up
+                this.viewer.camera.position = position
+                this.viewer.camera.direction = direction
+            }
+        }.bind(this))
     },
 
     methods:
@@ -281,7 +288,7 @@ export default {
 
             // Create sampled position
             for (let pos of points) {
-                position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
+                position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
                 positions.push(position)
                 let time = Cesium.JulianDate.addSeconds(start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
                 sampledPos.addSample(time, position)
@@ -339,7 +346,7 @@ export default {
             let oldColor = this.getModeColor(positions[0][3])
             let trajectory = []
             for (let pos of points) {
-                position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
+                position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
                 trajectory.push(position)
 
                 let color = this.getModeColor(pos[3])
@@ -380,7 +387,7 @@ export default {
         plotMission (points) {
             let cesiumPoints = []
             for (let pos of points) {
-                let position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2])
+                let position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
                 cesiumPoints.push(position)
             }
             // Add polyline representing the path under the points
