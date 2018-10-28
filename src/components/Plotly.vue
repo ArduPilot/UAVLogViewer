@@ -199,6 +199,7 @@ export default {
             this.$router.push({query: query})
         },
         addPlot (fieldname) {
+            this.state.plot_loading = true
             if (!this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
                 this.waitForMessage(fieldname).then(function () {
                     this.addPlot(fieldname)
@@ -209,6 +210,7 @@ export default {
                     this.fields.push(fieldname)
                     // this.updateUrl()
                     this.plot()
+                    this.state.plot_loading = false
                 }
             }
         },
