@@ -335,7 +335,7 @@ export default {
         z-index: 1000;
         display: block;
         background-color: black;
-        opacity: 0.5;
+        opacity: 0.75;
         text-align: center;
     }
 
