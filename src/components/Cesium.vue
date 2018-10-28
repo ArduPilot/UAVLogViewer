@@ -70,6 +70,7 @@ export default {
     },
     created () {
         this.$eventHub.$on('hoveredTime', this.showAttitude)
+        this.state.map_loading = true
     },
     beforeDestroy () {
         this.$eventHub.$off('hoveredTime')
@@ -140,6 +141,7 @@ export default {
                 this.viewer.camera.position = position
                 this.viewer.camera.direction = direction
             }
+            this.state.map_loading = false
         }.bind(this))
     },
 

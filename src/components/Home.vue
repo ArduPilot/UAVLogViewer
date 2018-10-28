@@ -1,6 +1,14 @@
 <template>
   <div id='vuewrapper' style="height: 100%;">
-
+      <template v-if="state.map_loading || state.plot_loading">
+          <div id="waiting">
+              <atom-spinner
+                  :animation-duration="1000"
+                  :size="300"
+                  :color="'#64e9ff'"
+              />
+          </div>
+      </template>
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
       <sidebar />
@@ -30,10 +38,12 @@ import Plotly from './Plotly'
 import Cesium from './Cesium'
 import Sidebar from './Sidebar'
 import {store} from './Globals.js'
+import {AtomSpinner} from 'epic-spinners'
 
 function getMinAlt (data) {
     return data.reduce((min, p) => p.Alt < min ? p.Alt : min, data[0].Alt)
 }
+
 
 export default {
     name: 'Home',
@@ -173,7 +183,8 @@ export default {
     components: {
         Sidebar,
         Plotly,
-        Cesium}
+        Cesium,
+        AtomSpinner}
 }
 </script>
 
@@ -314,5 +325,23 @@ export default {
     border-radius: 5px;
     -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
     background-color: #1c437f; }
+
+    div #waiting {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        display: block;
+        background-color: black;
+        opacity: 0.5;
+        text-align: center;
+    }
+
+    div .atom-spinner {
+        margin: auto;
+        margin-top: 15%;
+    }
 
 </style>

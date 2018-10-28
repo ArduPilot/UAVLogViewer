@@ -7,5 +7,7 @@ export var store = {
     map_on: false,
     plot_on: false,
     processStatus: 'Formatting...',
-    processPercentage: -1
+    processPercentage: -1,
+    map_loading: false,
+    plot_loading: false
 }
