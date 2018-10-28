@@ -111,7 +111,7 @@ export default {
         }
         let start = [Cesium.Cartographic.fromDegrees(this.state.current_trajectory[0][0],
                                                     this.state.current_trajectory[0][1])]
-        var promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, start);
+        let promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, start)
         Cesium.when(promise, function(updatedPositions) {
             this.heightOffset = updatedPositions[0].height
             this.plotTrajectory(this.state.current_trajectory)

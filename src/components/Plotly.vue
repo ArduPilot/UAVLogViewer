@@ -19,7 +19,7 @@ let plotOptions = {
     margin: { t: 20, l: 0, b: 30, r: 10 },
     xaxis: {
         domain: [0.1, 0.9],
-        rangeslider: {},
+        rangeslider: {}
     },
     yaxis: {
         // title: 'axis1',
@@ -104,30 +104,27 @@ export default {
                 for (let field of this.$route.query.ranges.split(',')) {
                     ranges.push(parseFloat(field))
                 }
-                if(ranges.length > 0) {
+                if (ranges.length > 0) {
                     plotOptions.xaxis.range = [ranges[0], ranges[1]]
                 }
-                if(ranges.length >= 4) {
+                if (ranges.length >= 4) {
                     plotOptions.yaxis.range = [ranges[2], ranges[3]]
                 }
-                if(ranges.length >= 6) {
+                if (ranges.length >= 6) {
                     plotOptions.yaxis2.range = [ranges[4], ranges[5]]
                 }
-                if(ranges.length >= 8) {
+                if (ranges.length >= 8) {
                     plotOptions.yaxis3.range = [ranges[6], ranges[7]]
                 }
-                if(ranges.length >= 10) {
+                if (ranges.length >= 10) {
                     plotOptions.yaxis4.range = [ranges[8], ranges[9]]
                 }
-
-
             }
             if (this.$route.query.hasOwnProperty('plots')) {
                 for (let field of this.$route.query.plots.split(',')) {
                     _this.addPlot(field)
                 }
             }
-
         })
         this.instruction = ''
         this.interval = setInterval(this.updateUrl, 3000)
@@ -180,19 +177,20 @@ export default {
                 this.gd._fullLayout.xaxis.range[0].toFixed(0),
                 this.gd._fullLayout.xaxis.range[1].toFixed(0)
             ]
-            if (this.fields.length>0) {
+            this.state.xrange = list
+            if (this.fields.length > 0) {
                 list.push(this.gd._fullLayout.yaxis.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis.range[1].toFixed(0))
             }
-            if (this.fields.length>1) {
+            if (this.fields.length > 1) {
                 list.push(this.gd._fullLayout.yaxis2.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis2.range[1].toFixed(0))
             }
-            if (this.fields.length>2) {
+            if (this.fields.length > 2) {
                 list.push(this.gd._fullLayout.yaxis3.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis3.range[1].toFixed(0))
             }
-            if (this.fields.length>3) {
+            if (this.fields.length > 3) {
                 list.push(this.gd._fullLayout.yaxis4.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis4.range[1].toFixed(0))
             }
@@ -209,7 +207,7 @@ export default {
             } else {
                 if (!this.fields.includes(fieldname)) {
                     this.fields.push(fieldname)
-                    //this.updateUrl()
+                    // this.updateUrl()
                     this.plot()
                 }
             }
