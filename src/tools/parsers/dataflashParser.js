@@ -462,6 +462,7 @@ export class DataflashParser {
         }
         message.time_boot_ms = message.TimeUS / 1000
         delete message.TimeUS
+        delete message.fieldnames
         return message
     }
 
