@@ -63,10 +63,10 @@ export default {
     methods: {
         updateData () {
             console.log('updatedata')
-            if (this.state.time_attitude.length === 0) {
+            if (Object.keys(this.state.time_attitude).length === 0) {
                 this.state.time_attitude = this.extractAttitudes(this.state.messages)
             }
-            if (this.state.time_attitudeQ.length === 0) {
+            if (Object.keys(this.state.time_attitudeQ).length === 0) {
                 this.state.time_attitudeQ = this.extractAttitudesQ(this.state.messages)
             }
             if (this.state.current_trajectory.length === 0) {
@@ -126,6 +126,7 @@ export default {
         extractAttitudesQ (messages) {
             let attitudes = {}
             if ('XKQ1' in messages) {
+                console.log("QUATERNIOS")
                 let attitudeMsgs = messages['XKQ1']
                 for (let att of attitudeMsgs) {
                     attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
@@ -197,7 +198,8 @@ export default {
         map_ok () {
             return (this.state.flight_mode_changes !== undefined &&
             this.state.current_trajectory !== undefined &&
-            this.state.current_trajectory.length > 0)
+            this.state.current_trajectory.length > 0 &&
+                (Object.keys(this.state.time_attitude).length > 0 || Object.keys(this.state.time_attitudeQ).length > 0))
         }
     }
 }
