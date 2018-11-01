@@ -21,10 +21,9 @@
             <Plotly />
           </div>
         </div>
-        <div class="row" v-if="state.map_on" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
+        <div class="row" v-if="state.map_on && map_ok" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
           <div class="col-12 noPadding">
-            <Cesium ref="cesium"
-                    v-if="state.current_trajectory.length"/>
+            <Cesium ref="cesium"/>
           </div>
         </div>
       </main>
@@ -43,7 +42,6 @@ import {AtomSpinner} from 'epic-spinners'
 function getMinAlt (data) {
     return data.reduce((min, p) => p.Alt < min ? p.Alt : min, data[0].Alt)
 }
-
 
 export default {
     name: 'Home',
@@ -67,7 +65,6 @@ export default {
             this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
             this.state.mission = this.extractMission(this.state.messages)
             this.state.vehicle = this.extractVehicleType(this.state.messages)
-            this.state.map_on = true
             this.state.processStatus = 'Processed!'
         },
 
@@ -184,7 +181,15 @@ export default {
         Sidebar,
         Plotly,
         Cesium,
-        AtomSpinner}
+        AtomSpinner
+    },
+    computed: {
+        map_ok () {
+            return (this.state.flight_mode_changes !== undefined &&
+            this.state.current_trajectory !== undefined &&
+            this.state.current_trajectory.length > 0)
+        }
+    }
 }
 </script>
 
