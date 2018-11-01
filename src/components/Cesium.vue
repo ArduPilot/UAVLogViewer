@@ -216,16 +216,18 @@ export default {
         },
 
         onMove (movement) {
-            if (this.isDragging) {
-                if (this.mouseIsOnPoint(movement.endPosition)) {
-                    this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
-                    this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16)), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
-                }
-            } else {
-                if (this.mouseIsOnPoint(movement.endPosition)) {
-                    this.viewer.container.style.cursor = 'pointer'
+            if (this.showClickableTrajectory) {
+                if (this.isDragging) {
+                    if (this.mouseIsOnPoint(movement.endPosition)) {
+                        this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
+                        this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16)), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
+                    }
                 } else {
-                    this.viewer.container.style.cursor = 'default'
+                    if (this.mouseIsOnPoint(movement.endPosition)) {
+                        this.viewer.container.style.cursor = 'pointer'
+                    } else {
+                        this.viewer.container.style.cursor = 'default'
+                    }
                 }
             }
         },
