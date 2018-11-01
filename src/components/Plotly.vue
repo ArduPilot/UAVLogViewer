@@ -231,7 +231,7 @@ export default {
             let axis = 1
             for (let msgtype of Object.keys(this.state.messages)) {
                 if (this.state.messages[msgtype].length > 0) {
-                    for (let msgfield of this.state.messages[msgtype][0].fieldnames) {
+                    for (let msgfield of this.state.messageTypes[msgtype].fields) {
                         if (this.fields.includes(msgtype + '.' + msgfield)) {
                             let x = []
                             let y = []
