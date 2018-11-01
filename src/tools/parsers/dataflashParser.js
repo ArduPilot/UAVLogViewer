@@ -426,7 +426,7 @@ export class DataflashParser {
     getModeString (cmode) {
         let mavtype
         for (let msg of this.messages['MSG']) {
-            console.log(msg)
+            //console.log(msg)
             if (msg.Message.indexOf('ArduPlane') > -1) {
                 mavtype = mavlink.MAV_TYPE_FIXED_WING
                 return getModeMap(mavtype)[cmode]
@@ -487,7 +487,7 @@ export class DataflashParser {
     }
 
     populateUnits () {
-        console.log(this.messages['FMTU'])
+        // console.log(this.messages['FMTU'])
         for (let msg of this.messages['FMTU']) {
             this.FMT[msg.FmtType]['units'] = []
             for (let unit of msg.UnitIds) {
@@ -505,7 +505,6 @@ export class DataflashParser {
         this.data = new DataView(this.buffer)
         this.DF_reader()
         let messageTypes = {}
-        console.log(this.FMT)
         this.parse_atOffset('FMTU')
         this.populateUnits()
         let typeSet = new Set(this.msgType)
