@@ -48,6 +48,9 @@ export default {
     created () {
         this.$eventHub.$on('messages', this.updateData)
         this.state.messages = {}
+        this.state.time_attitude = []
+        this.state.time_attitudeQ = []
+        this.state.current_trajectory = []
     },
     beforeDestroy () {
         this.$eventHub.$off('messages')
@@ -59,18 +62,26 @@ export default {
     },
     methods: {
         updateData () {
-            this.state.time_attitude = this.extractAttitudes(this.state.messages)
-            this.state.time_attitudeQ = this.extractAttitudesQ(this.state.messages)
-            this.state.current_trajectory = this.extractTrajectory(this.state.messages)
+            console.log('updatedata')
+            if (this.state.time_attitude.length === 0) {
+                this.state.time_attitude = this.extractAttitudes(this.state.messages)
+            }
+            if (this.state.time_attitudeQ.length === 0) {
+                this.state.time_attitudeQ = this.extractAttitudesQ(this.state.messages)
+            }
+            if (this.state.current_trajectory.length === 0) {
+                this.state.current_trajectory = this.extractTrajectory(this.state.messages)
+            }
             this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
             this.state.mission = this.extractMission(this.state.messages)
             this.state.vehicle = this.extractVehicleType(this.state.messages)
             this.state.processStatus = 'Processed!'
+            this.state.map_on = true
         },
 
         extractTrajectory (messages) {
             let trajectory = []
-
+            this.state.time_trajectory = {}
             if ('GLOBAL_POSITION_INT' in messages) {
                 let gpsData = messages['GLOBAL_POSITION_INT']
                 for (let pos of gpsData) {
@@ -156,7 +167,6 @@ export default {
         extractVehicleType (messages) {
             if ('MSG' in messages) {
                 for (let msg of messages['MSG']) {
-                    console.log(msg)
                     if (msg.Message.indexOf('ArduPlane') > -1) {
                         return 'airplane'
                     }
