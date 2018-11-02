@@ -78,10 +78,7 @@ Plotly.editable = true
 Plotly.edits = {legendPosition: true}
 export default {
     created () {
-        //this.$eventHub.$on('animation-changed', this.setCursorState)
-        this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
-        this.$eventHub.$on('addPlot', this.addPlot)
-        this.$eventHub.$on('hidePlot', this.removePlot)
+        this.$eventHub.$on('animation-changed', this.setCursorState)
     },
     mounted () {
         let d3 = Plotly.d3
@@ -127,7 +124,10 @@ export default {
             }
         })
         this.instruction = ''
-        this.interval = setInterval(this.updateUrl, 3000)
+        // this.interval = setInterval(this.onRangeChanged, 3000)
+        this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
+        this.$eventHub.$on('addPlot', this.addPlot)
+        this.$eventHub.$on('hidePlot', this.removePlot)
     },
     beforeDestroy () {
         window.removeEventListener('resize', this.resize)
@@ -172,34 +172,37 @@ export default {
         },
         onRangeChanged (event) {
             console.log(event)
+            let query = Object.create(this.$route.query) // clone it
+            query['plots'] = this.fields.join(',')
+            let list = [
+                this.gd._fullLayout.xaxis.range[0].toFixed(0),
+                this.gd._fullLayout.xaxis.range[1].toFixed(0)
+            ]
+            this.state.xrange = list
+            if (this.fields.length > 0) {
+                list.push(this.gd._fullLayout.yaxis.range[0].toFixed(0))
+                list.push(this.gd._fullLayout.yaxis.range[1].toFixed(0))
+            }
+            if (this.fields.length > 1) {
+                list.push(this.gd._fullLayout.yaxis2.range[0].toFixed(0))
+                list.push(this.gd._fullLayout.yaxis2.range[1].toFixed(0))
+            }
+            if (this.fields.length > 2) {
+                list.push(this.gd._fullLayout.yaxis3.range[0].toFixed(0))
+                list.push(this.gd._fullLayout.yaxis3.range[1].toFixed(0))
+            }
+            if (this.fields.length > 3) {
+                list.push(this.gd._fullLayout.yaxis4.range[0].toFixed(0))
+                list.push(this.gd._fullLayout.yaxis4.range[1].toFixed(0))
+            }
+            query['ranges'] = list.join(',')
+
+            this.$router.push({query: query})
             if (event.hasOwnProperty('xaxis.range')) {
                 this.$eventHub.$emit('rangeChanged', event['xaxis.range'])
-                let query = Object.create(this.$route.query) // clone it
-                query['plots'] = this.fields.join(',')
-                let list = [
-                    this.gd._fullLayout.xaxis.range[0].toFixed(0),
-                    this.gd._fullLayout.xaxis.range[1].toFixed(0)
-                ]
-                this.state.xrange = list
-                if (this.fields.length > 0) {
-                    list.push(this.gd._fullLayout.yaxis.range[0].toFixed(0))
-                    list.push(this.gd._fullLayout.yaxis.range[1].toFixed(0))
-                }
-                if (this.fields.length > 1) {
-                    list.push(this.gd._fullLayout.yaxis2.range[0].toFixed(0))
-                    list.push(this.gd._fullLayout.yaxis2.range[1].toFixed(0))
-                }
-                if (this.fields.length > 2) {
-                    list.push(this.gd._fullLayout.yaxis3.range[0].toFixed(0))
-                    list.push(this.gd._fullLayout.yaxis3.range[1].toFixed(0))
-                }
-                if (this.fields.length > 3) {
-                    list.push(this.gd._fullLayout.yaxis4.range[0].toFixed(0))
-                    list.push(this.gd._fullLayout.yaxis4.range[1].toFixed(0))
-                }
-                query['ranges'] = list.join(',')
-
-                this.$router.push({query: query})
+            }
+            if (event.hasOwnProperty('xaxis.range[0]')) {
+                this.$eventHub.$emit('rangeChanged', [event['xaxis.range[0]'], event['xaxis.range[1]']])
             }
         },
         addPlot (fieldname) {
