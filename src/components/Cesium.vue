@@ -340,7 +340,7 @@ export default {
                 orientation: sampledOrientation,
                 model: {
                     uri: this.getVehicleModel(),
-                    minimumPixelSize: 64,
+                    minimumPixelSize: 6,
                     scale: 0.5
                 }
             })
@@ -360,7 +360,7 @@ export default {
                         parent: this.trajectory,
                         polyline: {
                             positions: trajectory,
-                            width: 5,
+                            width: 2,
                             material: new Cesium.PolylineOutlineMaterialProperty({
                                 color: oldColor,
                                 outlineWidth: 1,
@@ -376,7 +376,7 @@ export default {
                 parent: this.trajectory,
                 polyline: {
                     positions: trajectory,
-                    width: 5,
+                    width: 2,
                     material: new Cesium.PolylineOutlineMaterialProperty({
                         color: oldColor,
                         outlineWidth: 1,
@@ -398,7 +398,7 @@ export default {
             this.waypoints = this.viewer.entities.add({
                 polyline: {
                     positions: cesiumPoints,
-                    width: 3,
+                    width: 1,
                     material: Cesium.Color.WHITE
                 }
             })
