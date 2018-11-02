@@ -87,12 +87,13 @@ export default {
                     requestRenderMode: true,
                     shouldAnimate: false,
                     scene3DOnly: true,
-                    selectionIndicator: false
+                    selectionIndicator: false,
+                    shadows: true
                 })
 
             this.viewer.scene.debugShowFramesPerSecond = true
             this.viewer.terrainProvider = Cesium.createWorldTerrain()
-            this.viewer.scene.postProcessStages.fxaa.enabled = false
+            // this.viewer.scene.postProcessStages.fxaa.enabled = false
             this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
             this.viewer.scene.postProcessStages.bloom.enabled = false
             this.clickableTrajectory = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
