@@ -170,33 +170,37 @@ export default {
                 }, 2000)
             })
         },
-        updateUrl () {
-            let query = Object.create(this.$route.query) // clone it
-            query['plots'] = this.fields.join(',')
-            let list = [
-                this.gd._fullLayout.xaxis.range[0].toFixed(0),
-                this.gd._fullLayout.xaxis.range[1].toFixed(0)
-            ]
-            this.state.xrange = list
-            if (this.fields.length > 0) {
-                list.push(this.gd._fullLayout.yaxis.range[0].toFixed(0))
-                list.push(this.gd._fullLayout.yaxis.range[1].toFixed(0))
-            }
-            if (this.fields.length > 1) {
-                list.push(this.gd._fullLayout.yaxis2.range[0].toFixed(0))
-                list.push(this.gd._fullLayout.yaxis2.range[1].toFixed(0))
-            }
-            if (this.fields.length > 2) {
-                list.push(this.gd._fullLayout.yaxis3.range[0].toFixed(0))
-                list.push(this.gd._fullLayout.yaxis3.range[1].toFixed(0))
-            }
-            if (this.fields.length > 3) {
-                list.push(this.gd._fullLayout.yaxis4.range[0].toFixed(0))
-                list.push(this.gd._fullLayout.yaxis4.range[1].toFixed(0))
-            }
-            query['ranges'] = list.join(',')
+        onRangeChanged (event) {
+            console.log(event)
+            if (event.hasOwnProperty('xaxis.range')) {
+                this.$eventHub.$emit('rangeChanged', event['xaxis.range'])
+                let query = Object.create(this.$route.query) // clone it
+                query['plots'] = this.fields.join(',')
+                let list = [
+                    this.gd._fullLayout.xaxis.range[0].toFixed(0),
+                    this.gd._fullLayout.xaxis.range[1].toFixed(0)
+                ]
+                this.state.xrange = list
+                if (this.fields.length > 0) {
+                    list.push(this.gd._fullLayout.yaxis.range[0].toFixed(0))
+                    list.push(this.gd._fullLayout.yaxis.range[1].toFixed(0))
+                }
+                if (this.fields.length > 1) {
+                    list.push(this.gd._fullLayout.yaxis2.range[0].toFixed(0))
+                    list.push(this.gd._fullLayout.yaxis2.range[1].toFixed(0))
+                }
+                if (this.fields.length > 2) {
+                    list.push(this.gd._fullLayout.yaxis3.range[0].toFixed(0))
+                    list.push(this.gd._fullLayout.yaxis3.range[1].toFixed(0))
+                }
+                if (this.fields.length > 3) {
+                    list.push(this.gd._fullLayout.yaxis4.range[0].toFixed(0))
+                    list.push(this.gd._fullLayout.yaxis4.range[1].toFixed(0))
+                }
+                query['ranges'] = list.join(',')
 
-            this.$router.push({query: query})
+                this.$router.push({query: query})
+            }
         },
         addPlot (fieldname) {
             this.state.plot_loading = true
@@ -223,7 +227,7 @@ export default {
             if (this.fields.length === 0) {
                 this.state.plot_on = false
             }
-            this.updateUrl()
+            this.onRangeChanged()
         },
         plot () {
             let _this = this
@@ -268,6 +272,7 @@ export default {
             } else {
                 this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
             }
+            this.gd.on('plotly_relayout', this.onRangeChanged)
             this.gd.on('plotly_hover', function (data) {
                 let infotext = data.points.map(function (d) {
                     return d.x
