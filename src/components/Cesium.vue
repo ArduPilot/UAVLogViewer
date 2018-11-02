@@ -53,22 +53,23 @@ export default {
     data () {
         return {
             state: store,
-            viewer: null,
-            startTimeMs: 0,
-            colors: [],
-            cssColors: [],
-            lastHoveredTime: 0,
-            model: undefined,
-            cameraType: 'free',
-            waypoints: null,
             showWaypoints: true,
-            trajectory: null,
+            startTimeMs: 0,
+            cameraType: 'free',
             showTrajectory: true,
-            clickableTrajectory: null,
             showClickableTrajectory: false
         }
     },
     created () {
+        this.viewer = null
+        this.colors = []
+        this.cssColors = []
+        this.lastHoveredTime = 0
+        this.model = null
+        this.clickableTrajectory = null
+        this.waypoints = null
+        this.trajectory = null
+
         this.$eventHub.$on('hoveredTime', this.showAttitude)
         this.state.map_loading = true
     },
