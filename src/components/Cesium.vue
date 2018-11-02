@@ -122,6 +122,8 @@ export default {
             this.addModel()
             this.plotTrajectories()
             this.plotMission(this.state.mission)
+            document.addEventListener('setzoom', this.onTimelineZoom)
+            this.$eventHub.$on('rangeChanged', this.onRangeChanged)
             if (this.$route.query.hasOwnProperty('cam')) {
                 let data = this.$route.query.cam.split(',')
                 let position = new Cesium.Cartesian3(
@@ -197,6 +199,17 @@ export default {
         },
         onAnimationChange (isAnimating) {
             this.$eventHub.$emit('animation-changed', isAnimating)
+        },
+        onRangeChanged(event) {
+            this.viewer.timeline.zoomTo(this.msToCesiumTime(event[0]), this.msToCesiumTime(event[1]))
+        },
+        onTimelineZoom (event) {
+            this.timelineStart = event.startJulian
+            this.timelineStop = event.endJulian
+            if (this.trajectoryUpdateTimeout !== null) {
+                clearTimeout(this.trajectoryUpdateTimeout)
+            }
+            setTimeout(this.plotTrajectories, 500)
         },
 
         onLeftDown (movement) {
