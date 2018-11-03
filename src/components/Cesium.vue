@@ -100,6 +100,18 @@ export default {
                 })
             }
         }))
+        imageryProviders.push(new Cesium.ProviderViewModel({
+            name: 'Eniro',
+            iconUrl: require('../assets/eniro.png'),
+            tooltip: 'Eniro aerial imagery \nhttp://map.eniro.com/',
+            creationFunction: function () {
+                return new Cesium.UrlTemplateImageryProvider({
+                    // url: 'http://map.eniro.com/geowebcache/service/tms1.0.0/map/{z}/{x}/{reverseY}.png',
+                    url: '/eniro/{z}/{x}/{reverseY}.png',
+                    credit: 'Map tiles by Eniro.'
+                })
+            }
+        }))
         if (this.viewer == null) {
             this.viewer = new Cesium.Viewer(
                 'cesiumContainer',

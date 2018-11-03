@@ -11,10 +11,14 @@ module.exports = {
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
     proxyTable: {
-      "/upload/*":{
+    "/upload/*":{
         target:"http://localhost:8001/upload",
         secure:"false"
-      },
+    },
+    "/eniro/*":{
+        target:"http://localhost:8001/eniro",
+        secure:"false"
+    },
       "/uploaded/*":{
         target:"http://localhost:8001/uploaded",
         secure:"false"
