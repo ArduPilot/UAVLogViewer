@@ -57,13 +57,14 @@ export default {
             startTimeMs: 0,
             cameraType: 'free',
             showTrajectory: true,
-            showClickableTrajectory: false
+            showClickableTrajectory: false,
+            cssColors: []
         }
     },
     created () {
         this.viewer = null
         this.colors = []
-        this.cssColors = []
+
         this.lastHoveredTime = 0
         this.model = null
         this.clickableTrajectory = null
