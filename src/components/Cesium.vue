@@ -446,12 +446,8 @@ export default {
                         parent: this.trajectory,
                         polyline: {
                             positions: trajectory,
-                            width: 2,
-                            material: new Cesium.PolylineOutlineMaterialProperty({
-                                color: oldColor,
-                                outlineWidth: 1,
-                                outlineColor: Cesium.Color.BLACK
-                            })
+                            width: 1,
+                            material: oldColor
                         }
                     })
                     oldColor = color
@@ -462,12 +458,8 @@ export default {
                 parent: this.trajectory,
                 polyline: {
                     positions: trajectory,
-                    width: 2,
-                    material: new Cesium.PolylineOutlineMaterialProperty({
-                        color: oldColor,
-                        outlineWidth: 1,
-                        outlineColor: Cesium.Color.BLACK
-                    })
+                    width: 1,
+                    material: oldColor
                 }
             })
             if (!this.$route.query.hasOwnProperty('cam')) {

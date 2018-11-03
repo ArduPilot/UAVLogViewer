@@ -426,7 +426,7 @@ export class DataflashParser {
     getModeString (cmode) {
         let mavtype
         for (let msg of this.messages['MSG']) {
-            //console.log(msg)
+            // console.log(msg)
             if (msg.Message.indexOf('ArduPlane') > -1) {
                 mavtype = mavlink.MAV_TYPE_FIXED_WING
                 return getModeMap(mavtype)[cmode]
@@ -481,8 +481,7 @@ export class DataflashParser {
                     }
                 }
             }
-        }
-        else {
+        } else {
             console.log('skipping ' + name)
         }
     }
