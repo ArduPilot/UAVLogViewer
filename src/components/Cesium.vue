@@ -88,6 +88,18 @@ export default {
         this.$eventHub.$off('hoveredTime')
     },
     mounted () {
+        let imageryProviders = Cesium.createDefaultImageryProviderViewModels()
+        imageryProviders.push(new Cesium.ProviderViewModel({
+            name: 'StatKart',
+            iconUrl: require('../assets/statkart.jpg'),
+            tooltip: 'Statkart aerial imagery \nhttp://statkart.no/',
+            creationFunction: function () {
+                return new Cesium.UrlTemplateImageryProvider({
+                    url: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
+                    credit: 'Map tiles by Statkart.'
+                })
+            }
+        }))
         if (this.viewer == null) {
             this.viewer = new Cesium.Viewer(
                 'cesiumContainer',
@@ -99,7 +111,8 @@ export default {
                     shouldAnimate: false,
                     scene3DOnly: true,
                     selectionIndicator: false,
-                    shadows: true
+                    shadows: true,
+                    imageryProviderViewModels: imageryProviders
                 })
 
             this.viewer.scene.debugShowFramesPerSecond = true
