@@ -11,23 +11,26 @@
       </table>
 
       <div class="demo-container">
-          <div>
-            <label>Camera</label>
-              <select class="cesium-button" v-model="cameraType" @change="changeCamera()">
-                  <option value="free">Free</option>
-                  <option value="follow">Follow</option>
-              </select>
+          <input id="collapsible" class="toggle" type="checkbox">
+          <label for="collapsible" class="lbl-toggle">Options</label>
+          <div class="collapsible-content">
+              <div>
+                <label>Camera</label>
+                  <select class="cesium-button" v-model="cameraType" @change="changeCamera()">
+                      <option value="free">Free</option>
+                      <option value="follow">Follow</option>
+                  </select>
+              </div>
+              <div>
+                  <label><input @change="updateVisibility()" type="checkbox" v-model="showWaypoints">Waypoints</label>
+              </div>
+              <div>
+                  <label><input @change="updateVisibility()" type="checkbox" v-model="showTrajectory">Trajectory</label>
+              </div>
+              <div>
+                  <label><input @change="updateVisibility()" type="checkbox" v-model="showClickableTrajectory">Clickable Trajectory</label>
+              </div>
           </div>
-          <div>
-              <label><input @change="updateVisibility()" type="checkbox" v-model="showWaypoints">Waypoints</label>
-          </div>
-          <div>
-              <label><input @change="updateVisibility()" type="checkbox" v-model="showTrajectory">Trajectory</label>
-          </div>
-          <div>
-              <label><input @change="updateVisibility()" type="checkbox" v-model="showClickableTrajectory">Clickable Trajectory</label>
-          </div>
-
       </div>
     </div>
 
@@ -591,6 +594,64 @@ export default {
       margin-right: 5px;
   }
     .demo-container div {
-        margin: 3px;
+        margin: 0;
     }
+
+  input#collapsible {
+      display: none;
+  }
+
+  .lbl-toggle {
+      display: block;
+      text-transform: uppercase;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease-out;
+      margin: 0;
+  }
+
+  .lbl-toggle:hover {
+      color: #5b5b5b;
+  }
+
+  .lbl-toggle::before {
+      content: ' ';
+      display: inline-block;
+
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 5px solid currentColor;
+      vertical-align: middle;
+      margin-right: .7rem;
+      transform: translateY(-2px);
+
+      transition: transform .2s ease-out;
+  }
+
+  .toggle:checked + .lbl-toggle::before {
+      transform: rotate(90deg) translateX(-3px);
+  }
+
+  .collapsible-content {
+      max-height: 0px;
+      overflow: hidden;
+      transition: max-height .25s ease-in-out;
+  }
+
+  .toggle:checked + .lbl-toggle + .collapsible-content {
+      max-height: 350px;
+  }
+
+  .toggle:checked + .lbl-toggle {
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
+  }
+
+  .collapsible-content .content-inner {
+      background: rgba(250, 224, 66, .2);
+      border-bottom: 1px solid rgba(250, 224, 66, .45);
+      border-bottom-left-radius: 7px;
+      border-bottom-right-radius: 7px;
+      padding: .5rem 1rem;
+  }
 </style>
