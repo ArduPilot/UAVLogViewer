@@ -123,9 +123,13 @@ export default {
             this.clickableTrajectory = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
             this.trajectory = this.viewer.entities.add(new Cesium.Entity())
             this.trajectoryUpdateTimeout = null
-
+            this.viewer.scene.globe.enableLighting = true
             this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
             this.viewer.animation.viewModel.setShuttleRingTicks([0.1, 0.25, 0.5, 0.75, 1, 2, 5, 10, 15])
+
+            this.viewer.shadowMap.maxmimumDistance = 10000.0
+            this.viewer.shadowMap.softShadows = true
+            this.viewer.shadowMap.size = 4096
 
             // Attach hover handler
             let handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas)
