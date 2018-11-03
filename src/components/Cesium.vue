@@ -182,6 +182,18 @@ export default {
                 this.cameraType].join(',')
             this.$router.push({query: query})
         },
+
+        getTimeStart () {
+            let date = null
+            try {
+                date = Cesium.JulianDate.fromDate(this.state.metadata.startTime)
+            } catch (e) {
+                console.log(e)
+                date = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
+            }
+            return date
+        },
+
         mouseIsOnPoint (point) {
         // Checks if there is a trajectory point under the coordinate "point"
             let pickedObjects = this.viewer.scene.drillPick(point)
@@ -239,7 +251,7 @@ export default {
         onClick (movement) {
             if (this.mouseIsOnPoint(movement.position)) {
                 this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
-                this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16)), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
+                this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(this.getTimeStart(), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
             }
             this.onLeftUp()
         },
@@ -249,7 +261,7 @@ export default {
                 if (this.isDragging) {
                     if (this.mouseIsOnPoint(movement.endPosition)) {
                         this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
-                        this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16)), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
+                        this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(this.getTimeStart(), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
                     }
                 } else {
                     if (this.mouseIsOnPoint(movement.endPosition)) {
@@ -306,7 +318,7 @@ export default {
             this.startTimeMs = getMinTime(this.points)
             let timespan = getMaxTime(this.points) - this.startTimeMs
             let viewer = this.viewer
-            this.start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
+            this.start = this.getTimeStart()
             this.stop = Cesium.JulianDate.addSeconds(this.start, Math.round(timespan / 1000), new Cesium.JulianDate())
             // Make sure viewer is at the desired time.
             viewer.clock.startTime = this.start.clone()

@@ -195,13 +195,20 @@ export class MavlinkParser {
         return message
     }
 
+    extractStartTime() {
+        let length = this.messages['SYSTEM_TIME'].length
+        let lastmsg = this.messages['SYSTEM_TIME'][length - 1]
+        lastmsg = lastmsg['time_unix_usec']
+        return new Date(lastmsg[0] / 1e3 + lastmsg[1] * ((2 ** 32) / 1e3))
+    }
+
     processData (data) {
         this.mavlinkParser.pushBuffer(Buffer.from(data))
         this.mavlinkParser.parseBuffer()
         let messageTypes = {}
         for (let msg of Object.keys(this.messages)) {
             let fields = this.messages[msg][0].fieldnames
-            fields = fields.filter(e => e !== 'time_usec').filter(e => e !== 'time_boot_ms')
+            fields = fields.filter(e => e !== 'time_boot_ms')
             let complexFields = {}
             for (let field in fields) {
                 complexFields[fields[field]] = {
@@ -217,6 +224,10 @@ export class MavlinkParser {
                 complexFields: complexFields
             }
         }
+        let metadata = {
+            startTime: this.extractStartTime()
+        }
+        self.postMessage({metadata: metadata})
         self.postMessage({availableMessages: messageTypes})
         //self.postMessage({done: true})
     }

@@ -501,6 +501,19 @@ export class DataflashParser {
         }
     }
 
+    extractStartTime () {
+        for (let msg of this.messages['GPS']) {
+            if (msg['GWk'] > 1000) { // lousy validation
+                let weeks = msg['GWk']
+                let ms = msg['GMS']
+                let datum = new Date(1980, 1, 6, 0, 0, 0)
+                datum.setDate(datum.getDate() + weeks * 7)
+                datum.setSeconds(datum.getSeconds() + ms / 1000)
+                return datum
+            }
+        }
+    }
+
     processData (data) {
         this.buffer = Buffer.from(data).buffer
         this.data = new DataView(this.buffer)
@@ -548,6 +561,10 @@ export class DataflashParser {
         this.parse_atOffset('MODE')
         this.parse_atOffset('ATT')
         this.parse_atOffset('GPS')
+        let metadata = {
+            startTime: this.extractStartTime()
+        }
+        self.postMessage({metadata: metadata})
 
         // self.postMessage({done: true})
     }

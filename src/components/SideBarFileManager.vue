@@ -182,6 +182,8 @@ export default {
                 this.state.processPercentage = event.data.percentage
             } else if (event.data.hasOwnProperty('availableMessages')) {
                 this.$eventHub.$emit('messageTypes', event.data.availableMessages)
+            } else if (event.data.hasOwnProperty('metadata')) {
+                this.state.metadata = event.data.metadata
             } else if (event.data.hasOwnProperty('messages')) {
                 this.state.messages = event.data.messages
                 this.$eventHub.$emit('messages')
