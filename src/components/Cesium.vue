@@ -240,7 +240,7 @@ export default {
         onAnimationChange (isAnimating) {
             this.$eventHub.$emit('animation-changed', isAnimating)
         },
-        onRangeChanged(event) {
+        onRangeChanged (event) {
             this.viewer.timeline.zoomTo(this.msToCesiumTime(event[0]), this.msToCesiumTime(event[1]))
         },
         onTimelineZoom (event) {
@@ -412,7 +412,7 @@ export default {
                 model: {
                     uri: this.getVehicleModel(),
                     minimumPixelSize: 6,
-                    scale: this.modelScale / 10,
+                    scale: this.modelScale / 10
                 }
             })
         },
@@ -535,7 +535,7 @@ export default {
     },
     watch: {
         modelScale (scale) {
-            let value =parseFloat(scale)
+            let value = parseFloat(scale)
             if (!isNaN(value)) {
                 this.model.model.scale = value / 10
                 this.viewer.scene.requestRender()
