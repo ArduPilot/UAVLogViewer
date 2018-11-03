@@ -30,6 +30,12 @@
               <div>
                   <label><input @change="updateVisibility()" type="checkbox" v-model="showClickableTrajectory">Clickable Trajectory</label>
               </div>
+              <div>
+                  <label>Wingspan (m)
+                      <input type="range" min="0.1" max="15" step="0.01" v-model="modelScale">
+                      <input type="text" size="5" v-model="modelScale">
+                  </label>
+              </div>
           </div>
       </div>
     </div>
@@ -61,7 +67,8 @@ export default {
             cameraType: 'free',
             showTrajectory: true,
             showClickableTrajectory: false,
-            cssColors: []
+            cssColors: [],
+            modelScale: 1
         }
     },
     created () {
@@ -376,7 +383,7 @@ export default {
                 model: {
                     uri: this.getVehicleModel(),
                     minimumPixelSize: 6,
-                    scale: 0.5
+                    scale: this.modelScale / 10,
                 }
             })
         },
@@ -503,6 +510,15 @@ export default {
                 }
             }
             return set
+        }
+    },
+    watch: {
+        modelScale (scale) {
+            let value =parseFloat(scale)
+            if (!isNaN(value)) {
+                this.model.model.scale = value / 10
+                this.viewer.scene.requestRender()
+            }
         }
     }
 }
