@@ -452,7 +452,7 @@ export default {
                 }
             }
 
-            for (let pos of this.points.slice(first, last)) {
+            for (let pos of this.points.slice(first, last+1)) {
                 this.position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
                 trajectory.push(this.position)
                 let color = this.getModeColor(pos[3])
