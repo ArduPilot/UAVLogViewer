@@ -305,6 +305,10 @@ export default {
         onFrameUpdate () {
         // emits in "boot_time_ms" units.
             this.$eventHub.$emit('cesium-time-changed', (this.viewer.clock.currentTime.secondsOfDay - this.viewer.clock.startTime.secondsOfDay) * 1000 + this.startTimeMs)
+            if (this.viewer.clock.currentTime < this.timelineStart ||
+                this.viewer.clock.currentTime > this.timelineStop) {
+                this.viewer.clock.currentTime = this.timelineStart.clone()
+            }
         },
 
         generateColorMMap () {
