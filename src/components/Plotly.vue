@@ -125,7 +125,7 @@ export default {
         })
         this.instruction = ''
         // this.interval = setInterval(this.onRangeChanged, 3000)
-        this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
+        // this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
         this.$eventHub.$on('addPlot', this.addPlot)
         this.$eventHub.$on('hidePlot', this.removePlot)
     },
@@ -284,24 +284,24 @@ export default {
                 // _this.setCursorTime(infotext[0])
             })
         },
-        setCursorTime (time) {
-            try {
-                /* Plotly.relayout(this.gd, {
-                    'shapes[0].x0': time,
-                    'shapes[0].x1': time
-                }) */
-                let xrange = this.gd.layout.xaxis.range
-                if (time < xrange[0] || time > xrange[1]) {
-                    this.$eventHub.$emit('hoveredTime', xrange[0])
-                    /*
-                    let interval = xrange[1] - xrange[0]
-                    this.gd.layout.xaxis.range[0] = time - interval / 2
-                    this.gd.layout.xaxis.range[1] = time + interval / 2 */
-                }
-            } catch (err) {
-                console.log(err)
-            }
-        },
+        // setCursorTime (time) {
+        //     try {
+        //         /* Plotly.relayout(this.gd, {
+        //             'shapes[0].x0': time,
+        //             'shapes[0].x1': time
+        //         }) */
+        //         let xrange = this.gd.layout.xaxis.range
+        //         if (time < xrange[0] || time > xrange[1]) {
+        //             this.$eventHub.$emit('hoveredTime', xrange[0])
+        //             /*
+        //             let interval = xrange[1] - xrange[0]
+        //             this.gd.layout.xaxis.range[0] = time - interval / 2
+        //             this.gd.layout.xaxis.range[1] = time + interval / 2 */
+        //         }
+        //     } catch (err) {
+        //         console.log(err)
+        //     }
+        // },
         setCursorState (animationState) {
             let state = !animationState
             let stateStr
