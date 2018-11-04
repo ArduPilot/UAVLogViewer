@@ -341,14 +341,6 @@ export class DataflashParser {
             self.postMessage({percentage: percentage})
             this.lastPercentage = percentage
         }
-
-        // TODO: FIX THIS!
-        // This a hack to detect the end of the buffer and only them message the main thread
-        if ((this.totalSize - this.offset) < 100 && this.sent === false) {
-            self.postMessage({percentage: 100})
-            self.postMessage({messages: this.messages})
-            this.sent = true
-        }
     }
 
     parse_atOffset (name) {
@@ -357,9 +349,16 @@ export class DataflashParser {
         for (var i = 0; i < this.msgType.length; i++) {
             if (type === this.msgType[i]) {
                 this.offset = this.offsetArray[i]
-                let temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
-                if (temp['name'] != null) {
-                    parsed.push(this.fixData(temp))
+                try {
+                    let temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
+                    if (temp['name'] != null) {
+                        parsed.push(this.fixData(temp))
+                    }
+                }
+                catch(e)
+                {
+                    console.log('reached log end?')
+                    console.log(e)
                 }
             }
             if (i % 100000 === 0) {
@@ -392,16 +391,22 @@ export class DataflashParser {
 
     DF_reader () {
         let lastOffset = 0
-        while (this.offset < (this.buffer.byteLength - 50)) {
+        while (this.offset < (this.buffer.byteLength - 1)) {
             this.offset += 2
             let attribute = this.data.getUint8(this.offset)
             if (this.FMT[attribute] != null) {
                 this.offset += 1
                 this.offsetArray.push(this.offset)
                 this.msgType.push(attribute)
-                var value = this.FORMAT_TO_STRUCT(this.FMT[attribute])
-                if (this.FMT[attribute].Name === 'GPS') {
-                    this.findTimeBase(value)
+                try {
+                    var value = this.FORMAT_TO_STRUCT(this.FMT[attribute])
+                    if (this.FMT[attribute].Name === 'GPS') {
+                        this.findTimeBase(value)
+                    }
+                } catch (e) {
+                    console.log('reached log end?')
+                    console.log(e)
+                    this.offset += 1
                 }
                 if (attribute == '128') {
                     this.FMT[value['Type']] = {
@@ -422,6 +427,9 @@ export class DataflashParser {
                 lastOffset = this.offset
             }
         }
+        self.postMessage({percentage: 100})
+        self.postMessage({messages: this.messages})
+        this.sent = true
     }
     getModeString (cmode) {
         let mavtype
