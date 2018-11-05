@@ -40,7 +40,8 @@ import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
 
 function getMinAlt (data) {
-    return data.reduce((min, p) => p.Alt < min ? p.Alt : min, data[0].Alt)
+    return data[0].Alt
+    //return data.reduce((min, p) => p.Alt < min ? p.Alt : min, data[0].Alt)
 }
 
 export default {
