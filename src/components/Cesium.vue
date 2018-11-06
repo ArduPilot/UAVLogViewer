@@ -252,12 +252,13 @@ export default {
         onAnimationChange (isAnimating) {
             this.$eventHub.$emit('animation-changed', isAnimating)
         },
-        onRangeChanged (event) {
-            this.viewer.timeline.zoomTo(this.msToCesiumTime(event[0]), this.msToCesiumTime(event[1]))
-        },
+        // onRangeChanged (event) {
+        //     this.viewer.timeline.zoomTo(this.msToCesiumTime(event[0]), this.msToCesiumTime(event[1]))
+        // },
         onTimelineZoom (event) {
             this.timelineStart = event.startJulian
             this.timelineStop = event.endJulian
+            this.state.timeRange = [this.cesiumTimeToMs(event.startJulian), this.cesiumTimeToMs(event.endJulian)]
             if (this.trajectoryUpdateTimeout !== null) {
                 clearTimeout(this.trajectoryUpdateTimeout)
             }
@@ -350,6 +351,7 @@ export default {
             // process time_boot_ms into cesium time
             this.startTimeMs = getMinTime(this.points)
             let timespan = getMaxTime(this.points) - this.startTimeMs
+            this.state.timeRange = [this.startTimeMs, this.startTimeMs + timespan]
             let viewer = this.viewer
             this.start = this.getTimeStart()
             this.stop = Cesium.JulianDate.addSeconds(this.start, Math.round(timespan / 1000), new Cesium.JulianDate())
@@ -547,6 +549,11 @@ export default {
                 }
             }
             return set
+        },
+        timeRange() {
+            if (this.state.timeRange !== null) {
+                return this.state.timeRange
+            }
         }
     },
     watch: {
@@ -555,6 +562,12 @@ export default {
             if (!isNaN(value)) {
                 this.model.model.scale = value / 10
                 this.viewer.scene.requestRender()
+            }
+        },
+        timeRange (range) {
+            if (Math.abs(this.msToCesiumTime(range[0]).secondsOfDay - this.viewer.timeline._startJulian.secondsOfDay) > 1 ||
+                Math.abs(this.msToCesiumTime(range[1]).secondsOfDay - this.viewer.timeline._endJulian.secondsOfDay) > 1) {
+                this.viewer.timeline.zoomTo(this.msToCesiumTime(range[0]), this.msToCesiumTime(range[1]))
             }
         }
     }
