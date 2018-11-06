@@ -78,7 +78,8 @@ Plotly.editable = true
 Plotly.edits = {legendPosition: true}
 export default {
     created () {
-        this.$eventHub.$on('animation-changed', this.setCursorState)
+        //this.$eventHub.$on('animation-changed', this.setCursorState)
+        this.zoomInterval = null
     },
     mounted () {
         let d3 = Plotly.d3
@@ -171,7 +172,6 @@ export default {
             })
         },
         onRangeChanged (event) {
-            console.log(event)
             let query = Object.create(this.$route.query) // clone it
             query['plots'] = this.fields.join(',')
             let list = [
@@ -197,12 +197,19 @@ export default {
             }
             query['ranges'] = list.join(',')
 
+            // this.$router.push({query: query})
+            // if (event.hasOwnProperty('xaxis.range')) {
+            //     this.$eventHub.$emit('rangeChanged', event['xaxis.range'])
+            // }
+            // if (event.hasOwnProperty('xaxis.range[0]')) {
+            //     this.$eventHub.$emit('rangeChanged', [event['xaxis.range[0]'], event['xaxis.range[1]']])
+            // }
             this.$router.push({query: query})
             if (event.hasOwnProperty('xaxis.range')) {
-                this.$eventHub.$emit('rangeChanged', event['xaxis.range'])
+                this.state.timeRange = event['xaxis.range']
             }
             if (event.hasOwnProperty('xaxis.range[0]')) {
-                this.$eventHub.$emit('rangeChanged', [event['xaxis.range[0]'], event['xaxis.range[1]']])
+                this.state.timeRange = [event['xaxis.range[0]'], event['xaxis.range[1]']]
             }
         },
         addPlot (fieldname) {
@@ -302,17 +309,44 @@ export default {
         //         console.log(err)
         //     }
         // },
-        setCursorState (animationState) {
-            let state = !animationState
-            let stateStr
-            if (state) {
-                stateStr = 'x'
-            } else {
-                stateStr = false
+        // setCursorState (animationState) {
+        //     let state = !animationState
+        //     let stateStr
+        //     if (state) {
+        //         stateStr = 'x'
+        //     } else {
+        //         stateStr = false
+        //     }
+        //     Plotly.relayout(this.gd, {
+        //         hovermode: stateStr
+        //     })
+        // }
+    },
+    computed: {
+        timeRange () {
+            if (this.state.timeRange != null) {
+                return this.state.timeRange
             }
-            Plotly.relayout(this.gd, {
-                hovermode: stateStr
-            })
+        }
+    },
+    watch: {
+        timeRange (range) {
+            if (Math.abs(this.gd.layout.xaxis.range[0] - range[0]) > 5 ||
+                Math.abs(this.gd.layout.xaxis.range[1] - range[1]) > 5) {
+                if(this.zoomInterval !== null)
+                {
+                    clearTimeout(this.zoomInterval)
+                }
+                this.zoomInterval = setTimeout(function() {
+                    Plotly.relayout(this.gd, {
+                        xaxis: {
+                            range: range,
+                            domain: [0.1, 0.9],
+                            rangeslider: {}
+                        }
+                    })
+                }.bind(this), 500)
+            }
         }
     }
 }
