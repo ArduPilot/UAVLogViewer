@@ -378,13 +378,13 @@ export default {
                 this.positions.push(position)
                 let time = Cesium.JulianDate.addSeconds(this.start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
                 this.sampledPos.addSample(time, position)
-                this.clickableTrajectory.add({
-                    position: position,
-                    pixelSize: 10,
-                    show: false,
-                    color: this.getModeColor(pos[3]),
-                    id: {time: pos[3]}
-                })
+                // this.clickableTrajectory.add({
+                //     position: position,
+                //     pixelSize: 10,
+                //     show: false,
+                //     color: this.getModeColor(pos[3]),
+                //     id: {time: pos[3]}
+                // })
             }
             console.log('finished')
         },
