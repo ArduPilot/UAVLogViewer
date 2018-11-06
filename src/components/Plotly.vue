@@ -256,7 +256,7 @@ export default {
 
                             datasets.push({
                                 name: msgtype + '.' + msgfield,
-                                mode: 'scatter',
+                                mode: 'scattergl',
                                 x: x,
                                 y: y,
                                 yaxis: 'y' + axis
