@@ -39,10 +39,6 @@ import Sidebar from './Sidebar'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
 
-function getMinAlt (data) {
-    return data[0].Alt
-    //return data.reduce((min, p) => p.Alt < min ? p.Alt : min, data[0].Alt)
-}
 
 export default {
     name: 'Home',
@@ -83,22 +79,28 @@ export default {
         extractTrajectory (messages) {
             let trajectory = []
             this.state.time_trajectory = {}
+            let startAltitude = null
             if ('GLOBAL_POSITION_INT' in messages) {
                 let gpsData = messages['GLOBAL_POSITION_INT']
                 for (let pos of gpsData) {
                     if (pos.lat !== 0) {
-                        trajectory.push([pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms])
+                        if (startAltitude === null) {
+                            startAltitude = pos.relative_alt
+                        }
+                        trajectory.push([pos.lon, pos.lat, pos.relative_alt - startAltitude, pos.time_boot_ms])
                         this.state.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms]
                     }
                 }
             } else if ('GPS' in messages) {
                 let gpsData = messages['GPS']
-                let min = getMinAlt(messages['GPS'])
                 console.log('min alt: ' + min)
                 for (let pos of gpsData) {
                     if (pos.lat !== 0) {
+                        if (startAltitude === null) {
+                            startAltitude = pos.Alt
+                        }
                         trajectory.push([pos.Lng, pos.Lat, pos.Alt - min, pos.time_boot_ms])
-                        this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, pos.Alt - min, pos.time_boot_ms]
+                        this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, pos.Alt - startAltitude, pos.time_boot_ms]
                     }
                 }
             }
