@@ -9,5 +9,6 @@ export var store = {
     processStatus: 'Formatting...',
     processPercentage: -1,
     map_loading: false,
-    plot_loading: false
+    plot_loading: false,
+    timeRange: null
 }
