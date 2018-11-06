@@ -93,13 +93,12 @@ export default {
                 }
             } else if ('GPS' in messages) {
                 let gpsData = messages['GPS']
-                console.log('min alt: ' + min)
                 for (let pos of gpsData) {
                     if (pos.lat !== 0) {
                         if (startAltitude === null) {
                             startAltitude = pos.Alt
                         }
-                        trajectory.push([pos.Lng, pos.Lat, pos.Alt - min, pos.time_boot_ms])
+                        trajectory.push([pos.Lng, pos.Lat, pos.Alt - startAltitude, pos.time_boot_ms])
                         this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, pos.Alt - startAltitude, pos.time_boot_ms]
                     }
                 }
