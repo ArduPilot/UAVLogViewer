@@ -397,22 +397,36 @@ export default {
             let position = Cesium.Cartesian3.fromDegrees(points[0][0], points[0][1], points[0][2] + this.heightOffset)
             let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
             let sampledOrientation = new Cesium.SampledProperty(Cesium.Quaternion)
-            if (Object.keys(this.state.time_attitude).length > 0) {
-                console.log('plotting with attitude')
-                for (let atti in this.state.time_attitude) {
-                    if (this.state.time_attitude.hasOwnProperty(atti)) {
-                        let att = this.state.time_attitude[atti]
-                        let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(att[2], att[1], att[0]), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
+            if (Object.keys(this.state.time_attitudeQ).length > 0) {
+                console.log('plotting with QUATERNIOS')
+                fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'east')
+                for (let atti in this.state.time_attitudeQ) {
+                    if (this.state.time_attitudeQ.hasOwnProperty(atti)) {
+                        let att = this.state.time_attitudeQ[atti]
+
+                        let q1 = att[0]
+                        let q2 = att[1]
+                        let q3 = att[2]
+                        let q4 = att[3]
+
+                        let roll = Math.atan2(2.0 * (q1 * q2 + q3 * q4), 1.0 - 2.0 * (q2 * q2 + q3 * q3))
+                        let pitch = Math.asin(2.0 * (q1 * q3 - q4 * q2))
+                        if (isNaN(pitch)) {
+                            pitch = 0
+                        }
+                        let yaw = Math.atan2(2.0 * (q1 * q4 + q2 * q3), 1.0 - 2.0 * (q3 * q3 + q4 * q4))
+                        // TODO: fix this coordinate system!
+                        let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(-yaw, -pitch, roll-3.14), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
                         let time = Cesium.JulianDate.addSeconds(this.start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
                         sampledOrientation.addSample(time, hpRoll)
                     }
                 }
             } else {
-                for (let atti in this.state.time_attitudeQ) {
-                    if (this.state.time_attitudeQ.hasOwnProperty(atti)) {
-                        let att = this.state.time_attitudeQ[atti]
-                        let temp = Cesium.HeadingPitchRoll.fromQuaternion(new Cesium.Quaternion(att[0], att[1], att[2], att[3]))
-                        let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(temp.heading, temp.pitch, temp.roll), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
+                console.log('plotting with attitude')
+                for (let atti in this.state.time_attitude) {
+                    if (this.state.time_attitude.hasOwnProperty(atti)) {
+                        let att = this.state.time_attitude[atti]
+                        let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(att[2], att[1], att[0]), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
                         let time = Cesium.JulianDate.addSeconds(this.start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
                         sampledOrientation.addSample(time, hpRoll)
                     }

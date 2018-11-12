@@ -127,14 +127,24 @@ export default {
         },
         extractAttitudesQ (messages) {
             let attitudes = {}
-            if ('XKQ1' in messages) {
-                console.log("QUATERNIOS")
+            if ('XKQ1' in messages && messages['XKQ1'].length > 0) {
+                console.log('QUATERNIOS1')
                 let attitudeMsgs = messages['XKQ1']
                 for (let att of attitudeMsgs) {
                     attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
+                    // attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
                 }
+                return attitudes
+            } else if ('NKQ1' in messages && messages['NKQ1'].length > 0) {
+                console.log('QUATERNIOS2')
+                let attitudeMsgs = messages['NKQ1']
+                for (let att of attitudeMsgs) {
+                    // attitudes[att.time_boot_ms] = [att.Q2, att.Q3, att.Q4, att.Q1]
+                    attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
+                }
+                return attitudes
             }
-            return attitudes
+            return []
         },
         extractFlightModes (messages) {
             let modes
