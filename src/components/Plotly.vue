@@ -143,10 +143,7 @@ export default {
             }
         })
         this.instruction = ''
-        // this.interval = setInterval(this.onRangeChanged, 3000)
-        // this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
-        this.$eventHub.$on('addPlot', this.addPlot)
-        this.$eventHub.$on('hidePlot', this.removePlot)
+        this.$eventHub.$on('togglePlot', this.togglePlot)
     },
     beforeDestroy () {
         window.removeEventListener('resize', this.resize)
@@ -154,6 +151,7 @@ export default {
         this.$eventHub.$off('cesium-time-changed')
         this.$eventHub.$off('addPlot')
         this.$eventHub.$off('hidePlot')
+        this.$eventHub.$off('togglePlot')
         clearInterval(this.interval)
     },
     data () {
@@ -222,12 +220,14 @@ export default {
             // if (event.hasOwnProperty('xaxis.range[0]')) {
             //     this.$eventHub.$emit('rangeChanged', [event['xaxis.range[0]'], event['xaxis.range[1]']])
             // }
-            this.$router.push({query: query})
-            if (event.hasOwnProperty('xaxis.range')) {
-                this.state.timeRange = event['xaxis.range']
-            }
-            if (event.hasOwnProperty('xaxis.range[0]')) {
-                this.state.timeRange = [event['xaxis.range[0]'], event['xaxis.range[1]']]
+            if (event !== undefined) {
+                this.$router.push({query: query})
+                if (event.hasOwnProperty('xaxis.range')) {
+                    this.state.timeRange = event['xaxis.range']
+                }
+                if (event.hasOwnProperty('xaxis.range[0]')) {
+                    this.state.timeRange = [event['xaxis.range[0]'], event['xaxis.range[1]']]
+                }
             }
         },
         addPlot (fieldname) {
@@ -240,7 +240,6 @@ export default {
             } else {
                 if (!this.fields.includes(fieldname)) {
                     this.fields.push(fieldname)
-                    // this.updateUrl()
                     this.plot()
                     this.state.plot_loading = false
                 }
@@ -256,6 +255,23 @@ export default {
                 this.state.plot_on = false
             }
             this.onRangeChanged()
+        },
+        togglePlot(fieldname) {
+
+            var index = this.fields.indexOf(fieldname) // <-- Not supported in <IE9
+            console.log(fieldname+ ' ' + index)
+            if (index !== -1) {
+                this.fields.splice(index, 1)
+                if (this.fields.length === 0) {
+                    this.state.plot_on = false
+                }
+                this.onRangeChanged()
+            }
+            else {
+                this.addPlot(fieldname)
+            }
+            console.log(this.fields)
+            this.plot()
         },
         plot () {
             let _this = this
