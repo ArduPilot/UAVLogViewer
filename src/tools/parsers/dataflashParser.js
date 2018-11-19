@@ -391,7 +391,7 @@ export class DataflashParser {
 
     DF_reader () {
         let lastOffset = 0
-        while (this.offset < (this.buffer.byteLength - 1)) {
+        while (this.offset < (this.buffer.byteLength - 3)) {
             this.offset += 2
             let attribute = this.data.getUint8(this.offset)
             if (this.FMT[attribute] != null) {
