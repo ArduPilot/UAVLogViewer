@@ -9,7 +9,7 @@ import {store} from './Globals.js'
 let plotOptions = {
     legend: {
         x: 0,
-        y: 1,
+        y: -0.4,
         traceorder: 'normal',
         borderwidth: 1
     },
@@ -30,7 +30,7 @@ let plotOptions = {
             color: '#1f77b4'
         },
         anchor: 'free',
-        position: 0.1
+        position: 0.03
     },
     yaxis2: {
         // title: 'yaxis2 title',
@@ -39,7 +39,7 @@ let plotOptions = {
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
-        position: 0.05
+        position: 0.06
     },
     yaxis3: {
         // title: 'yaxis4 title',
@@ -47,8 +47,8 @@ let plotOptions = {
         tickfont: {color: '#2ca02c'},
         anchor: 'free',
         overlaying: 'y',
-        side: 'right',
-        position: 0.9
+        side: 'left',
+        position: 0.1
     },
     yaxis4: {
         // title: 'yaxis5 title',
@@ -56,8 +56,26 @@ let plotOptions = {
         tickfont: {color: '#d62728'},
         anchor: 'free',
         overlaying: 'y',
-        side: 'right',
-        position: 0.95
+        side: 'left',
+        position: 0.93
+    },
+    yaxis5: {
+        // title: 'yaxis5 title',
+        titlefont: {color: '#9467BD'},
+        tickfont: {color: '#9467BD'},
+        anchor: 'free',
+        overlaying: 'y',
+        side: 'left',
+        position: 0.965
+    },
+    yaxis6: {
+        // title: 'yaxis5 title',
+        titlefont: {color: '#8C564B'},
+        tickfont: {color: '#8C564B'},
+        anchor: 'free',
+        overlaying: 'y',
+        side: 'left',
+        position: 1.0
     }
     /* shapes: [ { // plot cursor lin0.15
         type: 'line',
@@ -231,7 +249,7 @@ export default {
         removePlot (fieldname) {
             var index = this.fields.indexOf(fieldname) // <-- Not supported in <IE9
             if (index !== -1) {
-                this.fields.splice(index, 1)
+                this.fields = this.fields.splice(index, 1)
             }
             this.plot()
             if (this.fields.length === 0) {
@@ -263,7 +281,9 @@ export default {
                             })
                             let axisname = axis > 1 ? 'yaxis' + axis : 'yaxis'
                             axis += 1
-                            plotOptions[axisname].title = msgfield + ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
+                            if (axis <= 7) {
+                                plotOptions[axisname].title = msgfield + ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
+                            }
                         }
                     }
                 }
