@@ -9,9 +9,9 @@
       <a class="section"  >
         <i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>
     </li>
-    <li v-if="state.plot_on" @click="state.plot_on=false" >
+    <li v-if="state.plot_on" @click="state.plot_on=!state.plot_on" >
     <a class="section" >
-      <i class="fas fa-eye-slash fa-lg"></i> Hide Plot</a>
+      <i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>
     </li>
 
     <li v-b-toggle="'messages'">
@@ -30,9 +30,7 @@
       <b-collapse :id="'type' + key" v-bind:key="key+'1'">
       <template v-for="item in message.complexFields">
         <li class="field" v-bind:key="key+'.'+item.name">
-          <a >
-            <b-form-checkbox v-if="isPlottable(key,item.name)" v-model="checkboxes[key].fields[item.name]" @change="toggle($event, key, item.name)"> {{item.name}} ({{item.units}})</b-form-checkbox>
-          </a>
+          <a v-if="isPlottable(key,item.name)" @click="toggle(key, item.name)"> {{item.name}} ({{item.units}})</a>
         </li>
         </template>
       </b-collapse>
@@ -59,26 +57,9 @@ export default {
         this.$eventHub.$on('messageTypes', this.handleMessageTypes)
     },
     beforeDestroy () {
-        this.$eventHub.$off('messages')
+        this.$eventHub.$off('messageTypes')
     },
     methods: {
-        handleMessages () {
-            let newMessages = {}
-            // populate list of message types
-            for (let messageType of Object.keys(this.state.messages)) {
-                this.$set(this.checkboxes, messageType, this.getMessageNumericField(this.state.messages[messageType][0]))
-                newMessages[messageType] = this.getMessageNumericField(this.state.messages[messageType][0])
-            }
-
-            // populate checkbox status
-            for (let messageType of Object.keys(this.state.messages)) {
-                this.checkboxes[messageType] = {state: false, indeterminate: false, fields: {}}
-                for (let field of this.getMessageNumericField(this.state.messages[messageType].fields[0])) {
-                    this.checkboxes[messageType].fields[field] = false
-                }
-            }
-            this.messages = newMessages
-        },
         handleMessageTypes (messageTypes) {
             if (this.$route.query.hasOwnProperty('plots')) {
                 this.state.plot_on = true
@@ -123,39 +104,16 @@ export default {
             }
             return numberFields
         },
-        updateType (type) {
-            if (Object.keys(this.messages).indexOf(type) < 0) {
-                this.$eventHub.$emit('loadType', type)
-            }
-        },
-        toggle (state, message, item) {
-            if (state) {
-                this.state.plot_on = true
-                Vue.nextTick(function () {
-                    this.$eventHub.$emit('addPlot', message + '.' + item)
-                }.bind(this))
-            } else {
-                this.$eventHub.$emit('hidePlot', message + '.' + item)
-            }
+        toggle (message, item) {
+            this.state.plot_on = true
+            this.$nextTick(function () {
+                this.$eventHub.$emit('togglePlot', message + '.' + item)
+            })
         },
 
         isPlottable(msgtype, item) {
-            if ( item === 'TimeUS') {
-                return false
-            }
-            return true
+            return item !== 'TimeUS';
         },
-
-        hidePlots () {
-            for (let message of Object.keys(this.checkboxes)) {
-                this.checkboxes[message].state = false
-                this.checkboxes[message].indeterminate = false
-                for (let field of Object.keys(this.checkboxes[message].fields)) {
-                    this.checkboxes[message].fields[field] = false
-                }
-            }
-            this.state.plot_on = false
-        }
     },
     computed: {
         hasMessages () {
@@ -167,7 +125,7 @@ export default {
 </script>
 <style scoped>
     i {
-        margin: 10px;
+        margin: 5px;
     }
     i.expand {
       float:right;
@@ -190,6 +148,6 @@ export default {
 </style>
 <style>
   .custom-control-label {
-    margin-bottom: 8px
+    margin-bottom: 0;
   }
 </style>
