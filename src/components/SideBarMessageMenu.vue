@@ -70,7 +70,7 @@ export default {
                 'ORGN',
                 'FMTU',
                 'UNIT',
-                'MULT',
+                'MULT'
             ]
         }
     },

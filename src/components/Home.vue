@@ -39,7 +39,6 @@ import Sidebar from './Sidebar'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
 
-
 export default {
     name: 'Home',
     created () {

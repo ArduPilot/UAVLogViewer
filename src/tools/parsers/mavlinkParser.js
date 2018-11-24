@@ -195,7 +195,7 @@ export class MavlinkParser {
         return message
     }
 
-    extractStartTime() {
+    extractStartTime () {
         let length = this.messages['SYSTEM_TIME'].length
         let lastmsg = this.messages['SYSTEM_TIME'][length - 1]
         lastmsg = lastmsg['time_unix_usec']
@@ -229,6 +229,6 @@ export class MavlinkParser {
         }
         self.postMessage({metadata: metadata})
         self.postMessage({availableMessages: messageTypes})
-        //self.postMessage({done: true})
+        // self.postMessage({done: true})
     }
 }

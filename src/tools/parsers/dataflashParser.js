@@ -354,9 +354,7 @@ export class DataflashParser {
                     if (temp['name'] != null) {
                         parsed.push(this.fixData(temp))
                     }
-                }
-                catch(e)
-                {
+                } catch (e) {
                     console.log('reached log end?')
                     console.log(e)
                 }

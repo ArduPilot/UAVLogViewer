@@ -96,7 +96,7 @@ Plotly.editable = true
 Plotly.edits = {legendPosition: true}
 export default {
     created () {
-        //this.$eventHub.$on('animation-changed', this.setCursorState)
+        // this.$eventHub.$on('animation-changed', this.setCursorState)
         this.zoomInterval = null
     },
     mounted () {
@@ -256,18 +256,16 @@ export default {
             }
             this.onRangeChanged()
         },
-        togglePlot(fieldname) {
-
+        togglePlot (fieldname) {
             var index = this.fields.indexOf(fieldname) // <-- Not supported in <IE9
-            console.log(fieldname+ ' ' + index)
+            console.log(fieldname + ' ' + index)
             if (index !== -1) {
                 this.fields.splice(index, 1)
                 if (this.fields.length === 0) {
                     this.state.plot_on = false
                 }
                 this.onRangeChanged()
-            }
-            else {
+            } else {
                 this.addPlot(fieldname)
             }
             console.log(this.fields)
@@ -326,7 +324,7 @@ export default {
                 _this.$eventHub.$emit('hoveredTime', infotext[0])
                 // _this.setCursorTime(infotext[0])
             })
-        },
+        }
         // setCursorTime (time) {
         //     try {
         //         /* Plotly.relayout(this.gd, {
@@ -369,11 +367,10 @@ export default {
         timeRange (range) {
             if (Math.abs(this.gd.layout.xaxis.range[0] - range[0]) > 5 ||
                 Math.abs(this.gd.layout.xaxis.range[1] - range[1]) > 5) {
-                if(this.zoomInterval !== null)
-                {
+                if (this.zoomInterval !== null) {
                     clearTimeout(this.zoomInterval)
                 }
-                this.zoomInterval = setTimeout(function() {
+                this.zoomInterval = setTimeout(function () {
                     Plotly.relayout(this.gd, {
                         xaxis: {
                             range: range,

@@ -14,8 +14,7 @@ self.addEventListener('message', function (event) {
         }
         let data = event.data.file
         parser.processData(data)
-    }
-    else if (event.data.action === 'loadType') {
+    } else if (event.data.action === 'loadType') {
         parser.loadType(event.data.type)
     }
 })

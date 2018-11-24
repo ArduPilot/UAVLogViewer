@@ -416,7 +416,7 @@ export default {
                         }
                         let yaw = Math.atan2(2.0 * (q1 * q4 + q2 * q3), 1.0 - 2.0 * (q3 * q3 + q4 * q4))
                         // TODO: fix this coordinate system!
-                        let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(-yaw, -pitch, roll-3.14), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
+                        let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(-yaw, -pitch, roll - 3.14), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
                         let time = Cesium.JulianDate.addSeconds(this.start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
                         sampledOrientation.addSample(time, hpRoll)
                     }
@@ -564,7 +564,7 @@ export default {
             }
             return set
         },
-        timeRange() {
+        timeRange () {
             if (this.state.timeRange !== null) {
                 return this.state.timeRange
             }
@@ -579,9 +579,14 @@ export default {
             }
         },
         timeRange (range) {
-            if (Math.abs(this.msToCesiumTime(range[0]).secondsOfDay - this.viewer.timeline._startJulian.secondsOfDay) > 1 ||
-                Math.abs(this.msToCesiumTime(range[1]).secondsOfDay - this.viewer.timeline._endJulian.secondsOfDay) > 1) {
+            try {
                 this.viewer.timeline.zoomTo(this.msToCesiumTime(range[0]), this.msToCesiumTime(range[1]))
+                if (Math.abs(this.msToCesiumTime(range[0]).secondsOfDay - this.viewer.timeline._startJulian.secondsOfDay) > 1 ||
+                    Math.abs(this.msToCesiumTime(range[1]).secondsOfDay - this.viewer.timeline._endJulian.secondsOfDay) > 1) {
+
+                }
+            } catch (e) {
+                console.log(e)
             }
         }
     }
