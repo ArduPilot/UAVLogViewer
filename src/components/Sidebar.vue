@@ -1,11 +1,18 @@
 <template>
     <div class="nav-side-menu col-md-3 col-lg-2">
         <div class="brand">TLog Viewer</div>
+        <ul>
+            <div class="tabholder">
+                <a @click="selected='home'" :class="selected==='home' ? 'selected' : ''">HOME</a>
+                <a @click="selected='plot'" :class="selected==='plot' ? 'selected' : ''">PLOT</a>
+                <a @click="selected='3d'" :class="selected==='3d' ? 'selected' : ''">3D</a>
+            </div>
+        </ul>
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <div class="menu-list">
             <b-collapse visible id="menucontent" class="menu-content collapse out">
               <message-menu />
-                <Dropzone/>
+                <Dropzone v-if="selected==='home'"/>
             </b-collapse>
         </div>
     </div>
@@ -16,6 +23,11 @@ import MessageMenu from './SideBarMessageMenu'
 
 export default {
     name: 'sidebar',
+    data () {
+        return {
+            selected: 'home'
+        }
+    },
     components: {MessageMenu, Dropzone}
 }
 </script>
@@ -193,5 +205,37 @@ export default {
 
     .custom-control-inline {
       margin-right: 0;
+    }
+
+    .tabholder {
+        display: flex;
+        justify-content: space-between;
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+        border-bottom: 1px solid white;
+    }
+
+    .tabholder a {
+        border-top: 1px solid white;
+        border-left: 1px solid white;
+        border-right: 1px solid white;
+        border-radius: 3px;
+        padding-left: 5px;
+        padding-right: 5px;
+        font-weight: bold;
+        background-color: #2E353D;
+    }
+
+    a.selected {
+        margin-bottom: -1px;
+    }
+
+    .tabholder a:hover {
+        background-color: #4f5b69;
+        -webkit-transition: all 1s ease;
+        -moz-transition: all 1s ease;
+        -o-transition: all 1s ease;
+        -ms-transition: all 1s ease;
+        transition: all 1s ease;
     }
 </style>
