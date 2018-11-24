@@ -41,7 +41,6 @@
 </template>
 <script>
 
-import Vue from 'vue'
 import {store} from './Globals.js'
 
 export default {

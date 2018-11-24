@@ -40,6 +40,7 @@ export default {
     name: 'Dropzone',
     data: function () {
         return {
+            // eslint-disable-next-line no-undef
             mavlinkParser: new MAVLink(),
             uploadpercentage: -1,
             sampleLoaded: false,
