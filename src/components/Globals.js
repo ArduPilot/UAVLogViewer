@@ -10,5 +10,11 @@ export var store = {
     processPercentage: -1,
     map_loading: false,
     plot_loading: false,
-    timeRange: null
+    timeRange: null,
+    // cesium menu:
+    modelScale: 1.0,
+    showClickableTrajectory: false,
+    showTrajectory: true,
+    showWaypoints: true,
+    cameraType: 'free'
 }

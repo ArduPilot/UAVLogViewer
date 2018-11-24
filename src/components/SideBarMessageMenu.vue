@@ -1,14 +1,6 @@
 <template>
     <div v-if="hasMessages">
 
-        <li v-if="!state.map_on" @click="state.map_on=true">
-            <a class="section">
-                <i class="fas fa-eye fa-lg"></i> Show 3D View</a>
-        </li>
-        <li v-if="state.map_on" @click="state.map_on=false">
-            <a class="section">
-                <i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>
-        </li>
         <li v-if="state.plot_on" @click="state.plot_on=!state.plot_on">
             <a class="section">
                 <i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>

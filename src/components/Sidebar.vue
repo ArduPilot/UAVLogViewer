@@ -11,8 +11,41 @@
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <div class="menu-list">
             <b-collapse visible id="menucontent" class="menu-content collapse out">
-              <message-menu />
+              <message-menu :style="{display: selected==='plot' ? '' : 'none' }" />
                 <Dropzone v-if="selected==='home'"/>
+
+                <div v-if="selected==='3d' && state.map_on">
+                    <li v-if="!state.map_on" @click="state.map_on=true">
+                        <a class="section">
+                            <i class="fas fa-eye fa-lg"></i> Show 3D View</a>
+                    </li>
+                    <li v-if="state.map_on" @click="state.map_on=false">
+                        <a class="section">
+                            <i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>
+                    </li>
+                    <div>
+                        <label>Camera</label>
+                        <select class="cesium-button" v-model="state.cameraType">
+                            <option value="free">Free</option>
+                            <option value="follow">Follow</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label><input type="checkbox" v-model="state.showWaypoints">Waypoints</label>
+                    </div>
+                    <div>
+                        <label><input type="checkbox" v-model="state.showTrajectory">Trajectory</label>
+                    </div>
+                    <div>
+                        <label><input type="checkbox" v-model="state.showClickableTrajectory">Clickable Trajectory</label>
+                    </div>
+                    <div>
+                        <label>Wingspan (m)
+                            <input type="range" min="0.1" max="15" step="0.01" v-model="state.modelScale">
+                            <input type="text" size="5" v-model="state.modelScale">
+                        </label>
+                    </div>
+                </div>
             </b-collapse>
         </div>
     </div>
@@ -20,12 +53,14 @@
 <script>
 import Dropzone from './SideBarFileManager'
 import MessageMenu from './SideBarMessageMenu'
+import {store} from './Globals.js'
 
 export default {
     name: 'sidebar',
     data () {
         return {
-            selected: 'home'
+            selected: 'home',
+            state: store
         }
     },
     components: {MessageMenu, Dropzone}

@@ -9,35 +9,6 @@
           </tr>
         </tbody>
       </table>
-
-      <div class="demo-container">
-          <input id="collapsible" class="toggle" type="checkbox">
-          <label for="collapsible" class="lbl-toggle">Options</label>
-          <div class="collapsible-content">
-              <div>
-                <label>Camera</label>
-                  <select class="cesium-button" v-model="cameraType" @change="changeCamera()">
-                      <option value="free">Free</option>
-                      <option value="follow">Follow</option>
-                  </select>
-              </div>
-              <div>
-                  <label><input @change="updateVisibility()" type="checkbox" v-model="showWaypoints">Waypoints</label>
-              </div>
-              <div>
-                  <label><input @change="updateVisibility()" type="checkbox" v-model="showTrajectory">Trajectory</label>
-              </div>
-              <div>
-                  <label><input @change="updateVisibility()" type="checkbox" v-model="showClickableTrajectory">Clickable Trajectory</label>
-              </div>
-              <div>
-                  <label>Wingspan (m)
-                      <input type="range" min="0.1" max="15" step="0.01" v-model="modelScale">
-                      <input type="text" size="5" v-model="modelScale">
-                  </label>
-              </div>
-          </div>
-      </div>
     </div>
 
   </div>
@@ -62,13 +33,8 @@ export default {
     data () {
         return {
             state: store,
-            showWaypoints: true,
             startTimeMs: 0,
-            cameraType: 'free',
-            showTrajectory: true,
-            showClickableTrajectory: false,
-            cssColors: [],
-            modelScale: 1
+            cssColors: []
         }
     },
     created () {
@@ -181,7 +147,7 @@ export default {
                     parseFloat(data[7]),
                     parseFloat(data[8])
                 )
-                this.cameraType = data[9]
+                this.state.cameraType = data[9]
                 this.changeCamera()
                 console.log('setting camera to ' + position + ' ' + direction)
                 this.viewer.camera.up = up
@@ -568,6 +534,21 @@ export default {
             if (this.state.timeRange !== null) {
                 return this.state.timeRange
             }
+        },
+        modelScale () {
+            return this.state.modelScale
+        },
+        cameraType () {
+            return this.state.cameraType
+        },
+        showTrajectory () {
+            return this.state.showTrajectory
+        },
+        showClickableTrajectory () {
+            return this.state.showClickableTrajectory
+        },
+        showWaypoints () {
+            return this.state.showWaypoints
         }
     },
     watch: {
@@ -588,6 +569,18 @@ export default {
             } catch (e) {
                 console.log(e)
             }
+        },
+        cameraType () {
+            this.changeCamera()
+        },
+        showTrajectory () {
+            this.updateVisibility()
+        },
+        showClickableTrajectory () {
+            this.updateVisibility()
+        },
+        showWaypoints () {
+            this.updateVisibility()
         }
     }
 }
