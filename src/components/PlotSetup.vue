@@ -1,15 +1,15 @@
 <template>
-    <div  v-if="state.fields.length > 0">
+    <div >
         <li class="type">
             <div v-b-toggle.plotsetupcontent>
-                <a class="section">Plots Setup
+                <a class="section"> <i data-v-03de825a="" class="fas fa-wrench fa-lg"></i>Plots Setup
                     <i class="expand fas fa-caret-down"></i></a>
             </div>
         </li>
-        <b-collapse visible id="plotsetupcontent" class="menu-content collapse out">
+        <b-collapse id="plotsetupcontent" class="menu-content collapse out">
             <ul class="colorpicker">
 
-                <li v-for="(field, index) in state.fields" :key="field">
+                <li class="field" v-for="(field, index) in state.fields" :key="field">
                     {{field}} <i :style="{color: state.axis[state.fieldAxis[index+1]]}" class="fas fa-square"></i>
                     <select v-model="state.fieldAxis[index+1]" :style="{color: state.axis[state.fieldAxis[index+1]]}">
                         <option  v-for="(color, colorIndex) in state.axis" :style="{color: color}" v-bind:value="colorIndex">{{colorIndex}}
@@ -20,6 +20,7 @@
                     </a>
 
                 </li>
+                <li v-if="state.fields.length === 0"> Please plot something first.</li>
             </ul>
 
         </b-collapse>
@@ -179,6 +180,17 @@ export default {
     ul.colorpicker li a{
         cursor: pointer;
     }
+
+    li.field {
+        line-height: 20px;
+        padding-left: 40px;
+        font-size: 90%;
+    }
+
+    i {
+        margin: 5px;
+    }
+
 
 
 </style>

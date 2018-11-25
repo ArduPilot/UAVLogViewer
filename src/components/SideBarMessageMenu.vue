@@ -1,10 +1,10 @@
 <template>
     <div v-if="hasMessages">
 
-        <li v-if="state.plot_on" @click="state.plot_on=!state.plot_on">
-            <a class="section">
-                <i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>
-        </li>
+        <!--<li v-if="state.plot_on" @click="state.plot_on=!state.plot_on">-->
+            <!--<a class="section">-->
+                <!--<i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>-->
+        <!--</li>-->
 
         <li v-b-toggle="'messages'">
             <a class="section">

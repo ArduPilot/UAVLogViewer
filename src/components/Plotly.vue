@@ -299,7 +299,7 @@ export default {
                             let axisname = this.state.fieldAxis[axis] > 1 ? 'yaxis' + (this.state.fieldAxis[axis] + 1) : 'yaxis'
                             console.log(axis + ' ' + axisname)
 
-                            if (axis <= 7) {
+                            if (axis <= 6) {
                                 plotOptions[axisname].title = msgfield + ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
                             }
                         }
