@@ -11,7 +11,12 @@
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <div class="menu-list">
             <b-collapse visible id="menucontent" class="menu-content collapse out">
-              <message-menu :style="{display: selected==='plot' ? '' : 'none' }" />
+
+                <div :style="{display: selected==='plot' ? '' : 'none' }" >
+                    <plotSetup/>
+                    <message-menu />
+                </div>
+
                 <Dropzone v-if="selected==='home'"/>
 
                 <div v-if="selected==='3d' && state.map_on">
@@ -54,6 +59,7 @@
 import Dropzone from './SideBarFileManager'
 import MessageMenu from './SideBarMessageMenu'
 import {store} from './Globals.js'
+import PlotSetup from './PlotSetup'
 
 export default {
     name: 'sidebar',
@@ -63,7 +69,7 @@ export default {
             state: store
         }
     },
-    components: {MessageMenu, Dropzone}
+    components: {PlotSetup, MessageMenu, Dropzone}
 }
 </script>
 <style>

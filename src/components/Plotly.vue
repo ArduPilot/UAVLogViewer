@@ -158,7 +158,6 @@ export default {
         return {
             gd: null,
             plotInstance: null,
-            fields: [],
             state: store
         }
     },
@@ -189,25 +188,25 @@ export default {
         },
         onRangeChanged (event) {
             let query = Object.create(this.$route.query) // clone it
-            query['plots'] = this.fields.join(',')
+            query['plots'] = this.state.fields.join(',')
             let list = [
                 this.gd._fullLayout.xaxis.range[0].toFixed(0),
                 this.gd._fullLayout.xaxis.range[1].toFixed(0)
             ]
             this.state.xrange = list
-            if (this.fields.length > 0) {
+            if (this.state.fields.length > 0) {
                 list.push(this.gd._fullLayout.yaxis.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis.range[1].toFixed(0))
             }
-            if (this.fields.length > 1) {
+            if (this.state.fields.length > 1) {
                 list.push(this.gd._fullLayout.yaxis2.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis2.range[1].toFixed(0))
             }
-            if (this.fields.length > 2) {
+            if (this.state.fields.length > 2) {
                 list.push(this.gd._fullLayout.yaxis3.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis3.range[1].toFixed(0))
             }
-            if (this.fields.length > 3) {
+            if (this.state.fields.length > 3) {
                 list.push(this.gd._fullLayout.yaxis4.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis4.range[1].toFixed(0))
             }
@@ -238,63 +237,68 @@ export default {
                     console.log('got message ' + fieldname)
                 }.bind(this))
             } else {
-                if (!this.fields.includes(fieldname)) {
-                    this.fields.push(fieldname)
+                if (!this.state.fields.includes(fieldname)) {
+                    this.state.fields.push(fieldname)
                     this.plot()
                     this.state.plot_loading = false
                 }
             }
         },
         removePlot (fieldname) {
-            var index = this.fields.indexOf(fieldname) // <-- Not supported in <IE9
+            var index = this.state.fields.indexOf(fieldname) // <-- Not supported in <IE9
             if (index !== -1) {
-                this.fields = this.fields.splice(index, 1)
+                this.state.fields = this.state.fields.splice(index, 1)
             }
             this.plot()
-            if (this.fields.length === 0) {
+            if (this.state.fields.length === 0) {
                 this.state.plot_on = false
             }
             this.onRangeChanged()
         },
         togglePlot (fieldname) {
-            var index = this.fields.indexOf(fieldname) // <-- Not supported in <IE9
+            var index = this.state.fields.indexOf(fieldname) // <-- Not supported in <IE9
             console.log(fieldname + ' ' + index)
             if (index !== -1) {
-                this.fields.splice(index, 1)
-                if (this.fields.length === 0) {
+                this.state.fields.splice(index, 1)
+                if (this.state.fields.length === 0) {
                     this.state.plot_on = false
                 }
                 this.onRangeChanged()
             } else {
                 this.addPlot(fieldname)
             }
-            console.log(this.fields)
+            console.log(this.state.fields)
             this.plot()
         },
         plot () {
             let _this = this
             let datasets = []
-            let axis = 1
-            for (let msgtype of Object.keys(this.state.messages)) {
+            let axis = 0
+            for (let msgtypeindex in Object.keys(this.state.messages)) {
+                let msgtype = Object.keys(this.state.messages)[msgtypeindex]
                 if (this.state.messages[msgtype].length > 0) {
                     for (let msgfield of this.state.messageTypes[msgtype].fields) {
-                        if (this.fields.includes(msgtype + '.' + msgfield)) {
+                        if (this.state.fields.includes(msgtype + '.' + msgfield)) {
                             let x = []
                             let y = []
                             for (let message of this.state.messages[msgtype]) {
                                 x.push(message['time_boot_ms'])
                                 y.push(message[msgfield])
                             }
-
+                            axis += 1
                             datasets.push({
                                 name: msgtype + '.' + msgfield,
                                 mode: 'scattergl',
                                 x: x,
                                 y: y,
-                                yaxis: 'y' + axis
+                                yaxis: 'y' + (this.state.fieldAxis[axis] + 1),
+                                line: {
+                                    color: this.state.axis[this.state.fieldAxis[axis]]
+                                },
                             })
-                            let axisname = axis > 1 ? 'yaxis' + axis : 'yaxis'
-                            axis += 1
+                            let axisname = this.state.fieldAxis[axis] > 1 ? 'yaxis' + (this.state.fieldAxis[axis] + 1) : 'yaxis'
+                            console.log(axis + ' ' + axisname)
+
                             if (axis <= 7) {
                                 plotOptions[axisname].title = msgfield + ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
                             }
@@ -361,6 +365,9 @@ export default {
             if (this.state.timeRange != null) {
                 return this.state.timeRange
             }
+        },
+        fieldAxis () {
+            return this.state.fieldAxis
         }
     },
     watch: {
@@ -380,6 +387,10 @@ export default {
                     })
                 }.bind(this), 500)
             }
+        },
+        fieldAxis () {
+            console.log("mudouo")
+            this.plot()
         }
     }
 }

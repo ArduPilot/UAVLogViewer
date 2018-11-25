@@ -16,5 +16,8 @@ export var store = {
     showClickableTrajectory: false,
     showTrajectory: true,
     showWaypoints: true,
-    cameraType: 'free'
+    cameraType: 'free',
+    fields: [],
+    fieldAxis: [0, 0, 1, 2, 3, 4, 5, 6,1, 2, 3, 4, 5, 6,1, 2, 3, 4, 5, 6],
+    axis: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467BD', '#8C564B']
 }
