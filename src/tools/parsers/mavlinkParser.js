@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 require('mavlink_common_v1.0/mavlink')
 
 let modeMappingApm = {
