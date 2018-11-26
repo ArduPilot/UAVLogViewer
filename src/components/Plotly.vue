@@ -239,9 +239,10 @@ export default {
             } else {
                 if (!this.state.fields.includes(fieldname)) {
                     this.state.fields.push(fieldname)
-                    this.plot()
-                    this.state.plot_loading = false
                 }
+                this.plot()
+                this.state.plot_loading = false
+
             }
         },
         removePlot (fieldname) {
