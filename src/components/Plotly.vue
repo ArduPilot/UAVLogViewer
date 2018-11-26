@@ -96,7 +96,7 @@ Plotly.editable = true
 Plotly.edits = {legendPosition: true}
 export default {
     created () {
-        // this.$eventHub.$on('animation-changed', this.setCursorState)
+        this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
         this.zoomInterval = null
     },
     mounted () {
@@ -329,25 +329,37 @@ export default {
                 _this.$eventHub.$emit('hoveredTime', infotext[0])
                 // _this.setCursorTime(infotext[0])
             })
-        }
-        // setCursorTime (time) {
-        //     try {
-        //         /* Plotly.relayout(this.gd, {
-        //             'shapes[0].x0': time,
-        //             'shapes[0].x1': time
-        //         }) */
-        //         let xrange = this.gd.layout.xaxis.range
-        //         if (time < xrange[0] || time > xrange[1]) {
-        //             this.$eventHub.$emit('hoveredTime', xrange[0])
-        //             /*
-        //             let interval = xrange[1] - xrange[0]
-        //             this.gd.layout.xaxis.range[0] = time - interval / 2
-        //             this.gd.layout.xaxis.range[1] = time + interval / 2 */
-        //         }
-        //     } catch (err) {
-        //         console.log(err)
-        //     }
-        // },
+            let bglayer = document.getElementsByClassName('bglayer')[0]
+            let rect = bglayer.childNodes[0]
+            console.log(rect)
+            this.cursor = document.createElementNS('http://www.w3.org/2000/svg','line');
+            let x = rect.getAttribute('x')
+            let y = rect.getAttribute('y')
+            let y2 = parseInt(y) + parseInt(rect.getAttribute('height'))
+            this.cursor.setAttribute('id','batata');
+            this.cursor.setAttribute('x1', x);
+            this.cursor.setAttribute('y1', y);
+            this.cursor.setAttribute('x2', x);
+            this.cursor.setAttribute('y2', y2);
+            this.cursor.setAttribute('stroke-width', 1);
+            this.cursor.setAttribute("stroke", "black")
+            bglayer.append(this.cursor);
+        },
+        setCursorTime (time) {
+            try {
+                let bglayer = document.getElementsByClassName('bglayer')[0]
+                let rect = bglayer.childNodes[0]
+                let x = parseInt(rect.getAttribute('x'))
+                let width = parseInt(rect.getAttribute('width'))
+                let percTime = (time - this.gd.layout.xaxis.range[0]) / (this.gd.layout.xaxis.range[1] - this.gd.layout.xaxis.range[0])
+                let newx = x + width * percTime
+                this.cursor.setAttribute('x1', newx)
+                this.cursor.setAttribute('x2', newx)
+
+            } catch (err) {
+                console.log(err)
+            }
+        },
         // setCursorState (animationState) {
         //     let state = !animationState
         //     let stateStr
