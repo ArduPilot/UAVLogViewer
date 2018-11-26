@@ -20,14 +20,14 @@
                 <Dropzone v-if="selected==='home'"/>
 
                 <div v-if="selected==='3d' && state.map_on">
-                    <li v-if="!state.map_on" @click="state.map_on=true">
-                        <a class="section">
-                            <i class="fas fa-eye fa-lg"></i> Show 3D View</a>
-                    </li>
-                    <li v-if="state.map_on" @click="state.map_on=false">
-                        <a class="section">
-                            <i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>
-                    </li>
+                    <!--<li v-if="!state.map_on" @click="state.map_on=true">-->
+                        <!--<a class="section">-->
+                            <!--<i class="fas fa-eye fa-lg"></i> Show 3D View</a>-->
+                    <!--</li>-->
+                    <!--<li v-if="state.map_on" @click="state.map_on=false">-->
+                        <!--<a class="section">-->
+                            <!--<i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>-->
+                    <!--</li>-->
                     <div>
                         <label>Camera</label>
                         <select class="cesium-button" v-model="state.cameraType">
