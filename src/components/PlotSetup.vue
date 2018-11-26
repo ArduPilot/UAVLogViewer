@@ -189,6 +189,7 @@ export default {
 
     i {
         margin: 5px;
+        padding: 0;
     }
 
 
