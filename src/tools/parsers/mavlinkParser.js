@@ -209,7 +209,7 @@ export class MavlinkParser {
         let messageTypes = {}
         for (let msg of Object.keys(this.messages)) {
             let fields = this.messages[msg][0].fieldnames
-            fields = fields.filter(e => e !== 'time_boot_ms')
+            fields = fields.filter(e => e !== 'time_boot_ms' && e !== 'time_usec')
             let complexFields = {}
             for (let field in fields) {
                 complexFields[fields[field]] = {
