@@ -1,5 +1,5 @@
 <template>
-      <div id="line" ref="line" style="width:100%;height: 100%"></div>
+    <div id="line" ref="line" style="width:100%;height: 100%"></div>
 </template>
 
 <script>
@@ -16,7 +16,7 @@ let plotOptions = {
     plot_bgcolor: '#f8f8f8',
     paper_bgcolor: 'white',
     // autosize: true,
-    margin: { t: 20, l: 0, b: 30, r: 10 },
+    margin: {t: 20, l: 0, b: 30, r: 10},
     xaxis: {
         domain: [0.1, 0.9],
         rangeslider: {}
@@ -78,20 +78,21 @@ let plotOptions = {
         position: 1.0
     }
     /* shapes: [ { // plot cursor lin0.15
-        type: 'line',
-        y0: 0,
-        x0: null,
-        yref: 'paper',
-        y1: 1,
-        x1: null,
-        line: {
-            color: 'rgb(0, 0, 0)',
-            width: 2,
-            dash: 'dot'
-        }
-    }] */
+            type: 'line',
+            y0: 0,
+            x0: null,
+            yref: 'paper',
+            y1: 1,
+            x1: null,
+            line: {
+                color: 'rgb(0, 0, 0)',
+                width: 2,
+                dash: 'dot'
+            }
+        }] */
 }
-
+/* eslint max-len: ["error", { "ignoreStrings": false }] */
+let potato = 'Mussum Ipsum, cacilds vidis litro abertis. Nec orci ornare consequat. Praesent lacinia ultrices consectetur. Sed non ipsum felis. Mé faiz elementum girarzis, nisi eros vermeio. Em pé sem cair, deitado sem dormir, sentado sem cochilar e fazendo pose. Posuere libero varius. Nullam a nisl ut ante blandit hendrerit. Aenean sit amet nisi.'
 Plotly.editable = true
 Plotly.edits = {legendPosition: true}
 export default {
@@ -194,19 +195,19 @@ export default {
                 this.gd._fullLayout.xaxis.range[1].toFixed(0)
             ]
             this.state.xrange = list
-            if (this.state.fields.length > 0) {
+            if (this.gd._fullLayout.yaxis !== undefined) {
                 list.push(this.gd._fullLayout.yaxis.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis.range[1].toFixed(0))
             }
-            if (this.state.fields.length > 1) {
+            if (this.gd._fullLayout.yaxis2 !== undefined) {
                 list.push(this.gd._fullLayout.yaxis2.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis2.range[1].toFixed(0))
             }
-            if (this.state.fields.length > 2) {
+            if (this.gd._fullLayout.yaxis3 !== undefined) {
                 list.push(this.gd._fullLayout.yaxis3.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis3.range[1].toFixed(0))
             }
-            if (this.state.fields.length > 3) {
+            if (this.gd._fullLayout.yaxis4 !== undefined) {
                 list.push(this.gd._fullLayout.yaxis4.range[0].toFixed(0))
                 list.push(this.gd._fullLayout.yaxis4.range[1].toFixed(0))
             }
@@ -220,7 +221,7 @@ export default {
             //     this.$eventHub.$emit('rangeChanged', [event['xaxis.range[0]'], event['xaxis.range[1]']])
             // }
             if (event !== undefined) {
-                this.$router.push({query: query})
+                // this.$router.push({query: query})
                 if (event.hasOwnProperty('xaxis.range')) {
                     this.state.timeRange = event['xaxis.range']
                 }
@@ -232,6 +233,7 @@ export default {
         addPlot (fieldname) {
             this.state.plot_loading = true
             if (!this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
+                console.log('missing message type: ' + fieldname.split('.')[0])
                 this.waitForMessage(fieldname).then(function () {
                     this.addPlot(fieldname)
                     console.log('got message ' + fieldname)
@@ -242,7 +244,15 @@ export default {
                 }
                 this.plot()
                 this.state.plot_loading = false
-
+                if (this.state.fields.length === 1) {
+                    Plotly.relayout(this.gd, {
+                        xaxis: {
+                            range: this.timeRange,
+                            domain: [0.1, 0.9],
+                            rangeslider: {}
+                        }
+                    })
+                }
             }
         },
         removePlot (fieldname) {
@@ -295,7 +305,7 @@ export default {
                                 yaxis: 'y' + (this.state.fieldAxis[axis] + 1),
                                 line: {
                                     color: this.state.axis[this.state.fieldAxis[axis]]
-                                },
+                                }
                             })
                             let axisname = this.state.fieldAxis[axis] > 1 ? 'yaxis' + (this.state.fieldAxis[axis] + 1) : 'yaxis'
                             console.log(axis + ' ' + axisname)
@@ -310,9 +320,9 @@ export default {
 
             let plotData = datasets
             /*  if (plotOptions.shapes[0].x0 === null) {
-                plotOptions.shapes[0].x0 = datasets[0].x[1]
-                plotOptions.shapes[0].x1 = datasets[0].x[1]
-            } */
+                    plotOptions.shapes[0].x0 = datasets[0].x[1]
+                    plotOptions.shapes[0].x1 = datasets[0].x[1]
+                } */
 
             if (this.plotInstance !== null) {
                 plotOptions.xaxis = {rangeslider: {}, range: this.gd._fullLayout.xaxis.range, domain: [0.1, 0.9]}
@@ -332,18 +342,18 @@ export default {
             let bglayer = document.getElementsByClassName('bglayer')[0]
             let rect = bglayer.childNodes[0]
             console.log(rect)
-            this.cursor = document.createElementNS('http://www.w3.org/2000/svg','line');
+            this.cursor = document.createElementNS('http://www.w3.org/2000/svg', 'line')
             let x = rect.getAttribute('x')
             let y = rect.getAttribute('y')
             let y2 = parseInt(y) + parseInt(rect.getAttribute('height'))
-            this.cursor.setAttribute('id','batata');
-            this.cursor.setAttribute('x1', x);
-            this.cursor.setAttribute('y1', y);
-            this.cursor.setAttribute('x2', x);
-            this.cursor.setAttribute('y2', y2);
-            this.cursor.setAttribute('stroke-width', 1);
-            this.cursor.setAttribute("stroke", "black")
-            bglayer.append(this.cursor);
+            this.cursor.setAttribute('id', 'batata')
+            this.cursor.setAttribute('x1', x)
+            this.cursor.setAttribute('y1', y)
+            this.cursor.setAttribute('x2', x)
+            this.cursor.setAttribute('y2', y2)
+            this.cursor.setAttribute('stroke-width', 1)
+            this.cursor.setAttribute('stroke', 'black')
+            bglayer.append(this.cursor)
         },
         setCursorTime (time) {
             try {
@@ -355,11 +365,10 @@ export default {
                 let newx = x + width * percTime
                 this.cursor.setAttribute('x1', newx)
                 this.cursor.setAttribute('x2', newx)
-
             } catch (err) {
                 console.log(err)
             }
-        },
+        }
         // setCursorState (animationState) {
         //     let state = !animationState
         //     let stateStr
@@ -386,7 +395,7 @@ export default {
     watch: {
         timeRange (range) {
             if (Math.abs(this.gd.layout.xaxis.range[0] - range[0]) > 5 ||
-                Math.abs(this.gd.layout.xaxis.range[1] - range[1]) > 5) {
+                    Math.abs(this.gd.layout.xaxis.range[1] - range[1]) > 5) {
                 if (this.zoomInterval !== null) {
                     clearTimeout(this.zoomInterval)
                 }
@@ -402,7 +411,7 @@ export default {
             }
         },
         fieldAxis () {
-            console.log("mudouo")
+            console.log('mudouo')
             this.plot()
         }
     }
@@ -410,7 +419,7 @@ export default {
 
 </script>
 <style>
-      .js-plotly-plot {
-        margin-left: 0!important;
-      }
+    .js-plotly-plot {
+        margin-left: 0 !important;
+    }
 </style>

@@ -20,6 +20,8 @@ import 'cesium/Widgets/widgets.css'
 import colormap from 'colormap'
 import {store} from './Globals.js'
 
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmNTJjOWYzZS1hMDA5LTRjNDQtYTBhYi1iZWQ2NTc5YzliNWIiLCJpZCI6MjczNywiaWF0IjoxNTM0Mzg3NzM3fQ.Qe6EcCmGUfM_FRKYuJEORsT4tQAvRkdmFyNk9bkARqM'
+
 function getMinTime (data) {
     return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3])
 }

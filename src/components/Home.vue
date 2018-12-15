@@ -9,11 +9,13 @@
               />
           </div>
       </template>
+      <TxInputs></TxInputs>
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
       <sidebar />
 
       <main role="main" class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex">
+
         <div class="row"
              v-if="state.plot_on"
              v-bind:class="[state.map_on ? 'h-50' : 'h-100']">
@@ -36,6 +38,7 @@
 import Plotly from './Plotly'
 import Cesium from './Cesium'
 import Sidebar from './Sidebar'
+import TxInputs from './widgets/TxInputs'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
 
@@ -203,7 +206,8 @@ export default {
         Sidebar,
         Plotly,
         Cesium,
-        AtomSpinner
+        AtomSpinner,
+        TxInputs
     },
     computed: {
         map_ok () {
