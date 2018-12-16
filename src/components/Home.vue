@@ -9,7 +9,7 @@
               />
           </div>
       </template>
-      <TxInputs></TxInputs>
+      <TxInputs v-if="state.map_on"></TxInputs>
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
       <sidebar />

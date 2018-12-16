@@ -1,14 +1,113 @@
 <template>
-    <div id="pane">
-        <div id="title">Resize, Drag or Snap Me!</div>
+    <div id="pane" v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
+        <div class="circle">
+            <div id="left" class="stick" v-bind:style="{'margin-left': leftStickLeft -3 + 'px', 'margin-top': leftStickTop -3 + 'px' }"></div>
+            <div class="vertical-line"></div>
+            <div class="horizontal-line"></div>
+        </div>
+        <div class="circle">
+            <div id="right" class="stick" v-bind:style="{'margin-left': rightStickLeft -3 + 'px', 'margin-top': rightStickTop -3 + 'px' }"></div>
+            <div class="vertical-line"></div>
+        </div>
     </div>
 </template>
 
 <script>
+import {store} from '../Globals.js'
+
+class Interpolator {
+    // ..and an (optional) custom class constructor. If one is
+    // not supplied, a default constructor is used instead:
+    // constructor() { }
+    constructor (x, y) {
+        this.x = x
+        this.y = y
+        this.currentIndex = 0
+    }
+
+    at (point) {
+        while (this.x[this.currentIndex] < point && this.currentIndex < this.x.length - 2) {
+            this.currentIndex += 1
+        }
+        while (this.x[this.currentIndex] > point && this.currentIndex > 1) {
+            this.currentIndex -= 1
+        }
+        //console.log(this.currentIndex)
+        return this.y[Math.max(0, Math.min(this.currentIndex, this.y.length - 1))]
+    }
+
+    // We will look at static and subclassed methods shortly
+}
+
 export default {
+    data () {
+        return {
+            state: store,
+            throttle: 50,
+            yaw: 50,
+            pitch: 50,
+            roll: 50,
+            width: 264,
+            height: 120,
+            left: 500,
+            top: 12,
+            circleHeight: 50
+        }
+    },
+    methods: {
+        waitForMessage (fieldname) {
+            this.$eventHub.$emit('loadType', fieldname.split('.')[0])
+            let interval
+            let _this = this
+            let counter = 0
+            return new Promise((resolve, reject) => {
+                interval = setInterval(function () {
+                    if (_this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
+                        clearInterval(interval)
+                        counter += 1
+                        resolve()
+                    } else {
+                        if (counter > 6) {
+                            console.log('not resolving')
+                            clearInterval(interval)
+                            reject(new Error('Could not load messageType'))
+                        }
+                    }
+                }, 2000)
+            })
+        },
+        setTime (time) {
+            try {
+                let sticks = this.interpolated.at(time)
+                //console.log(sticks)
+                this.yaw = (sticks[3] - 1000) / 10
+                this.throttle = (sticks[2] - 1000) / 10
+                this.pitch = (sticks[0] - 1000) / 10
+                this.roll = (sticks[1] - 1000) / 10
+            } catch (e) {
+
+            }
+        }
+
+    },
+    computed: {
+        leftStickLeft: function () {
+            return 0.01 * (this.yaw) * this.width / 2
+        },
+        leftStickTop () {
+            return 0.01 * (100 - this.throttle) * this.circleHeight
+        },
+        rightStickLeft: function () {
+            return (0.01 * this.roll) * (this.width / 2)
+        },
+        rightStickTop () {
+            return 0.01 * (100 - this.pitch) * this.circleHeight
+        }
+    },
     name: 'TxInputs',
     props: {'snappable': {type: Boolean, default: false}},
     mounted () {
+        const _this = this
         const $elem = document.getElementById('pane')
         const mutable = function (e) {
             // Elements initial width and height
@@ -20,6 +119,8 @@ export default {
             // Click position within element
             const y = t + h - e.pageY
             const x = l + w - e.pageX
+            const minWidth = 70
+            const minHeight = 70
 
             const hasMoved = () =>
                 !(t === this.offsetTop && l === this.offsetLeft)
@@ -29,14 +130,15 @@ export default {
 
             const follow = (e) => {
                 // Set top/left of element according to mouse position
-                this.style.top = `${e.pageY + y - h}px`
-                this.style.left = `${e.pageX + x - w}px`
+                _this.top = Math.max(0, Math.min(e.pageY + y - h, window.innerHeight - h))
+                _this.left = Math.max(0, Math.min(e.pageX + x - w, window.innerWidth - w))
             }
 
             const resize = (e) => {
                 // Set width/height of element according to mouse position
-                this.style.width = `${(e.pageX - l + x)}px`
-                this.style.height = `${(e.pageY - t + y)}px`
+                _this.width = Math.max(e.pageX - l + x, minWidth)
+                _this.height = Math.max(e.pageY - t + y, minHeight)
+                _this.circleHeight = document.getElementsByClassName('circle')[0].offsetHeight
             }
 
             const unresize = (e) => {
@@ -80,9 +182,33 @@ export default {
         // Bind mutable to element mousedown
         $elem.addEventListener('mousedown', mutable)
         // Listen for events from mutable element
-        $elem.addEventListener('clicked', (e) => $elem.innerHTML = 'clicked')
-        $elem.addEventListener('moved', (e) => $elem.innerHTML = 'moved')
-        $elem.addEventListener('resized', (e) => $elem.innerHTML = 'resized')
+        // $elem.addEventListener('clicked', (e) => $elem.innerHTML = 'clicked')
+        // $elem.addEventListener('moved', (e) => $elem.innerHTML = 'moved')
+        // $elem.addEventListener('resized', (e) => $elem.innerHTML = 'resized')
+
+        this.waitForMessage('RC_CHANNELS.*').then(function () {
+            let x = []
+            let y = []
+            for (let key of Object.keys(_this.state.messages['RC_CHANNELS'])) {
+                let obj = _this.state.messages['RC_CHANNELS'][key]
+                x.push(obj.time_boot_ms)
+                y.push([obj['chan1_raw'], obj['chan2_raw'], obj['chan3_raw'], obj['chan4_raw']])
+            }
+            _this.interpolated = new Interpolator(x, y)
+        })
+        this.waitForMessage('RCIN.*').then(function () {
+            console.log('loaded?')
+            let x = []
+            let y = []
+            for (let key of Object.keys(_this.state.messages['RCIN'])) {
+                let obj = _this.state.messages['RCIN'][key]
+                x.push(obj.time_boot_ms)
+                y.push([obj['C1'], obj['C2'], obj['C3'], obj['C4']])
+            }
+            console.log(x, y)
+            _this.interpolated = new Interpolator(x, y)
+        })
+        this.$eventHub.$on('cesium-time-changed', this.setTime)
     }
 }
 </script>
@@ -94,7 +220,7 @@ export default {
         height: 100px;
         left: 20px;
         top: 20px;
-        overflow: auto;
+        overflow: hidden;
         background: rgba(255, 255, 255, 0.5);
         font-size: 10px;
         text-transform: uppercase;
@@ -119,5 +245,38 @@ export default {
         justify-content: center;
         font-size: 12px;
         border-radius: 5px;
+    }
+
+    div.circle {
+        border: solid 1px black;
+        border-radius: 20%;
+        width:50%;
+        height: 100%;
+        float: left;
+    }
+
+    div.stick {
+        border: solid 4px red;
+        border-radius: 50%;
+        width:6px;
+        height: 6px;
+        margin-left: 49%;
+        display: inline-block;
+    }
+
+    div.vertical-line {
+        position: absolute;
+        margin-left: 25%;
+        top: 0%;
+        height: 100%;
+        border-right: solid 1px black;
+    }
+
+    div.horizontal-line {
+        position: absolute;
+        top: 50%;
+        width: 100%;
+        height: 1%;
+        border-top: solid 1px black;
     }
 </style>
