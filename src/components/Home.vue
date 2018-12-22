@@ -42,6 +42,8 @@ import TxInputs from './widgets/TxInputs'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
 
+import {ParamSeeker} from '../tools/paramseeker'
+
 export default {
     name: 'Home',
     created () {
@@ -74,8 +76,24 @@ export default {
             this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
             this.state.mission = this.extractMission(this.state.messages)
             this.state.vehicle = this.extractVehicleType(this.state.messages)
+            this.state.params = this.extractParams(this.state.messages)
             this.state.processStatus = 'Processed!'
             this.state.map_on = true
+        },
+
+        extractParams (messages) {
+            let params = []
+            if ('PARM' in messages) {
+                let paramData = messages['PARM']
+                for (let data of paramData) {
+                    params.push([data.time_boot_ms, data.Name, data.Value])
+                }
+            }
+            if (params.length > 0) {
+                return new ParamSeeker(params)
+            } else {
+                return undefined
+            }
         },
 
         extractTrajectory (messages) {
