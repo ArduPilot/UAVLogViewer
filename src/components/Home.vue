@@ -10,6 +10,7 @@
           </div>
       </template>
       <TxInputs v-if="state.map_on"></TxInputs>
+      <ParamViewer v-if="state.map_on"></ParamViewer>
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
       <sidebar />
@@ -39,6 +40,7 @@ import Plotly from './Plotly'
 import Cesium from './Cesium'
 import Sidebar from './Sidebar'
 import TxInputs from './widgets/TxInputs'
+import ParamViewer from './widgets/ParamViewer'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
 
@@ -225,7 +227,8 @@ export default {
         Plotly,
         Cesium,
         AtomSpinner,
-        TxInputs
+        TxInputs,
+        ParamViewer
     },
     computed: {
         map_ok () {
