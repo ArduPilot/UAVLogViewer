@@ -79,11 +79,13 @@ export default {
         setTime (time) {
             try {
                 let sticks = this.interpolated.at(time)
-                //console.log(sticks)
-                this.yaw = (sticks[3] - 1000) / 10
-                this.throttle = (sticks[2] - 1000) / 10
-                this.pitch = (sticks[0] - 1000) / 10
-                this.roll = (sticks[1] - 1000) / 10
+                // console.log(sticks)
+                this.yaw =      ((sticks[3] - this.state.params.get('RC4_TRIM')) * parseFloat(this.state.params.get('RC4_REV')) + 1500 - 1000) / 10
+                this.throttle = ((sticks[2] - this.state.params.get('RC3_TRIM')) * parseFloat(this.state.params.get('RC3_REV')) + 1500 - 1000) / 10
+                this.pitch =    ((sticks[1] - this.state.params.get('RC2_TRIM')) * parseFloat(this.state.params.get('RC2_REV')) + 1500 - 1000) / 10
+                this.roll =     ((sticks[0] - this.state.params.get('RC1_TRIM')) * parseFloat(this.state.params.get('RC1_REV')) + 1500 - 1000) / 10
+                console.log(this.pitch)
+                console.log(parseFloat(this.state.params.get('RC2_REV')))
             } catch (e) {
 
             }
@@ -95,13 +97,13 @@ export default {
             return 0.01 * (this.yaw) * this.width / 2
         },
         leftStickTop () {
-            return 0.01 * (100 - this.throttle) * this.circleHeight
+            return 0.02 * (100 - this.throttle) * this.circleHeight
         },
         rightStickLeft: function () {
             return (0.01 * this.roll) * (this.width / 2)
         },
         rightStickTop () {
-            return 0.01 * (100 - this.pitch) * this.circleHeight
+            return 0.02 * (100 - this.pitch) * this.circleHeight
         }
     },
     name: 'TxInputs',
