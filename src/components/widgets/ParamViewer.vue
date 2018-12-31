@@ -54,7 +54,7 @@ export default {
     },
     computed: {
         filteredData () {
-            return Object.keys(this.state.params.values).filter(key => key.indexOf(this.filter) !== -1)
+            return Object.keys(this.state.params.values).filter(key => key.indexOf(this.filter.toUpperCase()) !== -1)
         }
     },
     mounted () {
