@@ -32,7 +32,6 @@ class Interpolator {
         while (this.x[this.currentIndex] > point && this.currentIndex > 1) {
             this.currentIndex -= 1
         }
-        //console.log(this.currentIndex)
         return this.y[Math.max(0, Math.min(this.currentIndex, this.y.length - 1))]
     }
 
