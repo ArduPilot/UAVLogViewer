@@ -1,9 +1,10 @@
 <template>
     <div id="paneParam" v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
-        <div style="width:90%;height: 90%; overflow: auto;">
-    <ul>
-        <li v-for="param in Object.keys(state.params.values)"> {{ param }} : {{state.params.values[param]}}</li>
-    </ul>
+        <div id="panecontent">
+            <input id="filterbox" v-model="filter" placeholder="Filter">
+            <ul>
+                <li v-for="param in filteredData"> {{ param }} : {{state.params.values[param]}}</li>
+            </ul>
         </div>
     </div>
 </template>
@@ -12,8 +13,11 @@
 import {store} from '../Globals.js'
 
 export default {
+    name: 'ParamViewer',
+    props: {'snappable': {type: Boolean, default: false}},
     data () {
         return {
+            filter: '',
             state: store,
             throttle: 50,
             yaw: 50,
@@ -25,8 +29,34 @@ export default {
             top: 12
         }
     },
-    name: 'ParamViewer',
-    props: {'snappable': {type: Boolean, default: false}},
+    methods: {
+        waitForMessage (fieldname) {
+            this.$eventHub.$emit('loadType', fieldname.split('.')[0])
+            let interval
+            let _this = this
+            let counter = 0
+            return new Promise((resolve, reject) => {
+                interval = setInterval(function () {
+                    if (_this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
+                        clearInterval(interval)
+                        counter += 1
+                        resolve()
+                    } else {
+                        if (counter > 6) {
+                            console.log('not resolving')
+                            clearInterval(interval)
+                            reject(new Error('Could not load messageType'))
+                        }
+                    }
+                }, 2000)
+            })
+        }
+    },
+    computed: {
+        filteredData () {
+            return Object.keys(this.state.params.values).filter(key => key.indexOf(this.filter) !== -1)
+        }
+    },
     mounted () {
         const _this = this
         const $elem = document.getElementById('paneParam')
@@ -59,7 +89,6 @@ export default {
                 // Set width/height of element according to mouse position
                 _this.width = Math.max(e.pageX - l + x, minWidth)
                 _this.height = Math.max(e.pageY - t + y, minHeight)
-                _this.circleHeight = document.getElementsByClassName('circle')[0].offsetHeight
             }
 
             const unresize = (e) => {
@@ -92,7 +121,7 @@ export default {
             if (x > 12 && y > 12) {
                 document.addEventListener('mousemove', follow)
                 document.addEventListener('mouseup', unfollow)
-                e.preventDefault()
+                //e.preventDefault()
             } else {
                 document.addEventListener('mousemove', resize)
                 document.addEventListener('mouseup', unresize)
@@ -107,29 +136,6 @@ export default {
         // $elem.addEventListener('moved', (e) => $elem.innerHTML = 'moved')
         // $elem.addEventListener('resized', (e) => $elem.innerHTML = 'resized')
 
-        this.waitForMessage('RC_CHANNELS.*').then(function () {
-            let x = []
-            let y = []
-            for (let key of Object.keys(_this.state.messages['RC_CHANNELS'])) {
-                let obj = _this.state.messages['RC_CHANNELS'][key]
-                x.push(obj.time_boot_ms)
-                y.push([obj['chan1_raw'], obj['chan2_raw'], obj['chan3_raw'], obj['chan4_raw']])
-            }
-            _this.interpolated = new Interpolator(x, y)
-        })
-        this.waitForMessage('RCIN.*').then(function () {
-            console.log('loaded?')
-            let x = []
-            let y = []
-            for (let key of Object.keys(_this.state.messages['RCIN'])) {
-                let obj = _this.state.messages['RCIN'][key]
-                x.push(obj.time_boot_ms)
-                y.push([obj['C1'], obj['C2'], obj['C3'], obj['C4']])
-            }
-            console.log(x, y)
-            _this.interpolated = new Interpolator(x, y)
-        })
-        this.$eventHub.$on('cesium-time-changed', this.setTime)
     }
 }
 </script>
@@ -165,6 +171,17 @@ export default {
         align-items: center;
         justify-content: center;
         font-size: 12px;
+        border-radius: 5px;
+    }
+
+    div#paneContent {
+        width:90%;height: 90%; overflow: auto;
+    }
+
+    input#filterbox {
+        margin-left: 30px;
+        background-color: rgba(255,255,255,0.5);
+        border: 1px solid black;
         border-radius: 5px;
     }
 

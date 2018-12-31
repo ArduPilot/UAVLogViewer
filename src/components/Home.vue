@@ -10,7 +10,7 @@
           </div>
       </template>
       <TxInputs v-if="state.map_on"></TxInputs>
-      <ParamViewer v-if="state.map_on"></ParamViewer>
+      <ParamViewer v-if="state.params"></ParamViewer>
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
       <sidebar />
@@ -78,7 +78,9 @@ export default {
             this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
             this.state.mission = this.extractMission(this.state.messages)
             this.state.vehicle = this.extractVehicleType(this.state.messages)
-            this.state.params = this.extractParams(this.state.messages)
+            if(this.state.params === undefined) {
+                this.state.params = this.extractParams(this.state.messages)
+            }
             this.state.processStatus = 'Processed!'
             this.state.map_on = true
         },
@@ -92,7 +94,9 @@ export default {
                 }
             }
             if (params.length > 0) {
-                return new ParamSeeker(params)
+                let seeker = new ParamSeeker(params)
+                this.$eventHub.$on('cesium-time-changed', (time) => { seeker.seek(time) })
+                return seeker
             } else {
                 return undefined
             }

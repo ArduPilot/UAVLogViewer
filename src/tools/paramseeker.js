@@ -10,14 +10,20 @@ export class ParamSeeker {
             this.values[change[1]] = change[2]
         }
         this.seek(0)
+        console.log(this.currentIndex)
+        console.log(this.changeArray[this.currentIndex])
+
     }
 
     seek (time) {
+        console.log(time)
+        console.log(this.currentIndex)
+        console.log(this.changeArray[this.currentIndex])
         while (this.changeArray[this.currentIndex][0] < time && this.currentIndex < this.changeArray.length - 2) {
             this.values[this.changeArray[this.currentIndex][1]] = this.changeArray[this.currentIndex][2]
             this.currentIndex += 1
         }
-        while (this.changeArray[0][this.currentIndex] > time && this.currentIndex > 1) {
+        while (this.changeArray[this.currentIndex][0] > time && this.currentIndex > 1) {
             this.values[this.changeArray[this.currentIndex][1]] = this.changeArray[this.currentIndex][2]
             this.currentIndex -= 1
         }
