@@ -79,15 +79,29 @@ export default {
         setTime (time) {
             try {
                 let sticks = this.interpolated.at(time)
-                // console.log(sticks)
-                this.yaw =      ((sticks[3] - this.state.params.get('RC4_TRIM')) * parseFloat(this.state.params.get('RC4_REV')) + 1500 - 1000) / 10
-                this.throttle = ((sticks[2] - this.state.params.get('RC3_TRIM')) * parseFloat(this.state.params.get('RC3_REV')) + 1500 - 1000) / 10
-                this.pitch =    ((sticks[1] - this.state.params.get('RC2_TRIM')) * parseFloat(this.state.params.get('RC2_REV')) + 1500 - 1000) / 10
-                this.roll =     ((sticks[0] - this.state.params.get('RC1_TRIM')) * parseFloat(this.state.params.get('RC1_REV')) + 1500 - 1000) / 10
-            //     console.log(this.pitch)
-            //     console.log(parseFloat(this.state.params.get('RC2_REV')))
-            } catch (e) {
+                let reverses = [0,0,0,0]
+                if (this.state.params.get('RC1_REV') !== undefined) {
+                    reverses = [
+                        parseFloat(this.state.params.get('RC1_REV')),
+                        parseFloat(this.state.params.get('RC2_REV')),
+                        parseFloat(this.state.params.get('RC3_REV')),
+                        parseFloat(this.state.params.get('RC4_REV'))]
 
+                } else if (this.state.params.get('RC1_REVERSED') !== undefined)  {
+                    reverses = [
+                        parseFloat(this.state.params.get('RC1_REVERSED')) ? -1 : 1,
+                        parseFloat(this.state.params.get('RC2_REVERSED')) ? -1 : 1,
+                        parseFloat(this.state.params.get('RC3_REVERSED')) ? -1 : 1,
+                        parseFloat(this.state.params.get('RC4_REVERSED')) ? -1 : 1]
+
+                }
+                this.yaw = ((sticks[3] - this.state.params.get('RC4_TRIM')) * reverses[3] + 1500 - 1000) / 10
+                this.throttle = ((sticks[2] - this.state.params.get('RC3_TRIM')) * reverses[2] + 1500 - 1000) / 10
+                this.pitch = ((sticks[1] - this.state.params.get('RC2_TRIM')) * reverses[1] + 1500 - 1000) / 10
+                this.roll = ((sticks[0] - this.state.params.get('RC1_TRIM')) * reverses[0] + 1500 - 1000) / 10
+
+            } catch (e) {
+                console.log(e)
             }
         }
 
