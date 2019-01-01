@@ -123,7 +123,7 @@ export default {
             if (x > 12 && y > 12) {
                 document.addEventListener('mousemove', follow)
                 document.addEventListener('mouseup', unfollow)
-                //e.preventDefault()
+                // e.preventDefault()
             } else {
                 document.addEventListener('mousemove', resize)
                 document.addEventListener('mouseup', unresize)
