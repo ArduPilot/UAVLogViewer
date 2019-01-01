@@ -1,3 +1,5 @@
+import Vue from 'vue'
+
 export class ParamSeeker {
     // ..and an (optional) custom class constructor. If one is
     // not supplied, a default constructor is used instead:
@@ -13,6 +15,7 @@ export class ParamSeeker {
     }
 
     seek (time) {
+        let indexBefore = this.currentIndex
         while (this.changeArray[this.currentIndex][0] < time && this.currentIndex < this.changeArray.length - 2) {
             this.values[this.changeArray[this.currentIndex][1]] = this.changeArray[this.currentIndex][2]
             this.currentIndex += 1
@@ -20,6 +23,9 @@ export class ParamSeeker {
         while (this.changeArray[this.currentIndex][0] > time && this.currentIndex > 1) {
             this.values[this.changeArray[this.currentIndex][1]] = this.changeArray[this.currentIndex][2]
             this.currentIndex -= 1
+        }
+        if (this.currentIndex !== indexBefore) {
+            Vue.prototype.$eventHub.$emit('paramsUpdated')
         }
         return this
     }

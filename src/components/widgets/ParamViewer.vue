@@ -26,7 +26,8 @@ export default {
             width: 264,
             height: 120,
             left: 750,
-            top: 12
+            top: 12,
+            forceRecompute: 0
         }
     },
     methods: {
@@ -54,6 +55,7 @@ export default {
     },
     computed: {
         filteredData () {
+            let potato = this.forceRecompute
             return Object.keys(this.state.params.values).filter(key => key.indexOf(this.filter.toUpperCase()) !== -1)
         }
     },
@@ -135,7 +137,7 @@ export default {
         // $elem.addEventListener('clicked', (e) => $elem.innerHTML = 'clicked')
         // $elem.addEventListener('moved', (e) => $elem.innerHTML = 'moved')
         // $elem.addEventListener('resized', (e) => $elem.innerHTML = 'resized')
-
+        this.$eventHub.$on('paramsUpdated', function () { this.forceRecompute += 1 }.bind(this))
     }
 }
 </script>
