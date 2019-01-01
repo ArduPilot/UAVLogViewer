@@ -157,6 +157,7 @@ export default {
                 this.viewer.camera.direction = direction
             }
             this.state.map_loading = false
+            setTimeout(this.updateTimelineColors, 500)
         }.bind(this))
     },
 
@@ -223,10 +224,44 @@ export default {
         // onRangeChanged (event) {
         //     this.viewer.timeline.zoomTo(this.msToCesiumTime(event[0]), this.msToCesiumTime(event[1]))
         // },
+        updateTimelineColors ()
+        {
+            let start = this.cesiumTimeToMs(this.viewer.timeline._startJulian)
+            let end = this.cesiumTimeToMs(this.viewer.timeline._endJulian)
+
+            let timeline = document.getElementsByClassName('cesium-timeline-bar')[0]
+            let colors = []
+            let previousColor = null
+            for (let change of this.state.flight_mode_changes) {
+                if (change[0] > start && change[0] < end) {
+                    if (previousColor === null) {
+                        previousColor = this.getModeColor(change[0] - 1)
+                        colors.push([0, previousColor])
+                    }
+                    let percentage = (change[0] - start) * 100 / (end - start)
+                    colors.push([percentage - 0.001, previousColor])
+                    colors.push([percentage, this.getModeColor(change[0])])
+                    previousColor = this.getModeColor(change[0])
+                }
+            }
+            colors.push([100, previousColor])
+
+            let string = 'linear-gradient(to right'
+            for (let change of colors) {
+                string = string + ', rgba(' + change[1].red * 150    + ',' + change[1].green * 150 + ',' + change[1].blue * 150 + ', 100) ' + change[0] + '%'
+            }
+            string = string + ')'
+            timeline.style.background = string
+        },
         onTimelineZoom (event) {
             this.timelineStart = event.startJulian
             this.timelineStop = event.endJulian
-            this.state.timeRange = [this.cesiumTimeToMs(event.startJulian), this.cesiumTimeToMs(event.endJulian)]
+
+            let start = this.cesiumTimeToMs(event.startJulian)
+            let end = this.cesiumTimeToMs(event.endJulian)
+            this.state.timeRange = [start, end]
+            this.updateTimelineColors()
+
             if (this.trajectoryUpdateTimeout !== null) {
                 clearTimeout(this.trajectoryUpdateTimeout)
             }
