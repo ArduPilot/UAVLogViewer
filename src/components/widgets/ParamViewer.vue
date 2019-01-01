@@ -1,9 +1,9 @@
 <template>
     <div id="paneParam" v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
-        <div id="panecontent">
+        <div id="paneContent">
             <input id="filterbox" v-model="filter" placeholder="Filter">
             <ul>
-                <li v-for="param in filteredData"> {{ param }} : {{state.params.values[param]}}</li>
+                <li v-for="param in filteredData"> {{ param }} : <span style="float: right;">{{state.params.values[param]}}</span></li>
             </ul>
         </div>
     </div>
@@ -25,7 +25,7 @@ export default {
             roll: 50,
             width: 264,
             height: 120,
-            left: 750,
+            left: 780,
             top: 12,
             forceRecompute: 0
         }
@@ -149,7 +149,6 @@ export default {
         height: 100px;
         left: 20px;
         top: 20px;
-        overflow: hidden;
         background: rgba(255, 255, 255, 0.5);
         font-size: 10px;
         text-transform: uppercase;
