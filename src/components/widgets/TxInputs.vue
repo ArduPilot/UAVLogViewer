@@ -219,6 +219,7 @@ export default {
                 y.push([obj['chan1_raw'], obj['chan2_raw'], obj['chan3_raw'], obj['chan4_raw']])
             }
             _this.interpolated = new Interpolator(x, y)
+            _this.$eventHub.$on('cesium-time-changed', _this.setTime)
         })
         this.waitForMessage('RCIN.*').then(function () {
             console.log('loaded?')
@@ -231,8 +232,8 @@ export default {
             }
             console.log(x, y)
             _this.interpolated = new Interpolator(x, y)
+            _this.$eventHub.$on('cesium-time-changed', _this.setTime)
         })
-        this.$eventHub.$on('cesium-time-changed', this.setTime)
     }
 }
 </script>
