@@ -21,8 +21,8 @@
                 </li>
                 <b-collapse :id="'type' + key" v-bind:key="key+'1'">
                     <template v-for="item in message.complexFields">
-                        <li class="field" v-bind:key="key+'.'+item.name">
-                            <a v-if="isPlottable(key,item.name)" @click="toggle(key, item.name)"> {{item.name}}
+                        <li class="field" v-bind:key="key+'.'+item.name" @click="toggle(key, item.name)">
+                            <a v-if="isPlottable(key,item.name)"> {{item.name}}
                                 ({{item.units}})</a>
                         </li>
                     </template>
