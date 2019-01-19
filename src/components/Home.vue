@@ -9,7 +9,7 @@
               />
           </div>
       </template>
-      <TxInputs v-if="state.show_map" fixed-aspect-ratio></TxInputs>
+      <TxInputs v-if="state.map_on && state.show_map" fixed-aspect-ratio></TxInputs>
       <ParamViewer v-if="state.params"></ParamViewer>
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
