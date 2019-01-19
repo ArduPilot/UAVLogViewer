@@ -93,6 +93,12 @@ export default {
                     params.push([data.time_boot_ms, data.Name, data.Value])
                 }
             }
+            if ('PARAM_VALUE' in messages) {
+                let paramData = messages['PARAM_VALUE']
+                for (let data of paramData) {
+                    params.push([data.time_boot_ms, data.param_id.replace(/[^a-z0-9A-Z_]/ig, ''), data.param_value])
+                }
+            }
             if (params.length > 0) {
                 let seeker = new ParamSeeker(params)
                 this.$eventHub.$on('cesium-time-changed', (time) => { seeker.seek(time) })
