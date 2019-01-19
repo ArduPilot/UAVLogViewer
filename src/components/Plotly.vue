@@ -307,7 +307,7 @@ export default {
                                     color: this.state.axis[this.state.fieldAxis[axis]]
                                 }
                             })
-                            let axisname = this.state.fieldAxis[axis] > 1 ? 'yaxis' + (this.state.fieldAxis[axis] + 1) : 'yaxis'
+                            let axisname = this.state.fieldAxis[axis] > 0 ? 'yaxis' + (this.state.fieldAxis[axis] + 1) : 'yaxis'
                             console.log(axis + ' ' + axisname)
 
                             if (axis <= 6) {
