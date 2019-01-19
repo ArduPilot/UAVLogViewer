@@ -222,7 +222,6 @@ export default {
             _this.$eventHub.$on('cesium-time-changed', _this.setTime)
         })
         this.waitForMessage('RCIN.*').then(function () {
-            console.log('loaded?')
             let x = []
             let y = []
             for (let key of Object.keys(_this.state.messages['RCIN'])) {
@@ -230,7 +229,6 @@ export default {
                 x.push(obj.time_boot_ms)
                 y.push([obj['C1'], obj['C2'], obj['C3'], obj['C4']])
             }
-            console.log(x, y)
             _this.interpolated = new Interpolator(x, y)
             _this.$eventHub.$on('cesium-time-changed', _this.setTime)
         })
