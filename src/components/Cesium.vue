@@ -121,6 +121,9 @@ export default {
 
             Cesium.knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
         }
+
+        this.addCloseButton()
+
         let start = [Cesium.Cartographic.fromDegrees(this.state.current_trajectory[0][0],
             this.state.current_trajectory[0][1])]
         let promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, start)
@@ -163,6 +166,35 @@ export default {
 
     methods:
     {
+        addCloseButton() {
+            let toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
+
+            let closeButton = document.createElement('span')
+            if (closeButton.classList) {
+                closeButton.classList.add('cesium-navigationHelpButton-wrapper');
+            } else {
+                closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper';
+            }
+            closeButton.innerHTML = '<button type="button" id="cesium-close-button" class="cesium-button cesium-toolbar-button cesium-close-button" title="Navigation Instructions">' +
+                                        '<svg viewbox="0 0 40 40">' +
+                                        '<path class="close-x" d="M 10,10 L 30,30 M 30,10 L 10,30" />' +
+                                        '</svg>' +
+                                    '</button>' +
+                                    '<div class="cesium-navigation-help" data-bind="css: { &quot;cesium-navigation-help-visible&quot; : showInstructions}">' +
+                                        '<button type="button" class="cesium-navigation-button cesium-navigation-button-left cesium-navigation-button-selected" data-bind="click: showClick, css: {&quot;cesium-navigation-button-selected&quot;: !_touch, &quot;cesium-navigation-button-unselected&quot;: _touch}">' +
+                                            '<img src="http://localhost:8080/Widgets/Images/NavigationHelp/Mouse.svg" class="cesium-navigation-button-icon" style="width: 25px; height: 25px;">' +
+                                            'Mouse' +
+                                        '</button>' +
+                                    '<button type="button" class="cesium-navigation-button cesium-navigation-button-right cesium-navigation-button-unselected" data-bind="click: showTouch, css: {&quot;cesium-navigation-button-selected&quot;: _touch, &quot;cesium-navigation-button-unselected&quot;: !_touch}">' +
+                                            '<img src="http://localhost:8080/Widgets/Images/NavigationHelp/Touch.svg" class="cesium-navigation-button-icon" style="width: 25px; height: 25px;">' +
+                                            'Touch' +
+                                    '</button>' +
+                                    '</div>'.trim()
+            toolbar.append(closeButton)
+            closeButton = document.getElementById('cesium-close-button')
+            console.log(closeButton)
+            closeButton.addEventListener('click', function () {this.state.show_map = false }.bind(this))
+        },
         onCameraUpdate () {
             console.log(this.viewer.camera)
             let query = Object.create(this.$route.query) // clone it
@@ -770,4 +802,11 @@ export default {
       border-bottom-right-radius: 7px;
       padding: .5rem 1rem;
   }
+  </style>
+
+<style>
+   .cesium-close-button svg{
+        stroke: white;
+        stroke-width: 5;
+    }
 </style>

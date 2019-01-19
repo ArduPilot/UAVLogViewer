@@ -5,7 +5,8 @@
             <div class="tabholder">
                 <a @click="selected='home'" :class="selected==='home' ? 'selected' : ''">HOME</a>
                 <a v-if="state.map_on" @click="selected='plot'" :class="selected==='plot' ? 'selected' : ''">PLOT</a>
-                <a v-if="state.map_on" @click="selected='3d'" :class="selected==='3d' ? 'selected' : ''">3D</a>
+                <a v-if="state.map_on && state.show_map" @click="selected='3d'" :class="selected==='3d' ? 'selected' : ''">3D</a>
+                <a v-if="state.map_on && !state.show_map" @click="state.show_map=true;selected='3d'" :class="selected==='3d' ? 'selected' : ''">3D</a>
             </div>
         </ul>
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>

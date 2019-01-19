@@ -9,7 +9,7 @@
               />
           </div>
       </template>
-      <TxInputs v-if="state.map_on" fixed-aspect-ratio></TxInputs>
+      <TxInputs v-if="state.show_map" fixed-aspect-ratio></TxInputs>
       <ParamViewer v-if="state.params"></ParamViewer>
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
@@ -19,12 +19,12 @@
 
         <div class="row"
              v-if="state.plot_on"
-             v-bind:class="[state.map_on ? 'h-50' : 'h-100']">
+             v-bind:class="[state.show_map ? 'h-50' : 'h-100']">
           <div class="col-12">
             <Plotly />
           </div>
         </div>
-        <div class="row" v-if="state.map_on && map_ok" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
+        <div class="row" v-if="state.map_on && map_ok && state.show_map" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
           <div class="col-12 noPadding">
             <Cesium ref="cesium"/>
           </div>
