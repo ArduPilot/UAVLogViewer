@@ -120,7 +120,11 @@ export default {
         }
     },
     name: 'TxInputs',
-    props: {'snappable': {type: Boolean, default: false}},
+    props: {
+        'snappable': {type: Boolean, default: false},
+        'fixedAspectRatio': {type: Boolean, default: false},
+        'aspectRatio': {type: Number, default: 2}
+    },
     mounted () {
         const _this = this
         const $elem = document.getElementById('pane')
@@ -152,7 +156,12 @@ export default {
             const resize = (e) => {
                 // Set width/height of element according to mouse position
                 _this.width = Math.max(e.pageX - l + x, minWidth)
-                _this.height = Math.max(e.pageY - t + y, minHeight)
+                if (_this.fixedAspectRatio) {
+                    _this.height = _this.width / _this.aspectRatio
+                } else {
+                    _this.height = Math.max(e.pageY - t + y, minHeight)
+                }
+
                 _this.circleHeight = document.getElementsByClassName('circle')[0].offsetHeight
             }
 
