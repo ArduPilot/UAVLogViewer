@@ -16,9 +16,7 @@
 import {store} from '../Globals.js'
 
 class Interpolator {
-    // ..and an (optional) custom class constructor. If one is
-    // not supplied, a default constructor is used instead:
-    // constructor() { }
+    // This class holds all joystick positions and returns the interpolated position at an arbitraty time.
     constructor (x, y) {
         this.x = x
         this.y = y
@@ -26,6 +24,9 @@ class Interpolator {
     }
 
     at (point) {
+        /*
+        Returns x at closest y. TODO: interpolate properly.
+        */
         while (this.x[this.currentIndex] < point && this.currentIndex < this.x.length - 2) {
             this.currentIndex += 1
         }
@@ -35,7 +36,6 @@ class Interpolator {
         return this.y[Math.max(0, Math.min(this.currentIndex, this.y.length - 1))]
     }
 
-    // We will look at static and subclassed methods shortly
 }
 
 export default {
