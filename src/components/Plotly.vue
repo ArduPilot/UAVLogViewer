@@ -77,22 +77,9 @@ let plotOptions = {
         side: 'left',
         position: 1.0
     }
-    /* shapes: [ { // plot cursor lin0.15
-            type: 'line',
-            y0: 0,
-            x0: null,
-            yref: 'paper',
-            y1: 1,
-            x1: null,
-            line: {
-                color: 'rgb(0, 0, 0)',
-                width: 2,
-                dash: 'dot'
-            }
-        }] */
+
 }
 /* eslint max-len: ["error", { "ignoreStrings": false }] */
-let potato = 'Mussum Ipsum, cacilds vidis litro abertis. Nec orci ornare consequat. Praesent lacinia ultrices consectetur. Sed non ipsum felis. Mé faiz elementum girarzis, nisi eros vermeio. Em pé sem cair, deitado sem dormir, sentado sem cochilar e fazendo pose. Posuere libero varius. Nullam a nisl ut ante blandit hendrerit. Aenean sit amet nisi.'
 Plotly.editable = true
 Plotly.edits = {legendPosition: true}
 export default {
@@ -319,14 +306,9 @@ export default {
             }
 
             let plotData = datasets
-            /*  if (plotOptions.shapes[0].x0 === null) {
-                    plotOptions.shapes[0].x0 = datasets[0].x[1]
-                    plotOptions.shapes[0].x1 = datasets[0].x[1]
-                } */
 
             if (this.plotInstance !== null) {
                 plotOptions.xaxis = {rangeslider: {}, range: this.gd._fullLayout.xaxis.range, domain: [0.1, 0.9]}
-                // plotOptions.yaxis = {range: this.gd._fullLayout.yaxis.range}
                 Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
             } else {
                 this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
@@ -337,7 +319,6 @@ export default {
                     return d.x
                 })
                 _this.$eventHub.$emit('hoveredTime', infotext[0])
-                // _this.setCursorTime(infotext[0])
             })
             let bglayer = document.getElementsByClassName('bglayer')[0]
             let rect = bglayer.childNodes[0]
@@ -369,18 +350,6 @@ export default {
                 console.log(err)
             }
         }
-        // setCursorState (animationState) {
-        //     let state = !animationState
-        //     let stateStr
-        //     if (state) {
-        //         stateStr = 'x'
-        //     } else {
-        //         stateStr = false
-        //     }
-        //     Plotly.relayout(this.gd, {
-        //         hovermode: stateStr
-        //     })
-        // }
     },
     computed: {
         timeRange () {
