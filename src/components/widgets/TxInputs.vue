@@ -1,5 +1,5 @@
 <template>
-    <div id="pane" v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
+    <div :id="getDivName()" v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
         <div class="circle">
             <div id="left" class="stick" v-bind:style="{'margin-left': leftStickLeft -3 + 'px', 'margin-top': leftStickTop -3 + 'px' }"></div>
             <div class="vertical-line"></div>
@@ -14,6 +14,7 @@
 
 <script>
 import {store} from '../Globals.js'
+import {baseWidget} from './baseWidget'
 
 class Interpolator {
     // This class holds all joystick positions and returns the interpolated position at an arbitraty time.
@@ -42,6 +43,7 @@ export default {
     data () {
         return {
             state: store,
+            name: 'inputViewer',
             throttle: 50,
             yaw: 50,
             pitch: 50,
@@ -78,7 +80,7 @@ export default {
         setTime (time) {
             try {
                 let sticks = this.interpolated.at(time)
-                let reverses = [0,0,0,0]
+                let reverses = [0, 0, 0, 0]
                 if (this.state.params.get('RC1_REV') !== undefined) {
                     reverses = [
                         parseFloat(this.state.params.get('RC1_REV')),
@@ -86,7 +88,7 @@ export default {
                         parseFloat(this.state.params.get('RC3_REV')),
                         parseFloat(this.state.params.get('RC4_REV'))]
 
-                } else if (this.state.params.get('RC1_REVERSED') !== undefined)  {
+                } else if (this.state.params.get('RC1_REVERSED') !== undefined) {
                     reverses = [
                         parseFloat(this.state.params.get('RC1_REVERSED')) ? -1 : 1,
                         parseFloat(this.state.params.get('RC2_REVERSED')) ? -1 : 1,
@@ -120,124 +122,17 @@ export default {
         }
     },
     name: 'TxInputs',
+    mixins: [baseWidget],
     props: {
         'snappable': {type: Boolean, default: false},
         'fixedAspectRatio': {type: Boolean, default: false},
         'aspectRatio': {type: Number, default: 2}
-    },
-    mounted () {
-        const _this = this
-        const $elem = document.getElementById('pane')
-        const mutable = function (e) {
-            // Elements initial width and height
-            const h = this.offsetHeight
-            const w = this.offsetWidth
-            // Elements original position
-            const t = this.offsetTop
-            const l = this.offsetLeft
-            // Click position within element
-            const y = t + h - e.pageY
-            const x = l + w - e.pageX
-            const minWidth = 70
-            const minHeight = 70
-
-            const hasMoved = () =>
-                !(t === this.offsetTop && l === this.offsetLeft)
-
-            const hasResized = () =>
-                !(w === this.offsetWidth && h === this.offsetHeight)
-
-            const follow = (e) => {
-                // Set top/left of element according to mouse position
-                _this.top = Math.max(0, Math.min(e.pageY + y - h, window.innerHeight - h))
-                _this.left = Math.max(0, Math.min(e.pageX + x - w, window.innerWidth - w))
-            }
-
-            const resize = (e) => {
-                // Set width/height of element according to mouse position
-                _this.width = Math.max(e.pageX - l + x, minWidth)
-                if (_this.fixedAspectRatio) {
-                    _this.height = _this.width / _this.aspectRatio
-                } else {
-                    _this.height = Math.max(e.pageY - t + y, minHeight)
-                }
-
-                _this.circleHeight = document.getElementsByClassName('circle')[0].offsetHeight
-            }
-
-            const unresize = (e) => {
-                // Remove listeners that were bound to document
-                document.removeEventListener('mousemove', resize)
-                document.removeEventListener('mouseup', unresize)
-                // Emit events according to interaction
-                if (hasResized(e)) {
-                    this.dispatchEvent(new Event('resized'))
-                } else {
-                    this.dispatchEvent(new Event('clicked'))
-                }
-                e.preventDefault()
-            }
-
-            const unfollow = (e) => {
-                // Remove listeners that were bound to document
-                document.removeEventListener('mousemove', follow)
-                document.removeEventListener('mouseup', unfollow)
-                // Emit events according to interaction
-                if (hasMoved(e)) {
-                    this.dispatchEvent(new Event('moved'))
-                } else {
-                    this.dispatchEvent(new Event('clicked'))
-                }
-                e.preventDefault()
-            }
-
-            // Add follow listener if not resizing
-            if (x > 12 && y > 12) {
-                document.addEventListener('mousemove', follow)
-                document.addEventListener('mouseup', unfollow)
-                e.preventDefault()
-            } else {
-                document.addEventListener('mousemove', resize)
-                document.addEventListener('mouseup', unresize)
-                e.preventDefault()
-            }
-        }
-
-        // Bind mutable to element mousedown
-        $elem.addEventListener('mousedown', mutable)
-        // Listen for events from mutable element
-        // $elem.addEventListener('clicked', (e) => $elem.innerHTML = 'clicked')
-        // $elem.addEventListener('moved', (e) => $elem.innerHTML = 'moved')
-        // $elem.addEventListener('resized', (e) => $elem.innerHTML = 'resized')
-
-        this.waitForMessage('RC_CHANNELS.*').then(function () {
-            let x = []
-            let y = []
-            for (let key of Object.keys(_this.state.messages['RC_CHANNELS'])) {
-                let obj = _this.state.messages['RC_CHANNELS'][key]
-                x.push(obj.time_boot_ms)
-                y.push([obj['chan1_raw'], obj['chan2_raw'], obj['chan3_raw'], obj['chan4_raw']])
-            }
-            _this.interpolated = new Interpolator(x, y)
-            _this.$eventHub.$on('cesium-time-changed', _this.setTime)
-        })
-        this.waitForMessage('RCIN.*').then(function () {
-            let x = []
-            let y = []
-            for (let key of Object.keys(_this.state.messages['RCIN'])) {
-                let obj = _this.state.messages['RCIN'][key]
-                x.push(obj.time_boot_ms)
-                y.push([obj['C1'], obj['C2'], obj['C3'], obj['C4']])
-            }
-            _this.interpolated = new Interpolator(x, y)
-            _this.$eventHub.$on('cesium-time-changed', _this.setTime)
-        })
     }
 }
 </script>
 
 <style scoped>
-    div #pane {
+    div #paneinputViewer {
         position: absolute;
         width: 100px;
         height: 100px;
@@ -251,7 +146,7 @@ export default {
         border-radius: 10px;
     }
 
-    div #pane::before {
+    div #paneinputViewer::before {
         content: '\2198';
         color: #fff;
         position: absolute;
