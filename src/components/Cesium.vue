@@ -413,7 +413,7 @@ export default {
             console.log('3')
             // Create sampled position
             for (let pos of this.points) {
-                position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
+                position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.heightOffset))
                 this.positions.push(position)
                 let time = Cesium.JulianDate.addSeconds(this.start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
                 this.sampledPos.addSample(time, position)
@@ -506,7 +506,7 @@ export default {
             }
 
             for (let pos of this.points.slice(first, last)) {
-                this.position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
+                this.position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.heightOffset))
                 trajectory.push(this.position)
                 let color = this.getModeColor(pos[3])
 
