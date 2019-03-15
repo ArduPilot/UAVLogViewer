@@ -203,7 +203,13 @@ export default {
                 let cmdMsgs = messages['CMD']
                 for (let cmd of cmdMsgs) {
                     if (cmd.Lat !== 0) {
-                        wps.push([cmd.Lng, cmd.Lat, cmd.Alt])
+                        let lat = cmd.Lat
+                        let lon = cmd.Lng
+                        if (Math.abs(cmd.Lat) > 180) {
+                            lat = lat/10e6
+                            lon = lon/10e6
+                        }
+                        wps.push([lon, lat, cmd.Alt])
                     }
                 }
             }
