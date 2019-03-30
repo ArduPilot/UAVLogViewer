@@ -385,6 +385,7 @@ export default {
   .noPadding {
     padding-left: 4px;
     padding-right: 6px;
+    max-height: 100%;
    }
   ::-webkit-scrollbar {
     width: 12px;
