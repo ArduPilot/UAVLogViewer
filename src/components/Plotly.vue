@@ -298,7 +298,10 @@ export default {
                             console.log(axis + ' ' + axisname)
 
                             if (axis <= 6) {
-                                plotOptions[axisname].title = msgfield + ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
+                                plotOptions[axisname].title = msgfield
+                                if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
+                                    plotOptions[axisname].title += ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
+                                }
                             }
                         }
                     }
