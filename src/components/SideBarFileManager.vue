@@ -68,7 +68,7 @@ export default {
             }
             this.transferMessage = 'Download Done'
             this.sampleLoaded = true
-            this.url = url
+            //this.url = url
             let oReq = new XMLHttpRequest()
             oReq.open('GET', url, true)
             oReq.responseType = 'arraybuffer'
