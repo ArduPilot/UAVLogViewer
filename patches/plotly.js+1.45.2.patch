@@ -1,0 +1,50 @@
+diff --git a/node_modules/plotly.js/dist/plotly.js b/node_modules/plotly.js/dist/plotly.js
+index 4491415..286de3c 100644
+--- a/node_modules/plotly.js/dist/plotly.js
++++ b/node_modules/plotly.js/dist/plotly.js
+@@ -134290,7 +134290,7 @@ function getFormatter(formatObj, separators) {
+     formatObj.decimal = separators.charAt(0);
+     formatObj.thousands = separators.charAt(1);
+ 
+-    return d3.locale(formatObj);
++    return function(potato) {return "aaaaa"};
+ }
+ 
+ // Create storage for all of the data related to frames and transitions:
+diff --git a/node_modules/plotly.js/src/plots/plots.js b/node_modules/plotly.js/src/plots/plots.js
+index 4028498..10e5fbf 100644
+--- a/node_modules/plotly.js/src/plots/plots.js
++++ b/node_modules/plotly.js/src/plots/plots.js
+@@ -673,6 +673,18 @@ function getFormatObj(gd, formatKeys) {
+     return formatObj;
+ }
+ 
++function relativeTimeFormatter(milliseconds) {
++    let outputString = ''
++    let seconds = (milliseconds / 1000) % 60;
++    let minutes = (milliseconds / 1000) / 60
++    outputString = ''+seconds.toFixed(3)
++    if (minutes > 1) {
++        outputString = minutes.toFixed(0) + ':' + outputString
++    }
++
++    return outputString
++}
++
+ /**
+  * getFormatter: combine the final separators with the locale formatting object
+  * we pulled earlier to generate number and time formatters
+@@ -689,7 +701,12 @@ function getFormatter(formatObj, separators) {
+     formatObj.decimal = separators.charAt(0);
+     formatObj.thousands = separators.charAt(1);
+ 
+-    return d3.locale(formatObj);
++    let formatters = d3.locale(formatObj)
++    formatters.numberFormat = function(specifier) {
++        return relativeTimeFormatter
++    }
++    return formatters
++    //return function(a){return ''+a}
+ }
+ 
+ // Create storage for all of the data related to frames and transitions:
