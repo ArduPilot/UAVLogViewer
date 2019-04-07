@@ -6,6 +6,7 @@
 import Plotly from 'plotly.js'
 import {store} from './Globals.js'
 
+let timeformat = ':02,2f'
 let plotOptions = {
     legend: {
         x: 0,
@@ -18,8 +19,10 @@ let plotOptions = {
     // autosize: true,
     margin: {t: 20, l: 0, b: 30, r: 10},
     xaxis: {
+        title: 'time_boot (ms)',
         domain: [0.1, 0.9],
-        rangeslider: {}
+        rangeslider: {},
+        tickformat: timeformat
     },
     yaxis: {
         // title: 'axis1',
@@ -236,7 +239,8 @@ export default {
                         xaxis: {
                             range: this.timeRange,
                             domain: [0.1, 0.9],
-                            rangeslider: {}
+                            rangeslider: {},
+                            title: 'time_boot (ms)'
                         }
                     })
                 }
@@ -311,7 +315,13 @@ export default {
             let plotData = datasets
 
             if (this.plotInstance !== null) {
-                plotOptions.xaxis = {rangeslider: {}, range: this.gd._fullLayout.xaxis.range, domain: [0.1, 0.9]}
+                plotOptions.xaxis = {
+                    rangeslider: {},
+                    range: this.gd._fullLayout.xaxis.range,
+                    domain: [0.1, 0.9],
+                    title: 'time_boot (ms)',
+                    tickformat: ':04,2f',
+                }
                 Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
             } else {
                 this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
@@ -374,9 +384,11 @@ export default {
                 this.zoomInterval = setTimeout(function () {
                     Plotly.relayout(this.gd, {
                         xaxis: {
+                            title: 'time_boot (ms)',
                             range: range,
                             domain: [0.1, 0.9],
-                            rangeslider: {}
+                            rangeslider: {},
+                            tickformat: timeformat
                         }
                     })
                 }.bind(this), 500)
