@@ -60,7 +60,7 @@ export default {
             let potato = this.forceRecompute
             return Object.keys(this.state.params.values).filter(key => key.indexOf(this.filter.toUpperCase()) !== -1)
         }
-    },
+    }
 }
 </script>
 

@@ -20,7 +20,8 @@ import 'cesium/Widgets/widgets.css'
 import colormap from 'colormap'
 import {store} from './Globals.js'
 
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmNTJjOWYzZS1hMDA5LTRjNDQtYTBhYi1iZWQ2NTc5YzliNWIiLCJpZCI6MjczNywiaWF0IjoxNTM0Mzg3NzM3fQ.Qe6EcCmGUfM_FRKYuJEORsT4tQAvRkdmFyNk9bkARqM'
+Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmNTJjOWYzZS1hMDA5LTRjNDQtYTBh' +
+'Yi1iZWQ2NTc5YzliNWIiLCJpZCI6MjczNywiaWF0IjoxNTM0Mzg3NzM3fQ.Qe6EcCmGUfM_FRKYuJEORsT4tQAvRkdmFyNk9bkARqM'
 
 function getMinTime (data) {
     return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3])
@@ -97,7 +98,7 @@ export default {
 
             this.viewer.scene.debugShowFramesPerSecond = true
             this.viewer.terrainProvider = Cesium.createWorldTerrain()
-            // this.viewer.scene.postProcessStages.fxaa.enabled = false
+
             this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
             this.viewer.scene.postProcessStages.bloom.enabled = false
             this.clickableTrajectory = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
@@ -166,34 +167,25 @@ export default {
 
     methods:
     {
-        addCloseButton() {
+        addCloseButton () {
             let toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
 
             let closeButton = document.createElement('span')
             if (closeButton.classList) {
-                closeButton.classList.add('cesium-navigationHelpButton-wrapper');
+                closeButton.classList.add('cesium-navigationHelpButton-wrapper')
             } else {
-                closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper';
+                closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
             }
-            closeButton.innerHTML = '<button type="button" id="cesium-close-button" class="cesium-button cesium-toolbar-button cesium-close-button" title="Navigation Instructions">' +
-                                        '<svg viewbox="0 0 40 40">' +
-                                        '<path class="close-x" d="M 10,10 L 30,30 M 30,10 L 10,30" />' +
-                                        '</svg>' +
-                                    '</button>' +
-                                    '<div class="cesium-navigation-help" data-bind="css: { &quot;cesium-navigation-help-visible&quot; : showInstructions}">' +
-                                        '<button type="button" class="cesium-navigation-button cesium-navigation-button-left cesium-navigation-button-selected" data-bind="click: showClick, css: {&quot;cesium-navigation-button-selected&quot;: !_touch, &quot;cesium-navigation-button-unselected&quot;: _touch}">' +
-                                            '<img src="http://localhost:8080/Widgets/Images/NavigationHelp/Mouse.svg" class="cesium-navigation-button-icon" style="width: 25px; height: 25px;">' +
-                                            'Mouse' +
-                                        '</button>' +
-                                    '<button type="button" class="cesium-navigation-button cesium-navigation-button-right cesium-navigation-button-unselected" data-bind="click: showTouch, css: {&quot;cesium-navigation-button-selected&quot;: _touch, &quot;cesium-navigation-button-unselected&quot;: !_touch}">' +
-                                            '<img src="http://localhost:8080/Widgets/Images/NavigationHelp/Touch.svg" class="cesium-navigation-button-icon" style="width: 25px; height: 25px;">' +
-                                            'Touch' +
-                                    '</button>' +
-                                    '</div>'.trim()
+            closeButton.innerHTML = '' +
+                '<button type="button" id="cesium-close-button" class="cesium-button cesium-toolbar-button cesium-close-button" title="Navigation Instructions">' +
+                '<svg viewbox="0 0 40 40">' +
+                '<path class="close-x" d="M 10,10 L 30,30 M 30,10 L 10,30" />' +
+                '</svg>' +
+                '</button>'.trim()
             toolbar.append(closeButton)
             closeButton = document.getElementById('cesium-close-button')
             console.log(closeButton)
-            closeButton.addEventListener('click', function () {this.state.show_map = false }.bind(this))
+            closeButton.addEventListener('click', function () { this.state.show_map = false }.bind(this))
         },
         onCameraUpdate () {
             console.log(this.viewer.camera)
@@ -256,8 +248,7 @@ export default {
         // onRangeChanged (event) {
         //     this.viewer.timeline.zoomTo(this.msToCesiumTime(event[0]), this.msToCesiumTime(event[1]))
         // },
-        updateTimelineColors ()
-        {
+        updateTimelineColors () {
             let start = this.cesiumTimeToMs(this.viewer.timeline._startJulian)
             let end = this.cesiumTimeToMs(this.viewer.timeline._endJulian)
 
@@ -280,7 +271,7 @@ export default {
 
             let string = 'linear-gradient(to right'
             for (let change of colors) {
-                string = string + ', rgba(' + change[1].red * 150    + ',' + change[1].green * 150 + ',' + change[1].blue * 150 + ', 100) ' + change[0] + '%'
+                string = string + ', rgba(' + change[1].red * 150 + ',' + change[1].green * 150 + ',' + change[1].blue * 150 + ', 100) ' + change[0] + '%'
             }
             string = string + ')'
             timeline.style.background = string
@@ -326,7 +317,12 @@ export default {
                 if (this.isDragging) {
                     if (this.mouseIsOnPoint(movement.endPosition)) {
                         this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
-                        this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(this.getTimeStart(), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
+                        this.viewer.clock.currentTime =
+                            Cesium.JulianDate.addSeconds(
+                                this.getTimeStart(),
+                                (this.lastHoveredTime - this.startTimeMs) / 1000,
+                                new Cesium.JulianDate()
+                            )
                     }
                 } else {
                     if (this.mouseIsOnPoint(movement.endPosition)) {
@@ -342,7 +338,10 @@ export default {
         // emits in "boot_time_ms" units.
             let current = (this.viewer.clock.currentTime.secondsOfDay)
             current = current > this.viewer.clock.startTime.secondsOfDay ? current : current + 86400
-            this.$eventHub.$emit('cesium-time-changed', (current - this.viewer.clock.startTime.secondsOfDay) * 1000 + this.startTimeMs)
+            this.$eventHub.$emit(
+                'cesium-time-changed',
+                (current - this.viewer.clock.startTime.secondsOfDay) * 1000 + this.startTimeMs
+            )
             if (this.viewer.clock.currentTime < this.timelineStart ||
                 this.viewer.clock.currentTime > this.timelineStop) {
                 this.viewer.clock.currentTime = this.timelineStart.clone()

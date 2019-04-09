@@ -320,7 +320,7 @@ export default {
                     range: this.gd._fullLayout.xaxis.range,
                     domain: [0.1, 0.9],
                     title: 'time_boot (ms)',
-                    tickformat: ':04,2f',
+                    tickformat: ':04,2f'
                 }
                 Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
             } else {

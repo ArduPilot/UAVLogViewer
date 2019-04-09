@@ -78,7 +78,7 @@ export default {
             this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
             this.state.mission = this.extractMission(this.state.messages)
             this.state.vehicle = this.extractVehicleType(this.state.messages)
-            if(this.state.params === undefined) {
+            if (this.state.params === undefined) {
                 this.state.params = this.extractParams(this.state.messages)
             }
             this.state.processStatus = 'Processed!'
@@ -206,8 +206,8 @@ export default {
                         let lat = cmd.Lat
                         let lon = cmd.Lng
                         if (Math.abs(cmd.Lat) > 180) {
-                            lat = lat/10e6
-                            lon = lon/10e6
+                            lat = lat / 10e6
+                            lon = lon / 10e6
                         }
                         wps.push([lon, lat, cmd.Alt])
                     }

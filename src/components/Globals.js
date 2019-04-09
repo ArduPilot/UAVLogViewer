@@ -19,6 +19,6 @@ export var store = {
     showWaypoints: true,
     cameraType: 'free',
     fields: [],
-    fieldAxis: [0, 0, 1, 2, 3, 4, 5, 0 ,1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5],
+    fieldAxis: [0, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5],
     axis: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467BD', '#8C564B']
 }

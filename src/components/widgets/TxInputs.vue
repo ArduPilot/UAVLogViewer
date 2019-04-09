@@ -36,7 +36,6 @@ class Interpolator {
         }
         return this.y[Math.max(0, Math.min(this.currentIndex, this.y.length - 1))]
     }
-
 }
 
 export default {
@@ -87,20 +86,17 @@ export default {
                         parseFloat(this.state.params.get('RC2_REV')),
                         parseFloat(this.state.params.get('RC3_REV')),
                         parseFloat(this.state.params.get('RC4_REV'))]
-
                 } else if (this.state.params.get('RC1_REVERSED') !== undefined) {
                     reverses = [
                         parseFloat(this.state.params.get('RC1_REVERSED')) ? -1 : 1,
                         parseFloat(this.state.params.get('RC2_REVERSED')) ? -1 : 1,
                         parseFloat(this.state.params.get('RC3_REVERSED')) ? -1 : 1,
                         parseFloat(this.state.params.get('RC4_REVERSED')) ? -1 : 1]
-
                 }
                 this.yaw = ((sticks[3] - this.state.params.get('RC4_TRIM')) * reverses[3] + 1500 - 1000) / 10
                 this.throttle = ((sticks[2] - this.state.params.get('RC3_TRIM')) * reverses[2] + 1500 - 1000) / 10
                 this.pitch = ((sticks[1] - this.state.params.get('RC2_TRIM')) * reverses[1] + 1500 - 1000) / 10
                 this.roll = ((sticks[0] - this.state.params.get('RC1_TRIM')) * reverses[0] + 1500 - 1000) / 10
-
             } catch (e) {
                 console.log(e)
             }
