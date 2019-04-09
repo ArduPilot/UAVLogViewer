@@ -369,7 +369,11 @@ export default {
         },
 
         cesiumTimeToMs (time) {
-            return this.startTimeMs + (time.secondsOfDay - this.start.secondsOfDay) * 1000
+            let result = (time.secondsOfDay - this.start.secondsOfDay)
+            if (result < 0) {
+                result += 86400
+            }
+            return this.startTimeMs + result * 1000
         },
 
         msToCesiumTime (ms) {
