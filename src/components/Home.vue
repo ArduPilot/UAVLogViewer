@@ -123,7 +123,18 @@ export default {
                         this.state.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms]
                     }
                 }
-            } else if ('GPS' in messages) {
+            } else if ('AHR2' in messages) {
+                let gpsData = messages['AHR2']
+                for (let pos of gpsData) {
+                    if (pos.Lat !== 0) {
+                        if (startAltitude === null) {
+                            startAltitude = pos.Alt
+                        }
+                        trajectory.push([pos.Lng, pos.Lat, pos.Alt - startAltitude, pos.time_boot_ms])
+                        this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, (pos.Alt - startAltitude)/1000, pos.time_boot_ms]
+                    }
+                }
+            }else if ('GPS' in messages) {
                 let gpsData = messages['GPS']
                 for (let pos of gpsData) {
                     if (pos.lat !== 0) {
