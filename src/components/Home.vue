@@ -9,7 +9,7 @@
               />
           </div>
       </template>
-      <TxInputs v-if="state.map_on && state.show_map" fixed-aspect-ratio></TxInputs>
+      <TxInputs v-if="state.map_available && state.show_map" fixed-aspect-ratio></TxInputs>
       <ParamViewer v-if="state.params"></ParamViewer>
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
@@ -24,7 +24,7 @@
             <Plotly />
           </div>
         </div>
-        <div class="row" v-if="state.map_on && map_ok && state.show_map" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
+        <div class="row" v-if="state.map_available && map_ok && state.show_map" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
           <div class="col-12 noPadding">
             <Cesium ref="cesium"/>
           </div>
@@ -82,7 +82,10 @@ export default {
                 this.state.params = this.extractParams(this.state.messages)
             }
             this.state.processStatus = 'Processed!'
-            this.state.map_on = true
+            this.state.processDone = true
+            this.state.map_available = this.state.current_trajectory.length > 0
+            this.state.show_map = this.state.map_available
+
         },
 
         extractParams (messages) {

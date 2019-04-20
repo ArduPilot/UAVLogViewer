@@ -4,9 +4,9 @@
         <ul>
             <div class="tabholder">
                 <a @click="selected='home'" :class="selected==='home' ? 'selected' : ''">HOME</a>
-                <a v-if="state.map_on" @click="selected='plot'" :class="selected==='plot' ? 'selected' : ''">PLOT</a>
-                <a v-if="state.map_on && state.show_map" @click="selected='3d'" :class="selected==='3d' ? 'selected' : ''">3D</a>
-                <a v-if="state.map_on && !state.show_map" @click="state.show_map=true;selected='3d'" :class="selected==='3d' ? 'selected' : ''">3D</a>
+                <a v-if="state.processDone" @click="selected='plot'" :class="selected==='plot' ? 'selected' : ''">PLOT</a>
+                <a v-if="state.map_available && state.show_map" @click="selected='3d'" :class="selected==='3d' ? 'selected' : ''">3D</a>
+                <a v-if="state.map_available && !state.show_map" @click="state.show_map=true;selected='3d'" :class="selected==='3d' ? 'selected' : ''">3D</a>
             </div>
         </ul>
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
@@ -20,12 +20,12 @@
 
                 <Dropzone v-if="selected==='home'"/>
 
-                <div v-if="selected==='3d' && state.map_on">
-                    <!--<li v-if="!state.map_on" @click="state.map_on=true">-->
+                <div v-if="selected==='3d' && state.map_available">
+                    <!--<li v-if="!state.map_available" @click="state.map_available=true">-->
                         <!--<a class="section">-->
                             <!--<i class="fas fa-eye fa-lg"></i> Show 3D View</a>-->
                     <!--</li>-->
-                    <!--<li v-if="state.map_on" @click="state.map_on=false">-->
+                    <!--<li v-if="state.map_available" @click="state.map_available=false">-->
                         <!--<a class="section">-->
                             <!--<i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>-->
                     <!--</li>-->
