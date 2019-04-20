@@ -553,7 +553,10 @@ export default {
                 polyline: {
                     positions: cesiumPoints,
                     width: 1,
-                    material: Cesium.Color.WHITE
+                    material: new Cesium.PolylineDashMaterialProperty({
+                        color : Cesium.Color.WHITE,
+                        dashLength: 8.0
+                    })
                 }
             })
         },
