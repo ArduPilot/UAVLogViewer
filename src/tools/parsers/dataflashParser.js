@@ -97,6 +97,9 @@ const multipliers = {
     '/': 3600 // (ampere*second => ampere*hour)
 }
 
+const HEAD1 = 163
+const HEAD2 = 149
+
 const units = {
     '-': '', // no units e.g. Pi, or a string
     '?': 'UNKNOWN', // Units which haven't been worked out yet....
@@ -390,7 +393,12 @@ export class DataflashParser {
     DF_reader () {
         let lastOffset = 0
         while (this.offset < (this.buffer.byteLength - 3)) {
+            if (this.data.getUint8(this.offset) !== HEAD1 || this.data.getUint8(this.offset + 1) !== HEAD2) {
+                this.offset += 1
+                continue
+            }
             this.offset += 2
+
             let attribute = this.data.getUint8(this.offset)
             if (this.FMT[attribute] != null) {
                 this.offset += 1
