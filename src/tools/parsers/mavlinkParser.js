@@ -136,11 +136,13 @@ export class MavlinkParser {
         this.totalSize = undefined
         this.lastPercentage = 0
         this.sent = false
-        this.lastTime = 0
+
         this.mavlinkParser = new MAVLink()
         this.mavlinkParser.on('message', this.onMessage)
         this.maxPercentageInterval = 0.1
         instance = this
+        instance.forcedTimeOffset = 0
+        instance.lastTime = 0
     }
 
     onMessage (message) {
@@ -149,10 +151,20 @@ export class MavlinkParser {
         }
         if (message.id !== -1) {
             if (message.time_boot_ms === undefined) {
-                message.time_boot_ms = this.lastTime
-            } else {
-                this.lastTime = message.time_boot_ms
+                message.time_boot_ms = instance.lastTime
             }
+
+            // TODO: Fix this logic, it is probably wrong.
+            if ((+message.time_boot_ms + instance.forcedTimeOffset) < instance.lastTime) {
+                console.log('Time going backwards detected, adding an offset. This means SYSTEM_TIME is now out of sync!')
+                instance.forcedTimeOffset = +instance.lastTime - message.time_boot_ms + 100000
+            }
+
+            if (+message.time_boot_ms < instance.lastTime) {
+                message.time_boot_ms = +message.time_boot_ms + instance.forcedTimeOffset
+            }
+            instance.lastTime = +message.time_boot_ms
+
             if (message.name in instance.messages) {
                 instance.messages[message.name].push(MavlinkParser.fixData(message))
             } else {
