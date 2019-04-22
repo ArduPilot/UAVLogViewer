@@ -6,7 +6,7 @@ export var store = {
     flight_mode_changes: [],
     map_available: false,
     show_map: true,
-    map_available: false,
+    currentTime: false,
     processDone: false,
     plot_on: false,
     processStatus: 'Formatting...',

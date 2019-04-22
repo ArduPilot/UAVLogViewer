@@ -11,6 +11,7 @@
       </template>
       <TxInputs v-if="state.map_available && state.show_map" fixed-aspect-ratio></TxInputs>
       <ParamViewer v-if="state.params"></ParamViewer>
+      <MessageViewer v-if="state.textMessages"></MessageViewer>
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
       <sidebar />
@@ -41,6 +42,7 @@ import Cesium from './Cesium'
 import Sidebar from './Sidebar'
 import TxInputs from './widgets/TxInputs'
 import ParamViewer from './widgets/ParamViewer'
+import MessageViewer from './widgets/MessageViewer'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
 
@@ -81,6 +83,7 @@ export default {
             if (this.state.params === undefined) {
                 this.state.params = this.extractParams(this.state.messages)
             }
+            this.state.textMessages = this.extractTextMessages(this.state.messages)
             this.state.processStatus = 'Processed!'
             this.state.processDone = true
             this.state.map_available = this.state.current_trajectory.length > 0
@@ -109,6 +112,23 @@ export default {
             } else {
                 return undefined
             }
+        },
+
+        extractTextMessages (messages) {
+            let texts = []
+            if ('STATUSTEXT' in messages) {
+                let textMsgs = messages['STATUSTEXT']
+                for (let data of textMsgs) {
+                    texts.push([data.time_boot_ms, data.severity, data.text])
+                }
+            }
+            if ('MSG' in messages) {
+                let textMsgs = messages['MSG']
+                for (let data of textMsgs) {
+                    texts.push([data.time_boot_ms, 0,data.Message])
+                }
+            }
+            return texts
         },
 
         extractTrajectory (messages) {
@@ -258,7 +278,8 @@ export default {
         Cesium,
         AtomSpinner,
         TxInputs,
-        ParamViewer
+        ParamViewer,
+        MessageViewer
     },
     computed: {
         map_ok () {
