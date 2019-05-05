@@ -16,7 +16,7 @@ export default {
     name: 'MessageViewer',
     mixins: [baseWidget],
     created () {
-        this.$eventHub.$on('cesium-time-changed', this.setTime)
+        this.$eventHub.$on('hoveredTime', this.setTime)
     },
     data () {
         return {
@@ -60,10 +60,7 @@ export default {
     computed: {
         filteredData () {
             let potato = this.forceRecompute
-            if (this.state.timeRange) {
-                return this.state.textMessages.filter(key => (key[0] < this.cursorTime && key[0] > this.state.timeRange[0]))
-            }
-            return []
+            return this.state.textMessages.filter(key => (key[0] < this.cursorTime))
         }
     }
 }
