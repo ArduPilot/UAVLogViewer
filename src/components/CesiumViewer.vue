@@ -5,7 +5,7 @@
       <table class="infoPanel">
         <tbody>
           <tr v-for="(mode, index) in setOfModes" v-bind:key="index">
-            <td class="mode"  v-bind:style="{ color: cssColors[index] } ">{{ mode }}</td>
+            <td class="mode"  v-bind:style="{ color: state.cssColors[index] } ">{{ mode }}</td>
           </tr>
         </tbody>
       </table>
@@ -17,7 +17,6 @@
 <script>
 import Cesium from 'cesium/Cesium'
 import 'cesium/Widgets/widgets.css'
-import colormap from 'colormap'
 import {store} from './Globals.js'
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmNTJjOWYzZS1hMDA5LTRjNDQtYTBh' +
@@ -31,18 +30,16 @@ function getMaxTime (data) {
 }
 
 export default {
-    name: 'Cesium',
+    name: 'CesiumViewer',
 
     data () {
         return {
             state: store,
             startTimeMs: 0,
-            cssColors: []
         }
     },
     created () {
         this.viewer = null
-        this.colors = []
 
         this.lastHoveredTime = 0
         this.model = null
@@ -129,6 +126,7 @@ export default {
             this.state.current_trajectory[0][1])]
         let promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, start)
         Cesium.when(promise, function (updatedPositions) {
+            console.log(updatedPositions)
             this.heightOffset = updatedPositions[0].height
             this.processTrajectory(this.state.current_trajectory)
             this.addModel()
@@ -348,26 +346,6 @@ export default {
             }
         },
 
-        generateColorMMap () {
-            let colorMapOptions = {
-                colormap: 'hsv',
-                nshades: Math.max(12, this.setOfModes.length),
-                format: 'rgbaString',
-                alpha: 1
-            }
-            // colormap used on legend.
-            this.cssColors = colormap(colorMapOptions)
-
-            // colormap used on Cesium
-            colorMapOptions.format = 'float'
-            this.colors = []
-            // this.translucentColors = []
-            for (let rgba of colormap(colorMapOptions)) {
-                this.colors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2]))
-                // this.translucentColors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2], 0.1))
-            }
-        },
-
         cesiumTimeToMs (time) {
             let result = (time.secondsOfDay - this.start.secondsOfDay)
             if (result < 0) {
@@ -387,7 +365,6 @@ export default {
 
         processTrajectory () {
             this.points = this.state.current_trajectory
-            this.generateColorMMap()
             // process time_boot_ms into cesium time
             this.startTimeMs = getMinTime(this.points)
             let timespan = getMaxTime(this.points) - this.startTimeMs
@@ -562,7 +539,7 @@ export default {
         },
 
         getModeColor (time) {
-            return this.colors[this.setOfModes.indexOf(this.getMode(time))]
+            return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
         },
         getMode (time) {
             for (let mode in this.state.flight_mode_changes) {

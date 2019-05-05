@@ -4,6 +4,8 @@ export var store = {
     // time_attitude: {},
     // time_attitudeQ: {},
     flight_mode_changes: [],
+    cssColors: [],
+    colors: [],
     map_available: false,
     show_map: true,
     currentTime: false,

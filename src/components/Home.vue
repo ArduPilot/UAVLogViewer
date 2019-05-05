@@ -27,7 +27,7 @@
         </div>
         <div class="row" v-if="state.map_available && map_ok && state.show_map" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
           <div class="col-12 noPadding">
-            <Cesium ref="cesium"/>
+            <CesiumViewer ref="cesiumViewer"/>
           </div>
         </div>
       </main>
@@ -38,15 +38,16 @@
 
 <script>
 import Plotly from './Plotly'
-import Cesium from './Cesium'
+import CesiumViewer from './CesiumViewer'
 import Sidebar from './Sidebar'
 import TxInputs from './widgets/TxInputs'
 import ParamViewer from './widgets/ParamViewer'
 import MessageViewer from './widgets/MessageViewer'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
-
 import {ParamSeeker} from '../tools/paramseeker'
+import Cesium from 'cesium/Cesium'
+import colormap from 'colormap'
 
 export default {
     name: 'Home',
@@ -84,10 +85,12 @@ export default {
                 this.state.params = this.extractParams(this.state.messages)
             }
             this.state.textMessages = this.extractTextMessages(this.state.messages)
+            this.generateColorMMap()
             this.state.processStatus = 'Processed!'
             this.state.processDone = true
             this.state.map_available = this.state.current_trajectory.length > 0
             this.state.show_map = this.state.map_available
+
 
         },
 
@@ -270,12 +273,31 @@ export default {
             if ('HEARTBEAT' in messages) {
                 return messages['HEARTBEAT'][0].craft
             }
-        }
+        },
+        generateColorMMap () {
+            let colorMapOptions = {
+                colormap: 'hsv',
+                nshades: Math.max(12, this.setOfModes.length),
+                format: 'rgbaString',
+                alpha: 1
+            }
+            // colormap used on legend.
+            this.state.cssColors = colormap(colorMapOptions)
+
+            // colormap used on Cesium
+            colorMapOptions.format = 'float'
+            this.state.colors = []
+            // this.translucentColors = []
+            for (let rgba of colormap(colorMapOptions)) {
+                this.state.colors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2]))
+                // this.translucentColors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2], 0.1))
+            }
+        },
     },
     components: {
         Sidebar,
         Plotly,
-        Cesium,
+        CesiumViewer,
         AtomSpinner,
         TxInputs,
         ParamViewer,
@@ -287,6 +309,15 @@ export default {
             this.state.current_trajectory !== undefined &&
             this.state.current_trajectory.length > 0 &&
                 (Object.keys(this.state.time_attitude).length > 0 || Object.keys(this.state.time_attitudeQ).length > 0))
+        },
+        setOfModes () {
+            let set = []
+            for (let mode of this.state.flight_mode_changes) {
+                if (!set.includes(mode[1])) {
+                    set.push(mode[1])
+                }
+            }
+            return set
         }
     }
 }
