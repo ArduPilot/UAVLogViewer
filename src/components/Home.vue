@@ -30,6 +30,15 @@
             <CesiumViewer ref="cesiumViewer"/>
           </div>
         </div>
+      <div id="toolbar">
+          <table class="infoPanel">
+              <tbody>
+              <tr v-for="(mode, index) in setOfModes" v-bind:key="index">
+                  <td class="mode"  v-bind:style="{ color: state.cssColors[index] } ">{{ mode }}</td>
+              </tr>
+              </tbody>
+          </table>
+      </div>
       </main>
 
     </div>
@@ -479,5 +488,29 @@ export default {
         margin: auto;
         margin-top: 15%;
     }
+
+
+  #toolbar {
+      margin: 5px;
+      padding: 2px 5px;
+      position: absolute;
+      top: 0;
+      color: #eee;
+      font-family: sans-serif;
+      font-size: 9pt;
+  }
+
+  .infoPanel {
+      background: rgba(42, 42, 42, 0.8);
+      margin: 5px;
+      border-radius: 10px;
+      font-size:100%;
+      font-weight: bold;
+      float: left;
+  }
+  .infoPanel > tbody{
+      padding:15px;
+  }
+
 
 </style>

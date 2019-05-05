@@ -1,16 +1,6 @@
 <template>
   <div id="wrapper">
     <div id="cesiumContainer"></div>
-    <div id="toolbar">
-      <table class="infoPanel">
-        <tbody>
-          <tr v-for="(mode, index) in setOfModes" v-bind:key="index">
-            <td class="mode"  v-bind:style="{ color: state.cssColors[index] } ">{{ mode }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
   </div>
 </template>
 
