@@ -364,6 +364,20 @@ export default {
                 console.log(err)
             }
         },
+        getMode (time) {
+            for (let mode in this.state.flight_mode_changes) {
+                if (this.state.flight_mode_changes[mode][0] > time) {
+                    if (mode - 1 < 0) {
+                        return this.state.flight_mode_changes[0][1]
+                    }
+                    return this.state.flight_mode_changes[mode - 1][1]
+                }
+            }
+            return this.state.flight_mode_changes[this.state.flight_mode_changes.length - 1][1]
+        },
+        getModeColor (time) {
+            return this.state.cssColors[this.setOfModes.indexOf(this.getMode(time))]
+        },
         addModeShapes () {
             let shapes = []
             let modeChanges = this.state.flight_mode_changes
@@ -382,7 +396,7 @@ export default {
                         y0: 0,
                         x1: modeChanges[i + 1][0],
                         y1: 1,
-                        fillcolor: this.state.cssColors[i],
+                        fillcolor: this.getModeColor(modeChanges[i][0] + 1),
                         opacity: 0.2,
                         line: {
                             width: 0
@@ -396,6 +410,15 @@ export default {
         }
     },
     computed: {
+        setOfModes () {
+            let set = []
+            for (let mode of this.state.flight_mode_changes) {
+                if (!set.includes(mode[1])) {
+                    set.push(mode[1])
+                }
+            }
+            return set
+        },
         timeRange () {
             if (this.state.timeRange != null) {
                 return this.state.timeRange
