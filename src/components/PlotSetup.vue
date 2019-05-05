@@ -6,7 +6,7 @@
                     <i class="expand fas fa-caret-down"></i></a>
             </div>
         </li>
-        <b-collapse id="plotsetupcontent" class="menu-content collapse out">
+        <b-collapse id="plotsetupcontent" visible class="menu-content collapse out">
             <ul class="colorpicker">
 
                 <li class="field" v-for="(field, index) in state.fields" :key="field">
