@@ -11,7 +11,11 @@
                 <i class="fas fa-signature fa-lg"></i> Plot
                 <i class="fas fa-caret-down"></i></a>
         </li>
+
         <b-collapse id="messages">
+            <li>
+                <input id="filterbox" v-model="filter" placeholder="Type here to filter...">
+            </li>
             <template v-for="(message, key) in messageTypesFiltered">
                 <li class="type" v-bind:key="key">
                     <div v-b-toggle="'type' + key">
@@ -21,8 +25,8 @@
                 </li>
                 <b-collapse :id="'type' + key" v-bind:key="key+'1'">
                     <template v-for="item in message.complexFields">
-                        <li class="field" v-bind:key="key+'.'+item.name" @click="toggle(key, item.name)">
-                            <a v-if="isPlottable(key,item.name)"> {{item.name}}
+                        <li v-if="isPlottable(key,item.name) && item.name.indexOf(filter) !== -1" class="field" v-bind:key="key+'.'+item.name" @click="toggle(key, item.name)">
+                            <a> {{item.name}}
                                 <span v-if="item.units!=='?' && item.units!==''"> ({{item.units}})</span></a>
                         </li>
                     </template>
@@ -39,6 +43,7 @@ export default {
     name: 'message-menu',
     data () {
         return {
+            filter: '',
             checkboxes: {},
             state: store,
             messages: {},
@@ -134,7 +139,17 @@ export default {
             let filtered = {}
             for (let key of Object.keys(this.messageTypes)) {
                 if (this.hiddenTypes.indexOf(key) === -1) {
-                    filtered[key] = this.messageTypes[key]
+                    if (this.messageTypes[key].fields.filter(field => field.indexOf(this.filter) !== -1).length > 0) {
+                        filtered[key] = this.messageTypes[key]
+                        // console.log('type' + key, document.getElementById('type' + key))
+                        if (document.getElementById('type' + key)
+                            && document.getElementById('type' + key).style
+                            && document.getElementById('type' + key).style.display === 'none'
+                        ) {
+                            console.log(document.getElementById('type' + key).style.display)
+                            this.$root.$emit('bv::toggle::collapse', 'type' + key)
+                        }
+                    }
                 }
             }
             return filtered
@@ -167,6 +182,28 @@ export default {
         line-height: 25px;
         padding-left: 30px;
         font-size: 90%;
+    }
+    input {
+        margin-left: 30px;
+        margin-right: 30px;
+        -webkit-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+        background-color: #4f5b69;
+        color: white;
+        width: 85%;
+    }
+    ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+        color: #AAAAAA;
+        opacity: 1; /* Firefox */
+    }
+
+    :-ms-input-placeholder { /* Internet Explorer 10-11 */
+        color: gainsboro;
+    }
+
+    ::-ms-input-placeholder { /* Microsoft Edge */
+        color: gainsboro;
     }
 </style>
 <style>
