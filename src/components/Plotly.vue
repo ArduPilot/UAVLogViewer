@@ -243,6 +243,7 @@ export default {
                             title: 'time_boot (ms)'
                         }
                     })
+                    this.addModeShapes()
                 }
             }
         },
@@ -362,6 +363,36 @@ export default {
             } catch (err) {
                 console.log(err)
             }
+        },
+        addModeShapes () {
+            let shapes = []
+            let modeChanges = this.state.flight_mode_changes
+            modeChanges.push([this.gd.layout.xaxis.range[1], null])
+
+            for (let i = 0; i < modeChanges.length - 1; i++) {
+                console.log(i)
+                shapes.push(
+                    {
+                        type: 'rect',
+                        // x-reference is assigned to the x-values
+                        xref: 'x',
+                        // y-reference is assigned to the plot paper [0,1]
+                        yref: 'paper',
+                        x0: modeChanges[i][0],
+                        y0: 0,
+                        x1: modeChanges[i + 1][0],
+                        y1: 1,
+                        fillcolor: this.state.cssColors[i],
+                        opacity: 0.2,
+                        line: {
+                            width: 0
+                        }
+                    }
+                )
+            }
+            Plotly.relayout(this.gd, {
+                shapes: shapes
+            })
         }
     },
     computed: {
