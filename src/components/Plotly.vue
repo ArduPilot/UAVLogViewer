@@ -19,8 +19,8 @@ let plotOptions = {
     // autosize: true,
     margin: {t: 20, l: 0, b: 30, r: 10},
     xaxis: {
-        title: 'time_boot (ms)',
-        domain: [0.1, 0.9],
+        title: 'Time since boot',
+        domain: [0.15, 0.85],
         rangeslider: {},
         tickformat: timeformat
     },
@@ -33,7 +33,7 @@ let plotOptions = {
             color: '#1f77b4'
         },
         anchor: 'free',
-        position: 0.03
+        position: 0.05
     },
     yaxis2: {
         // title: 'yaxis2 title',
@@ -42,7 +42,7 @@ let plotOptions = {
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
-        position: 0.06
+        position: 0.1
     },
     yaxis3: {
         // title: 'yaxis4 title',
@@ -51,7 +51,7 @@ let plotOptions = {
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
-        position: 0.1
+        position: 0.15
     },
     yaxis4: {
         // title: 'yaxis5 title',
@@ -60,7 +60,7 @@ let plotOptions = {
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
-        position: 0.93
+        position: 0.9
     },
     yaxis5: {
         // title: 'yaxis5 title',
@@ -69,7 +69,7 @@ let plotOptions = {
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
-        position: 0.965
+        position: 0.95
     },
     yaxis6: {
         // title: 'yaxis5 title',
@@ -238,7 +238,7 @@ export default {
                     Plotly.relayout(this.gd, {
                         xaxis: {
                             range: this.timeRange,
-                            domain: [0.1, 0.9],
+                            domain: [0.15, 0.85],
                             rangeslider: {},
                             title: 'time_boot (ms)'
                         }
@@ -303,7 +303,13 @@ export default {
                             console.log(axis + ' ' + axisname)
 
                             if (axis <= 6) {
-                                plotOptions[axisname].title = msgfield
+                                plotOptions[axisname].title = {
+                                    text: msgfield,
+                                    font: {
+                                        color: this.state.axis[this.state.fieldAxis[axis]]
+                                    }
+
+                                }
                                 if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
                                     plotOptions[axisname].title += ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
                                 }
@@ -319,7 +325,7 @@ export default {
                 plotOptions.xaxis = {
                     rangeslider: {},
                     range: this.gd._fullLayout.xaxis.range,
-                    domain: [0.1, 0.9],
+                    domain: [0.15, 0.85],
                     title: 'time_boot (ms)',
                     tickformat: ':04,2f'
                 }
@@ -438,9 +444,9 @@ export default {
                 this.zoomInterval = setTimeout(function () {
                     Plotly.relayout(this.gd, {
                         xaxis: {
-                            title: 'time_boot (ms)',
+                            title: 'Time since boot',
                             range: range,
-                            domain: [0.1, 0.9],
+                            domain: [0.15, 0.85],
                             rangeslider: {},
                             tickformat: timeformat
                         }
