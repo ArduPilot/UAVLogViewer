@@ -81,12 +81,17 @@ export default {
             if (Object.keys(this.state.time_attitude).length === 0) {
                 this.state.time_attitude = this.extractAttitudes(this.state.messages)
             }
+            let list = Object.keys(this.state.time_attitude)
+            this.state.lastTime = parseInt(list[list.length - 1])
+
             if (Object.keys(this.state.time_attitudeQ).length === 0) {
                 this.state.time_attitudeQ = this.extractAttitudesQ(this.state.messages)
             }
             if (this.state.current_trajectory.length === 0) {
                 this.state.current_trajectory = this.extractTrajectory(this.state.messages)
             }
+
+
             this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
             this.state.mission = this.extractMission(this.state.messages)
             this.state.vehicle = this.extractVehicleType(this.state.messages)
@@ -181,6 +186,12 @@ export default {
                     }
                 }
             }
+            if (trajectory.length === 0) {
+                trajectory.push([1, 1, 10, 0])
+                trajectory.push([1, 1, 10, this.state.lastTime])
+                this.state.time_trajectory[0] = [1, 1, 10, 0]
+                this.state.time_trajectory[this.state.lastTime] = [1, 1, 10, this.state.lastTime]
+            }
             return trajectory
         },
         extractAttitudes (messages) {
@@ -188,17 +199,17 @@ export default {
             if ('ATTITUDE' in messages) {
                 let attitudeMsgs = messages['ATTITUDE']
                 for (let att of attitudeMsgs) {
-                    attitudes[att.time_boot_ms] = [att.roll, att.pitch, att.yaw]
+                    attitudes[parseInt(att.time_boot_ms)] = [att.roll, att.pitch, att.yaw]
                 }
             } else if ('AHR2' in messages) {
                 let attitudeMsgs = messages['AHR2']
                 for (let att of attitudeMsgs) {
-                    attitudes[att.time_boot_ms] = [att.Roll, att.Pitch, att.Yaw]
+                    attitudes[parseInt(att.time_boot_ms)] = [att.Roll, att.Pitch, att.Yaw]
                 }
             } else if ('ATT' in messages) {
                 let attitudeMsgs = messages['ATT']
                 for (let att of attitudeMsgs) {
-                    attitudes[att.time_boot_ms] = [att.Roll, att.Pitch, att.Yaw]
+                    attitudes[parseInt(att.time_boot_ms)] = [att.Roll, att.Pitch, att.Yaw]
                 }
             }
             return attitudes

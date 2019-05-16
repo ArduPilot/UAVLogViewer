@@ -124,7 +124,7 @@ export default {
             this.plotMission(this.state.mission)
             document.addEventListener('setzoom', this.onTimelineZoom)
             this.$eventHub.$on('rangeChanged', this.onRangeChanged)
-            if (this.$route.query.hasOwnProperty('cam')) {
+/*            if (this.$route.query.hasOwnProperty('cam')) {
                 let data = this.$route.query.cam.split(',')
                 let position = new Cesium.Cartesian3(
                     parseFloat(data[0]),
@@ -147,8 +147,10 @@ export default {
                 this.viewer.camera.up = up
                 this.viewer.camera.position = position
                 this.viewer.camera.direction = direction
-            }
+            }*/
             this.state.map_loading = false
+            this.state.cameraType = 'follow'
+            this.changeCamera()
             setTimeout(this.updateTimelineColors, 500)
         }.bind(this))
     },
@@ -258,11 +260,15 @@ export default {
             colors.push([100, previousColor])
 
             let string = 'linear-gradient(to right'
-            for (let change of colors) {
-                string = string + ', rgba(' + change[1].red * 150 + ',' + change[1].green * 150 + ',' + change[1].blue * 150 + ', 100) ' + change[0] + '%'
+            console.log(colors)
+            if (colors.length > 1) {
+                for (let change of colors) {
+                    string = string + ', rgba(' + change[1].red * 150 + ',' + change[1].green * 150 + ',' + change[1].blue * 150 + ', 100) ' + change[0] + '%'
+                }
+
+                string = string + ')'
+                timeline.style.background = string
             }
-            string = string + ')'
-            timeline.style.background = string
         },
         onTimelineZoom (event) {
             this.timelineStart = event.startJulian
@@ -605,9 +611,11 @@ export default {
         },
         timeRange (range) {
             try {
-                if (Math.abs(this.msToCesiumTime(range[0]).secondsOfDay - this.viewer.timeline._startJulian.secondsOfDay) > 1 ||
-                    Math.abs(this.msToCesiumTime(range[1]).secondsOfDay - this.viewer.timeline._endJulian.secondsOfDay) > 1) {
-                    this.viewer.timeline.zoomTo(this.msToCesiumTime(range[0]), this.msToCesiumTime(range[1]))
+                if (range[1] > range[0]) {
+                    if (Math.abs(this.msToCesiumTime(range[0]).secondsOfDay - this.viewer.timeline._startJulian.secondsOfDay) > 1 ||
+                        Math.abs(this.msToCesiumTime(range[1]).secondsOfDay - this.viewer.timeline._endJulian.secondsOfDay) > 1) {
+                        this.viewer.timeline.zoomTo(this.msToCesiumTime(range[0]), this.msToCesiumTime(range[1]))
+                    }
                 }
             } catch (e) {
                 console.log(e)
