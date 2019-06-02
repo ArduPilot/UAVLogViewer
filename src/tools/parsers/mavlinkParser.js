@@ -103,13 +103,14 @@ function getModeMap (mavType) {
         mavlink.MAV_TYPE_HEXAROTOR,
         mavlink.MAV_TYPE_OCTOROTOR,
         mavlink.MAV_TYPE_COAXIAL,
-        mavlink.MAV_TYPE_TRICOPTER].includes(mavType)) {
+        mavlink.MAV_TYPE_TRICOPTER,].includes(mavType)) {
         map = modeMappingAcm
     }
     if (mavType === mavlink.MAV_TYPE_FIXED_WING) {
         map = modeMappingApm
     }
-    if (mavType === mavlink.MAV_TYPE_GROUND_ROVER) {
+    if ([mavlink.MAV_TYPE_GROUND_ROVER,
+         mavlink.MAV_TYPE_SURFACE_BOAT].includes(mavType)) {
         map = modeMappingRover
     }
     if (mavType === mavlink.MAV_TYPE_ANTENNA_TRACKER) {
@@ -125,6 +126,7 @@ function getModeMap (mavType) {
 }
 
 function getModeString (mavtype, cmode) {
+    console.log(mavtype)
     return getModeMap(mavtype)[cmode]
 }
 

@@ -186,12 +186,14 @@ export default {
                     }
                 }
             }
-            if (trajectory.length === 0) {
-                trajectory.push([1, 1, 10, 0])
-                trajectory.push([1, 1, 10, this.state.lastTime])
-                this.state.time_trajectory[0] = [1, 1, 10, 0]
-                this.state.time_trajectory[this.state.lastTime] = [1, 1, 10, this.state.lastTime]
-            }
+            // console.log(trajectory)
+            // console.log(this.state.time_trajectory)
+            // if (trajectory.length === 0) {
+            //     trajectory.push([1, 1, 10, 0])
+            //     trajectory.push([1, 1, 10, this.state.lastTime])
+            //     this.state.time_trajectory[0] = [1, 1, 10, 0]
+            //     this.state.time_trajectory[this.state.lastTime] = [1, 1, 10, this.state.lastTime]
+            // }
             return trajectory
         },
         extractAttitudes (messages) {
@@ -332,6 +334,9 @@ export default {
         },
         setOfModes () {
             let set = []
+            if(!this.state.flight_mode_changes) {
+                return []
+            }
             for (let mode of this.state.flight_mode_changes) {
                 if (!set.includes(mode[1])) {
                     set.push(mode[1])
