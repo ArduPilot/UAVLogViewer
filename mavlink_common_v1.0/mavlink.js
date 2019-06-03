@@ -10994,32 +10994,52 @@ var zeroes = new Buffer ([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 /* decode a buffer as a MAVLink message */
 MAVLink.prototype.decode = function(msgbuf) {
 
-    var magic, mlen, seq, srcSystem, srcComponent, unpacked, msgId, flag1, flag2;
+    var magic, mlen, seq, srcSystem, srcComponent, unpacked, msgId, flag1, flag2, headerLen, payload;
 
-    // decode the header
-    try {
-        unpacked = jspack.Unpack('cBBBBBBBBB', msgbuf.slice(0, 10));
-        magic = unpacked[0];
-        mlen = unpacked[1];
-        flag1 = unpacked[2];
-        flag2 = unpacked[3];
-        seq = unpacked[4];
-        srcSystem = unpacked[5];
-        srcComponent = unpacked[6];
-        msgId = (unpacked[9] << 16) + (unpacked[8] << 8) + unpacked[7]
+    if (msgbuf[0] === 254) {
+        // decode the header
+        try {
+            unpacked = jspack.Unpack('cBBBBB', msgbuf.slice(0, 6))
+            magic = unpacked[0]
+            mlen = unpacked[1]
+            seq = unpacked[2]
+            srcSystem = unpacked[3]
+            srcComponent = unpacked[4]
+            msgId = unpacked[5]
+            headerLen = 6
+        }
+        catch(e) {
+            throw new Error('Unable to unpack MAVLink header: ' + e.message);
+        }
+        payload = msgbuf.slice(headerLen)
 
-    }
-    catch(e) {
-        throw new Error('Unable to unpack MAVLink header: ' + e.message);
-    }
-    let payload = msgbuf.slice(10)
+    } else if (msgbuf[0] === 253) {
+        // decode the header
+        try {
+            unpacked = jspack.Unpack('cBBBBBBBBB', msgbuf.slice(0, 10));
+            magic = unpacked[0];
+            mlen = unpacked[1];
+            flag1 = unpacked[2];
+            flag2 = unpacked[3];
+            seq = unpacked[4];
+            srcSystem = unpacked[5];
+            srcComponent = unpacked[6];
+            msgId = (unpacked[9] << 16) + (unpacked[8] << 8) + unpacked[7]
+            headerLen = 10
 
-    if (magic.charCodeAt(0) != 253) {
+        }
+        catch(e) {
+            throw new Error('Unable to unpack MAVLink header: ' + e.message);
+        }
+        payload = msgbuf.slice(headerLen)
+
+    } else {
         throw new Error("Invalid MAVLink prefix ("+magic.charCodeAt(0)+")");
     }
 
-    if( mlen != msgbuf.length - 12 ) {
-        throw new Error("Invalid MAVLink message length.  Got " + (msgbuf.length - 8) + " expected " + mlen + ", msgId=" + msgId);
+
+    if( mlen !== msgbuf.length - headerLen - 2 ) {
+        throw new Error("Invalid MAVLink message length.  Got " + (msgbuf.length - headerLen -2) + " expected " + mlen + ", msgId=" + msgId);
     }
 
     if( false === _.has(mavlink.map, msgId) ) {
@@ -11083,31 +11103,51 @@ MAVLink.prototype.decode = function(msgbuf) {
 /* decode a buffer as a MAVLink message */
 MAVLink.prototype.checkIfValidMessage = function(msgbuf) {
 
-    var magic, mlen, seq, srcSystem, srcComponent, unpacked, msgId, flag1, flag2;
 
-    // decode the header
-    try {
-        unpacked = jspack.Unpack('cBBBBBBBBB', msgbuf.slice(0, 10));
-        magic = unpacked[0];
-        mlen = unpacked[1];
-        flag1 = unpacked[2];
-        flag2 = unpacked[3];
-        seq = unpacked[4];
-        srcSystem = unpacked[5];
-        srcComponent = unpacked[6];
-        msgId = (unpacked[9] << 16) + (unpacked[8] << 8) + unpacked[7]
+    var magic, mlen, seq, srcSystem, srcComponent, unpacked, msgId, flag1, flag2, headerLen, payload;
 
-    }
-    catch(e) {
-        throw new Error('Unable to unpack MAVLink header: ' + e.message);
-    }
-    let payload = msgbuf.slice(10)
+    if (msgbuf[0] == 254) {
+        // decode the header
+        try {
+            unpacked = jspack.Unpack('cBBBBB', msgbuf.slice(0, 6))
+            magic = unpacked[0]
+            mlen = unpacked[1]
+            seq = unpacked[2]
+            srcSystem = unpacked[3]
+            srcComponent = unpacked[4]
+            msgId = unpacked[5]
+            headerLen = 6
+        }
+        catch(e) {
+            throw new Error('Unable to unpack MAVLink header: ' + e.message);
+        }
+        payload = msgbuf.slice(headerLen)
 
-    if (magic.charCodeAt(0) != 253) {
+    } else if (msgbuf[0] == 253) {
+        // decode the header
+        try {
+            unpacked = jspack.Unpack('cBBBBBBBBB', msgbuf.slice(0, 10));
+            magic = unpacked[0];
+            mlen = unpacked[1];
+            flag1 = unpacked[2];
+            flag2 = unpacked[3];
+            seq = unpacked[4];
+            srcSystem = unpacked[5];
+            srcComponent = unpacked[6];
+            msgId = (unpacked[9] << 16) + (unpacked[8] << 8) + unpacked[7]
+            headerLen = 10
+
+        }
+        catch(e) {
+            throw new Error('Unable to unpack MAVLink header: ' + e.message);
+        }
+        payload = msgbuf.slice(headerLen)
+
+    } else {
         throw new Error("Invalid MAVLink prefix ("+magic.charCodeAt(0)+")");
     }
 
-    if( mlen != msgbuf.length - 12 ) {
+    if( mlen !== msgbuf.length - (headerLen + 2) ) {
         throw new Error("Invalid MAVLink message length.  Got " + (msgbuf.length - 8) + " expected " + mlen + ", msgId=" + msgId);
     }
 
@@ -11161,7 +11201,21 @@ MAVLink.prototype.preParse = function() {
             }
         }
         if (this.buf[i] === 254) {
+            let length = this.buf[i+1] + 8
+            let msgbuf = this.buf.slice(i, i+length)
+            //console.log(this.buf[i+1], length)
+            try {
+                let m = this.checkIfValidMessage(msgbuf)
+                if (!this.bufmap[m]) {
+                    this.bufmap[m] = []
+                }
+                this.bufmap[m].push([i, i+length])
+                i+= 10
 
+            } catch ( e) {
+                //console.log(msgbuf)
+                //console.log(e)
+            }
         }
         i += 1
     }
