@@ -589,7 +589,7 @@ export class DataflashParser {
     }
 
     loadType (type) {
-        this.parse_atOffset(type)
+        this.parseType(type)
         console.log('done')
     }
 }

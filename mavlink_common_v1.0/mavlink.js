@@ -6,10 +6,10 @@ Generated from: ardupilotmega.xml,common.xml,uAvionix.xml,icarous.xml
 Note: this file has been auto-generated. DO NOT EDIT
 */
 
-(jspack = require('jspack').jspack),
-(_ = require('underscore')),
-(events = require('events')),
-(util = require('util'))
+const jspack = require('jspack').jspack
+const _ = require('underscore')
+const events = require('events')
+const util = require('util')
 
 // Add a convenience method to Buffer
 Buffer.prototype.toByteArray = function () {
@@ -20,10 +20,11 @@ mavlink = function () {}
 
 // Implement the X25CRC function (present in the Python version through the mavutil.py package)
 mavlink.x25Crc = function (buffer, crc) {
-    var bytes = buffer
-    var crc = crc || 0xffff
+    const bytes = buffer
+    crc = crc || 0xffff
+    let tmp
     _.each(bytes, function (e) {
-        var tmp = e ^ (crc & 0xff)
+        tmp = e ^ (crc & 0xff)
         tmp = (tmp ^ (tmp << 4)) & 0xff
         crc = (crc >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4)
         crc = crc & 0xffff
@@ -79,7 +80,7 @@ mavlink.message.prototype.pack = function (mav, crc_extra, payload) {
     this.payload = payload
     this.header = new mavlink.header(this.id, payload.length, mav.seq, mav.srcSystem, mav.srcComponent)
     this.msgbuf = this.header.pack().concat(payload)
-    var crc = mavlink.x25Crc(this.msgbuf.slice(1))
+    let crc = mavlink.x25Crc(this.msgbuf.slice(1))
 
     // For now, assume always using crc_extra = True.  TODO: check/fix this.
     crc = mavlink.x25Crc([crc_extra], crc)
@@ -15736,8 +15737,8 @@ MAVLink = function (logger, srcSystem, srcComponent) {
     this.logger = logger
 
     this.seq = 0
-    this.buf = new Buffer(0)
-    this.bufInError = new Buffer(0)
+    this.buf = Buffer.alloc(0)
+    this.bufInError = Buffer.alloc(0)
     this.bufmap = {}
 
     this.srcSystem = typeof srcSystem === 'undefined' ? 0 : srcSystem
@@ -15779,7 +15780,7 @@ MAVLink.prototype.log = function (level, message) {
 }
 
 MAVLink.prototype.send = function (mavmsg) {
-    buf = mavmsg.pack(this)
+    const buf = mavmsg.pack(this)
     this.file.write(buf)
     this.seq = (this.seq + 1) % 256
     this.total_packets_sent += 1
@@ -15788,7 +15789,7 @@ MAVLink.prototype.send = function (mavmsg) {
 
 // return number of bytes needed for next parsing stage
 MAVLink.prototype.bytes_needed = function () {
-    ret = this.expected_length - this.buf.length
+    const ret = this.expected_length - this.buf.length
     return ret <= 0 ? 1 : ret
 }
 
@@ -15884,7 +15885,7 @@ MAVLink.prototype.parsePayload = function () {
 // input some data bytes, possibly returning an array of new messages
 MAVLink.prototype.parseBuffer = function (s) {
     // Get a message, if one is available in the stream.
-    var m = this.parseChar(s)
+    let m = this.parseChar(s)
 
     // No messages available, bail.
     if (m === null) {
@@ -15893,7 +15894,7 @@ MAVLink.prototype.parseBuffer = function (s) {
 
     // While more valid messages can be read from the existing buffer, add
     // them to the array of new messages and return them.
-    var ret = [m]
+    let ret = [m]
     while (true) {
         m = this.parseChar()
         if (m === null) {
@@ -15902,49 +15903,9 @@ MAVLink.prototype.parseBuffer = function (s) {
         }
         ret.push(m)
     }
-    return ret
 }
 
-var zeroes = new Buffer([
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0
-])
-
+var zeroes = Buffer.alloc(50)
 /* decode a buffer as a MAVLink message */
 MAVLink.prototype.decode = function (msgbuf) {
     var magic, mlen, seq, srcSystem, srcComponent, unpacked, msgId, flag1, flag2, headerLen, payload

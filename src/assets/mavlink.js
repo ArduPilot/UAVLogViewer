@@ -6415,7 +6415,7 @@ MAVLink.prototype.pushBuffer = function(data) {
 MAVLink.prototype.parsePrefix = function() {
 
     // Test for a message prefix.
-    if( this.buf.length >= 1 && this.buf[0] != 254 ) {
+    if( this.buf.length >= 1 && this.buf[0] != 254) {
 
         // Strip the offending initial byte and throw an error.
         var badPrefix = this.buf[0];
