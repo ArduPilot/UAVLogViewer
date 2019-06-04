@@ -18656,13 +18656,23 @@ MAVLink.prototype.preParse = function () {
         }
         i += 1
     }
-    console.log(this.bufmap)
+    nameList = []
+    for (let id of Object.keys(this.bufmap)) {
+        for ( let name of Object.keys(mavlink.nameMap)) {
+            if (mavlink.nameMap[name] == id) {
+                nameList.push(name)
+            }
+        }
+    }
+    return nameList
 }
 
 MAVLink.prototype.parseType = function (type) {
     let messages = []
-    for (let i of this.bufmap[type]) {
-        messages.push(this.decode(this.buf.slice(i[0], i[1])))
+    for (let i of this.bufmap[mavlink.nameMap[type]]) {
+        let m = this.decode(this.buf.slice(i[0], i[1]))
+        messages.push(m)
+        this.emit('message', m)
     }
     return messages
 }
