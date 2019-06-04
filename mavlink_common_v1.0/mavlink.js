@@ -18672,8 +18672,9 @@ MAVLink.prototype.parseType = function (type) {
     for (let i of this.bufmap[mavlink.nameMap[type]]) {
         let m = this.decode(this.buf.slice(i[0], i[1]))
         messages.push(m)
-        this.emit('message', m)
+
     }
+    this.emit('message', messages)
     return messages
 }
 

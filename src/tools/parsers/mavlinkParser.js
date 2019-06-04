@@ -147,45 +147,48 @@ export class MavlinkParser {
         instance.lastTime = 0
     }
 
-    onMessage (message) {
-        if (instance.totalSize == null) { // for percentage calculation
-            instance.totalSize = this.buf.byteLength
+    onMessage (messages) {
+        for (let message of messages ) {
+            if (instance.totalSize == null) { // for percentage calculation
+                instance.totalSize = this.buf.byteLength
+            }
+            if (message.id !== -1) {
+                if (message.time_boot_ms === undefined) {
+                    message.time_boot_ms = instance.lastTime
+                }
+
+                // TODO: Fix this logic, it is probably wrong.
+                if ((+message.time_boot_ms + instance.forcedTimeOffset) < instance.lastTime) {
+                    console.log('Time going backwards detected, adding an offset. This means SYSTEM_TIME is now out of sync!')
+                    instance.forcedTimeOffset = +instance.lastTime - message.time_boot_ms + 100000
+                }
+
+                if (+message.time_boot_ms < instance.lastTime) {
+                    message.time_boot_ms = +message.time_boot_ms + instance.forcedTimeOffset
+                }
+                instance.lastTime = +message.time_boot_ms
+
+                if (message.name in instance.messages) {
+                    instance.messages[message.name].push(MavlinkParser.fixData(message))
+                } else {
+                    instance.messages[message.name] = [MavlinkParser.fixData(message)]
+                }
+                let percentage = 100 * (instance.totalSize - this.buf.byteLength) / instance.totalSize
+                if ((percentage - instance.lastPercentage) > instance.maxPercentageInterval) {
+                    self.postMessage({percentage: percentage})
+                    instance.lastPercentage = percentage
+                }
+
+                // TODO: FIX THIS!
+                // This a hack to detect the end of the buffer and only them message the main thread
+                if (this.buf.length < 100 && instance.sent === false) {
+
+                    instance.sent = true
+                }
+            }
         }
-        if (message.id !== -1) {
-            if (message.time_boot_ms === undefined) {
-                message.time_boot_ms = instance.lastTime
-            }
-
-            // TODO: Fix this logic, it is probably wrong.
-            if ((+message.time_boot_ms + instance.forcedTimeOffset) < instance.lastTime) {
-                console.log('Time going backwards detected, adding an offset. This means SYSTEM_TIME is now out of sync!')
-                instance.forcedTimeOffset = +instance.lastTime - message.time_boot_ms + 100000
-            }
-
-            if (+message.time_boot_ms < instance.lastTime) {
-                message.time_boot_ms = +message.time_boot_ms + instance.forcedTimeOffset
-            }
-            instance.lastTime = +message.time_boot_ms
-
-            if (message.name in instance.messages) {
-                instance.messages[message.name].push(MavlinkParser.fixData(message))
-            } else {
-                instance.messages[message.name] = [MavlinkParser.fixData(message)]
-            }
-            let percentage = 100 * (instance.totalSize - this.buf.byteLength) / instance.totalSize
-            if ((percentage - instance.lastPercentage) > instance.maxPercentageInterval) {
-                self.postMessage({percentage: percentage})
-                instance.lastPercentage = percentage
-            }
-
-            // TODO: FIX THIS!
-            // This a hack to detect the end of the buffer and only them message the main thread
-            if (this.buf.length < 100 && instance.sent === false) {
-                self.postMessage({percentage: 100})
-                self.postMessage({messages: instance.messages})
-                instance.sent = true
-            }
-        }
+        self.postMessage({percentage: 100})
+        self.postMessage({messages: instance.messages})
     }
 
     static fixData (message) {
@@ -219,9 +222,11 @@ export class MavlinkParser {
 
     processData (data) {
         this.mavlinkParser.pushBuffer(Buffer.from(data))
-        let messageTypes = this.mavlinkParser.preParse()
-        for (let msg of Object.keys(this.messages)) {
-            let fields = this.messages[msg][0].fieldnames
+        this.mavlinkParser.preParse()
+        this.mavlinkParser.parseType('SYSTEM_TIME')
+        let messageTypes = {}
+        for (let msg of Object.keys(mavlink.messageFields)) {
+            let fields = mavlink.messageFields[msg]
             fields = fields.filter(e => e !== 'time_boot_ms' && e !== 'time_usec')
             let complexFields = {}
             for (let field in fields) {
@@ -241,13 +246,14 @@ export class MavlinkParser {
         let metadata = {
             startTime: this.extractStartTime()
         }
+
         self.postMessage({metadata: metadata})
         self.postMessage({availableMessages: messageTypes})
         // self.postMessage({done: true})
     }
 
     loadType (type) {
-        this.mavlinkParser.(type)
+        this.mavlinkParser.parseType(type)
         console.log('done')
     }
 }
