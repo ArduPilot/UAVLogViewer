@@ -148,7 +148,7 @@ export class MavlinkParser {
     }
 
     onMessage (messages) {
-        for (let message of messages ) {
+        for (let message of messages) {
             if (instance.totalSize == null) { // for percentage calculation
                 instance.totalSize = this.buf.byteLength
             }
@@ -222,10 +222,15 @@ export class MavlinkParser {
 
     processData (data) {
         this.mavlinkParser.pushBuffer(Buffer.from(data))
-        this.mavlinkParser.preParse()
+        let availableMessages = this.mavlinkParser.preParse()
         this.mavlinkParser.parseType('SYSTEM_TIME')
+        this.mavlinkParser.parseType('HEARTBEAT')
+        this.mavlinkParser.parseType('ATTITUDE')
+        this.mavlinkParser.parseType('AHRS')
+        this.mavlinkParser.parseType('GLOBAL_POSITION_INT')
+        this.mavlinkParser.parseType('PARAM_VALUE')
         let messageTypes = {}
-        for (let msg of Object.keys(mavlink.messageFields)) {
+        for (let msg of availableMessages) {
             let fields = mavlink.messageFields[msg]
             fields = fields.filter(e => e !== 'time_boot_ms' && e !== 'time_usec')
             let complexFields = {}
