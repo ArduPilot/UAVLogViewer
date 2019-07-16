@@ -18249,6 +18249,7 @@ MAVLink = function (logger, srcSystem, srcComponent) {
     this.buf = Buffer.alloc(0)
     this.bufInError = Buffer.alloc(0)
     this.bufmap = {}
+    this.timemap = {}
 
     this.srcSystem = typeof srcSystem === 'undefined' ? 0 : srcSystem
     this.srcComponent = typeof srcComponent === 'undefined' ? 0 : srcComponent
@@ -18674,6 +18675,26 @@ MAVLink.prototype.parseType = function (type) {
     }
     for (let i of this.bufmap[mavlink.nameMap[type]]) {
         let m = this.decode(this.buf.slice(i[0], i[1]))
+
+        // TODO: Fix this somehow. this is a hack to add time information to messages without it.
+        // It populates a "timemap", which is dict of timestamp at each offset, and whenever a message has no
+        // time information, it goes back in time until it finds an time information
+        let start = i[0]
+        // If there is a timestamp, save to the map
+        if ('time_boot_ms' in m) {
+            this.timemap[start] = m.time_boot_ms
+        } else {
+            // if there is not, seek back until we find a valid timestamp, and use that
+            m.time_boot_ms = 0
+            let index = start
+            while (index > 0) {
+                if (index in this.timemap) {
+                    m.time_boot_ms = this.timemap[index]
+                    break
+                }
+                index -= 1
+            }
+        }
         messages.push(m)
 
     }
