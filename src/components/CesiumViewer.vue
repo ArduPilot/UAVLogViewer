@@ -582,7 +582,7 @@ export default {
             if (type === 'boat') {
                 return require('../assets/boat.glb')
             }
-            return require('../assets/boat.glb')
+            return require('../assets/plane.glb')
         }
     },
 
