@@ -61,7 +61,7 @@ import colormap from 'colormap'
 export default {
     name: 'Home',
     created () {
-        this.$eventHub.$on('messages', this.updateData)
+        this.$eventHub.$on('messages', this.extractFlightData)
         this.state.messages = {}
         this.state.time_attitude = []
         this.state.time_attitudeQ = []
@@ -76,8 +76,7 @@ export default {
         }
     },
     methods: {
-        updateData () {
-            console.log('updatedata')
+        extractFlightData () {
             if (Object.keys(this.state.time_attitude).length === 0) {
                 this.state.time_attitude = this.extractAttitudes(this.state.messages)
             }
@@ -104,8 +103,6 @@ export default {
             this.state.processDone = true
             this.state.map_available = this.state.current_trajectory.length > 0
             this.state.show_map = this.state.map_available
-
-
         },
 
         extractParams (messages) {
