@@ -574,7 +574,10 @@ export default {
             if (type === 'quadcopter') {
                 return require('../assets/quad.glb')
             }
-            return require('../assets/plane.glb')
+            if (type === 'boat') {
+                return require('../assets/boat.glb')
+            }
+            return require('../assets/boat.glb')
         }
     },
 
