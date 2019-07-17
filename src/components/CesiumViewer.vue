@@ -495,7 +495,9 @@ export default {
                         polyline: {
                             positions: trajectory,
                             width: 1,
-                            material: oldColor
+                            material: oldColor,
+                            clampToGround: this.state.vehicle === 'boat',
+                            zIndex: 2
                         }
                     })
                     oldColor = color
@@ -507,7 +509,10 @@ export default {
                 polyline: {
                     positions: trajectory,
                     width: 1,
-                    material: oldColor
+                    material: oldColor,
+                    clampToGround: this.state.vehicle === 'boat',
+                    zIndex: 2
+
                 }
             })
             if (!this.$route.query.hasOwnProperty('cam')) {
