@@ -36,6 +36,7 @@ export default {
         this.clickableTrajectory = null
         this.waypoints = null
         this.trajectory = null
+        this.corrected_trajectory = []
 
         this.$eventHub.$on('hoveredTime', this.showAttitude)
         this.state.map_loading = true
@@ -114,10 +115,13 @@ export default {
         }
 
         this.addCloseButton()
+        for (let pos of this.state.current_trajectory){
+            this.corrected_trajectory.push(Cesium.Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
+        }
 
         let start = [Cesium.Cartographic.fromDegrees(this.state.current_trajectory[0][0],
             this.state.current_trajectory[0][1])]
-        let promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, start)
+        let promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, this.corrected_trajectory)
         Cesium.when(promise, function (updatedPositions) {
             console.log(updatedPositions)
             this.heightOffset = updatedPositions[0].height
@@ -391,8 +395,9 @@ export default {
             }
             console.log('3')
             // Create sampled position
-            for (let pos of this.points) {
-                position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.heightOffset))
+            for (let posIndex in this.points) {
+                let pos = this.points[posIndex]
+                position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.corrected_trajectory[posIndex].height))
                 this.positions.push(position)
                 let time = Cesium.JulianDate.addSeconds(this.start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
                 this.sampledPos.addSample(time, position)
