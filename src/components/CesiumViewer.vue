@@ -80,7 +80,10 @@ export default {
                     scene3DOnly: true,
                     selectionIndicator: false,
                     shadows: true,
-                    imageryProviderViewModels: imageryProviders
+                    imageryProviderViewModels: imageryProviders,
+                    terrainProvider: new Cesium.CesiumTerrainProvider({
+                        url: Cesium.IonResource.fromAssetId(3956)
+                    })
                 })
 
             this.viewer.scene.debugShowFramesPerSecond = true
