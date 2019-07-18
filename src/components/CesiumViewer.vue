@@ -82,13 +82,13 @@ export default {
                     selectionIndicator: false,
                     shadows: true,
                     imageryProviderViewModels: imageryProviders,
-                    terrainProvider: new Cesium.CesiumTerrainProvider({
-                        url: Cesium.IonResource.fromAssetId(3956)
-                    })
+
                 })
 
             this.viewer.scene.debugShowFramesPerSecond = true
-            this.viewer.terrainProvider = Cesium.createWorldTerrain()
+            if (this.state.vehicle !== 'boat') {
+                this.viewer.terrainProvider = Cesium.createWorldTerrain()
+            }
 
             this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
             this.viewer.scene.postProcessStages.bloom.enabled = false
@@ -121,8 +121,17 @@ export default {
 
         let start = [Cesium.Cartographic.fromDegrees(this.state.current_trajectory[0][0],
             this.state.current_trajectory[0][1])]
-        let promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, this.corrected_trajectory)
-        Cesium.when(promise, function (updatedPositions) {
+        if (this.state.vehicle !== 'boat') {
+            let promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, this.corrected_trajectory)
+            Cesium.when(promise, this.setup2)
+        } else {
+            this.setup2(this.corrected_trajectory)
+        }
+    },
+
+    methods:
+    {
+        setup2 (updatedPositions) {
             console.log(updatedPositions)
             this.heightOffset = updatedPositions[0].height
             this.processTrajectory(this.state.current_trajectory)
@@ -131,39 +140,35 @@ export default {
             this.plotMission(this.state.mission)
             document.addEventListener('setzoom', this.onTimelineZoom)
             this.$eventHub.$on('rangeChanged', this.onRangeChanged)
-/*            if (this.$route.query.hasOwnProperty('cam')) {
-                let data = this.$route.query.cam.split(',')
-                let position = new Cesium.Cartesian3(
-                    parseFloat(data[0]),
-                    parseFloat(data[1]),
-                    parseFloat(data[2])
-                )
-                let direction = new Cesium.Cartesian3(
-                    parseFloat(data[3]),
-                    parseFloat(data[4]),
-                    parseFloat(data[5])
-                )
-                let up = new Cesium.Cartesian3(
-                    parseFloat(data[6]),
-                    parseFloat(data[7]),
-                    parseFloat(data[8])
-                )
-                this.state.cameraType = data[9]
-                this.changeCamera()
-                console.log('setting camera to ' + position + ' ' + direction)
-                this.viewer.camera.up = up
-                this.viewer.camera.position = position
-                this.viewer.camera.direction = direction
-            }*/
+            /*            if (this.$route.query.hasOwnProperty('cam')) {
+                            let data = this.$route.query.cam.split(',')
+                            let position = new Cesium.Cartesian3(
+                                parseFloat(data[0]),
+                                parseFloat(data[1]),
+                                parseFloat(data[2])
+                            )
+                            let direction = new Cesium.Cartesian3(
+                                parseFloat(data[3]),
+                                parseFloat(data[4]),
+                                parseFloat(data[5])
+                            )
+                            let up = new Cesium.Cartesian3(
+                                parseFloat(data[6]),
+                                parseFloat(data[7]),
+                                parseFloat(data[8])
+                            )
+                            this.state.cameraType = data[9]
+                            this.changeCamera()
+                            console.log('setting camera to ' + position + ' ' + direction)
+                            this.viewer.camera.up = up
+                            this.viewer.camera.position = position
+                            this.viewer.camera.direction = direction
+                        } */
             this.state.map_loading = false
             this.state.cameraType = 'follow'
             this.changeCamera()
             setTimeout(this.updateTimelineColors, 500)
-        }.bind(this))
-    },
-
-    methods:
-    {
+        },
         addCloseButton () {
             let toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
 
@@ -395,9 +400,14 @@ export default {
             }
             console.log('3')
             // Create sampled position
+            let isBoat = this.state.vehicle === 'boat'
             for (let posIndex in this.points) {
                 let pos = this.points[posIndex]
-                position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.corrected_trajectory[posIndex].height))
+                if (isBoat) {
+                    position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], 0)
+                } else {
+                    position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.corrected_trajectory[posIndex].height))
+                }
                 this.positions.push(position)
                 let time = Cesium.JulianDate.addSeconds(this.start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
                 this.sampledPos.addSample(time, position)
