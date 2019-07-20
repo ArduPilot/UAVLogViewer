@@ -62,6 +62,12 @@ export default {
             let potato = this.forceRecompute
             return this.state.textMessages.filter(key => (key[0] < this.cursorTime))
         }
+    },
+    watch: {
+        filteredData: function (data) {
+            let container = this.$el.querySelector('#paneContent')
+            container.scrollTop = container.scrollHeight
+        }
     }
 }
 </script>
