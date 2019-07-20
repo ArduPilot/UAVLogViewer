@@ -90,7 +90,6 @@ export default {
                 this.state.current_trajectory = this.extractTrajectory(this.state.messages)
             }
 
-
             this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
             this.state.mission = this.extractMission(this.state.messages)
             this.state.vehicle = this.extractVehicleType(this.state.messages)
@@ -139,7 +138,7 @@ export default {
             if ('MSG' in messages) {
                 let textMsgs = messages['MSG']
                 for (let data of textMsgs) {
-                    texts.push([data.time_boot_ms, 0,data.Message])
+                    texts.push([data.time_boot_ms, 0, data.Message])
                 }
             }
             return texts
@@ -171,7 +170,7 @@ export default {
                         this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, (pos.Alt - startAltitude)/1000, pos.time_boot_ms]
                     }
                 }
-            }else if ('GPS' in messages) {
+            } else if ('GPS' in messages) {
                 let gpsData = messages['GPS']
                 for (let pos of gpsData) {
                     if (pos.lat !== 0) {
@@ -311,7 +310,7 @@ export default {
                 this.state.colors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2]))
                 // this.translucentColors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2], 0.1))
             }
-        },
+        }
     },
     components: {
         Sidebar,
@@ -331,7 +330,7 @@ export default {
         },
         setOfModes () {
             let set = []
-            if(!this.state.flight_mode_changes) {
+            if (!this.state.flight_mode_changes) {
                 return []
             }
             for (let mode of this.state.flight_mode_changes) {

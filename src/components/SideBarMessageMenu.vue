@@ -142,9 +142,9 @@ export default {
                     if (this.messageTypes[key].fields.filter(field => field.indexOf(this.filter) !== -1).length > 0) {
                         filtered[key] = this.messageTypes[key]
                         // console.log('type' + key, document.getElementById('type' + key))
-                        if (document.getElementById('type' + key)
-                            && document.getElementById('type' + key).style
-                            && document.getElementById('type' + key).style.display === 'none'
+                        if (document.getElementById('type' + key) &&
+                            document.getElementById('type' + key).style &&
+                            document.getElementById('type' + key).style.display === 'none'
                         ) {
                             console.log(document.getElementById('type' + key).style.display)
                             this.$root.$emit('bv::toggle::collapse', 'type' + key)

@@ -25,7 +25,7 @@ export default {
     data () {
         return {
             state: store,
-            startTimeMs: 0,
+            startTimeMs: 0
         }
     },
     created () {
@@ -81,7 +81,7 @@ export default {
                     scene3DOnly: true,
                     selectionIndicator: false,
                     shadows: true,
-                    imageryProviderViewModels: imageryProviders,
+                    imageryProviderViewModels: imageryProviders
 
                 })
 
