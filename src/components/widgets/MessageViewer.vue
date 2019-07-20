@@ -16,7 +16,8 @@ export default {
     name: 'MessageViewer',
     mixins: [baseWidget],
     created () {
-        this.$eventHub.$on('hoveredTime', this.setTime)
+        this.$eventHub.$on('cesium-time-changed', this.setTime)
+
     },
     data () {
         return {
