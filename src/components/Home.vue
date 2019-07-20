@@ -349,8 +349,8 @@ export default {
   .nav-side-menu ul,
   .nav-side-menu li {
     list-style: none;
-    padding: 0px;
-    margin: 0px;
+    padding: 0;
+    margin: 0;
     line-height: 35px;
     cursor: pointer;
     /*
@@ -396,7 +396,7 @@ export default {
     border: none;
     line-height: 28px;
     border-bottom: 1px solid #23282e;
-    margin-left: 0px;
+    margin-left: 0;
   }
   .nav-side-menu ul .sub-menu li:hover,
   .nav-side-menu li .sub-menu li:hover {
@@ -404,7 +404,6 @@ export default {
   }
   .nav-side-menu ul .sub-menu li:before,
   .nav-side-menu li .sub-menu li:before {
-    font-family: FontAwesome;
     content: "\f105";
     display: inline-block;
     padding-left: 10px;
@@ -412,7 +411,7 @@ export default {
     vertical-align: middle;
   }
   .nav-side-menu li {
-    padding-left: 0px;
+    padding-left: 0;
     border-left: 3px solid #2e353d;
     border-bottom: 1px solid #23282e;
   }
@@ -431,7 +430,6 @@ export default {
     -webkit-transition: all 1s ease;
     -moz-transition: all 1s ease;
     -o-transition: all 1s ease;
-    -ms-transition: all 1s ease;
     transition: all 1s ease;
   }
   @media (max-width: 767px) {
@@ -447,8 +445,8 @@ export default {
     }
   }
   body {
-    margin: 0px;
-    padding: 0px;
+    margin: 0;
+    padding: 0;
   }
 
   div .col-12 {
@@ -501,7 +499,6 @@ export default {
         margin-top: 15%;
     }
 
-
   #toolbar {
       margin: 5px;
       padding: 2px 5px;
@@ -523,6 +520,4 @@ export default {
   .infoPanel > tbody{
       padding:15px;
   }
-
-
 </style>
