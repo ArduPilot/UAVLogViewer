@@ -9,9 +9,9 @@
               />
           </div>
       </template>
-      <TxInputs v-if="state.map_available && state.show_map" fixed-aspect-ratio></TxInputs>
-      <ParamViewer v-if="state.params"></ParamViewer>
-      <MessageViewer v-if="state.textMessages"></MessageViewer>
+      <TxInputs v-if="state.map_available && state.show_map && state.show_radio" fixed-aspect-ratio></TxInputs>
+      <ParamViewer v-if="state.show_params"></ParamViewer>
+      <MessageViewer v-if="state.show_messages"></MessageViewer>
     <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
       <sidebar />

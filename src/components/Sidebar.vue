@@ -17,9 +17,14 @@
                     <plotSetup/>
                     <message-menu />
                 </div>
-
-                <Dropzone v-if="selected==='home'"/>
-
+                <div v-if="selected==='home'">
+                    <Dropzone/>
+                    <div v-if="state.processDone">
+                        <label v-if="state.params"><input type="checkbox" v-model="state.show_params">Show Parameters</label>
+                        <label><input type="checkbox" v-model="state.show_radio">Show Radio Sticks</label>
+                        <label v-if="state.textMessages"><input type="checkbox" v-model="state.show_messages">Show Messages</label>
+                    </div>
+                </div>
                 <div v-if="selected==='3d' && state.map_available">
                     <!--<li v-if="!state.map_available" @click="state.map_available=true">-->
                         <!--<a class="section">-->
@@ -41,9 +46,6 @@
                     </div>
                     <div>
                         <label><input type="checkbox" v-model="state.showTrajectory">Trajectory</label>
-                    </div>
-                    <div>
-                        <label><input type="checkbox" v-model="state.showClickableTrajectory">Clickable Trajectory</label>
                     </div>
                     <div>
                         <label>Wingspan (m)
@@ -279,5 +281,8 @@ export default {
         -o-transition: all 1s ease;
         -ms-transition: all 1s ease;
         transition: all 1s ease;
+    }
+    label {
+        display: block;
     }
 </style>
