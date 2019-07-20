@@ -229,6 +229,7 @@ export class MavlinkParser {
         this.mavlinkParser.parseType('AHRS')
         this.mavlinkParser.parseType('GLOBAL_POSITION_INT')
         this.mavlinkParser.parseType('PARAM_VALUE')
+        this.mavlinkParser.parseType('STATUSTEXT')
         let messageTypes = {}
         for (let msg of availableMessages) {
             let fields = mavlink.messageFields[msg]
