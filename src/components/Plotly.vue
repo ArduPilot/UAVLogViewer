@@ -220,7 +220,55 @@ export default {
                 }
             }
         },
+        isPlotted (fieldname) {
+            for (let field of this.state.fields) {
+                if (field.name === fieldname) {
+                    return true
+                }
+            }
+            return false
+        },
+        getFirstFreeAxis () {
+            //get free axis number
+            for (let i of this.state.allAxis) {
+                let taken = false
+                for (let field of this.state.fields) {
+                    if (field.axis == i) {
+                        taken = true
+                    }
+                }
+                if (!taken) {
+                    return i
+                }
+            }
+            return this.state.allAxis.length - 1
+        },
+        getFirstFreeColor () {
+            //get free color
+            for (let i of this.state.allColors) {
+                let taken = false
+                for (let field of this.state.fields) {
+                    console.log(field.color + '==' + i + ' =' + (field.color == i))
+                    if (field.color == i) {
+                        taken = true
+                    }
+                }
+                if (!taken) {
+                    return i
+                }
+            }
+            return this.state.allColors[this.state.allColors.length - 1]
+        },
+        createNewField (fieldname) {
+            return {
+                name: fieldname,
+                color: this.getFirstFreeColor(),
+                axis: this.getFirstFreeAxis()
+            }
+        },
+
         addPlot (fieldname) {
+            // ensure we have the data
             this.state.plot_loading = true
             if (!this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
                 console.log('missing message type: ' + fieldname.split('.')[0])
@@ -229,8 +277,8 @@ export default {
                     console.log('got message ' + fieldname)
                 }.bind(this))
             } else {
-                if (!this.state.fields.includes(fieldname)) {
-                    this.state.fields.push(fieldname)
+                if (!this.isPlotted(fieldname)) {
+                    this.state.fields.push(this.createNewField(fieldname))
                 }
                 this.plot()
                 this.state.plot_loading = false
@@ -259,9 +307,13 @@ export default {
             this.onRangeChanged()
         },
         togglePlot (fieldname) {
-            var index = this.state.fields.indexOf(fieldname) // <-- Not supported in <IE9
-            console.log(fieldname + ' ' + index)
-            if (index !== -1) {
+            if (this.isPlotted((fieldname))) {
+                let index
+                for (let i in this.state.fields) {
+                    if (this.state.fields[i].name === fieldname) {
+                        index = i
+                    }
+                }
                 this.state.fields.splice(index, 1)
                 if (this.state.fields.length === 0) {
                     this.state.plot_on = false
@@ -276,45 +328,50 @@ export default {
         plot () {
             let _this = this
             let datasets = []
-            let axis = 0
-            for (let msgtypeindex in Object.keys(this.state.messages)) {
-                let msgtype = Object.keys(this.state.messages)[msgtypeindex]
-                if (this.state.messages[msgtype].length > 0) {
-                    for (let msgfield of this.state.messageTypes[msgtype].fields) {
-                        if (this.state.fields.includes(msgtype + '.' + msgfield)) {
-                            let x = []
-                            let y = []
-                            for (let message of this.state.messages[msgtype]) {
-                                x.push(message['time_boot_ms'])
-                                y.push(message[msgfield])
-                            }
-                            axis += 1
-                            datasets.push({
-                                name: msgtype + '.' + msgfield,
-                                mode: 'scattergl',
-                                x: x,
-                                y: y,
-                                yaxis: 'y' + (this.state.fieldAxis[axis] + 1),
-                                line: {
-                                    color: this.state.axis[this.state.fieldAxis[axis]]
-                                }
-                            })
-                            let axisname = this.state.fieldAxis[axis] > 0 ? 'yaxis' + (this.state.fieldAxis[axis] + 1) : 'yaxis'
-                            console.log(axis + ' ' + axisname)
 
-                            if (axis <= 6) {
-                                plotOptions[axisname].title = {
-                                    text: msgfield,
-                                    font: {
-                                        color: this.state.axis[this.state.fieldAxis[axis]]
-                                    }
+            for (let field of this.state.fields) {
+                let msgtype = field.name.split('.')[0]
+                let msgfield = field.name.split('.')[1]
+                if (!(msgtype in this.state.messages) || this.state.messages[msgtype].length === 0) {
+                    console.log('ERROR: attempted to plot unavailable message: ' + msgtype)
+                    return
+                }
+                if (('' + this.state.messageTypes[msgtype].fields).indexOf(msgfield) === -1) {
+                    console.log('ERROR: Attempt to plot invalid field ' + msgfield + ' of ' + msgtype)
+                    console.log('available options ' + this.state.messageTypes[msgtype].fields)
+                    return
+                }
 
-                                }
-                                if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
-                                    plotOptions[axisname].title += ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
-                                }
-                            }
+                let x = []
+                let y = []
+                for (let message of this.state.messages[msgtype]) {
+                    x.push(message['time_boot_ms'])
+                    y.push(message[msgfield])
+                }
+                datasets.push({
+                    name: msgtype + '.' + msgfield,
+                    mode: 'scattergl',
+                    x: x,
+                    y: y,
+                    yaxis: 'y' + (field.axis + 1),
+                    line: {
+                        color: field.color
+                    }
+                })
+                let axisname = field.axis > 0 ? ('yaxis' + (field.axis + 1)) : 'yaxis'
+                console.log(axisname)
+
+                if (field.axis <= 6) {
+                    plotOptions[axisname].title = {
+                        text: msgfield,
+                        font: {
+                            color: field.color
                         }
+                    }
+                    plotOptions[axisname].tickfont.color = field.color
+                    console.log(this.state.messageTypes[msgtype].complexFields[msgfield])
+                    if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
+                        plotOptions[axisname].title += ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
                     }
                 }
             }
@@ -430,8 +487,8 @@ export default {
                 return this.state.timeRange
             }
         },
-        fieldAxis () {
-            return this.state.fieldAxis
+        fields () {
+            return this.state.fields
         }
     },
     watch: {
@@ -454,9 +511,9 @@ export default {
                 }.bind(this), 500)
             }
         },
-        fieldAxis () {
-            console.log('mudouo')
-            this.plot()
+        fields: {
+            deep: true,
+            handler () { this.plot() }
         }
     }
 }
