@@ -27,7 +27,12 @@
                     <template v-for="item in message.complexFields">
                         <li v-if="isPlottable(key,item.name) && item.name.indexOf(filter) !== -1" class="field" v-bind:key="key+'.'+item.name" @click="toggle(key, item.name)">
                             <a> {{item.name}}
-                                <span v-if="item.units!=='?' && item.units!==''"> ({{item.units}})</span></a>
+                                <span v-if="item.units!=='?' && item.units!==''"> ({{item.units}})</span>
+                            </a>
+
+                            <a v-if="isPlotted(key,item.name)" @click="$eventHub.$emit('togglePlot', field.name)">
+                                <i class="remove-icon fas fa-times" title="Remove data"></i>
+                            </a>
                         </li>
                     </template>
                 </b-collapse>
@@ -108,6 +113,15 @@ export default {
             }
             this.messageTypes = newMessages
             this.state.messageTypes = newMessages
+        },
+        isPlotted (message, field) {
+            let fullname = message + '.' + field
+            for (let field of this.state.fields) {
+                if (field.name === fullname) {
+                    return true
+                }
+            }
+            return false
         },
         getMessageNumericField (message) {
             let numberFields = []
@@ -204,6 +218,9 @@ export default {
 
     ::-ms-input-placeholder { /* Microsoft Edge */
         color: gainsboro;
+    }
+    i.remove-icon {
+        float: right;
     }
 </style>
 <style>
