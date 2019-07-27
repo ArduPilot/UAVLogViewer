@@ -371,7 +371,7 @@ export default {
                     plotOptions[axisname].tickfont.color = field.color
                     console.log(this.state.messageTypes[msgtype].complexFields[msgfield])
                     if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
-                        plotOptions[axisname].title += ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
+                        plotOptions[axisname].title.text += ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
                     }
                 }
             }
