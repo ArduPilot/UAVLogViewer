@@ -325,6 +325,26 @@ export default {
             console.log(this.state.fields)
             this.plot()
         },
+        calculateXAxisDomain () {
+            let start = 0.02
+            let end = 0.98
+            for (let field of this.state.fields) {
+                if (field.axis === 0) {
+                    start = Math.max(start, 0.06)
+                } else if (field.axis === 1) {
+                    start = Math.max(start, 0.11)
+                } else if (field.axis === 2) {
+                    start = Math.max(start, 0.16)
+                } else if (field.axis === 5) {
+                    end = Math.min(end, 0.94)
+                } else if (field.axis === 4) {
+                    end = Math.min(end, 0.89)
+                } else if (field.axis === 3) {
+                    end = Math.min(end, 0.84)
+                }
+            }
+            return [start, end]
+        },
         plot () {
             let _this = this
             let datasets = []
@@ -382,7 +402,7 @@ export default {
                 plotOptions.xaxis = {
                     rangeslider: {},
                     range: this.gd._fullLayout.xaxis.range,
-                    domain: [0.15, 0.85],
+                    domain: this.calculateXAxisDomain(),
                     title: 'time_boot (ms)',
                     tickformat: ':04,2f'
                 }
