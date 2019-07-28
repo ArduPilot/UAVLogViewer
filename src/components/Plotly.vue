@@ -345,6 +345,15 @@ export default {
             }
             return [start, end]
         },
+        getAxisTitle (fieldAxis) {
+            let names = []
+            for (let field of this.state.fields) {
+                if (field.axis === fieldAxis) {
+                    names.push(field.name.split('.')[1])
+                }
+            }
+            return names.join(', ')
+        },
         plot () {
             let _this = this
             let datasets = []
@@ -383,7 +392,7 @@ export default {
 
                 if (field.axis <= 6) {
                     plotOptions[axisname].title = {
-                        text: msgfield,
+                        text: this.getAxisTitle(field.axis),
                         font: {
                             color: field.color
                         }
