@@ -476,7 +476,8 @@ export default {
                     uri: this.getVehicleModel(),
                     minimumPixelSize: 6,
                     scale: this.modelScale / 10
-                }
+                },
+                viewFrom: new Cesium.Cartesian3(5, 0, 3)
             })
         },
         plotTrajectories () {
