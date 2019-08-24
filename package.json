@@ -70,6 +70,7 @@
     "postcss-import": "^11.0.0",
     "postcss-loader": "^2.0.8",
     "postcss-url": "^7.2.1",
+    "prettier": "^1.18.2",
     "rimraf": "^2.6.3",
     "selenium-server": "^3.141.59",
     "semver": "^5.7.0",
