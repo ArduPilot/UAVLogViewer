@@ -17,6 +17,6 @@ Vue.prototype.$eventHub = new Vue() // Global event bus
 new Vue({
     el: '#app',
     router,
-    components: { App },
+    components: {App},
     template: '<App/>'
 })

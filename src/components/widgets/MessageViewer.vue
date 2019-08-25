@@ -1,5 +1,6 @@
 <template>
-    <div :id="getDivName()" v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
+    <div :id="getDivName()"
+         v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
         <div id="paneContent">
             <ul>
                 <li v-for="msg in filteredData"> {{ msg[2] }}</li>
@@ -17,7 +18,6 @@ export default {
     mixins: [baseWidget],
     created () {
         this.$eventHub.$on('cesium-time-changed', this.setTime)
-
     },
     data () {
         return {
@@ -107,16 +107,18 @@ export default {
     }
 
     div#paneContent {
-        width:90%;height: 90%; overflow: auto;
-        -webkit-user-select: none;  /* Chrome all / Safari all */
-        -moz-user-select: none;     /* Firefox all */
-        -ms-user-select: none;      /* IE 10+ */
+        width: 90%;
+        height: 90%;
+        overflow: auto;
+        -webkit-user-select: none; /* Chrome all / Safari all */
+        -moz-user-select: none; /* Firefox all */
+        -ms-user-select: none; /* IE 10+ */
         user-select: none;
     }
 
     input#filterbox {
         margin-left: 30px;
-        background-color: rgba(255,255,255,0.5);
+        background-color: rgba(255, 255, 255, 0.5);
         border: 1px solid black;
         border-radius: 5px;
     }

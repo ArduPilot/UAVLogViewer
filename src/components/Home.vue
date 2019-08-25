@@ -1,48 +1,49 @@
 <template>
-  <div id='vuewrapper' style="height: 100%;">
-      <template v-if="state.map_loading || state.plot_loading">
-          <div id="waiting">
-              <atom-spinner
-                  :animation-duration="1000"
-                  :size="300"
-                  :color="'#64e9ff'"
-              />
-          </div>
-      </template>
-      <TxInputs v-if="state.map_available && state.show_map && state.show_radio" fixed-aspect-ratio></TxInputs>
-      <ParamViewer v-if="state.show_params"></ParamViewer>
-      <MessageViewer v-if="state.show_messages"></MessageViewer>
-    <div class="container-fluid" style="height: 100%; overflow: hidden;">
+    <div id='vuewrapper' style="height: 100%;">
+        <template v-if="state.map_loading || state.plot_loading">
+            <div id="waiting">
+                <atom-spinner
+                    :animation-duration="1000"
+                    :color="'#64e9ff'"
+                    :size="300"
+                />
+            </div>
+        </template>
+        <TxInputs fixed-aspect-ratio v-if="state.map_available && state.show_map && state.show_radio"></TxInputs>
+        <ParamViewer v-if="state.show_params"></ParamViewer>
+        <MessageViewer v-if="state.show_messages"></MessageViewer>
+        <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
-      <sidebar />
+            <sidebar/>
 
-      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex">
+            <main class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex" role="main">
 
-        <div class="row"
-             v-if="state.plot_on"
-             v-bind:class="[state.show_map ? 'h-50' : 'h-100']">
-          <div class="col-12">
-            <Plotly />
-          </div>
+                <div class="row"
+                     v-bind:class="[state.show_map ? 'h-50' : 'h-100']"
+                     v-if="state.plot_on">
+                    <div class="col-12">
+                        <Plotly/>
+                    </div>
+                </div>
+                <div class="row" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']"
+                     v-if="state.map_available && map_ok && state.show_map">
+                    <div class="col-12 noPadding">
+                        <CesiumViewer ref="cesiumViewer"/>
+                    </div>
+                </div>
+                <div id="toolbar">
+                    <table class="infoPanel">
+                        <tbody>
+                        <tr v-bind:key="index" v-for="(mode, index) in setOfModes">
+                            <td class="mode" v-bind:style="{ color: state.cssColors[index] } ">{{ mode }}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </main>
+
         </div>
-        <div class="row" v-if="state.map_available && map_ok && state.show_map" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']" >
-          <div class="col-12 noPadding">
-            <CesiumViewer ref="cesiumViewer"/>
-          </div>
-        </div>
-      <div id="toolbar">
-          <table class="infoPanel">
-              <tbody>
-              <tr v-for="(mode, index) in setOfModes" v-bind:key="index">
-                  <td class="mode"  v-bind:style="{ color: state.cssColors[index] } ">{{ mode }}</td>
-              </tr>
-              </tbody>
-          </table>
-      </div>
-      </main>
-
     </div>
-  </div>
 </template>
 
 <script>
@@ -120,7 +121,9 @@ export default {
             }
             if (params.length > 0) {
                 let seeker = new ParamSeeker(params)
-                this.$eventHub.$on('cesium-time-changed', (time) => { seeker.seek(time) })
+                this.$eventHub.$on('cesium-time-changed', (time) => {
+                    seeker.seek(time)
+                })
                 return seeker
             } else {
                 return undefined
@@ -167,7 +170,7 @@ export default {
                             startAltitude = pos.Alt
                         }
                         trajectory.push([pos.Lng, pos.Lat, pos.Alt - startAltitude, pos.time_boot_ms])
-                        this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, (pos.Alt - startAltitude)/1000, pos.time_boot_ms]
+                        this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, (pos.Alt - startAltitude) / 1000, pos.time_boot_ms]
                     }
                 }
             } else if ('GPS' in messages) {
@@ -324,9 +327,9 @@ export default {
     computed: {
         map_ok () {
             return (this.state.flight_mode_changes !== undefined &&
-            this.state.current_trajectory !== undefined &&
-            this.state.current_trajectory.length > 0 &&
-                (Object.keys(this.state.time_attitude).length > 0 || Object.keys(this.state.time_attitudeQ).length > 0))
+                    this.state.current_trajectory !== undefined &&
+                    this.state.current_trajectory.length > 0 &&
+                    (Object.keys(this.state.time_attitude).length > 0 || Object.keys(this.state.time_attitudeQ).length > 0))
         },
         setOfModes () {
             let set = []
@@ -346,140 +349,156 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-  .nav-side-menu ul,
-  .nav-side-menu li {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    line-height: 35px;
-    cursor: pointer;
-    /*
-      .collapsed{
-         .arrow:before{
-                   font-family: FontAwesome;
-                   content: "\f053";
-                   display: inline-block;
-                   padding-left:10px;
-                   padding-right: 10px;
-                   vertical-align: middle;
-                   float:right;
-              }
-       }
-  */
-  }
-  .nav-side-menu ul :not(collapsed) .arrow:before,
-  .nav-side-menu li :not(collapsed) .arrow:before {
-    font-family: FontAwesome;
-    content: "\f078";
-    display: inline-block;
-    padding-left: 10px;
-    padding-right: 10px;
-    vertical-align: middle;
-    float: right;
-  }
-  .nav-side-menu ul .active,
-  .nav-side-menu li .active {
-    border-left: 3px solid #d19b3d;
-    background-color: #4f5b69;
-  }
-  .nav-side-menu ul .sub-menu li.active,
-  .nav-side-menu li .sub-menu li.active {
-    color: #d19b3d;
-  }
-  .nav-side-menu ul .sub-menu li.active a,
-  .nav-side-menu li .sub-menu li.active a {
-    color: #d19b3d;
-  }
-  .nav-side-menu ul .sub-menu li,
-  .nav-side-menu li .sub-menu li {
-    background-color: #181c20;
-    border: none;
-    line-height: 28px;
-    border-bottom: 1px solid #23282e;
-    margin-left: 0;
-  }
-  .nav-side-menu ul .sub-menu li:hover,
-  .nav-side-menu li .sub-menu li:hover {
-    background-color: #020203;
-  }
-  .nav-side-menu ul .sub-menu li:before,
-  .nav-side-menu li .sub-menu li:before {
-    content: "\f105";
-    display: inline-block;
-    padding-left: 10px;
-    padding-right: 10px;
-    vertical-align: middle;
-  }
-  .nav-side-menu li {
-    padding-left: 0;
-    border-left: 3px solid #2e353d;
-    border-bottom: 1px solid #23282e;
-  }
-  .nav-side-menu li a {
-    text-decoration: none;
-    color: #e1ffff;
-  }
-  .nav-side-menu li a i {
-    padding-left: 10px;
-    width: 20px;
-    padding-right: 20px;
-  }
-  .nav-side-menu li:hover {
-    border-left: 3px solid #d19b3d;
-    background-color: #4f5b69;
-    -webkit-transition: all 1s ease;
-    -moz-transition: all 1s ease;
-    -o-transition: all 1s ease;
-    transition: all 1s ease;
-  }
-  @media (max-width: 767px) {
-    main {
-      height: 90%;
-      margin-top: 50px;
+    .nav-side-menu ul,
+    .nav-side-menu li {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        line-height: 35px;
+        cursor: pointer;
+        /*
+          .collapsed{
+             .arrow:before{
+                       font-family: FontAwesome;
+                       content: "\f053";
+                       display: inline-block;
+                       padding-left:10px;
+                       padding-right: 10px;
+                       vertical-align: middle;
+                       float:right;
+                  }
+           }
+      */
     }
-  }
 
-  @media (min-width: 767px) {
-    main {
-      height: 100%;
+    .nav-side-menu ul :not(collapsed) .arrow:before,
+    .nav-side-menu li :not(collapsed) .arrow:before {
+        font-family: FontAwesome;
+        content: "\f078";
+        display: inline-block;
+        padding-left: 10px;
+        padding-right: 10px;
+        vertical-align: middle;
+        float: right;
     }
-  }
-  body {
-    margin: 0;
-    padding: 0;
-  }
 
-  div .col-12 {
-      padding-left: 0;
-      padding-right: 0;
-  }
+    .nav-side-menu ul .active,
+    .nav-side-menu li .active {
+        border-left: 3px solid #d19b3d;
+        background-color: #4f5b69;
+    }
 
-  i {
-    margin:10px;
-  }
+    .nav-side-menu ul .sub-menu li.active,
+    .nav-side-menu li .sub-menu li.active {
+        color: #d19b3d;
+    }
 
-  i .dropdown{
-    float: right;
-  }
+    .nav-side-menu ul .sub-menu li.active a,
+    .nav-side-menu li .sub-menu li.active a {
+        color: #d19b3d;
+    }
 
-  .container-fluid {
-    padding-left: 0;
-    padding-right: 0;
-  }
+    .nav-side-menu ul .sub-menu li,
+    .nav-side-menu li .sub-menu li {
+        background-color: #181c20;
+        border: none;
+        line-height: 28px;
+        border-bottom: 1px solid #23282e;
+        margin-left: 0;
+    }
 
-  .noPadding {
-    padding-left: 4px;
-    padding-right: 6px;
-    max-height: 100%;
-   }
-  ::-webkit-scrollbar {
-    width: 12px;
-    background-color: rgba(0,0,0,0); }
+    .nav-side-menu ul .sub-menu li:hover,
+    .nav-side-menu li .sub-menu li:hover {
+        background-color: #020203;
+    }
 
-  ::-webkit-scrollbar-thumb {
-    border-radius: 5px;
-    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-    background-color: #1c437f; }
+    .nav-side-menu ul .sub-menu li:before,
+    .nav-side-menu li .sub-menu li:before {
+        content: "\f105";
+        display: inline-block;
+        padding-left: 10px;
+        padding-right: 10px;
+        vertical-align: middle;
+    }
+
+    .nav-side-menu li {
+        padding-left: 0;
+        border-left: 3px solid #2e353d;
+        border-bottom: 1px solid #23282e;
+    }
+
+    .nav-side-menu li a {
+        text-decoration: none;
+        color: #e1ffff;
+    }
+
+    .nav-side-menu li a i {
+        padding-left: 10px;
+        width: 20px;
+        padding-right: 20px;
+    }
+
+    .nav-side-menu li:hover {
+        border-left: 3px solid #d19b3d;
+        background-color: #4f5b69;
+        -webkit-transition: all 1s ease;
+        -moz-transition: all 1s ease;
+        -o-transition: all 1s ease;
+        transition: all 1s ease;
+    }
+
+    @media (max-width: 767px) {
+        main {
+            height: 90%;
+            margin-top: 50px;
+        }
+    }
+
+    @media (min-width: 767px) {
+        main {
+            height: 100%;
+        }
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    div .col-12 {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    i {
+        margin: 10px;
+    }
+
+    i .dropdown {
+        float: right;
+    }
+
+    .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .noPadding {
+        padding-left: 4px;
+        padding-right: 6px;
+        max-height: 100%;
+    }
+
+    ::-webkit-scrollbar {
+        width: 12px;
+        background-color: rgba(0, 0, 0, 0);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-radius: 5px;
+        -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+        background-color: #1c437f;
+    }
 
     div #waiting {
         position: absolute;
@@ -499,25 +518,26 @@ export default {
         margin-top: 15%;
     }
 
-  #toolbar {
-      margin: 5px;
-      padding: 2px 5px;
-      position: absolute;
-      top: 0;
-      color: #eee;
-      font-family: sans-serif;
-      font-size: 9pt;
-  }
+    #toolbar {
+        margin: 5px;
+        padding: 2px 5px;
+        position: absolute;
+        top: 0;
+        color: #eee;
+        font-family: sans-serif;
+        font-size: 9pt;
+    }
 
-  .infoPanel {
-      background: rgba(42, 42, 42, 0.8);
-      margin: 5px;
-      border-radius: 10px;
-      font-size:100%;
-      font-weight: bold;
-      float: left;
-  }
-  .infoPanel > tbody{
-      padding:15px;
-  }
+    .infoPanel {
+        background: rgba(42, 42, 42, 0.8);
+        margin: 5px;
+        border-radius: 10px;
+        font-size: 100%;
+        font-weight: bold;
+        float: left;
+    }
+
+    .infoPanel > tbody {
+        padding: 15px;
+    }
 </style>

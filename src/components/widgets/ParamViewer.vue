@@ -1,9 +1,11 @@
 <template>
-    <div :id="getDivName()" v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
+    <div :id="getDivName()"
+         v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
         <div id="paneContent">
-            <input id="filterbox" v-model="filter" placeholder="Filter">
+            <input id="filterbox" placeholder="Filter" v-model="filter">
             <ul id="params">
-                <li v-for="param in filteredData"> {{ param }} : <span style="float: right;">{{state.params.values[param]}}</span></li>
+                <li v-for="param in filteredData"> {{ param }} : <span style="float: right;">{{state.params.values[param]}}</span>
+                </li>
             </ul>
         </div>
     </div>
@@ -98,19 +100,22 @@ export default {
     }
 
     div#paneContent {
-        width:90%;height: 90%; overflow: auto;
+        width: 90%;
+        height: 90%;
+        overflow: auto;
     }
 
     input#filterbox {
         margin-left: 30px;
-        background-color: rgba(255,255,255,0.5);
+        background-color: rgba(255, 255, 255, 0.5);
         border: 1px solid black;
         border-radius: 5px;
     }
+
     ul#params {
-        -webkit-user-select: none;  /* Chrome all / Safari all */
-        -moz-user-select: none;     /* Firefox all */
-        -ms-user-select: none;      /* IE 10+ */
+        -webkit-user-select: none; /* Chrome all / Safari all */
+        -moz-user-select: none; /* Firefox all */
+        -ms-user-select: none; /* IE 10+ */
         user-select: none;
     }
 

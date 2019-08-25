@@ -101,6 +101,8 @@ export const baseWidget = {
         // $elem.addEventListener('clicked', (e) => $elem.innerHTML = 'clicked')
         // $elem.addEventListener('moved', (e) => $elem.innerHTML = 'moved')
         // $elem.addEventListener('resized', (e) => $elem.innerHTML = 'resized')
-        this.$eventHub.$on('paramsUpdated', function () { this.forceRecompute += 1 }.bind(this))
+        this.$eventHub.$on('paramsUpdated', function () {
+            this.forceRecompute += 1
+        }.bind(this))
     }
 }

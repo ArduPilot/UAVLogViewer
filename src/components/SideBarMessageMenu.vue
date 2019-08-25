@@ -2,8 +2,8 @@
     <div v-if="hasMessages">
 
         <!--<li v-if="state.plot_on" @click="state.plot_on=!state.plot_on">-->
-            <!--<a class="section">-->
-                <!--<i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>-->
+        <!--<a class="section">-->
+        <!--<i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>-->
         <!--</li>-->
 
         <li v-b-toggle="'messages'">
@@ -14,7 +14,7 @@
 
         <b-collapse id="messages">
             <li>
-                <input id="filterbox" v-model="filter" placeholder="Type here to filter...">
+                <input id="filterbox" placeholder="Type here to filter..." v-model="filter">
             </li>
             <template v-for="(message, key) in messageTypesFiltered">
                 <li class="type" v-bind:key="key">
@@ -25,12 +25,13 @@
                 </li>
                 <b-collapse :id="'type' + key" v-bind:key="key+'1'">
                     <template v-for="item in message.complexFields">
-                        <li v-if="isPlottable(key,item.name) && item.name.indexOf(filter) !== -1" class="field" v-bind:key="key+'.'+item.name" @click="toggle(key, item.name)">
+                        <li @click="toggle(key, item.name)" class="field"
+                            v-bind:key="key+'.'+item.name" v-if="isPlottable(key,item.name) && item.name.indexOf(filter) !== -1">
                             <a> {{item.name}}
                                 <span v-if="item.units!=='?' && item.units!==''"> ({{item.units}})</span>
                             </a>
 
-                            <a v-if="isPlotted(key,item.name)" @click="$eventHub.$emit('togglePlot', field.name)">
+                            <a @click="$eventHub.$emit('togglePlot', field.name)" v-if="isPlotted(key,item.name)">
                                 <i class="remove-icon fas fa-times" title="Remove data"></i>
                             </a>
                         </li>
@@ -157,8 +158,8 @@ export default {
                         filtered[key] = this.messageTypes[key]
                         // console.log('type' + key, document.getElementById('type' + key))
                         if (document.getElementById('type' + key) &&
-                            document.getElementById('type' + key).style &&
-                            document.getElementById('type' + key).style.display === 'none'
+                                document.getElementById('type' + key).style &&
+                                document.getElementById('type' + key).style.display === 'none'
                         ) {
                             console.log(document.getElementById('type' + key).style.display)
                             this.$root.$emit('bv::toggle::collapse', 'type' + key)
@@ -197,6 +198,7 @@ export default {
         padding-left: 30px;
         font-size: 90%;
     }
+
     input {
         margin-left: 30px;
         margin-right: 30px;
@@ -207,6 +209,7 @@ export default {
         color: white;
         width: 85%;
     }
+
     ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
         color: #AAAAAA;
         opacity: 1; /* Firefox */
@@ -219,6 +222,7 @@ export default {
     ::-ms-input-placeholder { /* Microsoft Edge */
         color: gainsboro;
     }
+
     i.remove-icon {
         float: right;
     }

@@ -185,7 +185,13 @@ export class DataflashParser {
         this.buffer = null
         this.data = null
         this.FMT = []
-        this.FMT[128] = {'Type': '128', 'length': '89', 'Name': 'FMT', 'Format': 'BBnNZ', 'Columns': 'Type,Length,Name,Format,Columns'}
+        this.FMT[128] = {
+            'Type': '128',
+            'length': '89',
+            'Name': 'FMT',
+            'Format': 'BBnNZ',
+            'Columns': 'Type,Length,Name,Format,Columns'
+        }
         this.offset = 0
         this.msgType = []
         this.offsetArray = []
@@ -376,7 +382,9 @@ export class DataflashParser {
 
     time_stamp (TimeUs) {
         let temp = this.timebase + TimeUs * 0.000001
-        if (temp > 0) { TimeUs = temp }
+        if (temp > 0) {
+            TimeUs = temp
+        }
         let date = new Date(TimeUs * 1000)
         let hours = date.getHours()
         let minutes = '0' + date.getMinutes()
@@ -437,6 +445,7 @@ export class DataflashParser {
         self.postMessage({messages: this.messages})
         this.sent = true
     }
+
     getModeString (cmode) {
         let mavtype
         for (let msg of this.messages['MSG']) {

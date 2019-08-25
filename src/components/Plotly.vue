@@ -229,7 +229,7 @@ export default {
             return false
         },
         getFirstFreeAxis () {
-            //get free axis number
+            // get free axis number
             for (let i of this.state.allAxis) {
                 let taken = false
                 for (let field of this.state.fields) {
@@ -244,7 +244,7 @@ export default {
             return this.state.allAxis.length - 1
         },
         getFirstFreeColor () {
-            //get free color
+            // get free color
             for (let i of this.state.allColors) {
                 let taken = false
                 for (let field of this.state.fields) {
@@ -542,7 +542,9 @@ export default {
         },
         fields: {
             deep: true,
-            handler () { this.plot() }
+            handler () {
+                this.plot()
+            }
         }
     }
 }

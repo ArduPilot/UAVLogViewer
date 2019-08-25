@@ -103,14 +103,14 @@ function getModeMap (mavType) {
         mavlink.MAV_TYPE_HEXAROTOR,
         mavlink.MAV_TYPE_OCTOROTOR,
         mavlink.MAV_TYPE_COAXIAL,
-        mavlink.MAV_TYPE_TRICOPTER,].includes(mavType)) {
+        mavlink.MAV_TYPE_TRICOPTER].includes(mavType)) {
         map = modeMappingAcm
     }
     if (mavType === mavlink.MAV_TYPE_FIXED_WING) {
         map = modeMappingApm
     }
     if ([mavlink.MAV_TYPE_GROUND_ROVER,
-         mavlink.MAV_TYPE_SURFACE_BOAT].includes(mavType)) {
+        mavlink.MAV_TYPE_SURFACE_BOAT].includes(mavType)) {
         map = modeMappingRover
     }
     if (mavType === mavlink.MAV_TYPE_ANTENNA_TRACKER) {
@@ -145,6 +145,28 @@ export class MavlinkParser {
         instance = this
         instance.forcedTimeOffset = 0
         instance.lastTime = 0
+    }
+
+    static fixData (message) {
+        if (message.name === 'GLOBAL_POSITION_INT') {
+            message.lat = message.lat / 10000000
+            message.lon = message.lon / 10000000
+            message.relative_alt = message.relative_alt / 1000
+            return message
+        } else if (message.name === 'HEARTBEAT') {
+            message.asText = getModeString(message.type, message.custom_mode)
+            message.craft = vehicles[message.type]
+            return message
+        }
+        delete message.crc
+        delete message.crc_extra
+        delete message.format
+        delete message.header
+        delete message.msgbuf
+        delete message.id
+        delete message.payload
+        delete message.order_map
+        return message
     }
 
     onMessage (messages) {
@@ -182,35 +204,12 @@ export class MavlinkParser {
                 // TODO: FIX THIS!
                 // This a hack to detect the end of the buffer and only them message the main thread
                 if (this.buf.length < 100 && instance.sent === false) {
-
                     instance.sent = true
                 }
             }
         }
         self.postMessage({percentage: 100})
         self.postMessage({messages: instance.messages})
-    }
-
-    static fixData (message) {
-        if (message.name === 'GLOBAL_POSITION_INT') {
-            message.lat = message.lat / 10000000
-            message.lon = message.lon / 10000000
-            message.relative_alt = message.relative_alt / 1000
-            return message
-        } else if (message.name === 'HEARTBEAT') {
-            message.asText = getModeString(message.type, message.custom_mode)
-            message.craft = vehicles[message.type]
-            return message
-        }
-        delete message.crc
-        delete message.crc_extra
-        delete message.format
-        delete message.header
-        delete message.msgbuf
-        delete message.id
-        delete message.payload
-        delete message.order_map
-        return message
     }
 
     extractStartTime () {

@@ -1,12 +1,15 @@
 <template>
-    <div :id="getDivName()" v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
+    <div :id="getDivName()"
+         v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
         <div class="circle">
-            <div id="left" class="stick" v-bind:style="{'margin-left': leftStickLeft -3 + 'px', 'margin-top': leftStickTop -3 + 'px' }"></div>
+            <div class="stick" id="left"
+                 v-bind:style="{'margin-left': leftStickLeft -3 + 'px', 'margin-top': leftStickTop -3 + 'px' }"></div>
             <div class="vertical-line"></div>
             <div class="horizontal-line"></div>
         </div>
         <div class="circle">
-            <div id="right" class="stick" v-bind:style="{'margin-left': rightStickLeft -3 + 'px', 'margin-top': rightStickTop -3 + 'px' }"></div>
+            <div class="stick" id="right"
+                 v-bind:style="{'margin-left': rightStickLeft -3 + 'px', 'margin-top': rightStickTop -3 + 'px' }"></div>
             <div class="vertical-line"></div>
         </div>
     </div>
@@ -26,8 +29,8 @@ class Interpolator {
 
     at (point) {
         /*
-        Returns x at closest y. TODO: interpolate properly.
-        */
+            Returns x at closest y. TODO: interpolate properly.
+            */
         while (this.x[this.currentIndex] < point && this.currentIndex < this.x.length - 2) {
             this.currentIndex += 1
         }
@@ -164,7 +167,7 @@ export default {
     div.circle {
         border: solid 1px black;
         border-radius: 20%;
-        width:50%;
+        width: 50%;
         height: 100%;
         float: left;
     }
@@ -172,7 +175,7 @@ export default {
     div.stick {
         border: solid 4px red;
         border-radius: 50%;
-        width:6px;
+        width: 6px;
         height: 6px;
         margin-left: 49%;
         display: inline-block;

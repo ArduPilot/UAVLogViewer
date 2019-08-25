@@ -3,31 +3,34 @@
         <div class="brand">TLog Viewer</div>
         <ul>
             <div class="tabholder">
-                <a @click="selected='home'" :class="selected==='home' ? 'selected' : ''">HOME</a>
-                <a v-if="state.processDone" @click="selected='plot'" :class="selected==='plot' ? 'selected' : ''">PLOT</a>
-                <a v-if="state.map_available && state.show_map" @click="selected='3d'" :class="selected==='3d' ? 'selected' : ''">3D</a>
-                <a v-if="state.map_available && !state.show_map" @click="state.show_map=true;selected='3d'" :class="selected==='3d' ? 'selected' : ''">3D</a>
+                <a :class="selected==='home' ? 'selected' : ''" @click="selected='home'">HOME</a>
+                <a :class="selected==='plot' ? 'selected' : ''" @click="selected='plot'"
+                   v-if="state.processDone">PLOT</a>
+                <a :class="selected==='3d' ? 'selected' : ''" @click="selected='3d'"
+                   v-if="state.map_available && state.show_map">3D</a>
+                <a :class="selected==='3d' ? 'selected' : ''" @click="state.show_map=trueselected='3d'"
+                   v-if="state.map_available && !state.show_map">3D</a>
             </div>
         </ul>
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <div class="menu-list">
-            <b-collapse visible id="menucontent" class="menu-content collapse out">
+            <b-collapse class="menu-content collapse out" id="menucontent" visible>
 
-                <div :style="{display: selected==='plot' ? '' : 'none' }" >
+                <div :style="{display: selected==='plot' ? '' : 'none' }">
                     <plotSetup/>
-                    <message-menu />
+                    <message-menu/>
                 </div>
                 <div v-if="selected==='home'">
                     <Dropzone/>
                 </div>
                 <div v-if="selected==='3d' && state.map_available">
                     <!--<li v-if="!state.map_available" @click="state.map_available=true">-->
-                        <!--<a class="section">-->
-                            <!--<i class="fas fa-eye fa-lg"></i> Show 3D View</a>-->
+                    <!--<a class="section">-->
+                    <!--<i class="fas fa-eye fa-lg"></i> Show 3D View</a>-->
                     <!--</li>-->
                     <!--<li v-if="state.map_available" @click="state.map_available=false">-->
-                        <!--<a class="section">-->
-                            <!--<i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>-->
+                    <!--<a class="section">-->
+                    <!--<i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>-->
                     <!--</li>-->
                     <div>
                         <label>Camera</label>
@@ -41,14 +44,16 @@
                         <label><input type="checkbox" v-model="state.showTrajectory">Trajectory</label>
                     </div>
                     <div v-if="state.processDone">
-                        <label v-if="state.params"><input type="checkbox" v-model="state.show_params">Show Parameters</label>
+                        <label v-if="state.params"><input type="checkbox" v-model="state.show_params">Show
+                            Parameters</label>
                         <label><input type="checkbox" v-model="state.show_radio">Show Radio Sticks</label>
-                        <label v-if="state.textMessages"><input type="checkbox" v-model="state.show_messages">Show Messages</label>
+                        <label v-if="state.textMessages"><input type="checkbox" v-model="state.show_messages">Show
+                            Messages</label>
                     </div>
                     <div>
                         <label>Wingspan (m)
-                            <input type="range" min="0.1" max="15" step="0.01" v-model="state.modelScale">
-                            <input type="text" size="5" v-model="state.modelScale">
+                            <input max="15" min="0.1" step="0.01" type="range" v-model="state.modelScale">
+                            <input size="5" type="text" v-model="state.modelScale">
                         </label>
                     </div>
                 </div>
@@ -246,7 +251,7 @@ export default {
     }
 
     .custom-control-inline {
-      margin-right: 0;
+        margin-right: 0;
     }
 
     .tabholder {
@@ -280,6 +285,7 @@ export default {
         -ms-transition: all 1s ease;
         transition: all 1s ease;
     }
+
     label {
         display: block;
     }

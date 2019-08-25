@@ -1,29 +1,30 @@
 <template>
-  <div>
-    <li  v-if="!sampleLoaded">
-      <a class="section" @click="onLoadSample('sample')"><i class="fas fa-play "></i> Open Sample </a>
-    </li>
-    <li  v-if="url">
-      <a class="section" @click="share" ><i class="fas fa-share-alt"></i> {{ shared ? 'Copied to clipboard!' : 'Share link'}}</a>
-    </li>
-    <li  v-if="url">
-      <a class="section" target="_blank" :href="'/uploaded/' + url"><i class="fas fa-download"></i> Download</a>
-    </li>
-    <div id="drop_zone" v-if="uploadpercentage===-1" @dragover.prevent @drop="onDrop" @click="browse">
-      <p>Drop *.tlog file here or click to browse</p>
-      <input type="file" id="choosefile" style="opacity: 0;" @change="onChange">
+    <div>
+        <li v-if="!sampleLoaded">
+            <a @click="onLoadSample('sample')" class="section"><i class="fas fa-play "></i> Open Sample </a>
+        </li>
+        <li v-if="url">
+            <a @click="share" class="section"><i class="fas fa-share-alt"></i> {{ shared ? 'Copied to clipboard!' :
+                'Share link'}}</a>
+        </li>
+        <li v-if="url">
+            <a :href="'/uploaded/' + url" class="section" target="_blank"><i class="fas fa-download"></i> Download</a>
+        </li>
+        <div @click="browse" @dragover.prevent @drop="onDrop" id="drop_zone" v-if="uploadpercentage===-1">
+            <p>Drop *.tlog file here or click to browse</p>
+            <input @change="onChange" id="choosefile" style="opacity: 0;" type="file">
+        </div>
+        <b-form-checkbox @change="uploadFile()" class="uploadCheckbox" v-if="file!=null && !uploadStarted"> Upload
+        </b-form-checkbox>
+        <VProgress v-bind:complete="transferMessage"
+                   v-bind:percent="uploadpercentage"
+                   v-if="uploadpercentage > -1">
+        </VProgress>
+        <VProgress v-bind:complete="state.processStatus"
+                   v-bind:percent="state.processPercentage"
+                   v-if="state.processPercentage > -1"
+        ></VProgress>
     </div>
-    <b-form-checkbox class="uploadCheckbox" v-if="file!=null && !uploadStarted" @change="uploadFile()"> Upload
-    </b-form-checkbox>
-    <VProgress v-bind:percent="uploadpercentage"
-               v-bind:complete="transferMessage"
-               v-if="uploadpercentage > -1">
-    </VProgress>
-    <VProgress v-bind:percent="state.processPercentage"
-               v-if="state.processPercentage > -1"
-               v-bind:complete="state.processStatus"
-    ></VProgress>
-  </div>
 </template>
 <script>
 import VProgress from './SideBarFileManagerProgressBar'
@@ -34,7 +35,8 @@ require('mavlink_common_v1.0')
 
 const worker = new Worker()
 
-worker.addEventListener('message', function (event) {})
+worker.addEventListener('message', function (event) {
+})
 
 export default {
     name: 'Dropzone',
@@ -120,9 +122,11 @@ export default {
             let reader = new FileReader()
             reader.onload = function (e) {
                 let data = reader.result
-                worker.postMessage({action: 'parse',
+                worker.postMessage({
+                    action: 'parse',
                     file: Buffer.from(data),
-                    isTlog: (file.name.indexOf('tlog') > 1)})
+                    isTlog: (file.name.indexOf('tlog') > 1)
+                })
             }
 
             reader.readAsArrayBuffer(file)
@@ -207,22 +211,23 @@ export default {
      */
 
     #drop_zone {
-      padding-top: 25px;
-      padding-left: 10px;
-      border: 1px solid dimgrey;
-      width:  auto;
-      height: 100px;
-      margin: 20px;
-      border-radius: 10px;
-      cursor: default;
-      background-color: rgba(0,0,0,0.0);
+        padding-top: 25px;
+        padding-left: 10px;
+        border: 1px solid dimgrey;
+        width: auto;
+        height: 100px;
+        margin: 20px;
+        border-radius: 10px;
+        cursor: default;
+        background-color: rgba(0, 0, 0, 0.0);
     }
+
     #drop_zone:hover {
-      background-color: rgba(0,0,0,0.05);
+        background-color: rgba(0, 0, 0, 0.05);
     }
 
     .uploadCheckbox {
-      margin-left: 20px;
+        margin-left: 20px;
     }
 
 </style>

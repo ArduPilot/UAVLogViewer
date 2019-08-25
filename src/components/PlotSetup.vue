@@ -1,21 +1,21 @@
 <template>
-    <div >
+    <div>
         <li class="type">
             <div v-b-toggle.plotsetupcontent>
-                <a class="section"> <i data-v-03de825a="" class="fas fa-wrench fa-lg"></i>Plots Setup
+                <a class="section"> <i class="fas fa-wrench fa-lg" data-v-03de825a=""></i>Plots Setup
                     <i class="expand fas fa-caret-down"></i></a>
             </div>
         </li>
-        <b-collapse id="plotsetupcontent" visible class="menu-content collapse out">
+        <b-collapse class="menu-content collapse out" id="plotsetupcontent" visible>
             <ul class="colorpicker">
 
-                <li class="field" v-for="field in state.fields" :key="field.name">
+                <li :key="field.name" class="field" v-for="field in state.fields">
                     {{field.name}}
                     <select v-model.number="field.axis">
-                        <option  v-for="axis in state.allAxis">{{axis}}</option>
+                        <option v-for="axis in state.allAxis">{{axis}}</option>
                     </select>
-                    <select v-model="field.color" :style="{color: field.color}">
-                        <option  v-for="color in state.allColors" :style="{color: color}" v-bind:value="color">■
+                    <select :style="{color: field.color}" v-model="field.color">
+                        <option :style="{color: color}" v-bind:value="color" v-for="color in state.allColors">■
                         </option>
                     </select>
                     <a @click="$eventHub.$emit('togglePlot', field.name)">
@@ -180,7 +180,7 @@ export default {
         cursor: default;
     }
 
-    ul.colorpicker li a{
+    ul.colorpicker li a {
         cursor: pointer;
     }
 
