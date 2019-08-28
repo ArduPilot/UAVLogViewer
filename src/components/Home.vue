@@ -282,8 +282,8 @@ export default {
                     if (msg.Message.indexOf('ArduSub') > -1) {
                         return 'submarine'
                     }
-                    if (msg.Message.indexOf('Rover') > -1) {
-                        return 'rover'
+                    if (msg.Message.toLowerCase().indexOf('rover') > -1) {
+                        return 'boat'
                     }
                     if (msg.Message.indexOf('Tracker') > -1) {
                         return 'tracker'
