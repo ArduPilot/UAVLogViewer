@@ -118,6 +118,8 @@ export default {
             })
         },
         process: function (file) {
+            this.state.processStatus = 'Pre-processing...'
+            this.state.processPercentage = 100
             this.file = file
             let reader = new FileReader()
             reader.onload = function (e) {

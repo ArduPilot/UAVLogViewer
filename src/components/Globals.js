@@ -14,7 +14,7 @@ export var store = {
     currentTime: false,
     processDone: false,
     plot_on: false,
-    processStatus: 'Formatting...',
+    processStatus: 'Pre-processing...',
     processPercentage: -1,
     map_loading: false,
     plot_loading: false,

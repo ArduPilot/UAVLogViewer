@@ -78,6 +78,10 @@ export default {
     },
     methods: {
         extractFlightData () {
+            if ('FMTU' in this.state.messages && this.state.messages['FMTU'].length === 0) {
+                this.state.processStatus = 'ERROR PARSING'
+                return
+            }
             if (Object.keys(this.state.time_attitude).length === 0) {
                 this.state.time_attitude = this.extractAttitudes(this.state.messages)
             }
