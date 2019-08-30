@@ -95,14 +95,22 @@ export default {
                 this.state.current_trajectory = this.extractTrajectory(this.state.messages)
             }
 
-            this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
-            this.state.mission = this.extractMission(this.state.messages)
+            if (this.state.flight_mode_changes.length === 0) {
+                this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
+            }
+            if (this.state.mission.length === 0) {
+                this.state.mission = this.extractMission(this.state.messages)
+            }
             this.state.vehicle = this.extractVehicleType(this.state.messages)
             if (this.state.params === undefined) {
                 this.state.params = this.extractParams(this.state.messages)
             }
-            this.state.textMessages = this.extractTextMessages(this.state.messages)
-            this.generateColorMMap()
+            if (this.state.textMessages.length === 0) {
+                this.state.textMessages = this.extractTextMessages(this.state.messages)
+            }
+            if (this.state.colors.length === 0) {
+                this.generateColorMMap()
+            }
             this.state.processStatus = 'Processed!'
             this.state.processDone = true
             this.state.map_available = this.state.current_trajectory.length > 0
@@ -241,7 +249,7 @@ export default {
             return []
         },
         extractFlightModes (messages) {
-            let modes
+            let modes = []
             if ('HEARTBEAT' in messages) {
                 modes = [[messages['HEARTBEAT'][0].time_boot_ms, messages['HEARTBEAT'][0].asText]]
                 for (let message of messages['HEARTBEAT']) {

@@ -10,6 +10,7 @@ export var store = {
     cssColors: [],
     colors: [],
     map_available: false,
+    mission: [],
     show_map: true,
     currentTime: false,
     processDone: false,
@@ -19,6 +20,7 @@ export var store = {
     map_loading: false,
     plot_loading: false,
     timeRange: null,
+    textMessages: [],
     // cesium menu:
     modelScale: 1.0,
     showClickableTrajectory: false,
