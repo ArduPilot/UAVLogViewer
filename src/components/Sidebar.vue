@@ -1,5 +1,5 @@
 <template>
-    <div class="nav-side-menu col-md-3 col-lg-2">
+    <div class="nav-side-menu col-sm-4 col-md-3 col-lg-2">
         <div class="brand">TLog Viewer</div>
         <ul>
             <div class="tabholder">

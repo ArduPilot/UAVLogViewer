@@ -142,7 +142,6 @@ export default {
     methods:
             {
                 setup2 (updatedPositions) {
-                    console.log(updatedPositions)
                     this.heightOffset = updatedPositions[0].height
                     this.processTrajectory(this.state.current_trajectory)
                     this.addModel()
