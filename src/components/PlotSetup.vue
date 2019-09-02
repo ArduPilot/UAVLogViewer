@@ -9,16 +9,16 @@
         <b-collapse class="menu-content collapse out" id="plotsetupcontent" visible>
             <ul class="colorpicker">
 
-                <li :key="field.name" class="field" v-for="field in state.fields">
-                    {{field.name}}
-                    <select v-model.number="field.axis">
+                <li :key="field.name" class="field plotsetup" v-for="field in state.fields">
+                    <span class="plotname">{{field.name}}</span>
+                    <select style="float: right" v-model.number="field.axis">
                         <option v-for="axis in state.allAxis">{{axis}}</option>
                     </select>
-                    <select :style="{color: field.color}" v-model="field.color">
+                    <select :style="{color: field.color, float: 'right'}" v-model="field.color">
                         <option :style="{color: color}" v-bind:value="color" v-for="color in state.allColors">■
                         </option>
                     </select>
-                    <a @click="$eventHub.$emit('togglePlot', field.name)">
+                    <a style="float: right" @click="$eventHub.$emit('togglePlot', field.name)">
                         <i class="expand fas fa-times" title="Remove data"></i>
                     </a>
 
@@ -190,8 +190,18 @@ export default {
         font-size: 90%;
     }
 
+    li.plotsetup {
+        display: inline-flex;
+    }
+
     i {
         margin: 5px;
         padding: 0;
+    }
+    span.plotname {
+        white-space: nowrap;
+        overflow: hidden;
+        direction: rtl;
+        display: block;
     }
 </style>

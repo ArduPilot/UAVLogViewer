@@ -6,9 +6,24 @@
         <!--<i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>-->
         <!--</li>-->
 
+        <li v-b-toggle="'presets'" v-if="Object.keys(availableMessagePresets).length > 0">
+            <a class="section">
+                <i class="fas fa-signature fa-lg"></i> Plot Presets
+                <i class="fas fa-caret-down"></i></a>
+        </li>
+        <b-collapse id="presets">
+            <template v-for="(presetClass, presetClassName) in availableMessagePresets">
+                <li class="type" v-bind:key="presetClass">
+                    <div v-b-toggle="presetClassName">
+                        <a  @click="openPreset(presetClass)" class="section">{{presetClassName}}
+                        </a>
+                    </div>
+                </li>
+            </template>
+        </b-collapse>
         <li v-b-toggle="'messages'">
             <a class="section">
-                <i class="fas fa-signature fa-lg"></i> Plot
+                <i class="fas fa-signature fa-lg"></i> Plot Individual Field
                 <i class="fas fa-caret-down"></i></a>
         </li>
 
@@ -73,7 +88,15 @@ export default {
                 'FMTU',
                 'UNIT',
                 'MULT'
-            ]
+            ],
+            messagePresets: {
+                'Attitude Control': [
+                    'NAV_CONTROLLER_OUTPUT.nav_roll',
+                    'NAV_CONTROLLER_OUTPUT.nav_pitch',
+                    'ATTITUDE.roll',
+                    'ATTITUDE.pitch'
+                ]
+            }
         }
     },
     created () {
@@ -144,6 +167,16 @@ export default {
 
         isPlottable (msgtype, item) {
             return item !== 'TimeUS'
+        },
+
+        openPreset (preset) {
+            this.$eventHub.$emit('clearPlot')
+            this.state.plot_on = true
+            this.$nextTick(function () {
+                for (let msg of preset) {
+                    this.$eventHub.$emit('togglePlot', msg)
+                }
+            })
         }
     },
     computed: {
@@ -168,6 +201,18 @@ export default {
                 }
             }
             return filtered
+        },
+        availableMessagePresets () {
+            let dict = {}
+            for (const [key, value] of Object.entries(this.messagePresets)) {
+                for (let field of value) {
+                    if (field.split('.')[0] in this.state.messages) {
+                        dict[key] = value
+                        break
+                    }
+                }
+            }
+            return dict
         }
     }
 

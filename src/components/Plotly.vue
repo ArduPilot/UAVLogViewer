@@ -135,6 +135,7 @@ export default {
         })
         this.instruction = ''
         this.$eventHub.$on('togglePlot', this.togglePlot)
+        this.$eventHub.$on('clearPlot', this.clearPlot)
     },
     beforeDestroy () {
         window.removeEventListener('resize', this.resize)
@@ -305,6 +306,9 @@ export default {
                 this.state.plot_on = false
             }
             this.onRangeChanged()
+        },
+        clearPlot ( ) {
+            this.state.fields.lenght = 0
         },
         togglePlot (fieldname) {
             if (this.isPlotted((fieldname))) {
