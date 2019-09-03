@@ -5,25 +5,16 @@
         <!--<a class="section">-->
         <!--<i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>-->
         <!--</li>-->
+        <tree-menu
+            v-if="Object.keys(availableMessagePresets).length > 0"
+            :nodes="availableMessagePresets"
+            :label="'Presets'"
+            :level="0">
 
-        <li v-b-toggle="'presets'" v-if="Object.keys(availableMessagePresets).length > 0">
-            <a class="section">
-                <i class="fas fa-signature fa-lg"></i> Plot Presets
-                <i class="fas fa-caret-down"></i></a>
-        </li>
-        <b-collapse id="presets">
-            <template v-for="(presetClass, presetClassName) in availableMessagePresets">
-                <li class="type" v-bind:key="presetClass">
-                    <div v-b-toggle="presetClassName">
-                        <a  @click="openPreset(presetClass)" class="section">{{presetClassName}}
-                        </a>
-                    </div>
-                </li>
-            </template>
-        </b-collapse>
+        </tree-menu>
         <li v-b-toggle="'messages'">
             <a class="section">
-                <i class="fas fa-signature fa-lg"></i> Plot Individual Field
+                Plot Individual Field
                 <i class="fas fa-caret-down"></i></a>
         </li>
 
@@ -59,9 +50,11 @@
 <script>
 
 import {store} from './Globals.js'
+import TreeMenu from './widgets/TreeMenu'
 
 export default {
     name: 'message-menu',
+    components: {TreeMenu},
     data () {
         return {
             filter: '',
@@ -90,11 +83,26 @@ export default {
                 'MULT'
             ],
             messagePresets: {
-                'Attitude Control': [
+                'Attitude/Attitude Control': [
                     'NAV_CONTROLLER_OUTPUT.nav_roll',
                     'NAV_CONTROLLER_OUTPUT.nav_pitch',
                     'ATTITUDE.roll',
                     'ATTITUDE.pitch'
+                ],
+                'Attitude/Roll and Pitch': [
+                    'ATT.Roll',
+                    'ATT.Pitch'
+                ],
+                'Servos/Servos 1-4': [
+                    'SERVO_OUTPUT_RAW.servo1_raw',
+                    'SERVO_OUTPUT_RAW.servo2_raw',
+                    'SERVO_OUTPUT_RAW.servo3_raw',
+                    'SERVO_OUTPUT_RAW.servo4_raw'
+                ],
+                'Sensors/Accelerometer/Vibration': [
+                    'VIBRATION.vibration_x',
+                    'VIBRATION.vibration_y',
+                    'VIBRATION.vibration_z'
                 ]
             }
         }
@@ -167,16 +175,6 @@ export default {
 
         isPlottable (msgtype, item) {
             return item !== 'TimeUS'
-        },
-
-        openPreset (preset) {
-            this.$eventHub.$emit('clearPlot')
-            this.state.plot_on = true
-            this.$nextTick(function () {
-                for (let msg of preset) {
-                    this.$eventHub.$emit('togglePlot', msg)
-                }
-            })
         }
     },
     computed: {
@@ -206,16 +204,33 @@ export default {
             let dict = {}
             for (const [key, value] of Object.entries(this.messagePresets)) {
                 for (let field of value) {
-                    if (field.split('.')[0] in this.state.messages) {
-                        dict[key] = value
-                        break
+                    // If any of the fields match, add this and move on
+                    if (field.split('.')[0] in this.state.messageTypes) {
+                        if (!(key in dict)) {
+                            dict[key] = [field]
+                        } else {
+                            dict[key].push(field)
+                        }
                     }
                 }
             }
-            return dict
-        }
+            let newDict = {}
+            for (const [key, value] of Object.entries(dict)) {
+                let current = newDict
+                let fields = key.split('/')
+                let lastField = fields.pop()
+                for (let field of fields) {
+                    if (!(field in current)) {
+                        console.log('overwriting ' + field)
+                        current[field] = {}
+                    }
+                    current = current[field]
+                }
+                current[lastField] = value
+            }
+            return newDict
+        },
     }
-
 }
 </script>
 <style scoped>

@@ -307,7 +307,10 @@ export default {
             }
             this.onRangeChanged()
         },
-        clearPlot ( ) {
+        clearPlot () {
+            while (this.state.fields.length) {
+                this.state.fields.pop()
+            }
             this.state.fields.lenght = 0
         },
         togglePlot (fieldname) {

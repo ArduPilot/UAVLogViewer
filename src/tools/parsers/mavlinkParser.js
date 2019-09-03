@@ -175,15 +175,15 @@ export class MavlinkParser {
                 instance.totalSize = this.buf.byteLength
             }
             if (message.id !== -1) {
-                if (message.time_boot_ms === undefined) {
-                    message.time_boot_ms = instance.lastTime
-                }
-
-                // TODO: Fix this logic, it is probably wrong.
-                if ((+message.time_boot_ms + instance.forcedTimeOffset) < instance.lastTime) {
-                    console.log('Time going backwards detected, adding an offset. This means SYSTEM_TIME is now out of sync!')
-                    instance.forcedTimeOffset = +instance.lastTime - message.time_boot_ms + 100000
-                }
+                // if (message.time_boot_ms === undefined) {
+                //     message.time_boot_ms = instance.lastTime
+                // }
+                //
+                // // TODO: Fix this logic, it is probably wrong.
+                // if ((+message.time_boot_ms + instance.forcedTimeOffset) < instance.lastTime) {
+                //     console.log('Time going backwards detected, adding an offset. This means SYSTEM_TIME is now out of sync!')
+                //     instance.forcedTimeOffset = +instance.lastTime - message.time_boot_ms + 100000
+                // }
 
                 if (+message.time_boot_ms < instance.lastTime) {
                     message.time_boot_ms = +message.time_boot_ms + instance.forcedTimeOffset

@@ -2,7 +2,7 @@
     <div>
         <li class="type">
             <div v-b-toggle.plotsetupcontent>
-                <a class="section"> <i class="fas fa-wrench fa-lg" data-v-03de825a=""></i>Plots Setup
+                <a class="section">Plots Setup
                     <i class="expand fas fa-caret-down"></i></a>
             </div>
         </li>
