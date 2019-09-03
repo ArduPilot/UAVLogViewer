@@ -11,15 +11,15 @@
 
                 <li :key="field.name" class="field plotsetup" v-for="field in state.fields">
                     <span class="plotname">{{field.name}}</span>
-                    <select style="float: right" v-model.number="field.axis">
+                    <select v-model.number="field.axis">
                         <option v-for="axis in state.allAxis">{{axis}}</option>
                     </select>
-                    <select :style="{color: field.color, float: 'right'}" v-model="field.color">
+                    <select :style="{color:  field.color}" v-model="field.color">
                         <option :style="{color: color}" v-bind:value="color" v-for="color in state.allColors">■
                         </option>
                     </select>
-                    <a style="float: right" @click="$eventHub.$emit('togglePlot', field.name)">
-                        <i class="expand fas fa-times" title="Remove data"></i>
+                    <a class="remove-button" @click="$eventHub.$emit('togglePlot', field.name)">
+                        <i class="expand fas fa-trash" title="Remove data"></i>
                     </a>
 
                 </li>
@@ -186,12 +186,12 @@ export default {
 
     li.field {
         line-height: 20px;
-        padding-left: 40px;
+        padding-left: 20px;
         font-size: 90%;
     }
 
     li.plotsetup {
-        display: inline-flex;
+        display: block;
     }
 
     i {
@@ -204,4 +204,5 @@ export default {
         direction: rtl;
         display: block;
     }
+
 </style>
