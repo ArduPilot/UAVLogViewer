@@ -70,6 +70,27 @@ export default {
                 })
             }
         }))
+        imageryProviders.push(new Cesium.ProviderViewModel({
+            name: 'OpenSeaMap',
+            iconUrl: require('../assets/openseamap.png'),
+            tooltip: 'OpenSeaMap Nautical Maps \nhttp://openseamap.org/',
+            parameters: {
+                transparent: 'true',
+                format: 'image/png'
+            },
+            creationFunction: function () {
+                return [
+                    new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        credit: 'Map tiles by OpenStreetMap.'
+                    }),
+                    new Cesium.UrlTemplateImageryProvider({
+                        url: 'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
+                        credit: 'Map tiles by OpenSeaMap.'
+                    })
+                ]
+            }
+        }))
         if (this.viewer == null) {
             this.viewer = new Cesium.Viewer(
                 'cesiumContainer',
