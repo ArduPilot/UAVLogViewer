@@ -38,7 +38,7 @@
                             </a>
 
                             <a @click="$eventHub.$emit('togglePlot', field.name)" v-if="isPlotted(key,item.name)">
-                                <i class="remove-icon fas fa-times" title="Remove data"></i>
+                                <i class="remove-icon fas fa-trash" title="Remove data"></i>
                             </a>
                         </li>
                     </template>
@@ -84,25 +84,25 @@ export default {
             ],
             messagePresets: {
                 'Attitude/Attitude Control': [
-                    'NAV_CONTROLLER_OUTPUT.nav_roll',
-                    'NAV_CONTROLLER_OUTPUT.nav_pitch',
-                    'ATTITUDE.roll',
-                    'ATTITUDE.pitch'
+                    ['NAV_CONTROLLER_OUTPUT.nav_roll', 0],
+                    ['NAV_CONTROLLER_OUTPUT.nav_pitch', 1],
+                    ['ATTITUDE.roll', 0],
+                    ['ATTITUDE.pitch', 1]
                 ],
                 'Attitude/Roll and Pitch': [
-                    'ATT.Roll',
-                    'ATT.Pitch'
+                    ['ATT.Roll', 0],
+                    ['ATT.Pitch', 0]
                 ],
                 'Servos/Servos 1-4': [
-                    'SERVO_OUTPUT_RAW.servo1_raw',
-                    'SERVO_OUTPUT_RAW.servo2_raw',
-                    'SERVO_OUTPUT_RAW.servo3_raw',
-                    'SERVO_OUTPUT_RAW.servo4_raw'
+                    ['SERVO_OUTPUT_RAW.servo1_raw', 0],
+                    ['SERVO_OUTPUT_RAW.servo2_raw', 0],
+                    ['SERVO_OUTPUT_RAW.servo3_raw', 0],
+                    ['SERVO_OUTPUT_RAW.servo4_raw', 0]
                 ],
                 'Sensors/Accelerometer/Vibration': [
-                    'VIBRATION.vibration_x',
-                    'VIBRATION.vibration_y',
-                    'VIBRATION.vibration_z'
+                    ['VIBRATION.vibration_x', 0],
+                    ['VIBRATION.vibration_y', 0],
+                    ['VIBRATION.vibration_z', 0]
                 ]
             }
         }
@@ -205,7 +205,7 @@ export default {
             for (const [key, value] of Object.entries(this.messagePresets)) {
                 for (let field of value) {
                     // If any of the fields match, add this and move on
-                    if (field.split('.')[0] in this.state.messageTypes) {
+                    if (field[0].split('.')[0] in this.state.messageTypes) {
                         if (!(key in dict)) {
                             dict[key] = [field]
                         } else {

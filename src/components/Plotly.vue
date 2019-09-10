@@ -260,26 +260,32 @@ export default {
             }
             return this.state.allColors[this.state.allColors.length - 1]
         },
-        createNewField (fieldname) {
+        createNewField (fieldname, axis, color) {
+            if (color === undefined) {
+                color = this.getFirstFreeColor()
+            }
+            if (axis === undefined) {
+                axis = this.getFirstFreeAxis()
+            }
             return {
                 name: fieldname,
-                color: this.getFirstFreeColor(),
-                axis: this.getFirstFreeAxis()
+                color: color,
+                axis: axis
             }
         },
 
-        addPlot (fieldname) {
+        addPlot (fieldname, axis, color) {
             // ensure we have the data
             this.state.plot_loading = true
             if (!this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
                 console.log('missing message type: ' + fieldname.split('.')[0])
                 this.waitForMessage(fieldname).then(function () {
-                    this.addPlot(fieldname)
+                    this.addPlot(fieldname,axis, color)
                     console.log('got message ' + fieldname)
                 }.bind(this))
             } else {
                 if (!this.isPlotted(fieldname)) {
-                    this.state.fields.push(this.createNewField(fieldname))
+                    this.state.fields.push(this.createNewField(fieldname, axis, color))
                 }
                 this.plot()
                 this.state.plot_loading = false
@@ -313,7 +319,7 @@ export default {
             }
             this.state.fields.lenght = 0
         },
-        togglePlot (fieldname) {
+        togglePlot (fieldname, axis, color) {
             if (this.isPlotted((fieldname))) {
                 let index
                 for (let i in this.state.fields) {
@@ -327,7 +333,7 @@ export default {
                 }
                 this.onRangeChanged()
             } else {
-                this.addPlot(fieldname)
+                this.addPlot(fieldname, axis, color)
             }
             console.log(this.state.fields)
             this.plot()

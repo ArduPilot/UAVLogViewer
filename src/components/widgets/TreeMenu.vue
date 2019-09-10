@@ -50,7 +50,7 @@ export default {
             this.state.plot_on = true
             this.$nextTick(function () {
                 for (let msg of preset) {
-                    this.$eventHub.$emit('togglePlot', msg)
+                    this.$eventHub.$emit('togglePlot', msg[0], msg[1], msg[2])
                 }
             })
         }
