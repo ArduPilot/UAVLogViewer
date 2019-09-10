@@ -251,6 +251,8 @@ export default {
         line-height: 20px;
         padding-left: 40px;
         font-size: 90%;
+        display: inline-block;
+        width: 100%;
     }
 
     li.type {
