@@ -82,12 +82,13 @@ export default {
                 'UNIT',
                 'MULT'
             ],
+            // TODO: lists are nor clear, use objects instead
             messagePresets: {
                 'Attitude/Attitude Control': [
                     ['NAV_CONTROLLER_OUTPUT.nav_roll', 0],
                     ['NAV_CONTROLLER_OUTPUT.nav_pitch', 1],
-                    ['ATTITUDE.roll', 0],
-                    ['ATTITUDE.pitch', 1]
+                    ['ATTITUDE.roll', 0, undefined, function (a) { return a * 180 / Math.PI }],
+                    ['ATTITUDE.pitch', 1, undefined, function (a) { return a * 180 / Math.PI }]
                 ],
                 'Attitude/Roll and Pitch': [
                     ['ATT.Roll', 0],

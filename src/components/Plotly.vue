@@ -249,7 +249,6 @@ export default {
             for (let i of this.state.allColors) {
                 let taken = false
                 for (let field of this.state.fields) {
-                    console.log(field.color + '==' + i + ' =' + (field.color == i))
                     if (field.color == i) {
                         taken = true
                     }
@@ -260,7 +259,7 @@ export default {
             }
             return this.state.allColors[this.state.allColors.length - 1]
         },
-        createNewField (fieldname, axis, color) {
+        createNewField (fieldname, axis, color, func) {
             if (color === undefined) {
                 color = this.getFirstFreeColor()
             }
@@ -270,22 +269,23 @@ export default {
             return {
                 name: fieldname,
                 color: color,
-                axis: axis
+                axis: axis,
+                func: func
             }
         },
 
-        addPlot (fieldname, axis, color) {
+        addPlot (fieldname, axis, color, func) {
             // ensure we have the data
             this.state.plot_loading = true
             if (!this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
                 console.log('missing message type: ' + fieldname.split('.')[0])
                 this.waitForMessage(fieldname).then(function () {
-                    this.addPlot(fieldname,axis, color)
+                    this.addPlot(fieldname, axis, color, func)
                     console.log('got message ' + fieldname)
                 }.bind(this))
             } else {
                 if (!this.isPlotted(fieldname)) {
-                    this.state.fields.push(this.createNewField(fieldname, axis, color))
+                    this.state.fields.push(this.createNewField(fieldname, axis, color, func))
                 }
                 this.plot()
                 this.state.plot_loading = false
@@ -319,7 +319,7 @@ export default {
             }
             this.state.fields.lenght = 0
         },
-        togglePlot (fieldname, axis, color) {
+        togglePlot (fieldname, axis, color, func) {
             if (this.isPlotted((fieldname))) {
                 let index
                 for (let i in this.state.fields) {
@@ -333,7 +333,7 @@ export default {
                 }
                 this.onRangeChanged()
             } else {
-                this.addPlot(fieldname, axis, color)
+                this.addPlot(fieldname, axis, color, func)
             }
             console.log(this.state.fields)
             this.plot()
@@ -386,10 +386,20 @@ export default {
 
                 let x = []
                 let y = []
-                for (let message of this.state.messages[msgtype]) {
-                    x.push(message['time_boot_ms'])
-                    y.push(message[msgfield])
+
+                if (field.func === undefined) {
+                    for (let message of this.state.messages[msgtype]) {
+                        x.push(message['time_boot_ms'])
+                        y.push(message[msgfield])
+                    }
+                } else {
+                    console.log("ding!")
+                    for (let message of this.state.messages[msgtype]) {
+                        x.push(message['time_boot_ms'])
+                        y.push(field.func(message[msgfield]))
+                    }
                 }
+
                 datasets.push({
                     name: msgtype + '.' + msgfield,
                     mode: 'scattergl',
@@ -401,7 +411,6 @@ export default {
                     }
                 })
                 let axisname = field.axis > 0 ? ('yaxis' + (field.axis + 1)) : 'yaxis'
-                console.log(axisname)
 
                 if (field.axis <= 6) {
                     plotOptions[axisname].title = {
@@ -411,7 +420,6 @@ export default {
                         }
                     }
                     plotOptions[axisname].tickfont.color = field.color
-                    console.log(this.state.messageTypes[msgtype].complexFields[msgfield])
                     if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
                         plotOptions[axisname].title.text += ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
                     }
@@ -441,7 +449,6 @@ export default {
             })
             let bglayer = document.getElementsByClassName('bglayer')[0]
             let rect = bglayer.childNodes[0]
-            console.log(rect)
             this.cursor = document.createElementNS('http://www.w3.org/2000/svg', 'line')
             let x = rect.getAttribute('x')
             let y = rect.getAttribute('y')
@@ -489,7 +496,6 @@ export default {
             modeChanges.push([this.gd.layout.xaxis.range[1], null])
 
             for (let i = 0; i < modeChanges.length - 1; i++) {
-                console.log(i)
                 shapes.push(
                     {
                         type: 'rect',
