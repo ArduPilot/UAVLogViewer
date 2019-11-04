@@ -56,7 +56,7 @@ import MessageViewer from './widgets/MessageViewer'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
 import {ParamSeeker} from '../tools/paramseeker'
-import Cesium from 'cesium/Cesium'
+import {Color} from 'cesium/Cesium'
 import colormap from 'colormap'
 
 export default {
@@ -253,6 +253,9 @@ export default {
             if ('HEARTBEAT' in messages) {
                 modes = [[messages['HEARTBEAT'][0].time_boot_ms, messages['HEARTBEAT'][0].asText]]
                 for (let message of messages['HEARTBEAT']) {
+                    if (message.asText === undefined) {
+                        message.asText = 'Unknown'
+                    }
                     if (message.asText !== modes[modes.length - 1][1]) {
                         modes.push([message.time_boot_ms, message.asText])
                     }
@@ -322,7 +325,7 @@ export default {
             this.state.colors = []
             // this.translucentColors = []
             for (let rgba of colormap(colorMapOptions)) {
-                this.state.colors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2]))
+                this.state.colors.push(new Color(rgba[0], rgba[1], rgba[2]))
                 // this.translucentColors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2], 0.1))
             }
         }

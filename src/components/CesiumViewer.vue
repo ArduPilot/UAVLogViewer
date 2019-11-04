@@ -5,11 +5,40 @@
 </template>
 
 <script>
-import Cesium from 'cesium/Cesium'
+import {
+    Ion,
+    Color,
+    createDefaultImageryProviderViewModels,
+    ProviderViewModel,
+    UrlTemplateImageryProvider,
+    Viewer, createWorldTerrain,
+    PointPrimitiveCollection,
+    Entity,
+    SceneMode,
+    ScreenSpaceEventHandler,
+    ScreenSpaceEventType,
+    knockout,
+    Cartographic,
+    sampleTerrainMostDetailed,
+    JulianDate,
+    ClockRange,
+    Cartesian3,
+    SampledProperty,
+    SampledPositionProperty,
+    Transforms,
+    PolylineDashMaterialProperty,
+    TimeInterval,
+    TimeIntervalCollection,
+    HeadingPitchRoll,
+    Ellipsoid,
+    Quaternion,
+    when,
+    defined} from 'cesium/Cesium'
+
 import 'cesium/Widgets/widgets.css'
 import {store} from './Globals.js'
 
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmNTJjOWYzZS1hMDA5LTRjNDQtYTBh' +
+Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmNTJjOWYzZS1hMDA5LTRjNDQtYTBh' +
         'Yi1iZWQ2NTc5YzliNWIiLCJpZCI6MjczNywiaWF0IjoxNTM0Mzg3NzM3fQ.Qe6EcCmGUfM_FRKYuJEORsT4tQAvRkdmFyNk9bkARqM'
 
 function getMinTime (data) {
@@ -46,31 +75,31 @@ export default {
         this.$eventHub.$off('hoveredTime')
     },
     mounted () {
-        let imageryProviders = Cesium.createDefaultImageryProviderViewModels()
-        imageryProviders.push(new Cesium.ProviderViewModel({
+        let imageryProviders = createDefaultImageryProviderViewModels()
+        imageryProviders.push(new ProviderViewModel({
             name: 'StatKart',
             iconUrl: require('../assets/statkart.jpg'),
             tooltip: 'Statkart aerial imagery \nhttp://statkart.no/',
             creationFunction: function () {
-                return new Cesium.UrlTemplateImageryProvider({
+                return new UrlTemplateImageryProvider({
                     url: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
                     credit: 'Map tiles by Statkart.'
                 })
             }
         }))
-        imageryProviders.push(new Cesium.ProviderViewModel({
+        imageryProviders.push(new ProviderViewModel({
             name: 'Eniro',
             iconUrl: require('../assets/eniro.png'),
             tooltip: 'Eniro aerial imagery \nhttp://map.eniro.com/',
             creationFunction: function () {
-                return new Cesium.UrlTemplateImageryProvider({
+                return new UrlTemplateImageryProvider({
                     // url: 'http://map.eniro.com/geowebcache/service/tms1.0.0/map/{z}/{x}/{reverseY}.png',
                     url: '/eniro/{z}/{x}/{reverseY}.png',
                     credit: 'Map tiles by Eniro.'
                 })
             }
         }))
-        imageryProviders.push(new Cesium.ProviderViewModel({
+        imageryProviders.push(new ProviderViewModel({
             name: 'OpenSeaMap',
             iconUrl: require('../assets/openseamap.png'),
             tooltip: 'OpenSeaMap Nautical Maps \nhttp://openseamap.org/',
@@ -80,11 +109,11 @@ export default {
             },
             creationFunction: function () {
                 return [
-                    new Cesium.UrlTemplateImageryProvider({
+                    new UrlTemplateImageryProvider({
                         url: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
                         credit: 'Map tiles by OpenStreetMap.'
                     }),
-                    new Cesium.UrlTemplateImageryProvider({
+                    new UrlTemplateImageryProvider({
                         url: 'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
                         credit: 'Map tiles by OpenSeaMap.'
                     })
@@ -92,7 +121,7 @@ export default {
             }
         }))
         if (this.viewer == null) {
-            this.viewer = new Cesium.Viewer(
+            this.viewer = new Viewer(
                 'cesiumContainer',
                 {
                     homeButton: false,
@@ -109,13 +138,13 @@ export default {
 
             this.viewer.scene.debugShowFramesPerSecond = true
             if (this.state.vehicle !== 'boat') {
-                this.viewer.terrainProvider = Cesium.createWorldTerrain()
+                this.viewer.terrainProvider = createWorldTerrain()
             }
 
             this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
             this.viewer.scene.postProcessStages.bloom.enabled = false
-            this.clickableTrajectory = this.viewer.scene.primitives.add(new Cesium.PointPrimitiveCollection())
-            this.trajectory = this.viewer.entities.add(new Cesium.Entity())
+            this.clickableTrajectory = this.viewer.scene.primitives.add(new PointPrimitiveCollection())
+            this.trajectory = this.viewer.entities.add(new Entity())
             this.trajectoryUpdateTimeout = null
             this.viewer.scene.globe.enableLighting = true
             this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
@@ -127,7 +156,7 @@ export default {
 
             this.viewer.camera.changed.addEventListener(
                 function () {
-                    if (this.viewer.camera._suspendTerrainAdjustment && this.viewer.scene.mode === Cesium.SceneMode.SCENE3D) {
+                    if (this.viewer.camera._suspendTerrainAdjustment && this.viewer.scene.mode === SceneMode.SCENE3D) {
                         this.viewer.camera._suspendTerrainAdjustment = false
                         this.viewer.camera._adjustHeightForTerrain()
                     }
@@ -135,26 +164,26 @@ export default {
             )
 
             // Attach hover handler
-            let handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas)
-            handler.setInputAction(this.onMove, Cesium.ScreenSpaceEventType.MOUSE_MOVE)
-            handler.setInputAction(this.onLeftDown, Cesium.ScreenSpaceEventType.LEFT_DOWN)
-            handler.setInputAction(this.onClick, Cesium.ScreenSpaceEventType.LEFT_CLICK)
-            handler.setInputAction(this.onLeftUp, Cesium.ScreenSpaceEventType.LEFT_UP)
+            let handler = new ScreenSpaceEventHandler(this.viewer.scene.canvas)
+            handler.setInputAction(this.onMove, ScreenSpaceEventType.MOUSE_MOVE)
+            handler.setInputAction(this.onLeftDown, ScreenSpaceEventType.LEFT_DOWN)
+            handler.setInputAction(this.onClick, ScreenSpaceEventType.LEFT_CLICK)
+            handler.setInputAction(this.onLeftUp, ScreenSpaceEventType.LEFT_UP)
             this.viewer.camera.moveEnd.addEventListener(this.onCameraUpdate)
 
-            Cesium.knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
+            knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
         }
 
         this.addCloseButton()
         for (let pos of this.state.current_trajectory) {
-            this.corrected_trajectory.push(Cesium.Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
+            this.corrected_trajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
         }
 
-        let start = [Cesium.Cartographic.fromDegrees(this.state.current_trajectory[0][0],
+        let start = [Cartographic.fromDegrees(this.state.current_trajectory[0][0],
             this.state.current_trajectory[0][1])]
         if (this.state.vehicle !== 'boat') {
-            let promise = Cesium.sampleTerrainMostDetailed(this.viewer.terrainProvider, this.corrected_trajectory)
-            Cesium.when(promise, this.setup2)
+            let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.corrected_trajectory)
+            when(promise, this.setup2)
         } else {
             this.setup2(this.corrected_trajectory)
         }
@@ -172,17 +201,17 @@ export default {
                     this.$eventHub.$on('rangeChanged', this.onRangeChanged)
                     /*            if (this.$route.query.hasOwnProperty('cam')) {
                                     let data = this.$route.query.cam.split(',')
-                                    let position = new Cesium.Cartesian3(
+                                    let position = new Cartesian3(
                                         parseFloat(data[0]),
                                         parseFloat(data[1]),
                                         parseFloat(data[2])
                                     )
-                                    let direction = new Cesium.Cartesian3(
+                                    let direction = new Cartesian3(
                                         parseFloat(data[3]),
                                         parseFloat(data[4]),
                                         parseFloat(data[5])
                                     )
-                                    let up = new Cesium.Cartesian3(
+                                    let up = new Cartesian3(
                                         parseFloat(data[6]),
                                         parseFloat(data[7]),
                                         parseFloat(data[8])
@@ -242,10 +271,10 @@ export default {
                 getTimeStart () {
                     let date = null
                     try {
-                        date = Cesium.JulianDate.fromDate(this.state.metadata.startTime)
+                        date = JulianDate.fromDate(this.state.metadata.startTime)
                     } catch (e) {
                         console.log(e)
-                        date = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16))
+                        date = JulianDate.fromDate(new Date(2015, 2, 25, 16))
                     }
                     return date
                 },
@@ -253,7 +282,7 @@ export default {
                 mouseIsOnPoint (point) {
                     // Checks if there is a trajectory point under the coordinate "point"
                     let pickedObjects = this.viewer.scene.drillPick(point)
-                    if (Cesium.defined(pickedObjects)) {
+                    if (defined(pickedObjects)) {
                         // tries to read the time of each entioty under the mouse, returns once one is found.
                         for (let entity of pickedObjects) {
                             try {
@@ -345,7 +374,7 @@ export default {
                 onClick (movement) {
                     if (this.mouseIsOnPoint(movement.position)) {
                         this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
-                        this.viewer.clock.currentTime = Cesium.JulianDate.addSeconds(this.getTimeStart(), (this.lastHoveredTime - this.startTimeMs) / 1000, new Cesium.JulianDate())
+                        this.viewer.clock.currentTime = JulianDate.addSeconds(this.getTimeStart(), (this.lastHoveredTime - this.startTimeMs) / 1000, new JulianDate())
                     }
                     this.onLeftUp()
                 },
@@ -356,10 +385,10 @@ export default {
                             if (this.mouseIsOnPoint(movement.endPosition)) {
                                 this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
                                 this.viewer.clock.currentTime =
-                                    Cesium.JulianDate.addSeconds(
+                                    JulianDate.addSeconds(
                                         this.getTimeStart(),
                                         (this.lastHoveredTime - this.startTimeMs) / 1000,
-                                        new Cesium.JulianDate()
+                                        new JulianDate()
                                     )
                             }
                         } else {
@@ -395,7 +424,7 @@ export default {
                 },
 
                 msToCesiumTime (ms) {
-                    return Cesium.JulianDate.addSeconds(this.start, (ms - this.startTimeMs) / 1000, new Cesium.JulianDate())
+                    return JulianDate.addSeconds(this.start, (ms - this.startTimeMs) / 1000, new JulianDate())
                 },
 
                 showAttitude (time) {
@@ -411,20 +440,20 @@ export default {
                     this.state.timeRange = [this.startTimeMs, this.startTimeMs + timespan]
                     let viewer = this.viewer
                     this.start = this.getTimeStart()
-                    this.stop = Cesium.JulianDate.addSeconds(this.start, Math.round(timespan / 1000), new Cesium.JulianDate())
+                    this.stop = JulianDate.addSeconds(this.start, Math.round(timespan / 1000), new JulianDate())
                     // Make sure viewer is at the desired time.
                     viewer.clock.startTime = this.start.clone()
                     this.timelineStart = this.start
                     this.timelineStop = this.stop
                     viewer.clock.stopTime = this.stop.clone()
                     viewer.clock.currentTime = this.start.clone()
-                    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP
+                    viewer.clock.clockRange = ClockRange.LOOP_STOP
                     viewer.clock.multiplier = 1
                     // Set timeline to simulation bounds
                     viewer.timeline.zoomTo(this.start, this.stop)
                     let position
                     this.positions = []
-                    this.sampledPos = new Cesium.SampledPositionProperty()
+                    this.sampledPos = new SampledPositionProperty()
 
                     // clean entities
                     if (this.clickableTrajectory !== null) {
@@ -432,16 +461,16 @@ export default {
                     }
                     console.log('3')
                     // Create sampled position
-                    let isBoat = this.state.vehicle === 'boat'
+                    let isBoat = false;//this.state.vehicle === 'boat'
                     for (let posIndex in this.points) {
                         let pos = this.points[posIndex]
                         if (isBoat) {
-                            position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], 0)
+                            position = Cartesian3.fromDegrees(pos[0], pos[1], 0)
                         } else {
-                            position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.corrected_trajectory[posIndex].height))
+                            position = Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.corrected_trajectory[posIndex].height))
                         }
                         this.positions.push(position)
-                        let time = Cesium.JulianDate.addSeconds(this.start, (pos[3] - this.startTimeMs) / 1000, new Cesium.JulianDate())
+                        let time = JulianDate.addSeconds(this.start, (pos[3] - this.startTimeMs) / 1000, new JulianDate())
                         this.sampledPos.addSample(time, position)
                         // this.clickableTrajectory.add({
                         //     position: position,
@@ -457,12 +486,12 @@ export default {
                     console.log('model')
                     let points = this.points
                     // Create sampled aircraft orientation
-                    let position = Cesium.Cartesian3.fromDegrees(points[0][0], points[0][1], points[0][2] + this.heightOffset)
-                    let fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west')
-                    let sampledOrientation = new Cesium.SampledProperty(Cesium.Quaternion)
+                    let position = Cartesian3.fromDegrees(points[0][0], points[0][1], points[0][2] + this.heightOffset)
+                    let fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'west')
+                    let sampledOrientation = new SampledProperty(Quaternion)
                     if (Object.keys(this.state.time_attitudeQ).length > 0) {
                         console.log('plotting with QUATERNIOS')
-                        fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'east')
+                        fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'east')
                         for (let atti in this.state.time_attitudeQ) {
                             if (this.state.time_attitudeQ.hasOwnProperty(atti)) {
                                 let att = this.state.time_attitudeQ[atti]
@@ -479,8 +508,8 @@ export default {
                                 }
                                 let yaw = Math.atan2(2.0 * (q1 * q4 + q2 * q3), 1.0 - 2.0 * (q3 * q3 + q4 * q4))
                                 // TODO: fix this coordinate system!
-                                let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(-yaw, -pitch, roll - 3.14), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
-                                let time = Cesium.JulianDate.addSeconds(this.start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
+                                let hpRoll = Transforms.headingPitchRollQuaternion(position, new HeadingPitchRoll(-yaw, -pitch, roll - 3.14), Ellipsoid.WGS84, fixedFrameTransform)
+                                let time = JulianDate.addSeconds(this.start, (atti - this.startTimeMs) / 1000, new JulianDate())
                                 sampledOrientation.addSample(time, hpRoll)
                             }
                         }
@@ -489,8 +518,8 @@ export default {
                         for (let atti in this.state.time_attitude) {
                             if (this.state.time_attitude.hasOwnProperty(atti)) {
                                 let att = this.state.time_attitude[atti]
-                                let hpRoll = Cesium.Transforms.headingPitchRollQuaternion(position, new Cesium.HeadingPitchRoll(att[2], att[1], att[0]), Cesium.Ellipsoid.WGS84, fixedFrameTransform)
-                                let time = Cesium.JulianDate.addSeconds(this.start, (atti - this.startTimeMs) / 1000, new Cesium.JulianDate())
+                                let hpRoll = Transforms.headingPitchRollQuaternion(position, new HeadingPitchRoll(att[2], att[1], att[0]), Ellipsoid.WGS84, fixedFrameTransform)
+                                let time = JulianDate.addSeconds(this.start, (atti - this.startTimeMs) / 1000, new JulianDate())
                                 sampledOrientation.addSample(time, hpRoll)
                             }
                         }
@@ -498,7 +527,7 @@ export default {
 
                     // Add airplane model with interpolated position and orientation
                     this.model = this.viewer.entities.add({
-                        availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
+                        availability: new TimeIntervalCollection([new TimeInterval({
                             start: this.start,
                             stop: this.stop
                         })]),
@@ -509,7 +538,7 @@ export default {
                             minimumPixelSize: 6,
                             scale: this.modelScale / 10
                         },
-                        viewFrom: new Cesium.Cartesian3(5, 0, 3)
+                        viewFrom: new Cartesian3(5, 0, 3)
                     })
                 },
                 plotTrajectories () {
@@ -533,7 +562,7 @@ export default {
                     }
 
                     for (let pos of this.points.slice(first, last)) {
-                        this.position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.heightOffset))
+                        this.position = Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.heightOffset))
                         trajectory.push(this.position)
                         let color = this.getModeColor(pos[3])
 
@@ -574,7 +603,7 @@ export default {
                 plotMission (points) {
                     let cesiumPoints = []
                     for (let pos of points) {
-                        let position = Cesium.Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
+                        let position = Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
                         cesiumPoints.push(position)
                     }
                     // Add polyline representing the path under the points
@@ -582,8 +611,8 @@ export default {
                         polyline: {
                             positions: cesiumPoints,
                             width: 1,
-                            material: new Cesium.PolylineDashMaterialProperty({
-                                color: Cesium.Color.WHITE,
+                            material: new PolylineDashMaterialProperty({
+                                color: Color.WHITE,
                                 dashLength: 8.0
                             })
                         }

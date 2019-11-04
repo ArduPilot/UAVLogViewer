@@ -28,7 +28,7 @@ export var store = {
     showWaypoints: true,
     cameraType: 'follow',
     fields: [], // holds message name
-    allAxis: [0, 1, 2, 3, 4, 5, 6],
+    allAxis: [0, 1, 2, 3, 4, 5],
     allColors: [
         '#1f77b4',
         '#ff7f0e',
