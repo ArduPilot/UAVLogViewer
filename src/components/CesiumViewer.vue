@@ -179,8 +179,6 @@ export default {
             this.corrected_trajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
         }
 
-        let start = [Cartographic.fromDegrees(this.state.current_trajectory[0][0],
-            this.state.current_trajectory[0][1])]
         if (this.state.vehicle !== 'boat') {
             let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.corrected_trajectory)
             when(promise, this.setup2)
@@ -238,7 +236,10 @@ export default {
                         closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
                     }
                     closeButton.innerHTML = '' +
-                        '<button type="button" id="cesium-close-button" class="cesium-button cesium-toolbar-button cesium-close-button" title="Navigation Instructions">' +
+                        '<button type="button" ' +
+                        'id="cesium-close-button" ' +
+                        'class="cesium-button cesium-toolbar-button cesium-close-button" ' +
+                        'title="Navigation Instructions">' +
                         '<svg viewbox="0 0 40 40">' +
                         '<path class="close-x" d="M 10,10 L 30,30 M 30,10 L 10,30" />' +
                         '</svg>' +
@@ -336,7 +337,8 @@ export default {
                     console.log(colors)
                     if (colors.length > 1) {
                         for (let change of colors) {
-                            string = string + ', rgba(' + change[1].red * 150 + ',' + change[1].green * 150 + ',' + change[1].blue * 150 + ', 100) ' + change[0] + '%'
+                            string = string + ', rgba(' + change[1].red * 150 + ',' + change[1].green * 150 + ',' +
+                                change[1].blue * 150 + ', 100) ' + change[0] + '%'
                         }
 
                         string = string + ')'
@@ -374,7 +376,11 @@ export default {
                 onClick (movement) {
                     if (this.mouseIsOnPoint(movement.position)) {
                         this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
-                        this.viewer.clock.currentTime = JulianDate.addSeconds(this.getTimeStart(), (this.lastHoveredTime - this.startTimeMs) / 1000, new JulianDate())
+                        this.viewer.clock.currentTime =
+                            JulianDate.addSeconds(
+                                this.getTimeStart(),
+                                (this.lastHoveredTime - this.startTimeMs) / 1000,
+                                new JulianDate())
                     }
                     this.onLeftUp()
                 },
@@ -461,16 +467,23 @@ export default {
                     }
                     console.log('3')
                     // Create sampled position
-                    let isBoat = false;//this.state.vehicle === 'boat'
+                    let isBoat = this.state.vehicle === 'boat'
                     for (let posIndex in this.points) {
                         let pos = this.points[posIndex]
                         if (isBoat) {
                             position = Cartesian3.fromDegrees(pos[0], pos[1], 0)
                         } else {
-                            position = Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.corrected_trajectory[posIndex].height))
+                            position = Cartesian3.fromDegrees(
+                                pos[0],
+                                pos[1],
+                                Math.max(pos[2] + this.heightOffset, this.corrected_trajectory[posIndex].height)
+                            )
                         }
                         this.positions.push(position)
-                        let time = JulianDate.addSeconds(this.start, (pos[3] - this.startTimeMs) / 1000, new JulianDate())
+                        let time = JulianDate.addSeconds(
+                            this.start,
+                            (pos[3] - this.startTimeMs) / 1000, new JulianDate())
+
                         this.sampledPos.addSample(time, position)
                         // this.clickableTrajectory.add({
                         //     position: position,
@@ -508,8 +521,17 @@ export default {
                                 }
                                 let yaw = Math.atan2(2.0 * (q1 * q4 + q2 * q3), 1.0 - 2.0 * (q3 * q3 + q4 * q4))
                                 // TODO: fix this coordinate system!
-                                let hpRoll = Transforms.headingPitchRollQuaternion(position, new HeadingPitchRoll(-yaw, -pitch, roll - 3.14), Ellipsoid.WGS84, fixedFrameTransform)
-                                let time = JulianDate.addSeconds(this.start, (atti - this.startTimeMs) / 1000, new JulianDate())
+                                let hpRoll = Transforms.headingPitchRollQuaternion(
+                                    position,
+                                    new HeadingPitchRoll(-yaw, -pitch, roll - 3.14),
+                                    Ellipsoid.WGS84,
+                                    fixedFrameTransform
+                                )
+
+                                let time = JulianDate.addSeconds(
+                                    this.start, (atti - this.startTimeMs) / 1000,
+                                    new JulianDate())
+
                                 sampledOrientation.addSample(time, hpRoll)
                             }
                         }
@@ -518,8 +540,17 @@ export default {
                         for (let atti in this.state.time_attitude) {
                             if (this.state.time_attitude.hasOwnProperty(atti)) {
                                 let att = this.state.time_attitude[atti]
-                                let hpRoll = Transforms.headingPitchRollQuaternion(position, new HeadingPitchRoll(att[2], att[1], att[0]), Ellipsoid.WGS84, fixedFrameTransform)
-                                let time = JulianDate.addSeconds(this.start, (atti - this.startTimeMs) / 1000, new JulianDate())
+                                let hpRoll = Transforms.headingPitchRollQuaternion(
+                                    position,
+                                    new HeadingPitchRoll(att[2], att[1], att[0]),
+                                    Ellipsoid.WGS84,
+                                    fixedFrameTransform
+                                )
+
+                                let time = JulianDate.addSeconds(
+                                    this.start, (atti - this.startTimeMs) / 1000,
+                                    new JulianDate()
+                                )
                                 sampledOrientation.addSample(time, hpRoll)
                             }
                         }
@@ -562,7 +593,11 @@ export default {
                     }
 
                     for (let pos of this.points.slice(first, last)) {
-                        this.position = Cartesian3.fromDegrees(pos[0], pos[1], Math.max(pos[2] + this.heightOffset, this.heightOffset))
+                        this.position = Cartesian3.fromDegrees(
+                            pos[0],
+                            pos[1],
+                            Math.max(pos[2] + this.heightOffset, this.heightOffset)
+                        )
                         trajectory.push(this.position)
                         let color = this.getModeColor(pos[3])
 
@@ -700,8 +735,12 @@ export default {
         timeRange (range) {
             try {
                 if (range[1] > range[0]) {
-                    if (Math.abs(this.msToCesiumTime(range[0]).secondsOfDay - this.viewer.timeline._startJulian.secondsOfDay) > 1 ||
-                            Math.abs(this.msToCesiumTime(range[1]).secondsOfDay - this.viewer.timeline._endJulian.secondsOfDay) > 1) {
+                    let cesiumStart = this.msToCesiumTime(range[0]).secondsOfDay
+                    let plotlyStart = this.viewer.timeline._startJulian.secondsOfDay
+                    let cesiumEnd = this.msToCesiumTime(range[1]).secondsOfDay
+                    let plotlyEnd = this.viewer.timeline._endJulian.secondsOfDay
+                    // If range has changed more than 1 second
+                    if (Math.abs(cesiumStart - plotlyStart) > 1 || Math.abs(cesiumEnd - plotlyEnd) > 1) {
                         this.viewer.timeline.zoomTo(this.msToCesiumTime(range[0]), this.msToCesiumTime(range[1]))
                     }
                 }

@@ -4,7 +4,8 @@
         <div id="paneContent">
             <input id="filterbox" placeholder="Filter" v-model="filter">
             <ul id="params">
-                <li v-for="param in filteredData"> {{ param }} : <span style="float: right;">{{state.params.values[param]}}</span>
+                <li v-for="param in filteredData" v-bind:key="param">
+                    {{ param }} : <span style="float: right;">{{state.params.values[param]}}</span>
                 </li>
             </ul>
         </div>
@@ -59,6 +60,7 @@ export default {
     },
     computed: {
         filteredData () {
+            // eslint-disable-next-line
             let potato = this.forceRecompute
             return Object.keys(this.state.params.values).filter(key => key.indexOf(this.filter.toUpperCase()) !== -1)
         }

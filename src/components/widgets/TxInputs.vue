@@ -19,28 +19,6 @@
 import {store} from '../Globals.js'
 import {baseWidget} from './baseWidget'
 
-class Interpolator {
-    // This class holds all joystick positions and returns the interpolated position at an arbitraty time.
-    constructor (x, y) {
-        this.x = x
-        this.y = y
-        this.currentIndex = 0
-    }
-
-    at (point) {
-        /*
-            Returns x at closest y. TODO: interpolate properly.
-            */
-        while (this.x[this.currentIndex] < point && this.currentIndex < this.x.length - 2) {
-            this.currentIndex += 1
-        }
-        while (this.x[this.currentIndex] > point && this.currentIndex > 1) {
-            this.currentIndex -= 1
-        }
-        return this.y[Math.max(0, Math.min(this.currentIndex, this.y.length - 1))]
-    }
-}
-
 export default {
     data () {
         return {

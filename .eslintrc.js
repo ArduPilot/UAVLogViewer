@@ -22,12 +22,20 @@ module.exports = {
   // add your custom rules here
   rules: {
     // allow async-await
+   "max-len": ["error", 120, 2, {
+      ignoreUrls: true,
+          ignoreComments: false,
+          ignoreRegExpLiterals: true,
+          ignoreStrings: false,
+          ignoreTemplateLiterals: false,
+        }],
     'generator-star-spacing': 'off',
     // allow debugger during development
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     "indent": ["error", 4],
-      "camelcase": [2, {"properties": "never"}],
-
-
+    "camelcase": [2, {"properties": "never"}],
+    'vue/no-parsing-error': [2, {
+          "invalid-first-character-of-tag-name": false
+      }]
   }
 }

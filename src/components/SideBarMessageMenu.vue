@@ -31,8 +31,10 @@
                 </li>
                 <b-collapse :id="'type' + key" v-bind:key="key+'1'">
                     <template v-for="item in message.complexFields">
-                        <li @click="toggle(key, item.name)" class="field"
-                            v-bind:key="key+'.'+item.name" v-if="isPlottable(key,item.name) && item.name.indexOf(filter) !== -1">
+                        <li @click="toggle(key, item.name)"
+                            class="field"
+                            v-bind:key="key+'.'+item.name"
+                            v-if="isPlottable(key,item.name) && item.name.indexOf(filter) !== -1">
                             <a> {{item.name}}
                                 <span v-if="item.units!=='?' && item.units!==''"> ({{item.units}})</span>
                             </a>
@@ -230,7 +232,7 @@ export default {
                 current[lastField] = value
             }
             return newDict
-        },
+        }
     }
 }
 </script>

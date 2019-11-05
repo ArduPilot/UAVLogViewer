@@ -3,7 +3,7 @@
          v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
         <div id="paneContent">
             <ul>
-                <li v-for="msg in filteredData"> {{ msg[2] }}</li>
+                <li v-bind:key="msg[0]+msg[1]" v-for="msg in filteredData"> {{ msg[2] }}</li>
             </ul>
         </div>
     </div>
@@ -60,6 +60,8 @@ export default {
     },
     computed: {
         filteredData () {
+            // this seems necessary to force a recomputation
+            // eslint-disable-next-line
             let potato = this.forceRecompute
             return this.state.textMessages.filter(key => (key[0] < this.cursorTime))
         }

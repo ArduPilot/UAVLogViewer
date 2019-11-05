@@ -171,7 +171,11 @@ export default {
                             startAltitude = pos.relative_alt
                         }
                         trajectory.push([pos.lon, pos.lat, pos.relative_alt - startAltitude, pos.time_boot_ms])
-                        this.state.time_trajectory[pos.time_boot_ms] = [pos.lon, pos.lat, pos.relative_alt, pos.time_boot_ms]
+                        this.state.time_trajectory[pos.time_boot_ms] = [
+                            pos.lon,
+                            pos.lat,
+                            pos.relative_alt,
+                            pos.time_boot_ms]
                     }
                 }
             } else if ('AHR2' in messages) {
@@ -182,7 +186,11 @@ export default {
                             startAltitude = pos.Alt
                         }
                         trajectory.push([pos.Lng, pos.Lat, pos.Alt - startAltitude, pos.time_boot_ms])
-                        this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, (pos.Alt - startAltitude) / 1000, pos.time_boot_ms]
+                        this.state.time_trajectory[pos.time_boot_ms] = [
+                            pos.Lng,
+                            pos.Lat,
+                            (pos.Alt - startAltitude) / 1000,
+                            pos.time_boot_ms]
                     }
                 }
             } else if ('GPS' in messages) {
@@ -193,7 +201,11 @@ export default {
                             startAltitude = pos.Alt
                         }
                         trajectory.push([pos.Lng, pos.Lat, pos.Alt - startAltitude, pos.time_boot_ms])
-                        this.state.time_trajectory[pos.time_boot_ms] = [pos.Lng, pos.Lat, pos.Alt - startAltitude, pos.time_boot_ms]
+                        this.state.time_trajectory[pos.time_boot_ms] = [
+                            pos.Lng,
+                            pos.Lat,
+                            pos.Alt - startAltitude,
+                            pos.time_boot_ms]
                     }
                 }
             }
@@ -344,7 +356,8 @@ export default {
             return (this.state.flight_mode_changes !== undefined &&
                     this.state.current_trajectory !== undefined &&
                     this.state.current_trajectory.length > 0 &&
-                    (Object.keys(this.state.time_attitude).length > 0 || Object.keys(this.state.time_attitudeQ).length > 0))
+                    (Object.keys(this.state.time_attitude).length > 0 ||
+                        Object.keys(this.state.time_attitudeQ).length > 0))
         },
         setOfModes () {
             let set = []

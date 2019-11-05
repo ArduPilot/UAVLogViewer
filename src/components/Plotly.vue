@@ -82,7 +82,7 @@ let plotOptions = {
     }
 
 }
-/* eslint max-len: ["error", { "ignoreStrings": false }] */
+
 Plotly.editable = true
 Plotly.edits = {legendPosition: true}
 export default {
@@ -234,6 +234,7 @@ export default {
             for (let i of this.state.allAxis) {
                 let taken = false
                 for (let field of this.state.fields) {
+                    // eslint-disable-next-line
                     if (field.axis == i) {
                         taken = true
                     }
@@ -249,6 +250,7 @@ export default {
             for (let i of this.state.allColors) {
                 let taken = false
                 for (let field of this.state.fields) {
+                    // eslint-disable-next-line
                     if (field.color == i) {
                         taken = true
                     }
@@ -393,7 +395,6 @@ export default {
                         y.push(message[msgfield])
                     }
                 } else {
-                    console.log("ding!")
                     for (let message of this.state.messages[msgtype]) {
                         x.push(message['time_boot_ms'])
                         y.push(field.func(message[msgfield]))
@@ -421,7 +422,8 @@ export default {
                     }
                     plotOptions[axisname].tickfont.color = field.color
                     if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
-                        plotOptions[axisname].title.text += ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
+                        plotOptions[axisname].title.text +=
+                            ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
                     }
                 }
             }
@@ -468,7 +470,8 @@ export default {
                 let rect = bglayer.childNodes[0]
                 let x = parseInt(rect.getAttribute('x'))
                 let width = parseInt(rect.getAttribute('width'))
-                let percTime = (time - this.gd.layout.xaxis.range[0]) / (this.gd.layout.xaxis.range[1] - this.gd.layout.xaxis.range[0])
+                let percTime = (time - this.gd.layout.xaxis.range[0]) /
+                    (this.gd.layout.xaxis.range[1] - this.gd.layout.xaxis.range[0])
                 let newx = x + width * percTime
                 this.cursor.setAttribute('x1', newx)
                 this.cursor.setAttribute('x2', newx)

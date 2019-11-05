@@ -12,12 +12,14 @@
                         v-if="newNode.length === undefined"
                         :label="nodeName"
                         :nodes="newNode"
-                        :level="level+1">
+                        :level="level+1"
+                        :key="newNode+nodeName">
                     </tree-menu>
                     <li v-if="newNode.length !== undefined"
                         class="type"
                         v-bind:key="nodeName">
-                        <a :style="{'margin-left': ''+(level+3)*10+'px'}"  @click="openPreset(newNode)" class="section">{{nodeName}}
+                        <a :style="{'margin-left': ''+(level+3)*10+'px'}"  @click="openPreset(newNode)" class="section">
+                            {{nodeName}}
                         </a>
 
                     </li>
@@ -31,7 +33,7 @@
 
 <script>
 import {store} from '../Globals.js'
-import TreeMenu from './TreeMenu.vue'
+
 export default {
     props: {
         label: String,
