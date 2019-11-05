@@ -81,7 +81,7 @@ export default {
         border: none;
         line-height: 28px;
         border-bottom: 1px solid #23282e;
-        margin-left: 0px;
+        margin-left: 0;
     }
 
     .nav-side-menu ul .sub-menu li:hover,
@@ -100,7 +100,7 @@ export default {
     }
 
     .nav-side-menu li {
-        padding-left: 0px;
+        padding-left: 0;
         border-left: 3px solid #2e353d;
         border-bottom: 1px solid #23282e;
     }
@@ -122,7 +122,6 @@ export default {
         -webkit-transition: all 1s ease;
         -moz-transition: all 1s ease;
         -o-transition: all 1s ease;
-        -ms-transition: all 1s ease;
         transition: all 1s ease;
     }
 
@@ -172,7 +171,6 @@ export default {
         -webkit-transition: all 1s ease;
         -moz-transition: all 1s ease;
         -o-transition: all 1s ease;
-        -ms-transition: all 1s ease;
         transition: all 1s ease;
     }
 

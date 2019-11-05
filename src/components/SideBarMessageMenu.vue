@@ -135,12 +135,8 @@ export default {
                 // for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
                 for (let field of messageTypes[messageType].fields) {
                     if (this.state.plot_on) {
-                        if (this.$route.query.plots.indexOf(messageType + '.' + field) !== -1) {
-                            this.checkboxes[messageType].fields[field] = true
-                            // this.checkboxes[messageType].indeterminate = true
-                        } else {
-                            this.checkboxes[messageType].fields[field] = false
-                        }
+                        this.checkboxes[messageType].fields[field] =
+                            this.$route.query.plots.indexOf(messageType + '.' + field) !== -1
                     } else {
                         this.checkboxes[messageType].fields[field] = false
                     }
@@ -290,10 +286,5 @@ export default {
 
     i.remove-icon {
         float: right;
-    }
-</style>
-<style>
-    .custom-control-label {
-        margin-bottom: 0;
     }
 </style>
