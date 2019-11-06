@@ -11,4 +11,13 @@ export default {
 </script>
 
 <style>
+
+@import url('https://fonts.googleapis.com/css?family=Montserrat&display=swap');
+
+ #app {
+    font-family: 'Raleway', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+ }
+
 </style>
