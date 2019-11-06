@@ -1,17 +1,24 @@
 <template>
+<!-- HEADER -->
     <div class="nav-side-menu col-sm-4 col-md-3 col-lg-2">
-        <div class="brand">TLog Viewer</div>
+        <h1 class="brand"> <b>TLog</b>viewer<i class="fas fa-plane"></i></h1>
+        <!-- TABHOLDER -->
         <ul>
             <div class="tabholder">
-                <a :class="selected==='home' ? 'selected' : ''" @click="selected='home'">HOME</a>
-                <a :class="selected==='plot' ? 'selected' : ''" @click="selected='plot'"
-                   v-if="state.processDone">PLOT</a>
-                <a :class="selected==='3d' ? 'selected' : ''" @click="selected='3d'"
-                   v-if="state.map_available && state.show_map">3D</a>
-                <a :class="selected==='3d' ? 'selected' : ''" @click="state.show_map=trueselected='3d'"
+                <!-- Home -->
+                <a :class="selected === 'home' ? 'selected' : ''" @click="selected='home'">
+                <i class="fas fa-home"></i> Home </a>
+                <!-- Plot -->
+                <a :class="selected === 'plot' ? 'selected' : ''" @click="selected='plot'"
+                   v-if="state.processDone"> <i class="fas fa-pen"></i> Plot </a>
+                <!-- 3D -->
+                <a :class="selected ==='3d' ? 'selected' : ''" @click="selected='3d'"
+                   v-if="state.map_available && state.show_map">  <i class="fas fa-cube"></i> 3D </a>
+                <a :class="selected ==='3d' ? 'selected' : ''" @click="state.show_map=trueselected='3d'"
                    v-if="state.map_available && !state.show_map">3D</a>
             </div>
         </ul>
+        <!-- TOGGLE MENU -->
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <div class="menu-list">
             <b-collapse class="menu-content collapse out" id="menucontent" visible>
@@ -32,28 +39,33 @@
                     <!--<a class="section">-->
                     <!--<i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>-->
                     <!--</li>-->
+
+                    <!-- CAMERA -->
                     <div>
-                        <label>Camera</label>
+                        <label><i class="fas fa-camera"></i> Camera</label>
                         <select class="cesium-button" v-model="state.cameraType">
                             <option value="free">Free</option>
                             <option value="follow">Follow</option>
                         </select>
                     </div>
+                    <!-- CHECKBOXES -->
                     <div>
-                        <label><input type="checkbox" v-model="state.showWaypoints">Waypoints</label>
-                        <label><input type="checkbox" v-model="state.showTrajectory">Trajectory</label>
+                        <label><input type="checkbox" v-model="state.showWaypoints"> Waypoints</label>
+                        <label><input type="checkbox" v-model="state.showTrajectory"> Trajectory</label>
                     </div>
                     <div v-if="state.processDone">
-                        <label v-if="state.params"><input type="checkbox" v-model="state.show_params">Show
+                        <label v-if="state.params"><input type="checkbox" v-model="state.show_params"> Show
                             Parameters</label>
-                        <label><input type="checkbox" v-model="state.show_radio">Show Radio Sticks</label>
-                        <label v-if="state.textMessages"><input type="checkbox" v-model="state.show_messages">Show
+                        <label><input type="checkbox" v-model="state.show_radio"> Show Radio Sticks</label>
+                        <label v-if="state.textMessages"><input type="checkbox" v-model="state.show_messages"> Show
                             Messages</label>
                     </div>
+                    <!-- WINGSPAN -->
                     <div>
-                        <label>Wingspan (m)
-                            <input max="15" min="0.1" step="0.01" type="range" v-model="state.modelScale">
-                            <input size="5" type="text" v-model="state.modelScale">
+                        <label><i class="fa fa-fighter-jet"></i> Wingspan (m)
+                            <input max="15" min="0.1" step="0.01" type="range"
+                            class="custom-range" v-model="state.modelScale">
+                            <input class="wingspan-text" size="5" type="text" v-model="state.modelScale">
                         </label>
                     </div>
                 </div>
@@ -62,6 +74,7 @@
     </div>
 </template>
 <script>
+/* eslint-disable */
 import Dropzone from './SideBarFileManager'
 import MessageMenu from './SideBarMessageMenu'
 import {store} from './Globals.js'
@@ -79,31 +92,23 @@ export default {
 }
 </script>
 <style>
+
+/* NAV SIDE MENU */
+
     .nav-side-menu {
         overflow-x: hidden;
-        font-family: verdana;
-        font-size: 14px;
-        font-weight: 200;
-        background-color: #2e353d;
+        padding: 0;
+        background-color: #2e2e2e;
         position: fixed;
         top: 0px;
-        /*width: 300px;*/
         height: 100%;
-        color: #e1ffff;
+        color: #fffffff1;
     }
-
-    .nav-side-menu .brand {
-        background-color: #23282e;
-        line-height: 50px;
-        display: block;
-        text-align: center;
-        font-size: 17px;
-        font-weight: bold;
-    }
-
     .nav-side-menu .toggle-btn {
         display: none;
     }
+
+    /* UL/LI */
 
     .nav-side-menu ul,
     .nav-side-menu li {
@@ -112,24 +117,11 @@ export default {
         margin: 0px;
         line-height: 35px;
         cursor: pointer;
-        /*
-          .collapsed{
-             .arrow:before{
-                       font-family: FontAwesome;
-                       content: "\f053";
-                       display: inline-block;
-                       padding-left:10px;
-                       padding-right: 10px;
-                       vertical-align: middle;
-                       float:right;
-                  }
-           }
-      */
     }
 
     .nav-side-menu ul .sub-menu li.active a,
     .nav-side-menu li .sub-menu li.active a {
-        color: #d19b3d;
+        color: #cc8812;
     }
 
     .nav-side-menu ul .sub-menu li,
@@ -148,7 +140,6 @@ export default {
 
     .nav-side-menu ul .sub-menu li:before,
     .nav-side-menu li .sub-menu li:before {
-        font-family: FontAwesome;
         content: "\f105";
         display: inline-block;
         padding-left: 10px;
@@ -175,13 +166,96 @@ export default {
 
     .nav-side-menu li:hover {
         border-left: 3px solid #d19b3d;
-        background-color: #4f5b69;
+        background-color: #555d66;
         -webkit-transition: all 1s ease;
         -moz-transition: all 1s ease;
         -o-transition: all 1s ease;
         -ms-transition: all 1s ease;
         transition: all 1s ease;
     }
+
+    i {
+        margin: 10px;
+    }
+
+    /* SCROLLBAR */
+
+    ::-webkit-scrollbar {
+        width: 12px;
+        background-color: rgba(0, 0, 0, 0);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-radius: 5px;
+        box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+        -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+        -moz-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+        background-color: #864920;
+    }
+
+    .custom-control-inline {
+        margin-right: 0;
+    }
+
+    /* BRAND */
+
+    .fa-plane {
+        margin: 8px;
+        font-size: 18px;
+    }
+         
+    .brand {
+        text-align: center;
+        font-size: 22px;
+        padding-left: 20px;
+        line-height: 50px;
+        background-color: #585858;
+        color: #eeeeee;
+        display: block;
+    }
+
+    /* TABHOLDER */
+
+    .tabholder {
+        display: flex;
+        flex-flow: row wrap;
+        justify-content: space-evenly;
+        overflow: hidden;
+        padding-bottom: 10px;
+    }
+
+    .tabholder a {
+        float: left;
+        padding: 2px 15px 2px 5px;
+    }
+
+    a.selected {
+        background-color: #727171;
+    }
+
+    .tabholder a:hover {
+        background-color: #686868;
+        -webkit-transition: all 1s ease;
+        -moz-transition: all 1s ease;
+        -o-transition: all 1s ease;
+        transition: all 1s ease;
+    }
+
+    /* LABELS */
+
+    label {
+        display: block;
+        padding: 6px;
+    }
+
+    .wingspan-text {
+        width: 20%;
+        border: none;
+        border-radius: 3px;
+        background-color: rgb(175, 177, 175);
+    }
+
+    /* MEDIA QUERIES */
 
     @media (max-width: 767px) {
         .nav-side-menu {
@@ -201,21 +275,14 @@ export default {
             top: 0px;
             z-index: 10 !important;
             padding: 3px;
-            background-color: #ffffff;
-            color: #000;
+            background-color: #ffffffde;
+            color: rgb(58, 58, 58);
             height: auto;
             width: 40px;
             text-align: center;
-            -webkit-border-radius: 3px;
-            -moz-border-radius: 3px;
-            border-radius: 3px;
-        }
-
-        .brand {
-            text-align: left !important;
-            font-size: 22px;
-            padding-left: 20px;
-            line-height: 50px !important;
+            -webkit-border-radius: 2px;
+            -moz-border-radius: 2px;
+            border-radius: 2px;
         }
 
         main {
@@ -235,60 +302,50 @@ export default {
         }
     }
 
-    i {
-        margin: 10px;
+    /* MEDIA QUERIES */
+
+    @media (max-width: 767px) {
+        .nav-side-menu {
+            position: fixed;
+            width: 100%;
+            margin-bottom: 10px;
+            height: auto;
+            max-height: 100%;
+            z-index: 1002;
+        }
+
+        .nav-side-menu .toggle-btn {
+            display: block;
+            cursor: pointer;
+            position: absolute;
+            right: 10px;
+            top: 0px;
+            z-index: 10 !important;
+            padding: 3px;
+            background-color: #ffffffde;
+            color: rgb(58, 58, 58);
+            height: auto;
+            width: 40px;
+            text-align: center;
+            -webkit-border-radius: 2px;
+            -moz-border-radius: 2px;
+            border-radius: 2px;
+        }
+
+        main {
+            height: 90%;
+            margin-top: 50px;
+        }
     }
 
-    ::-webkit-scrollbar {
-        width: 12px;
-        background-color: rgba(0, 0, 0, 0);
-    }
+    @media (min-width: 767px) {
+        .nav-side-menu .menu-list .menu-content {
+            display: block;
+            height: 100%;
+        }
 
-    ::-webkit-scrollbar-thumb {
-        border-radius: 5px;
-        box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-        -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-        -moz-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-        background-color: #1c437f;
-    }
-
-    .custom-control-inline {
-        margin-right: 0;
-    }
-
-    .tabholder {
-        display: flex;
-        justify-content: space-between;
-        padding-left: 20px !important;
-        padding-right: 20px !important;
-        border-bottom: 1px solid white;
-    }
-
-    .tabholder a {
-        border-top: 1px solid white;
-        border-left: 1px solid white;
-        border-right: 1px solid white;
-        border-radius: 3px;
-        padding-left: 5px;
-        padding-right: 5px;
-        font-weight: bold;
-        background-color: #2E353D;
-    }
-
-    a.selected {
-        margin-bottom: -1px;
-    }
-
-    .tabholder a:hover {
-        background-color: #4f5b69;
-        -webkit-transition: all 1s ease;
-        -moz-transition: all 1s ease;
-        -o-transition: all 1s ease;
-        -ms-transition: all 1s ease;
-        transition: all 1s ease;
-    }
-
-    label {
-        display: block;
+        main {
+            height: 100%;
+        }
     }
 </style>
