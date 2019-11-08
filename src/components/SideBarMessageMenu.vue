@@ -34,7 +34,7 @@
                         <li @click="toggle(key, item.name)"
                             class="field"
                             v-bind:key="key+'.'+item.name"
-                            v-if="isPlottable(key,item.name) && item.name.indexOf(filter) !== -1">
+                            v-if="isPlottable(key,item.name) && item.name.toLowerCase().indexOf(filter.toLowerCase()) !== -1">
                             <a> {{item.name}}
                                 <span v-if="item.units!=='?' && item.units!==''"> ({{item.units}})</span>
                             </a>
@@ -184,7 +184,7 @@ export default {
             let filtered = {}
             for (let key of Object.keys(this.messageTypes)) {
                 if (this.hiddenTypes.indexOf(key) === -1) {
-                    if (this.messageTypes[key].fields.filter(field => field.indexOf(this.filter) !== -1).length > 0) {
+                    if (this.messageTypes[key].fields.filter(field => field.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1).length > 0) {
                         filtered[key] = this.messageTypes[key]
                         // console.log('type' + key, document.getElementById('type' + key))
                         if (document.getElementById('type' + key) &&
