@@ -30,19 +30,27 @@ let plotOptions = {
             color: '#1f77b4'
         },
         tickfont: {
-            color: '#1f77b4'
+            color: '#1f77b4', size: 12
         },
         anchor: 'free',
-        position: 0.05
+        position: 0.03,
+        autotick: true,
+        showline: true,
+        ticklen: 3,
+        tickangle: 45
     },
     yaxis2: {
         // title: 'yaxis2 title',
         titlefont: {color: '#ff7f0e'},
-        tickfont: {color: '#ff7f0e'},
+        tickfont: {color: '#ff7f0e', size: 12},
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
-        position: 0.1
+        position: 0.07,
+        autotick: true,
+        showline: true,
+        ticklen: 3,
+        tickangle: 45
     },
     yaxis3: {
         // title: 'yaxis4 title',
@@ -51,7 +59,11 @@ let plotOptions = {
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
-        position: 0.15
+        position: 0.11,
+        autotick: true,
+        showline: true,
+        ticklen: 3,
+        tickangle: 45
     },
     yaxis4: {
         // title: 'yaxis5 title',
@@ -60,7 +72,11 @@ let plotOptions = {
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
-        position: 0.9
+        position: 0.92,
+        autotick: true,
+        showline: true,
+        ticklen: 3,
+        tickangle: 45
     },
     yaxis5: {
         // title: 'yaxis5 title',
@@ -69,7 +85,11 @@ let plotOptions = {
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
-        position: 0.95
+        position: 0.96,
+        autotick: true,
+        showline: true,
+        ticklen: 3,
+        tickangle: 45
     },
     yaxis6: {
         // title: 'yaxis5 title',
@@ -78,7 +98,11 @@ let plotOptions = {
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
-        position: 1.0
+        position: 1.0,
+        autotick: true,
+        showline: true,
+        ticklen: 3,
+        tickangle: 45
     }
 
 }
@@ -295,7 +319,7 @@ export default {
                     Plotly.relayout(this.gd, {
                         xaxis: {
                             range: this.timeRange,
-                            domain: [0.15, 0.85],
+                            domain: this.calculateXAxisDomain(),
                             rangeslider: {},
                             title: 'time_boot (ms)'
                         }
@@ -345,17 +369,17 @@ export default {
             let end = 0.98
             for (let field of this.state.fields) {
                 if (field.axis === 0) {
-                    start = Math.max(start, 0.06)
+                    start = Math.max(start, 0.03)
                 } else if (field.axis === 1) {
-                    start = Math.max(start, 0.11)
+                    start = Math.max(start, 0.07)
                 } else if (field.axis === 2) {
-                    start = Math.max(start, 0.16)
+                    start = Math.max(start, 0.11)
                 } else if (field.axis === 5) {
-                    end = Math.min(end, 0.94)
+                    end = Math.min(end, 0.96)
                 } else if (field.axis === 4) {
-                    end = Math.min(end, 0.89)
+                    end = Math.min(end, 0.92)
                 } else if (field.axis === 3) {
-                    end = Math.min(end, 0.84)
+                    end = Math.min(end, 0.88)
                 }
             }
             return [start, end]
@@ -554,7 +578,7 @@ export default {
                         xaxis: {
                             title: 'Time since boot',
                             range: range,
-                            domain: [0.15, 0.85],
+                            domain: [0.15, this.calculateXAxisDomain()],
                             rangeslider: {},
                             tickformat: timeformat
                         }
