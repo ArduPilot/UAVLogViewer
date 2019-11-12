@@ -917,8 +917,38 @@ export default {
 </style>
 
 <style>
-    .cesium-close-button svg {
+
+/* TOOLBAR BUTTONS */
+
+    .cesium-toolbar-button {
+        background-color: rgb(61, 58, 56);
+        border-radius: 3px;
+    }
+
+    .cesium-toolbar-button:hover {
+        background-color: rgb(102, 90, 79);
+        color: #fff;
+        box-shadow: none;
+        border: #5b5b5b;
+        -webkit-transition: all 1s ease;
+        -moz-transition: all 1s ease;
+        -o-transition: all 1s ease;
+        transition: all 1s ease;
+    }
+
+    /* HELP BUTTON */
+
+    .cesium-navigation-help-button svg {
+        width: 27px;
+        padding-left: 3px;
+        color: #fff;
+    }
+
+    /* CLOSE BUTTON */
+
+     .cesium-close-button svg {
         stroke: white;
-        stroke-width: 5;
+        stroke-width: 2px;
+        width: 25px;
     }
 </style>
