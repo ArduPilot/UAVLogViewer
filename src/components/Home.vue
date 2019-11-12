@@ -495,16 +495,15 @@ export default {
     /* INFO PANEL */
 
     .infoPanel {
-        background: rgba(42, 42, 42, 0.8);
-        margin: 5px;
-        border-radius: 10px;
-        font-size: 100%;
+        background: rgba(41, 41, 41, 0.678);
+        padding: 5px;
+        border-collapse: separate;
+        margin: 8px;
+        border-radius: 5px;
         font-weight: bold;
         float: left;
-    }
-
-    .infoPanel > tbody {
-        padding: 15px;
+        box-shadow: inset 0 0 10px rgb(0, 0, 0);
+        letter-spacing: 1px;
     }
 
     /* ATOM SPINNER */
