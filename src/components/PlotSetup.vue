@@ -82,22 +82,5 @@ export default {
         direction: rtl;
         display: block;
     }
-
-/* MEDIA QUERIES */
-
-@media (max-width: 767px) {
-
-        main {
-            height: 90%;
-            margin-top: 50px;
-        }
-    }
-
-    @media (min-width: 767px) {
-
-        main {
-            height: 100%;
-        }
-    }
-
+    
 </style>
