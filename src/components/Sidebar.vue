@@ -102,7 +102,7 @@ export default {
         position: fixed;
         top: 0px;
         height: 100%;
-        color: #fffffff1;
+        color: #ffff;
     }
     .nav-side-menu .toggle-btn {
         display: none;
@@ -257,7 +257,7 @@ export default {
 
     /* MEDIA QUERIES */
 
-    @media (max-width: 767px) {
+    @media only screen and (max-width: 767px) {
         .nav-side-menu {
             position: fixed;
             width: 100%;
@@ -302,50 +302,9 @@ export default {
         }
     }
 
-    /* MEDIA QUERIES */
-
-    @media (max-width: 767px) {
+    @media only screen and (min-width: 2000px) {
         .nav-side-menu {
-            position: fixed;
-            width: 100%;
-            margin-bottom: 10px;
-            height: auto;
-            max-height: 100%;
-            z-index: 1002;
-        }
-
-        .nav-side-menu .toggle-btn {
-            display: block;
-            cursor: pointer;
-            position: absolute;
-            right: 10px;
-            top: 0px;
-            z-index: 10 !important;
-            padding: 3px;
-            background-color: #ffffffde;
-            color: rgb(58, 58, 58);
-            height: auto;
-            width: 40px;
-            text-align: center;
-            -webkit-border-radius: 2px;
-            -moz-border-radius: 2px;
-            border-radius: 2px;
-        }
-
-        main {
-            height: 90%;
-            margin-top: 50px;
-        }
-    }
-
-    @media (min-width: 767px) {
-        .nav-side-menu .menu-list .menu-content {
-            display: block;
-            height: 100%;
-        }
-
-        main {
-            height: 100%;
-        }
+        max-width: 300px;  
+        }      
     }
 </style>
