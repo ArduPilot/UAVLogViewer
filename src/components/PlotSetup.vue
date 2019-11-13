@@ -82,5 +82,5 @@ export default {
         direction: rtl;
         display: block;
     }
-    
+
 </style>

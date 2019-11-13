@@ -226,7 +226,7 @@ export default {
 
     .tabholder a {
         float: left;
-        padding: 2px 15px 2px 5px;
+        padding: 2px 10px 2px 5px;
     }
 
     a.selected {
@@ -257,7 +257,9 @@ export default {
 
     /* MEDIA QUERIES */
 
-    @media only screen and (max-width: 767px) {
+    /* MAX */
+    
+    @media only screen and (max-width: 768px) {
         .nav-side-menu {
             position: fixed;
             width: 100%;
@@ -285,11 +287,21 @@ export default {
             border-radius: 2px;
         }
 
-        main {
-            height: 90%;
-            margin-top: 50px;
+          main {
+            margin-top: 110px;
+        }
+
+        .col-sm-4 {
+            max-width: 100%;
+        }
+
+        .col-lg-10 {
+            max-width: 100%;
+            height: 85%;
         }
     }
+    
+    /* MIN */
 
     @media (min-width: 767px) {
         .nav-side-menu .menu-list .menu-content {
@@ -302,9 +314,23 @@ export default {
         }
     }
 
+    @media only screen and (min-width: 996px) {
+        .nav-side-menu {
+            max-width: 20%;
+        }
+
+        .col-lg-10 {
+            max-width: 80%;
+        }
+    }
+
     @media only screen and (min-width: 2000px) {
         .nav-side-menu {
-        max-width: 300px;  
-        }      
+        max-width: 11%;  
+        }
+
+        .col-lg-10 {
+            max-width: 89.2%;
+        }
     }
 </style>
