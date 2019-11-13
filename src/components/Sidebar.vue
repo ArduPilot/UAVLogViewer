@@ -1,6 +1,6 @@
 <template>
 <!-- HEADER -->
-    <div class="nav-side-menu col-sm-4 col-md-3 col-lg-2">
+    <div class="nav-side-menu col-sm-4 col-md-3 col-lg-2" :class="mode" @toggle="toggle">
         <h1 class="brand"> <b>TLog</b>viewer<i class="fas fa-plane"></i></h1>
         <!-- TABHOLDER -->
         <ul>
@@ -71,6 +71,12 @@
                 </div>
             </b-collapse>
         </div>
+        <button class="light-mode-button"> Dark Mode
+            <input type="checkbox"
+            :checked="(mode === 'dark') ? 'checked' : false"
+            @change="toggle"
+            />
+        </button>
     </div>
 </template>
 <script>
@@ -85,10 +91,20 @@ export default {
     data () {
         return {
             selected: 'home',
-            state: store
+            state: store,
+            mode: 'dark'
         }
     },
-    components: {PlotSetup, MessageMenu, Dropzone}
+    components: {PlotSetup, MessageMenu, Dropzone},
+    methods: {
+        toggle () {
+      if (this.mode === "dark") {
+        this.mode = "light"
+      } else {
+        this.mode = "dark"
+      }
+        }
+    }
 }
 </script>
 <style>
@@ -230,7 +246,8 @@ export default {
     }
 
     a.selected {
-        background-color: #727171;
+        background-color: #818181;
+        color: #fff !important;
     }
 
     .tabholder a:hover {
@@ -255,6 +272,32 @@ export default {
         background-color: rgb(175, 177, 175);
     }
 
+    /* LIGHT MODE */
+
+    .light-mode-button {
+        position: absolute; 
+        left: 0 ; right: 0; bottom: 0; 
+        text-decoration: none;
+        padding: 5px;
+        margin: 0 auto;
+        border: none;
+        background-color: #585858;
+        color: #fff;
+        display: none;
+    }
+
+    .light-mode-button:hover {
+        background-color: #686868;
+    }
+
+    .light {
+        background: rgb(241, 241, 241);
+        color: rgb(230, 103, 0);
+    }
+
+    .dark {
+        background-color: #2e2e2e;
+    }
     /* MEDIA QUERIES */
 
     /* MAX */
@@ -311,6 +354,10 @@ export default {
 
         main {
             height: 100%;
+        }
+
+        .light-mode-button {
+            display: block;
         }
     }
 
