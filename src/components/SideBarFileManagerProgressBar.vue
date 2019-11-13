@@ -25,6 +25,7 @@ export default {
     }
 
     .progress .progress-bar {
+        background-color: rgba(236, 126, 0, 0.733);
         -webkit-transition: none;
         -o-transition: none;
         transition: none;
