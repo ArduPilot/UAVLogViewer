@@ -121,8 +121,14 @@ export default {
             let params = []
             if ('PARM' in messages) {
                 let paramData = messages['PARM']
-                for (let data of paramData) {
-                    params.push([data.time_boot_ms, data.Name, data.Value])
+                for (let i in paramData) {
+                    params.push(
+                        [
+                            paramData.time_boot_ms[i],
+                            paramData.Name[i],
+                            paramData.Value[i]
+                        ]
+                    )
                 }
             }
             if ('PARAM_VALUE' in messages) {
@@ -146,14 +152,14 @@ export default {
             let texts = []
             if ('STATUSTEXT' in messages) {
                 let textMsgs = messages['STATUSTEXT']
-                for (let data of textMsgs) {
-                    texts.push([data.time_boot_ms, data.severity, data.text])
+                for (let i in textMsgs.time_boot_ms) {
+                    texts.push([textMsgs.time_boot_ms[i], textMsgs.severity[i], textMsgs.text[i]])
                 }
             }
             if ('MSG' in messages) {
                 let textMsgs = messages['MSG']
-                for (let data of textMsgs) {
-                    texts.push([data.time_boot_ms, 0, data.Message])
+                for (let i in textMsgs.time_boot_ms) {
+                    texts.push([textMsgs.time_boot_ms[i], 0, textMsgs.Message[i]])
                 }
             }
             return texts
@@ -195,17 +201,24 @@ export default {
                 }
             } else if ('GPS' in messages) {
                 let gpsData = messages['GPS']
-                for (let pos of gpsData) {
-                    if (pos.lat !== 0) {
+                for (let i in gpsData.time_boot_ms) {
+                    if (gpsData.Lat[i] !== 0) {
                         if (startAltitude === null) {
-                            startAltitude = pos.Alt
+                            startAltitude = gpsData.Alt[i]
                         }
-                        trajectory.push([pos.Lng, pos.Lat, pos.Alt - startAltitude, pos.time_boot_ms])
-                        this.state.time_trajectory[pos.time_boot_ms] = [
-                            pos.Lng,
-                            pos.Lat,
-                            pos.Alt - startAltitude,
-                            pos.time_boot_ms]
+                        trajectory.push(
+                            [
+                                gpsData.Lng[i],
+                                gpsData.Lat[i],
+                                gpsData.Alt[i] - startAltitude,
+                                gpsData.time_boot_ms[i]
+                            ]
+                        )
+                        this.state.time_trajectory[gpsData.time_boot_ms[i]] = [
+                            gpsData.Lng[i],
+                            gpsData.Lat[i],
+                            gpsData.Alt[i] - startAltitude,
+                            gpsData.time_boot_ms[i]]
                     }
                 }
             }
@@ -223,18 +236,33 @@ export default {
             let attitudes = {}
             if ('ATTITUDE' in messages) {
                 let attitudeMsgs = messages['ATTITUDE']
-                for (let att of attitudeMsgs) {
-                    attitudes[parseInt(att.time_boot_ms)] = [att.roll, att.pitch, att.yaw]
+                for (let i in attitudeMsgs.time_boot_ms) {
+                    attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
+                        [
+                            attitudeMsgs.roll[i],
+                            attitudeMsgs.pitch[i],
+                            attitudeMsgs.yaw[i]
+                        ]
                 }
             } else if ('AHR2' in messages) {
                 let attitudeMsgs = messages['AHR2']
-                for (let att of attitudeMsgs) {
-                    attitudes[parseInt(att.time_boot_ms)] = [att.Roll, att.Pitch, att.Yaw]
+                for (let i in attitudeMsgs.time_boot_ms) {
+                    attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
+                        [
+                            attitudeMsgs.Roll[i],
+                            attitudeMsgs.Pitch[i],
+                            attitudeMsgs.Yaw[i]
+                        ]
                 }
             } else if ('ATT' in messages) {
                 let attitudeMsgs = messages['ATT']
-                for (let att of attitudeMsgs) {
-                    attitudes[parseInt(att.time_boot_ms)] = [att.Roll, att.Pitch, att.Yaw]
+                for (let i in attitudeMsgs.time_boot_ms) {
+                    attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
+                        [
+                            attitudeMsgs.Roll[i],
+                            attitudeMsgs.Pitch[i],
+                            attitudeMsgs.Yaw[i]
+                        ]
                 }
             }
             return attitudes
@@ -263,20 +291,22 @@ export default {
         extractFlightModes (messages) {
             let modes = []
             if ('HEARTBEAT' in messages) {
-                modes = [[messages['HEARTBEAT'][0].time_boot_ms, messages['HEARTBEAT'][0].asText]]
-                for (let message of messages['HEARTBEAT']) {
-                    if (message.asText === undefined) {
-                        message.asText = 'Unknown'
+                let msgs = messages['HEARTBEAT']
+                modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
+                for (let i in msgs.time_boot_ms) {
+                    if (msgs.asText[i] === undefined) {
+                        msgs.asText[i] = 'Unknown'
                     }
-                    if (message.asText !== modes[modes.length - 1][1]) {
-                        modes.push([message.time_boot_ms, message.asText])
+                    if (msgs.asText[i] !== modes[modes.length - 1][1]) {
+                        modes.push([msgs.time_boot_ms[i], msgs.asText[i]])
                     }
                 }
             } else if ('MODE' in messages) {
-                modes = [[messages['MODE'][0].time_boot_ms, messages['MODE'][0].asText]]
-                for (let message of messages['MODE']) {
-                    if (message.asText !== modes[modes.length - 1][1]) {
-                        modes.push([message.time_boot_ms, message.asText])
+                let msgs = messages['MODE']
+                modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
+                for (let i in msgs.time_boot_ms) {
+                    if (msgs.asText[i] !== modes[modes.length - 1][1]) {
+                        modes.push([msgs.time_boot_ms[i], msgs.asText[i]])
                     }
                 }
             }
@@ -286,15 +316,15 @@ export default {
             let wps = []
             if ('CMD' in messages) {
                 let cmdMsgs = messages['CMD']
-                for (let cmd of cmdMsgs) {
-                    if (cmd.Lat !== 0) {
-                        let lat = cmd.Lat
-                        let lon = cmd.Lng
-                        if (Math.abs(cmd.Lat) > 180) {
+                for (let i in cmdMsgs.time_boot_ms) {
+                    if (cmdMsgs.Lat[i] !== 0) {
+                        let lat = cmdMsgs.Lat[i]
+                        let lon = cmdMsgs.Lng[[i]]
+                        if (Math.abs(lat) > 180) {
                             lat = lat / 10e6
                             lon = lon / 10e6
                         }
-                        wps.push([lon, lat, cmd.Alt])
+                        wps.push([lon, lat, cmdMsgs.Alt[i]])
                     }
                 }
             }
@@ -302,17 +332,18 @@ export default {
         },
         extractVehicleType (messages) {
             if ('MSG' in messages) {
-                for (let msg of messages['MSG']) {
-                    if (msg.Message.indexOf('ArduPlane') > -1) {
+                let msgs = messages['MSG']
+                for (let i in msgs.time_boot_ms) {
+                    if (msgs.Message[i].indexOf('ArduPlane') > -1) {
                         return 'airplane'
                     }
-                    if (msg.Message.indexOf('ArduSub') > -1) {
+                    if (msgs.Message[i].indexOf('ArduSub') > -1) {
                         return 'submarine'
                     }
-                    if (msg.Message.toLowerCase().indexOf('rover') > -1) {
+                    if (msgs.Message[i].toLowerCase().indexOf('rover') > -1) {
                         return 'boat'
                     }
-                    if (msg.Message.indexOf('Tracker') > -1) {
+                    if (msgs.Message[i].indexOf('Tracker') > -1) {
                         return 'tracker'
                     }
                 }

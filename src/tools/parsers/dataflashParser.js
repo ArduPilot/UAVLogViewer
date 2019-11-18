@@ -375,6 +375,7 @@ export class DataflashParser {
         }
         this.messages[name] = parsed
         this.fixDataOnce(name)
+        this.simplifyData(name)
         self.postMessage({percentage: 100})
         self.postMessage({messageType: name, messageList: this.messages[name]})
         return parsed
@@ -448,21 +449,22 @@ export class DataflashParser {
 
     getModeString (cmode) {
         let mavtype
-        for (let msg of this.messages['MSG']) {
+        let msgs = this.messages['MSG']
+        for (let i in msgs.time_boot_ms) {
             // console.log(msg)
-            if (msg.Message.indexOf('ArduPlane') > -1) {
+            if (msgs.Message[i].indexOf('ArduPlane') > -1) {
                 mavtype = mavlink.MAV_TYPE_FIXED_WING
                 return getModeMap(mavtype)[cmode]
-            } else if (msg.Message.indexOf('ArduCopter') > -1) {
+            } else if (msgs.Message[i].indexOf('ArduCopter') > -1) {
                 mavtype = mavlink.MAV_TYPE_QUADROTOR
                 return getModeMap(mavtype)[cmode]
-            } else if (msg.Message.indexOf('ArduSub') > -1) {
+            } else if (msgs.Message[i].indexOf('ArduSub') > -1) {
                 mavtype = mavlink.MAV_TYPE_SUBMARINE
                 return getModeMap(mavtype)[cmode]
-            } else if (msg.Message.indexOf('Rover') > -1) {
+            } else if (msgs.Message[i].indexOf('Rover') > -1) {
                 mavtype = mavlink.MAV_TYPE_GROUND_ROVER
                 return getModeMap(mavtype)[cmode]
-            } else if (msg.Message.indexOf('Tracker') > -1) {
+            } else if (msgs.Message[i].indexOf('Tracker') > -1) {
                 mavtype = mavlink.MAV_TYPE_ANTENNA_TRACKER
                 return getModeMap(mavtype)[cmode]
             }
@@ -509,6 +511,30 @@ export class DataflashParser {
         }
     }
 
+    simplifyData (name) {
+        if (name === 'MODE') {
+            this.messageTypes[name].fields.push('asText')
+        }
+        if (['FMTU'].indexOf(name) === -1) {
+            if (this.messageTypes.hasOwnProperty(name)) {
+                let fields = this.messageTypes[name].fields
+                fields.push('time_boot_ms')
+                let mergedData = {}
+                for (let field of fields) {
+                    mergedData[field] = []
+                }
+                for (let message of this.messages[name]) {
+                    for (let i = 1; i < fields.length; i++) {
+                        let fieldname = fields[i]
+                        mergedData[fieldname].push(message[fieldname])
+                    }
+                }
+                delete this.messages[name]
+                this.messages[name] = mergedData
+            }
+        }
+    }
+
     populateUnits () {
         // console.log(this.messages['FMTU'])
         for (let msg of this.messages['FMTU']) {
@@ -524,10 +550,11 @@ export class DataflashParser {
     }
 
     extractStartTime () {
-        for (let msg of this.messages['GPS']) {
-            if (msg['GWk'] > 1000) { // lousy validation
-                let weeks = msg['GWk']
-                let ms = msg['GMS']
+        let msgs = this.messages['GPS']
+        for (let i in msgs.time_boot_ms) {
+            if (msgs.GWk[i] > 1000) { // lousy validation
+                let weeks = msgs.GWk[i]
+                let ms = msgs.GMS[i]
                 let datum = new Date(1980, 1, 6, 0, 0, 0)
                 datum.setDate(datum.getDate() + weeks * 7)
                 datum.setSeconds(datum.getSeconds() + ms / 1000)

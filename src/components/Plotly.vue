@@ -410,18 +410,14 @@ export default {
                     return
                 }
 
-                let x = []
+                let x = this.state.messages[msgtype].time_boot_ms
                 let y = []
 
                 if (field.func === undefined) {
-                    for (let message of this.state.messages[msgtype]) {
-                        x.push(message['time_boot_ms'])
-                        y.push(message[msgfield])
-                    }
+                    y = this.state.messages[msgtype][msgfield]
                 } else {
-                    for (let message of this.state.messages[msgtype]) {
-                        x.push(message['time_boot_ms'])
-                        y.push(field.func(message[msgfield]))
+                    for (let i in this.state.messages[msgtype].time_boot_ms) {
+                        y.push(field.func(this.state.messages[msgtype][msgfield][i]))
                     }
                 }
 

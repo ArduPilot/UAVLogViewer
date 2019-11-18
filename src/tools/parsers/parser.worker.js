@@ -6,7 +6,11 @@ let dataflashparser = require('./dataflashParser')
 let parser
 
 self.addEventListener('message', function (event) {
-    if (event.data.action === 'parse') {
+    console.log(event)
+    if (event.data === null) {
+        console.log('got bad file message!')
+    }
+    else if (event.data.action === 'parse') {
         if (event.data.isTlog) {
             parser = new mavparser.MavlinkParser()
         } else {
