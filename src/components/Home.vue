@@ -121,7 +121,7 @@ export default {
             let params = []
             if ('PARM' in messages) {
                 let paramData = messages['PARM']
-                for (let i in paramData) {
+                for (let i in paramData.time_boot_ms) {
                     params.push(
                         [
                             paramData.time_boot_ms[i],
@@ -133,8 +133,14 @@ export default {
             }
             if ('PARAM_VALUE' in messages) {
                 let paramData = messages['PARAM_VALUE']
-                for (let data of paramData) {
-                    params.push([data.time_boot_ms, data.param_id.replace(/[^a-z0-9A-Z_]/ig, ''), data.param_value])
+                for (let i in paramData.time_boot_ms) {
+                    params.push(
+                        [
+                            paramData.time_boot_ms[i],
+                            paramData.param_id[i].replace(/[^a-z0-9A-Z_]/ig, ''),
+                            paramData.param_value
+                        ]
+                    )
                 }
             }
             if (params.length > 0) {
@@ -171,32 +177,46 @@ export default {
             let startAltitude = null
             if ('GLOBAL_POSITION_INT' in messages) {
                 let gpsData = messages['GLOBAL_POSITION_INT']
-                for (let pos of gpsData) {
-                    if (pos.lat !== 0) {
+                for (let i in gpsData.time_boot_ms) {
+                    if (gpsData.lat[i] !== 0) {
                         if (startAltitude === null) {
-                            startAltitude = pos.relative_alt
+                            startAltitude = gpsData.relative_alt[i]
                         }
-                        trajectory.push([pos.lon, pos.lat, pos.relative_alt - startAltitude, pos.time_boot_ms])
-                        this.state.time_trajectory[pos.time_boot_ms] = [
-                            pos.lon,
-                            pos.lat,
-                            pos.relative_alt,
-                            pos.time_boot_ms]
+                        trajectory.push(
+                            [
+                                gpsData.lon[i],
+                                gpsData.lat[i],
+                                gpsData.relative_alt[i] - startAltitude,
+                                gpsData.time_boot_ms[i]
+                            ]
+                        )
+                        this.state.time_trajectory[gpsData.time_boot_ms[i]] = [
+                            gpsData.lon[i],
+                            gpsData.lat[i],
+                            gpsData.relative_alt[i],
+                            gpsData.time_boot_ms[i]]
                     }
                 }
             } else if ('AHR2' in messages) {
                 let gpsData = messages['AHR2']
-                for (let pos of gpsData) {
-                    if (pos.Lat !== 0) {
+                for (let i in gpsData.time_boot_ms) {
+                    if (gpsData.Lat[i] !== 0) {
                         if (startAltitude === null) {
-                            startAltitude = pos.Alt
+                            startAltitude = gpsData.Alt[i]
                         }
-                        trajectory.push([pos.Lng, pos.Lat, pos.Alt - startAltitude, pos.time_boot_ms])
-                        this.state.time_trajectory[pos.time_boot_ms] = [
-                            pos.Lng,
-                            pos.Lat,
-                            (pos.Alt - startAltitude) / 1000,
-                            pos.time_boot_ms]
+                        trajectory.push(
+                            [
+                                gpsData.Lng[i],
+                                gpsData.Lat[i],
+                                gpsData.Alt[i] - startAltitude,
+                                gpsData.time_boot_ms[i]
+                            ]
+                        )
+                        this.state.time_trajectory[gpsData.time_boot_ms[i]] = [
+                            gpsData.Lng[i],
+                            gpsData.Lat[i],
+                            (gpsData.Alt[i] - startAltitude) / 1000,
+                            gpsData.time_boot_ms[i]]
                     }
                 }
             } else if ('GPS' in messages) {
@@ -350,7 +370,7 @@ export default {
                 return 'quadcopter'
             }
             if ('HEARTBEAT' in messages) {
-                return messages['HEARTBEAT'][0].craft
+                return messages['HEARTBEAT'].craft[0]
             }
         },
         generateColorMMap () {

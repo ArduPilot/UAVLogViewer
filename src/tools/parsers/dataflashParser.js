@@ -339,7 +339,6 @@ export class DataflashParser {
         if (this.totalSize == null) { // for percentage calculation
             this.totalSize = this.buffer.byteLength
         }
-
         if (message.name in this.messages) {
             this.messages[message.name].push(this.fixData(message))
         } else {
@@ -373,11 +372,15 @@ export class DataflashParser {
                 self.postMessage({percentage: perc})
             }
         }
+        delete this.messages[name]
         this.messages[name] = parsed
         this.fixDataOnce(name)
         this.simplifyData(name)
         self.postMessage({percentage: 100})
         self.postMessage({messageType: name, messageList: this.messages[name]})
+        if (['FMTU', 'GPS', 'MSG'].indexOf(name) === -1) {
+            delete this.messages[name]
+        }
         return parsed
     }
 

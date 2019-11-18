@@ -126,7 +126,6 @@ function getModeMap (mavType) {
 }
 
 function getModeString (mavtype, cmode) {
-    console.log(mavtype)
     return getModeMap(mavtype)[cmode]
 }
 
@@ -170,6 +169,7 @@ export class MavlinkParser {
     }
 
     onMessage (messages) {
+        let name = messages[0].name
         for (let message of messages) {
             if (instance.totalSize == null) { // for percentage calculation
                 instance.totalSize = this.buf.byteLength
@@ -191,7 +191,7 @@ export class MavlinkParser {
                 instance.lastTime = +message.time_boot_ms
 
                 if (message.name in instance.messages) {
-                    instance.messages[message.name].push(MavlinkParser.fixData(message))
+                    MavlinkParser.fixData(message)
                 } else {
                     instance.messages[message.name] = [MavlinkParser.fixData(message)]
                 }
@@ -208,14 +208,38 @@ export class MavlinkParser {
                 }
             }
         }
+
+
+        let fields = messages[0].fieldnames
+        if (fields.indexOf('time_boot_ms') === -1) {
+            fields.push('time_boot_ms')
+        }
+        if (messages[0].name === 'HEARTBEAT') {
+            fields.push('asText')
+            fields.push('craft')
+        } else if (messages[0].name === 'PARAM_VALUE') {
+            fields.push('param_id')
+        } else if (messages[0].name === 'SYSTEM_TIME') {
+            fields.push('time_unix_usec')
+        }
+        let mergedData = {}
+        for (let field of fields) {
+            mergedData[field] = []
+        }
+        for (let message of messages) {
+            for (let i = 0; i < fields.length; i++) {
+                let fieldname = fields[i]
+                mergedData[fieldname].push(message[fieldname])
+            }
+        }
+        instance.messages[name] = mergedData
         self.postMessage({percentage: 100})
         self.postMessage({messages: instance.messages})
     }
 
     extractStartTime () {
-        let length = this.messages['SYSTEM_TIME'].length
-        let lastmsg = this.messages['SYSTEM_TIME'][length - 1]
-        lastmsg = lastmsg['time_unix_usec']
+        let length = instance.messages['SYSTEM_TIME'].time_boot_ms.length
+        let lastmsg = instance.messages['SYSTEM_TIME'].time_unix_usec[length - 1]
         return new Date(lastmsg[0] / 1e3 + lastmsg[1] * ((2 ** 32) / 1e3))
     }
 
