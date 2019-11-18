@@ -15,7 +15,7 @@ const cesiumWorkers = '../Build/Cesium/Workers'
 
 
 
-const HOST = process.env.HOST
+const HOST = '0.0.0.0'
 const PORT = process.env.PORT && Number(process.env.PORT)
 
 const devWebpackConfig = merge(baseWebpackConfig, {
