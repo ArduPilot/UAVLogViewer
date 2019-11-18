@@ -537,7 +537,7 @@ export class DataflashParser {
     }
 
     processData (data) {
-        this.buffer = Buffer.from(data).buffer
+        this.buffer = data
         this.data = new DataView(this.buffer)
         this.DF_reader()
         let messageTypes = {}

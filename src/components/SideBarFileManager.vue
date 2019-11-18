@@ -126,7 +126,7 @@ export default {
                 let data = reader.result
                 worker.postMessage({
                     action: 'parse',
-                    file: Buffer.from(data),
+                    file: data,
                     isTlog: (file.name.indexOf('tlog') > 1)
                 })
             }
