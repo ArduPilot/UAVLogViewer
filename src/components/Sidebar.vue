@@ -346,7 +346,7 @@ export default {
     
     /* MIN */
 
-    @media (min-width: 767px) {
+    @media (min-width: 769px) {
         .nav-side-menu .menu-list .menu-content {
             display: block;
             height: 100%;
