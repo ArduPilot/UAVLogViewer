@@ -109,6 +109,10 @@ export default {
 </script>
 <style>
 
+a.section {
+    margin-left: 8px;
+}
+
 /* NAV SIDE MENU */
 
     .nav-side-menu {
@@ -357,7 +361,9 @@ export default {
         }
 
         .light-mode-button {
+            margin-left: 100px;
             display: block;
+            position: fixed;
         }
     }
 
