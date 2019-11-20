@@ -19,8 +19,8 @@
         </li>
 
         <b-collapse id="messages">
-            <li>
-                <input id="filterbox" placeholder="Type here to filter..." v-model="filter">
+            <li class="input-li">
+                <input id="filterbox" placeholder=" Type here to filter..." v-model="filter">
             </li>
             <template v-for="(message, key) in messageTypesFiltered">
                 <li class="type" v-bind:key="key">
@@ -247,7 +247,7 @@ export default {
     }
 
     li.field {
-        line-height: 20px;
+        line-height: 25px;
         padding-left: 40px;
         font-size: 90%;
         display: inline-block;
@@ -255,24 +255,34 @@ export default {
     }
 
     li.type {
-        line-height: 25px;
-        padding-left: 30px;
-        font-size: 90%;
+        line-height: 30px;
+        padding-left: 10px;
+        font-size: 85%;
     }
 
     input {
-        margin-left: 30px;
-        margin-right: 30px;
-        -webkit-border-radius: 10px;
-        -moz-border-radius: 10px;
-        border-radius: 10px;
-        background-color: #4f5b69;
-        color: white;
-        width: 85%;
+        margin: 12px 12px 15px 10px;
+        border: 2px solid #ccc;
+        -webkit-border-radius: 4px;
+        -moz-border-radius: 4px;
+        border-radius: 4px;
+        background-color: rgba(255, 255, 255, 0.897);
+        color: rgb(252, 252, 252);
+        width: 92%;
+    }
+
+    input:focus {
+        outline: none;
+        border: 2px solid rgba(194, 100, 19, 0.849);
+    }
+
+    .input-li:hover {
+        background-color: #2e2e2e;
+        border-left: 3px solid #2e2e2e;
     }
 
     ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
-        color: #AAAAAA;
+        color: rgb(148, 147, 147);
         opacity: 1; /* Firefox */
     }
 
