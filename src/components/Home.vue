@@ -138,7 +138,7 @@ export default {
                         [
                             paramData.time_boot_ms[i],
                             paramData.param_id[i].replace(/[^a-z0-9A-Z_]/ig, ''),
-                            paramData.param_value
+                            paramData.param_value[i]
                         ]
                     )
                 }
