@@ -267,7 +267,7 @@ export default {
         -moz-border-radius: 4px;
         border-radius: 4px;
         background-color: rgba(255, 255, 255, 0.897);
-        color: rgb(252, 252, 252);
+        color: #2e2e2e;
         width: 92%;
     }
 
@@ -282,16 +282,16 @@ export default {
     }
 
     ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
-        color: rgb(148, 147, 147);
+        color: #2e2e2e;
         opacity: 1; /* Firefox */
     }
 
     :-ms-input-placeholder { /* Internet Explorer 10-11 */
-        color: gainsboro;
+        color: #2e2e2e;
     }
 
     ::-ms-input-placeholder { /* Microsoft Edge */
-        color: gainsboro;
+        color: #2e2e2e;
     }
 
     i.remove-icon {
