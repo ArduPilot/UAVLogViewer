@@ -19,6 +19,28 @@
 import {store} from '../Globals.js'
 import {baseWidget} from './baseWidget'
 
+class Interpolator {
+    // This class holds all joystick positions and returns the interpolated position at an arbitraty time.
+    constructor (x, y) {
+        this.x = x
+        this.y = y
+        this.currentIndex = 0
+    }
+
+    at (point) {
+        /*
+            Returns x at closest y. TODO: interpolate properly.
+            */
+        while (this.x[this.currentIndex] < point && this.currentIndex < this.x.length - 2) {
+            this.currentIndex += 1
+        }
+        while (this.x[this.currentIndex] > point && this.currentIndex > 1) {
+            this.currentIndex -= 1
+        }
+        return this.y[Math.max(0, Math.min(this.currentIndex, this.y.length - 1))]
+    }
+}
+
 export default {
     data () {
         return {
@@ -60,7 +82,7 @@ export default {
         setTime (time) {
             try {
                 let sticks = this.interpolated.at(time)
-                let reverses = [0, 0, 0, 0]
+                let reverses = [1, 1, 1, 1]
                 if (this.state.params.get('RC1_REV') !== undefined) {
                     reverses = [
                         parseFloat(this.state.params.get('RC1_REV')),
@@ -74,15 +96,49 @@ export default {
                         parseFloat(this.state.params.get('RC3_REVERSED')) ? -1 : 1,
                         parseFloat(this.state.params.get('RC4_REVERSED')) ? -1 : 1]
                 }
-                this.yaw = ((sticks[3] - this.state.params.get('RC4_TRIM')) * reverses[3] + 1500 - 1000) / 10
-                this.throttle = ((sticks[2] - this.state.params.get('RC3_TRIM')) * reverses[2] + 1500 - 1000) / 10
-                this.pitch = ((sticks[1] - this.state.params.get('RC2_TRIM')) * reverses[1] + 1500 - 1000) / 10
-                this.roll = ((sticks[0] - this.state.params.get('RC1_TRIM')) * reverses[0] + 1500 - 1000) / 10
+                let trims = [1500, 1500, 1500, 1500]
+                if (this.state.params.get('RC4_TRIM') !== undefined) {
+                    trims = [
+                        this.state.params.get('RC4_TRIM'),
+                        this.state.params.get('RC3_TRIM'),
+                        this.state.params.get('RC2_TRIM'),
+                        this.state.params.get('RC1_TRIM')
+                    ]
+                }
+                this.yaw = ((sticks[3] - trims[0]) * reverses[3] + 1500 - 1000) / 10
+                this.throttle = ((sticks[2] - trims[1]) * reverses[2] + 1500 - 1000) / 10
+                this.pitch = ((sticks[1] - trims[2]) * reverses[1] + 1500 - 1000) / 10
+                this.roll = ((sticks[0] - trims[3]) * reverses[0] + 1500 - 1000) / 10
             } catch (e) {
                 console.log(e)
             }
-        }
+        },
+        setup () {
+            const _this = this
 
+            this.waitForMessage('RC_CHANNELS.*').then(function () {
+                let x = _this.state.messages['RC_CHANNELS'].time_boot_ms
+                let y = []
+                let msg = _this.state.messages['RC_CHANNELS']
+                for (let i in msg.time_boot_ms) {
+                    y.push([msg.chan1_raw[i], msg.chan2_raw[i], msg.chan3_raw[i], msg.chan4_raw[i]])
+                }
+                _this.interpolated = new Interpolator(x, y)
+                _this.$eventHub.$on('cesium-time-changed', _this.setTime)
+            })
+            this.waitForMessage('RCIN.*').then(function () {
+                let x = _this.state.messages['RCIN'].time_boot_ms
+                let y = []
+
+                let msg = _this.state.messages['RCIN']
+                for (let i in msg.time_boot_ms) {
+
+                    y.push([msg.C1[i], msg.C2[i], msg.C3[i], msg.C4[i]])
+                }
+                _this.interpolated = new Interpolator(x, y)
+                _this.$eventHub.$on('cesium-time-changed', _this.setTime)
+            })
+        }
     },
     computed: {
         leftStickLeft: function () {

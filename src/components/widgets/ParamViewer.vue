@@ -56,6 +56,8 @@ export default {
                     }
                 }, 2000)
             })
+        },
+        setup () {
         }
     },
     computed: {
