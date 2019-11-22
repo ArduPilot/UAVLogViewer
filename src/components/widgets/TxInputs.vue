@@ -50,11 +50,11 @@ export default {
             yaw: 50,
             pitch: 50,
             roll: 50,
-            width: 264,
-            height: 120,
+            width: 294,
+            height: 150,
             left: 500,
             top: 12,
-            circleHeight: 50
+            circleHeight: 40
         }
     },
     methods: {
@@ -171,11 +171,13 @@ export default {
         left: 20px;
         top: 20px;
         overflow: hidden;
-        background: rgba(255, 255, 255, 0.5);
+        background: rgb(1, 160, 139);
         font-size: 10px;
         text-transform: uppercase;
         z-index: 10000;
-        border-radius: 10px;
+        border-radius: 20px;
+        border: 3px groove rgba(1, 133, 111, 0.541);
+        box-shadow: inset 0px 0px 8px 6px rgba(0, 87, 72, 0.411);
     }
 
     div #paneinputViewer::before {
@@ -186,40 +188,51 @@ export default {
         right: 0;
         width: 20px;
         height: 20px;
-        padding: 2px;
+        padding: 1px;
         padding-left: 5px;
         padding-bottom: 3px;
-        background: #000;
+        background: rgba(0, 36, 27, 0.63);
         box-sizing: border-box;
         align-items: center;
         justify-content: center;
         font-size: 12px;
-        border-radius: 5px;
+        border: 1px outset rgba(107, 107, 107, 0.726);
+        border-radius: 3px;
     }
 
     div.circle {
-        border: solid 1px black;
-        border-radius: 20%;
-        width: 50%;
-        height: 100%;
+        border: double 4px rgba(2, 145, 121, 0.98);
+        background: rgb(116,116,116);
+        background: radial-gradient(circle, rgba(24, 24, 24, 0.76) 0%, rgba(0,0,0,0.8886905103838411) 100%);
+        margin: 1px;
+        border-radius: 50%;
+        width: 48%;
+        height: 98%;
         float: left;
+        box-shadow: 0px 0px 14px -1px rgba(1, 82, 65, 0.61);
     }
 
+/* STICK */
+
     div.stick {
-        border: solid 4px red;
         border-radius: 50%;
-        width: 6px;
-        height: 6px;
-        margin-left: 49%;
+        width: 16px;
+        height: 16px;
+        background-color: rgb(221, 221, 221);
+        border: 1px solid rgb(139, 139, 139);
+        margin-left: 48%;
         display: inline-block;
+        box-shadow: inset 0px 0px 4px 2px rgba(102, 102, 102, 0.877);
     }
+
+/* LINES */
 
     div.vertical-line {
         position: absolute;
-        margin-left: 25%;
+        margin-left: 23%;
         top: 0%;
         height: 100%;
-        border-right: solid 1px black;
+        border-right: solid 1px rgba(119, 145, 140, 0.192);
     }
 
     div.horizontal-line {
@@ -227,6 +240,6 @@ export default {
         top: 50%;
         width: 100%;
         height: 1%;
-        border-top: solid 1px black;
+        border-top: solid 1px rgba(102, 129, 126, 0.192);
     }
 </style>
