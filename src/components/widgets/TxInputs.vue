@@ -4,13 +4,11 @@
         <div class="circle">
             <div class="stick" id="left"
                  v-bind:style="{'margin-left': leftStickLeft -3 + 'px', 'margin-top': leftStickTop -3 + 'px' }"></div>
-            <div class="vertical-line"></div>
-            <div class="horizontal-line"></div>
         </div>
         <div class="circle">
             <div class="stick" id="right"
-                 v-bind:style="{'margin-left': rightStickLeft -3 + 'px', 'margin-top': rightStickTop -3 + 'px' }"></div>
-            <div class="vertical-line"></div>
+                 v-bind:style="{'margin-left': rightStickLeft -3 + 'px', 'margin-top': rightStickTop -3 + 'px' }">
+                 </div>
         </div>
     </div>
 </template>
@@ -203,7 +201,21 @@ export default {
     div.circle {
         border: double 4px rgba(2, 145, 121, 0.98);
         background: rgb(116,116,116);
-        background: radial-gradient(circle, rgba(24, 24, 24, 0.76) 0%, rgba(0,0,0,0.8886905103838411) 100%);
+        background: 
+        radial-gradient(circle, rgba(24, 24, 24, 0.76) 0%, rgba(0,0,0,0.8886905103838411) 100%),
+         linear-gradient(
+            90deg,
+            transparent 49.55%,
+            darkgreen 49.75%,
+            darkgreen 50.25%,
+            transparent 50.25%
+        ),
+        linear-gradient(
+            transparent 49.55%,
+            darkgreen 49.75%,
+            darkgreen 50.25%,
+            transparent 50.25%
+        );
         margin: 1px;
         border-radius: 50%;
         width: 48%;
@@ -224,22 +236,5 @@ export default {
         display: inline-block;
         box-shadow: inset 0px 0px 4px 2px rgba(102, 102, 102, 0.877);
     }
-
-/* LINES */
-
-    div.vertical-line {
-        position: absolute;
-        margin-left: 23%;
-        top: 0%;
-        height: 100%;
-        border-right: solid 1px rgba(119, 145, 140, 0.192);
-    }
-
-    div.horizontal-line {
-        position: absolute;
-        top: 50%;
-        width: 100%;
-        height: 1%;
-        border-top: solid 1px rgba(102, 129, 126, 0.192);
-    }
+    
 </style>
