@@ -314,11 +314,13 @@ export default {
                 let msgs = messages['HEARTBEAT']
                 modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
                 for (let i in msgs.time_boot_ms) {
-                    if (msgs.asText[i] === undefined) {
-                        msgs.asText[i] = 'Unknown'
-                    }
-                    if (msgs.asText[i] !== modes[modes.length - 1][1]) {
-                        modes.push([msgs.time_boot_ms[i], msgs.asText[i]])
+                    if (msgs.type[i] !== mavlink.MAV_TYPE_GCS) {
+                        if (msgs.asText[i] === undefined) {
+                            msgs.asText[i] = 'Unknown'
+                        }
+                        if (msgs.asText[i] !== modes[modes.length - 1][1]) {
+                            modes.push([msgs.time_boot_ms[i], msgs.asText[i]])
+                        }
                     }
                 }
             } else if ('MODE' in messages) {
