@@ -279,15 +279,16 @@ a.section {
     /* LIGHT MODE */
 
     .light-mode-button {
-        position: absolute; 
-        left: 0 ; right: 0; bottom: 0; 
+        display: block;
+        position: fixed;
+        margin-left: 95px;
+        bottom: 0; 
         text-decoration: none;
         padding: 6px;
         border: none;
         border-radius: 8px 8px 0px 0px;
         background-color: #58585881;
         color: #fff;
-        display: none;
     }
 
     .light-mode-button:hover {
