@@ -132,7 +132,6 @@ export default {
 
                 let msg = _this.state.messages['RCIN']
                 for (let i in msg.time_boot_ms) {
-
                     y.push([msg.C1[i], msg.C2[i], msg.C3[i], msg.C4[i]])
                 }
                 _this.interpolated = new Interpolator(x, y)

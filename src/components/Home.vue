@@ -314,6 +314,8 @@ export default {
                 let msgs = messages['HEARTBEAT']
                 modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
                 for (let i in msgs.time_boot_ms) {
+                    // TODO: fix this properly
+                    // eslint-disable-next-line
                     if (msgs.type[i] !== mavlink.MAV_TYPE_GCS) {
                         if (msgs.asText[i] === undefined) {
                             msgs.asText[i] = 'Unknown'
