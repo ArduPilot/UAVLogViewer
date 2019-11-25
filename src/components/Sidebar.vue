@@ -206,11 +206,11 @@ a.section {
     }
 
     ::-webkit-scrollbar-thumb {
-        border-radius: 5px;
+        border-radius: 0px;
         box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
         -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
         -moz-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-        background-color: #864920;
+        background-color: #ac4e0f;
     }
 
     .custom-control-inline {
@@ -229,7 +229,8 @@ a.section {
         font-size: 22px;
         padding-left: 20px;
         line-height: 50px;
-        background-color: #585858;
+        background: rgb(94,94,93);
+        background: linear-gradient(90deg, rgba(94,94,93,1) 20%, rgba(41, 41, 41, 0.856) 100%);
         color: #eeeeee;
         display: block;
     }
