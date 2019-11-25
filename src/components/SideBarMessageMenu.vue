@@ -51,10 +51,8 @@
     </div>
 </template>
 <script>
-
 import {store} from './Globals.js'
 import TreeMenu from './widgets/TreeMenu'
-
 export default {
     name: 'message-menu',
     components: {TreeMenu},
@@ -122,14 +120,12 @@ export default {
             if (this.$route.query.hasOwnProperty('plots')) {
                 this.state.plot_on = true
             }
-
             let newMessages = {}
             // populate list of message types
             for (let messageType of Object.keys(messageTypes)) {
                 this.$set(this.checkboxes, messageType, messageTypes[messageType].fields.fields)
                 newMessages[messageType] = messageTypes[messageType]
             }
-
             // populate checkbox status
             for (let messageType of Object.keys(messageTypes)) {
                 this.checkboxes[messageType] = {fields: {}}
@@ -172,7 +168,6 @@ export default {
                 this.$eventHub.$emit('togglePlot', message + '.' + item)
             })
         },
-
         isPlottable (msgtype, item) {
             return item !== 'TimeUS'
         }
@@ -238,16 +233,13 @@ export default {
     i {
         margin: 5px;
     }
-
     i.expand {
         float: right;
     }
-
     li > div {
         display: inline-block;
         width: 100%;
     }
-
     li.field {
         line-height: 25px;
         padding-left: 40px;
@@ -255,13 +247,11 @@ export default {
         display: inline-block;
         width: 100%;
     }
-
     li.type {
         line-height: 30px;
         padding-left: 10px;
         font-size: 85%;
     }
-
     input {
         margin: 12px 12px 15px 10px;
         border: 2px solid #ccc;
@@ -269,33 +259,27 @@ export default {
         -moz-border-radius: 4px;
         border-radius: 4px;
         background-color: rgba(255, 255, 255, 0.897);
-        color: #2e2e2e;
+        color: rgb(51, 51, 51);
         width: 92%;
     }
-
     input:focus {
         outline: none;
         border: 2px solid rgba(194, 100, 19, 0.849);
     }
-
     .input-li:hover {
         background-color: #2e2e2e;
         border-left: 3px solid #2e2e2e;
     }
-
     ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
-        color: #2e2e2e;
+        color: rgb(148, 147, 147);
         opacity: 1; /* Firefox */
     }
-
     :-ms-input-placeholder { /* Internet Explorer 10-11 */
         color: #2e2e2e;
     }
-
     ::-ms-input-placeholder { /* Microsoft Edge */
         color: #2e2e2e;
     }
-
     i.remove-icon {
         float: right;
     }

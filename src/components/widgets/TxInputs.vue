@@ -8,7 +8,7 @@
         <div class="circle">
             <div class="stick" id="right"
                  v-bind:style="{'margin-left': rightStickLeft -3 + 'px', 'margin-top': rightStickTop -3 + 'px' }">
-                 </div>
+            </div>
         </div>
     </div>
 </template>
@@ -228,8 +228,8 @@ export default {
 
     div.stick {
         border-radius: 50%;
-        width: 16px;
-        height: 16px;
+        width: 12px;
+        height: 12px;
         background-color: rgb(221, 221, 221);
         border: 1px solid rgb(139, 139, 139);
         margin-left: 48%;
