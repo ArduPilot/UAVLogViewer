@@ -58,6 +58,7 @@ import {AtomSpinner} from 'epic-spinners'
 import {ParamSeeker} from '../tools/paramseeker'
 import {Color} from 'cesium/Cesium'
 import colormap from 'colormap'
+import {mavlink} from 'mavlink_common_v1.0/mavlink'
 
 export default {
     name: 'Home',

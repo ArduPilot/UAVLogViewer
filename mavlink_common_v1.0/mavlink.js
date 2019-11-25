@@ -15,7 +15,8 @@ const util = require('util')
 Buffer.prototype.toByteArray = function () {
     return Array.prototype.slice.call(this, 0)
 }
-
+var mavlink
+var MAVLink
 mavlink = function () {}
 
 // Implement the X25CRC function (present in the Python version through the mavutil.py package)
@@ -18702,4 +18703,5 @@ MAVLink.prototype.parseType = function (type) {
 }
 
 // Expose this code as a module
-module.exports = mavlink
+module.exports.mavlink = mavlink
+module.exports.MAVLink = MAVLink

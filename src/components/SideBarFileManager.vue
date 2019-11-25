@@ -31,7 +31,7 @@ import VProgress from './SideBarFileManagerProgressBar'
 import Worker from '../tools/parsers/parser.worker.js'
 import {store} from './Globals'
 
-require('mavlink_common_v1.0')
+import {MAVLink} from 'mavlink_common_v1.0'
 
 const worker = new Worker()
 

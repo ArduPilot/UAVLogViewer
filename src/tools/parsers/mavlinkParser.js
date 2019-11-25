@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
-require('mavlink_common_v1.0/mavlink')
+import {MAVLink} from'mavlink_common_v1.0/mavlink'
+import {mavlink} from'mavlink_common_v1.0/mavlink'
 
 let modeMappingApm = {
     0: 'MANUAL',
@@ -279,6 +280,7 @@ export class MavlinkParser {
         self.postMessage({metadata: metadata})
         self.postMessage({availableMessages: messageTypes})
         // self.postMessage({done: true})
+        return messageTypes
     }
 
     loadType (type) {
