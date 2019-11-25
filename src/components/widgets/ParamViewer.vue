@@ -28,8 +28,8 @@ export default {
             yaw: 50,
             pitch: 50,
             roll: 50,
-            width: 264,
-            height: 120,
+            width: 220,
+            height: 215,
             left: 780,
             top: 12,
             forceRecompute: 0
@@ -72,51 +72,58 @@ export default {
 
 <style scoped>
     div #paneParamViewer {
+        min-width: 220px;
+        min-height: 150px;
         position: absolute;
-        width: 100px;
-        height: 100px;
-        left: 20px;
-        top: 20px;
-        background: rgba(255, 255, 255, 0.5);
-        font-size: 10px;
+        background: rgba(51, 49, 49, 0.938);
+        color: rgba(255, 255, 255, 0.918);
+        font-size: 11px;
         text-transform: uppercase;
         z-index: 10000;
-        border-radius: 10px;
+        box-shadow: 9px 9px 3px -6px rgba(26, 26, 26, 0.699);
+        border-radius: 1px;
     }
 
     div #paneParamViewer::before {
         content: '\2198';
-        color: #fff;
+        color: rgb(255, 140, 45);
         position: absolute;
         bottom: 0;
         right: 0;
         width: 20px;
         height: 20px;
-        padding: 2px;
-        padding-left: 5px;
-        padding-bottom: 3px;
-        background: #000;
+        padding: 0px 5px;
         box-sizing: border-box;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
-        border-radius: 5px;
+        font-size: 14px;
+        border-radius: 4px;
     }
 
     div#paneContent {
-        width: 90%;
-        height: 90%;
+        height: 95%;
         overflow: auto;
+        margin: 0;
     }
 
     input#filterbox {
-        margin-left: 30px;
-        background-color: rgba(255, 255, 255, 0.5);
-        border: 1px solid black;
-        border-radius: 5px;
+        width: 95%;
+        margin: 15px 0px 0px 10px;
+        padding: 4px;
+        background-color: rgba(255, 255, 255, 0.836);
+        border: 1px solid rgb(133, 133, 133);
+        border-radius: 3px;
+    }
+
+    input#filterbox:focus {
+        outline: none;
+        border: 1px solid rgba(194, 100, 19, 0.849);
     }
 
     ul#params {
+        padding: 12px;
+        list-style: none;
+        line-height: 22px;
         -webkit-user-select: none; /* Chrome all / Safari all */
         -moz-user-select: none; /* Firefox all */
         -ms-user-select: none; /* IE 10+ */
