@@ -282,10 +282,10 @@ a.section {
         position: absolute; 
         left: 0 ; right: 0; bottom: 0; 
         text-decoration: none;
-        padding: 5px;
-        margin: 0 auto;
+        padding: 6px;
         border: none;
-        background-color: #585858;
+        border-radius: 8px 8px 0px 0px;
+        background-color: #58585881;
         color: #fff;
         display: none;
     }
