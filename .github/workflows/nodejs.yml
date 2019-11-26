@@ -3,24 +3,29 @@ name: Node CI
 on: [push, pull_request]
 
 jobs:
-  build:
+    build:
 
-    runs-on: ubuntu-latest
+        runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [8.x, 10.x, 12.x]
+        strategy:
+            matrix:
+                node-version: [12.x]
 
-    steps:
-    - uses: actions/checkout@v1
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: npm install, build, and test
-      run: |
-        npm ci
-        npm run build --if-present
-        npm test
-      env:
-        CI: true
+        steps:
+            - uses: actions/checkout@v1
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v1
+              with:
+                  node-version: ${{ matrix.node-version }}
+            - run: npm install selenium-standalone@latest -g
+            - run: selenium-standalone install
+            - run: selenium-standalone start &
+            - run: npm install
+            - run: npm run build --if-present
+            - run: wget http://dl.google.com/linux/deb/pool/main/g/google-chrome-unstable/google-chrome-unstable_72.0.3595.2-1_amd64.deb
+            - run: sudo apt install -y ./google-chrome-unstable_72.0.3595.2-1_amd64.deb
+            - run: sudo apt install -y default-jdk
+            - run: npm run e2e
+            - run: npm run unit
+              env:
+                  CI: true
