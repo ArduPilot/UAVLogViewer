@@ -127,6 +127,9 @@ function getModeMap (mavType) {
 }
 
 function getModeString (mavtype, cmode) {
+    if (mavtype === mavlink.MAV_TYPE_GCS) {
+        return ''
+    }
     return getModeMap(mavtype)[cmode]
 }
 
