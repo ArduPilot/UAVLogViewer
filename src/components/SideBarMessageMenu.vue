@@ -283,4 +283,5 @@ export default {
     i.remove-icon {
         float: right;
     }
+
 </style>
