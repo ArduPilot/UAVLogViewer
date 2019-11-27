@@ -201,7 +201,7 @@ export default {
     div.circle {
         border: double 4px rgba(2, 145, 121, 0.98);
         background: rgb(116,116,116);
-        background: 
+        background:
         radial-gradient(circle, rgba(24, 24, 24, 0.76) 0%, rgba(0,0,0,0.8886905103838411) 100%),
          linear-gradient(
             90deg,
@@ -236,5 +236,5 @@ export default {
         display: inline-block;
         box-shadow: inset 0px 0px 4px 2px rgba(102, 102, 102, 0.877);
     }
-    
+
 </style>
