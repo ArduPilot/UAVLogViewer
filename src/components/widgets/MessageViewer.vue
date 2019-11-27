@@ -24,9 +24,9 @@ export default {
             name: 'MessageViewer',
             filter: '',
             state: store,
-            width: 264,
-            height: 120,
-            left: 1060,
+            width: 220,
+            height: 215,
+            left: 1070,
             top: 12,
             forceRecompute: 0,
             cursorTime: 0
@@ -79,40 +79,36 @@ export default {
 
 <style scoped>
     div #paneMessageViewer {
+         min-width: 220px;
+        min-height: 150px;
         position: absolute;
-        width: 100px;
-        height: 100px;
-        left: 20px;
-        top: 20px;
-        background: rgba(255, 255, 255, 0.5);
-        font-size: 10px;
+        background: rgba(51, 49, 49, 0.938);
+        color: rgba(255, 255, 255, 0.918);
+        font-size: 11px;
         text-transform: uppercase;
         z-index: 10000;
-        border-radius: 10px;
+        box-shadow: 9px 9px 3px -6px rgba(26, 26, 26, 0.699);
+        border-radius: 1px;
     }
 
     div #paneMessageViewer::before {
         content: '\2198';
-        color: #fff;
+        color: rgb(255, 140, 45);
+        background-color: rgba(51, 49, 49, 0.938);
         position: absolute;
         bottom: 0;
         right: 0;
         width: 20px;
         height: 20px;
-        padding: 2px;
-        padding-left: 5px;
-        padding-bottom: 3px;
-        background: #000;
+        padding: 0px 5px;
         box-sizing: border-box;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
-        border-radius: 5px;
+        font-size: 14px;
     }
 
     div#paneContent {
-        width: 90%;
-        height: 90%;
+        height: 100%;
         overflow: auto;
         -webkit-user-select: none; /* Chrome all / Safari all */
         -moz-user-select: none; /* Firefox all */
@@ -120,11 +116,11 @@ export default {
         user-select: none;
     }
 
-    input#filterbox {
-        margin-left: 30px;
-        background-color: rgba(255, 255, 255, 0.5);
-        border: 1px solid black;
-        border-radius: 5px;
+    div#paneContent ul {
+        list-style: none;
+        line-height: 22px;
+        padding: 14px;
+        margin: 0;
     }
 
 </style>
