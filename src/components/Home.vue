@@ -80,8 +80,7 @@ export default {
     methods: {
         extractFlightData () {
             if ('FMTU' in this.state.messages && this.state.messages['FMTU'].length === 0) {
-                this.state.processStatus = 'ERROR PARSING'
-                return
+                this.state.processStatus = 'ERROR PARSING?'
             }
             if (Object.keys(this.state.time_attitude).length === 0) {
                 this.state.time_attitude = this.extractAttitudes(this.state.messages)
@@ -358,7 +357,7 @@ export default {
         extractVehicleType (messages) {
             if ('MSG' in messages) {
                 let msgs = messages['MSG']
-                for (let i in msgs.time_boot_ms) {
+                for (let i in msgs.Message) {
                     if (msgs.Message[i].indexOf('ArduPlane') > -1) {
                         return 'airplane'
                     }
