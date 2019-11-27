@@ -358,23 +358,27 @@ export default {
             if ('MSG' in messages) {
                 let msgs = messages['MSG']
                 for (let i in msgs.Message) {
-                    if (msgs.Message[i].indexOf('ArduPlane') > -1) {
+                    if (msgs.Message[i].toLowerCase().indexOf('arduplane') > -1) {
                         return 'airplane'
                     }
-                    if (msgs.Message[i].indexOf('ArduSub') > -1) {
+                    if (msgs.Message[i].toLowerCase().indexOf('ardusub') > -1) {
                         return 'submarine'
                     }
-                    if (msgs.Message[i].toLowerCase().indexOf('rover') > -1) {
+                    if (msgs.Message[i].toLowerCase().toLowerCase().indexOf('rover') > -1) {
                         return 'boat'
                     }
-                    if (msgs.Message[i].indexOf('Tracker') > -1) {
+                    if (msgs.Message[i].toLowerCase().indexOf('tracker') > -1) {
                         return 'tracker'
                     }
                 }
                 return 'quadcopter'
             }
             if ('HEARTBEAT' in messages) {
-                return messages['HEARTBEAT'].craft[0]
+                for (let i in messages['HEARTBEAT'].craft) {
+                    if (messages['HEARTBEAT'].craft[i] !== undefined) {
+                        return messages['HEARTBEAT'].craft[i]
+                    }
+                }
             }
         },
         generateColorMMap () {
