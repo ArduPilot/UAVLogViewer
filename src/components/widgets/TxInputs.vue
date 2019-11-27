@@ -139,16 +139,16 @@ export default {
     },
     computed: {
         leftStickLeft: function () {
-            return 0.01 * (this.yaw) * this.width / 2
+            return -12 + 0.01 * (this.yaw) * this.width / 2
         },
         leftStickTop () {
-            return 0.02 * (100 - this.throttle) * this.circleHeight
+            return 22 + 0.02 * (100 - this.throttle) * this.circleHeight
         },
         rightStickLeft: function () {
-            return (0.01 * this.roll) * (this.width / 2)
+            return -12 + (0.01 * this.roll) * (this.width / 2)
         },
         rightStickTop () {
-            return 0.02 * (100 - this.pitch) * this.circleHeight
+            return 22 + 0.02 * (100 - this.pitch) * this.circleHeight
         }
     },
     name: 'TxInputs',
