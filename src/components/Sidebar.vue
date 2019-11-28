@@ -251,8 +251,7 @@ a.section {
     }
 
     .tabholder a {
-        background: rgb(150,150,150);
-        background: linear-gradient(0deg, rgba(150, 150, 150, 0.808) 15%, rgba(63, 63, 63, 0.829) 100%);
+        background:rgba(59, 59, 59, 0.829);
         float: left;
         padding: 2px 10px 2px 5px;
         border-radius: 15px 0px 15px 0px;
@@ -260,6 +259,8 @@ a.section {
 
     a.selected {
         color: #fff !important;
+        background: rgb(150,150,150);
+        background: linear-gradient(0deg, rgba(150, 150, 150, 0.808) 15%, rgba(63, 63, 63, 0.829) 100%);
     }
 
     .tabholder a:hover {
@@ -306,8 +307,8 @@ a.section {
     }
 
     .light {
-        background: rgb(221, 220, 220);
-        color: rgb(65, 63, 63);
+        background: rgb(231, 231, 231);
+        color: rgb(148, 147, 147);
     }
 
     .dark {
