@@ -79,7 +79,7 @@ export default {
 
 <style scoped>
     div #paneMessageViewer {
-         min-width: 220px;
+        min-width: 220px;
         min-height: 150px;
         position: absolute;
         background: rgba(51, 49, 49, 0.938);
@@ -123,4 +123,12 @@ export default {
         margin: 0;
     }
 
+/* MEDIA QUERIES */
+
+    @media(max-width: 769px) {
+        div#paneMessageViewer {
+        left: 5% !important;
+        top: 35% !important;
+    }
+    }
 </style>

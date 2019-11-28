@@ -130,4 +130,12 @@ export default {
         user-select: none;
     }
 
+/* MEDIA QUERIES */
+
+    @media(max-width: 769px) {
+        div#paneParamViewer {
+        left: 5% !important;
+        top: 35% !important;
+    }
+    }
 </style>
