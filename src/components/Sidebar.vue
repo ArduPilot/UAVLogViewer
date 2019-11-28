@@ -42,7 +42,7 @@
 
                     <!-- CAMERA -->
                     <div>
-                        <label><i class="fas fa-camera" aria-hidden="true"></i> Camera</label>
+                        <label><i class="fas fa-camera"></i> Camera</label>
                         <select class="cesium-button" v-model="state.cameraType">
                             <option value="free">Free</option>
                             <option value="follow">Follow</option>
@@ -51,17 +51,17 @@
                     <!-- CHECKBOXES -->
                     <div>
                         <label><input type="checkbox" v-model="state.showWaypoints">
-                        Waypoints <i class="fa fa-map-marker" aria-hidden="true"></i> </label>
+                        Waypoints <i class="fa fa-map-marker"></i> </label>
                         <label><input type="checkbox" v-model="state.showTrajectory">
                         Trajectory <i class="fa fa-map" aria-hidden="true"></i> </label>
                     </div>
                     <div v-if="state.processDone">
                         <label v-if="state.params"><input type="checkbox" v-model="state.show_params"> Show
-                            Parameters <i class="fa fa-cogs" aria-hidden="true"></i> </label>
+                            Parameters <i class="fa fa-cogs"></i> </label>
                         <label><input type="checkbox" v-model="state.show_radio">
-                        Show Radio Sticks <i class="fa fa-gamepad" aria-hidden="true"></i> </label>
+                        Show Radio Sticks <i class="fa fa-gamepad"></i> </label>
                         <label v-if="state.textMessages"><input type="checkbox" v-model="state.show_messages"> Show
-                            Messages <i class="fa fa-comment" aria-hidden="true"></i> </label>
+                            Messages <i class="fa fa-comment"></i> </label>
                     </div>
                     <!-- WINGSPAN -->
                     <div>

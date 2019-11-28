@@ -166,8 +166,6 @@ export default {
         position: absolute;
         width: 100px;
         height: 100px;
-        left: 20px;
-        top: 20px;
         overflow: hidden;
         background: rgb(1, 160, 139);
         font-size: 10px;
@@ -237,4 +235,13 @@ export default {
         box-shadow: inset 0px 0px 4px 2px rgba(102, 102, 102, 0.877);
     }
 
+/* MEDIA QUERIES */
+
+    @media(max-width: 769px) {
+        div#paneinputViewer {
+        left: 5% !important;
+        top: 35% !important;
+    }
+    }
+   
 </style>
