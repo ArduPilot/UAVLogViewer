@@ -3,7 +3,8 @@
     <div class="nav-side-menu col-sm-4 col-md-3 col-lg-2" :class="mode" @toggle="toggle">
         <h1 class="brand"> <b>TLog</b>viewer<i class="fas fa-plane"></i></h1>
         <!-- TABHOLDER -->
-        <ul>
+        <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
+        <b-collapse class="menu-content collapse out" id="menucontent" visible>
             <div class="tabholder">
                 <!-- Home -->
                 <a :class="selected === 'home' ? 'selected' : ''" @click="selected='home'">
@@ -17,9 +18,8 @@
                 <a :class="selected ==='3d' ? 'selected' : ''" @click="state.show_map=trueselected='3d'"
                    v-if="state.map_available && !state.show_map">3D</a>
             </div>
-        </ul>
+        </b-collapse>
         <!-- TOGGLE MENU -->
-        <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <div class="menu-list">
             <b-collapse class="menu-content collapse out" id="menucontent" visible>
 
@@ -246,7 +246,8 @@ a.section {
         flex-flow: row wrap;
         justify-content: space-evenly;
         overflow: hidden;
-        padding: 10px 0px 10px 0px;
+        padding: 12px 0px 12px 0px;
+        cursor: pointer;
     }
 
     .tabholder a {
@@ -345,7 +346,7 @@ a.section {
         }
 
           main {
-            margin-top: 110px;
+            margin-top: 45px;
         }
 
         .col-sm-4 {
@@ -354,7 +355,7 @@ a.section {
 
         .col-lg-10 {
             max-width: 100%;
-            height: 85%;
+            height: 93%;
         }
 
         .light-mode-button {
