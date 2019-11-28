@@ -243,5 +243,5 @@ export default {
         top: 35% !important;
     }
     }
-   
+
 </style>
