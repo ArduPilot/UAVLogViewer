@@ -42,7 +42,7 @@
 
                     <!-- CAMERA -->
                     <div>
-                        <label><i class="fas fa-camera"></i> Camera</label>
+                        <label><i class="fas fa-camera" aria-hidden="true"></i> Camera</label>
                         <select class="cesium-button" v-model="state.cameraType">
                             <option value="free">Free</option>
                             <option value="follow">Follow</option>
@@ -50,19 +50,22 @@
                     </div>
                     <!-- CHECKBOXES -->
                     <div>
-                        <label><input type="checkbox" v-model="state.showWaypoints"> Waypoints</label>
-                        <label><input type="checkbox" v-model="state.showTrajectory"> Trajectory</label>
+                        <label><input type="checkbox" v-model="state.showWaypoints">
+                        Waypoints <i class="fa fa-map-marker" aria-hidden="true"></i> </label>
+                        <label><input type="checkbox" v-model="state.showTrajectory">
+                        Trajectory <i class="fa fa-map" aria-hidden="true"></i> </label>
                     </div>
                     <div v-if="state.processDone">
                         <label v-if="state.params"><input type="checkbox" v-model="state.show_params"> Show
-                            Parameters</label>
-                        <label><input type="checkbox" v-model="state.show_radio"> Show Radio Sticks</label>
+                            Parameters <i class="fa fa-cogs" aria-hidden="true"></i> </label>
+                        <label><input type="checkbox" v-model="state.show_radio">
+                        Show Radio Sticks <i class="fa fa-gamepad" aria-hidden="true"></i> </label>
                         <label v-if="state.textMessages"><input type="checkbox" v-model="state.show_messages"> Show
-                            Messages</label>
+                            Messages <i class="fa fa-comment" aria-hidden="true"></i> </label>
                     </div>
                     <!-- WINGSPAN -->
                     <div>
-                        <label><i class="fa fa-fighter-jet"></i> Wingspan (m)
+                        <label><i class="fa fa-fighter-jet" aria-hidden="true"></i> Wingspan (m)
                             <input max="15" min="0.1" step="0.01" type="range"
                             class="custom-range" v-model="state.modelScale">
                             <input class="wingspan-text" size="5" type="text" v-model="state.modelScale">
@@ -229,8 +232,9 @@ a.section {
         font-size: 22px;
         padding-left: 20px;
         line-height: 50px;
+        margin-bottom: 0;
         background: rgb(94,94,93);
-        background: linear-gradient(90deg, rgba(94,94,93,1) 20%, rgba(41, 41, 41, 0.856) 100%);
+        background: linear-gradient(90deg, rgba(94,94,93,1) 20%, rgba(66, 65, 65, 0.856) 100%);
         color: #eeeeee;
         display: block;
     }
@@ -242,16 +246,18 @@ a.section {
         flex-flow: row wrap;
         justify-content: space-evenly;
         overflow: hidden;
-        padding-bottom: 10px;
+        padding: 10px 0px 10px 0px;
     }
 
     .tabholder a {
+        background: rgb(150,150,150);
+        background: linear-gradient(0deg, rgba(150, 150, 150, 0.808) 15%, rgba(63, 63, 63, 0.829) 100%);
         float: left;
         padding: 2px 10px 2px 5px;
+        border-radius: 15px 0px 15px 0px;
     }
 
     a.selected {
-        background-color: #818181;
         color: #fff !important;
     }
 
@@ -280,6 +286,7 @@ a.section {
     /* LIGHT MODE */
 
     .light-mode-button {
+        font-size: 12px;
         display: block;
         position: fixed;
         margin-left: 95px;
@@ -288,7 +295,8 @@ a.section {
         padding: 6px;
         border: none;
         border-radius: 8px 8px 0px 0px;
-        background-color: #58585881;
+        background-color: #58585856;
+        background: linear-gradient(0deg, rgba(150, 150, 150, 0.486) 15%, rgba(63, 63, 63, 0.473) 100%);
         color: #fff;
     }
 
@@ -297,8 +305,8 @@ a.section {
     }
 
     .light {
-        background: rgb(241, 241, 241);
-        color: rgb(230, 103, 0);
+        background: rgb(221, 220, 220);
+        color: rgb(65, 63, 63);
     }
 
     .dark {
@@ -348,6 +356,10 @@ a.section {
             max-width: 100%;
             height: 85%;
         }
+
+        .light-mode-button {
+            display: none;
+        }
     }
     
     /* MIN */
@@ -362,11 +374,6 @@ a.section {
             height: 100%;
         }
 
-        .light-mode-button {
-            margin-left: 100px;
-            display: block;
-            position: fixed;
-        }
     }
 
     @media only screen and (min-width: 996px) {
@@ -376,6 +383,12 @@ a.section {
 
         .col-lg-10 {
             max-width: 80%;
+        }
+
+         .light-mode-button {
+            margin-left: 7%;
+            display: block;
+            position: fixed;
         }
     }
 
