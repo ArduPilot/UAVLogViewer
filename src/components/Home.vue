@@ -439,7 +439,7 @@ export default {
 
     .nav-side-menu ul :not(collapsed) .arrow:before,
     .nav-side-menu li :not(collapsed) .arrow:before {
-        font-family: FontAwesome;
+        font-family: 'Montserrat', sans-serif;
         content: "\f078";
         display: inline-block;
         padding-left: 10px;
@@ -496,7 +496,7 @@ export default {
         position: absolute;
         top: 0;
         color: #eee;
-        font-family: sans-serif;
+        font-family: 'Montserrat', sans-serif;
         font-size: 9pt;
     }
 

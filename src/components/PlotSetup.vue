@@ -51,7 +51,7 @@ export default {
     /* COLOR PICKER */
 
     ul.colorpicker {
-        font-family: 'FontAwesome';
+        font-family: 'Montserrat', sans-serif;
     }
 
     ul.colorpicker li {

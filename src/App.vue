@@ -15,7 +15,7 @@ export default {
 @import url('https://fonts.googleapis.com/css?family=Montserrat&display=swap');
 
  #app {
-    font-family: 'Raleway', sans-serif;
+    font-family: 'Montserrat', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
  }

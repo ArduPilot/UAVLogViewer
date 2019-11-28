@@ -792,7 +792,7 @@ export default {
         position: absolute;
         top: 0;
         color: #eee;
-        font-family: sans-serif;
+        font-family: 'Montserrat', sans-serif;
         font-size: 9pt;
     }
 
