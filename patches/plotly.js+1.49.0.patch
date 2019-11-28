@@ -1,5 +1,5 @@
 diff --git a/node_modules/plotly.js/dist/plotly.js b/node_modules/plotly.js/dist/plotly.js
-index 47ff566..bd43bec 100644
+index 47ff566..0a4d3d9 100644
 --- a/node_modules/plotly.js/dist/plotly.js
 +++ b/node_modules/plotly.js/dist/plotly.js
 @@ -1,4 +1,4 @@
@@ -9,7 +9,7 @@ index 47ff566..bd43bec 100644
  * Copyright 2012-2019, Plotly, Inc.
  * All rights reserved.
 diff --git a/node_modules/plotly.js/src/plots/plots.js b/node_modules/plotly.js/src/plots/plots.js
-index 705e8aa..d4e24c1 100644
+index 705e8aa..b479d8b 100644
 --- a/node_modules/plotly.js/src/plots/plots.js
 +++ b/node_modules/plotly.js/src/plots/plots.js
 @@ -677,6 +677,17 @@ function getFormatObj(gd, formatKeys) {
@@ -19,9 +19,9 @@ index 705e8aa..d4e24c1 100644
 +function relativeTimeFormatter(milliseconds) {
 +    let outputString = ''
 +    let seconds = (milliseconds / 1000) % 60;
-+    let minutes = (milliseconds / 1000) / 60
++    let minutes = Math.floor((milliseconds / 1000) / 60)
 +    outputString = ''+seconds.toFixed(1) + ' s'
-+    if (minutes > 1) {
++    if (minutes >= 1) {
 +        outputString = minutes.toFixed(0) + ' m ' + outputString
 +    }
 +    return outputString
