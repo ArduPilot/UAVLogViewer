@@ -189,7 +189,7 @@ a.section {
 
     .nav-side-menu li:hover {
         border-left: 3px solid #d19b3d;
-        background-color: #555d66;
+        background-color: #5c5b5a48;
         -webkit-transition: all 1s ease;
         -moz-transition: all 1s ease;
         -o-transition: all 1s ease;
