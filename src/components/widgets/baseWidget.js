@@ -19,7 +19,6 @@ export const baseWidget = {
     },
     methods: {
         getDivName () {
-            console.log('pane' + this.name)
             return 'pane' + this.name
         }
     },
@@ -34,8 +33,17 @@ export const baseWidget = {
             const t = this.offsetTop
             const l = this.offsetLeft
             // Click position within element
-            const y = t + h - e.pageY
-            const x = l + w - e.pageX
+            let pageX
+            let pageY
+            if (e.touches !== undefined) {
+                pageX = e.touches[0].pageX
+                pageY = e.touches[0].pageY
+            } else {
+                pageX = e.pageX
+                pageY = e.pageY
+            }
+            const y = t + h - pageY
+            const x = l + w - pageX
             const minWidth = 70
             const minHeight = 70
 
@@ -46,21 +54,39 @@ export const baseWidget = {
                 !(w === this.offsetWidth && h === this.offsetHeight)
 
             const follow = (e) => {
+                let pageX
+                let pageY
+                if (e.touches !== undefined) {
+                    pageX = e.touches[0].pageX
+                    pageY = e.touches[0].pageY
+                } else {
+                    pageX = e.pageX
+                    pageY = e.pageY
+                }
                 // Set top/left of element according to mouse position
-                _this.top = Math.max(0, Math.min(e.pageY + y - h, window.innerHeight - h))
-                _this.left = Math.max(0, Math.min(e.pageX + x - w, window.innerWidth - w))
+                _this.top = Math.max(0, Math.min(pageY + y - h, window.innerHeight - h))
+                _this.left = Math.max(0, Math.min(pageX + x - w, window.innerWidth - w))
             }
 
             const resize = (e) => {
+                if (e.touches !== undefined) {
+                    pageX = e.touches[0].pageX
+                    pageY = e.touches[0].pageY
+                } else {
+                    pageX = e.pageX
+                    pageY = e.pageY
+                }
                 // Set width/height of element according to mouse position
-                _this.width = Math.max(e.pageX - l + x, minWidth)
-                _this.height = Math.max(e.pageY - t + y, minHeight)
+                _this.width = Math.max(pageX - l + x, minWidth)
+                _this.height = Math.max(pageY - t + y, minHeight)
             }
 
             const unresize = (e) => {
                 // Remove listeners that were bound to document
                 document.removeEventListener('mousemove', resize)
+                document.removeEventListener('touchmove', resize)
                 document.removeEventListener('mouseup', unresize)
+                document.removeEventListener('touchend', unresize)
                 // Emit events according to interaction
                 if (hasResized(e)) {
                     this.dispatchEvent(new Event('resized'))
@@ -74,6 +100,8 @@ export const baseWidget = {
                 // Remove listeners that were bound to document
                 document.removeEventListener('mousemove', follow)
                 document.removeEventListener('mouseup', unfollow)
+                document.removeEventListener('touchmove', follow)
+                document.removeEventListener('touchend', unfollow)
                 // Emit events according to interaction
                 if (hasMoved(e)) {
                     this.dispatchEvent(new Event('moved'))
@@ -87,16 +115,21 @@ export const baseWidget = {
             if (x > 12 && y > 12) {
                 document.addEventListener('mousemove', follow)
                 document.addEventListener('mouseup', unfollow)
+                document.addEventListener('touchmove', follow)
+                document.addEventListener('touchend', unfollow)
                 // e.preventDefault()
             } else {
                 document.addEventListener('mousemove', resize)
                 document.addEventListener('mouseup', unresize)
+                document.addEventListener('touchmove', resize)
+                document.addEventListener('touchend', unresize)
                 e.preventDefault()
             }
         }
 
         // Bind mutable to element mousedown
         $elem.addEventListener('mousedown', mutable)
+        $elem.addEventListener('touchstart', mutable)
         // Listen for events from mutable element
         // $elem.addEventListener('clicked', (e) => $elem.innerHTML = 'clicked')
         // $elem.addEventListener('moved', (e) => $elem.innerHTML = 'moved')

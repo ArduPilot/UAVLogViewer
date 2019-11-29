@@ -30,7 +30,7 @@ export default {
             roll: 50,
             width: 220,
             height: 215,
-            left: 820,
+            left: 50,
             top: 12,
             forceRecompute: 0
         }
@@ -128,14 +128,5 @@ export default {
         -moz-user-select: none; /* Firefox all */
         -ms-user-select: none; /* IE 10+ */
         user-select: none;
-    }
-
-/* MEDIA QUERIES */
-
-    @media(max-width: 769px) {
-        div#paneParamViewer {
-        left: 5% !important;
-        top: 35% !important;
-    }
     }
 </style>
