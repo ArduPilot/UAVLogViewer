@@ -26,7 +26,7 @@ export default {
             state: store,
             width: 220,
             height: 215,
-            left: 1070,
+            left: 50,
             top: 12,
             forceRecompute: 0,
             cursorTime: 0
@@ -123,12 +123,4 @@ export default {
         margin: 0;
     }
 
-/* MEDIA QUERIES */
-
-    @media(max-width: 769px) {
-        div#paneMessageViewer {
-        left: 5% !important;
-        top: 35% !important;
-    }
-    }
 </style>

@@ -50,7 +50,7 @@ export default {
             roll: 50,
             width: 294,
             height: 150,
-            left: 500,
+            left: 50,
             top: 12,
             circleHeight: 40
         }
@@ -233,15 +233,6 @@ export default {
         margin-left: 48%;
         display: inline-block;
         box-shadow: inset 0px 0px 4px 2px rgba(102, 102, 102, 0.877);
-    }
-
-/* MEDIA QUERIES */
-
-    @media(max-width: 769px) {
-        div#paneinputViewer {
-        left: 5% !important;
-        top: 35% !important;
-    }
     }
 
 </style>
