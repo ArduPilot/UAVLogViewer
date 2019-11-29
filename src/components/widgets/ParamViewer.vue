@@ -85,8 +85,8 @@ export default {
     }
 
     div #paneParamViewer::before {
-        content: '\2198';
-        color: rgb(255, 140, 45);
+        content: '\25e2';
+        color: rgb(202, 99, 15);
         position: absolute;
         bottom: 0;
         right: 0;
@@ -100,6 +100,22 @@ export default {
         border-radius: 4px;
     }
 
+      div #paneParamViewer::after {
+        content: '\2725';
+        color: rgb(202, 99, 15);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 18px;
+        height: 17px;
+        margin-top: -3px;
+        padding: 0px 2px;
+        box-sizing: border-box;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+    }
+
     div#paneContent {
         height: 95%;
         overflow: auto;
@@ -108,7 +124,7 @@ export default {
 
     input#filterbox {
         width: 95%;
-        margin: 15px 0px 0px 10px;
+        margin: 23px 0px 0px 10px;
         padding: 4px;
         background-color: rgba(255, 255, 255, 0.836);
         border: 1px solid rgb(133, 133, 133);

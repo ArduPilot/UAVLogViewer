@@ -177,23 +177,37 @@ export default {
     }
 
     div #paneinputViewer::before {
-        content: '\2198';
-        color: #fff;
+        content: '\25e2';
+        color: rgba(255, 255, 255, 0.918);
         position: absolute;
         bottom: 0;
         right: 0;
-        width: 20px;
-        height: 20px;
-        padding: 1px;
-        padding-left: 5px;
-        padding-bottom: 3px;
-        background: rgba(0, 36, 27, 0.63);
+        width: 22px;
+        height: 21px;
+        padding: 2px 6px;
+        background: rgba(0, 36, 27, 0.212);
         box-sizing: border-box;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
-        border: 1px outset rgba(107, 107, 107, 0.726);
-        border-radius: 3px;
+        font-size: 11px;
+        border-radius: 15px 0px;
+    }
+
+     div #paneinputViewer::after {
+        content: '\2725';
+        color: rgba(255, 255, 255, 0.918);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 25px;
+        height: 23px;
+        padding: 0px 5px;
+        background: rgba(0, 36, 27, 0.212);
+        box-sizing: border-box;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        border-radius: 15px 0px;
     }
 
     div.circle {
