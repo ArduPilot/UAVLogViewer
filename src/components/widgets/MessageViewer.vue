@@ -92,8 +92,8 @@ export default {
     }
 
     div #paneMessageViewer::before {
-        content: '\2198';
-        color: rgb(255, 140, 45);
+        content: '\25e2';
+        color: rgb(202, 99, 15);
         background-color: rgba(51, 49, 49, 0.938);
         position: absolute;
         bottom: 0;
@@ -105,6 +105,22 @@ export default {
         align-items: center;
         justify-content: center;
         font-size: 14px;
+    }
+
+     div #paneMessageViewer::after {
+        content: '\2725';
+        color: rgb(202, 99, 15);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 18px;
+        height: 17px;
+        margin-top: -3px;
+        padding: 0px 2px;
+        box-sizing: border-box;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
     }
 
     div#paneContent {
@@ -119,7 +135,7 @@ export default {
     div#paneContent ul {
         list-style: none;
         line-height: 22px;
-        padding: 14px;
+        padding: 16px;
         margin: 0;
     }
 
