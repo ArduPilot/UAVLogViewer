@@ -521,6 +521,4 @@ export default {
         margin-top: 15%;
     }
 
-    #vuewrapper { overscroll-behavior: none; }
-
 </style>
