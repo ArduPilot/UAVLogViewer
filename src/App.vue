@@ -20,4 +20,9 @@ export default {
     -moz-osx-font-smoothing: grayscale;
  }
 
+ html,
+body {
+    overscroll-behavior-y: contain;
+}
+
 </style>

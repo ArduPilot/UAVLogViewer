@@ -54,7 +54,6 @@ export const baseWidget = {
                 !(w === this.offsetWidth && h === this.offsetHeight)
 
             const follow = (e) => {
-                e.preventDefault()
                 let pageX
                 let pageY
                 if (e.touches !== undefined) {
@@ -70,7 +69,6 @@ export const baseWidget = {
             }
 
             const resize = (e) => {
-                e.preventDefault()
                 if (e.touches !== undefined) {
                     pageX = e.touches[0].pageX
                     pageY = e.touches[0].pageY
