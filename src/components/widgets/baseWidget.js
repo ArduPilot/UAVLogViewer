@@ -54,6 +54,7 @@ export const baseWidget = {
                 !(w === this.offsetWidth && h === this.offsetHeight)
 
             const follow = (e) => {
+                e.preventDefault()
                 let pageX
                 let pageY
                 if (e.touches !== undefined) {
@@ -69,6 +70,7 @@ export const baseWidget = {
             }
 
             const resize = (e) => {
+                e.preventDefault()
                 if (e.touches !== undefined) {
                     pageX = e.touches[0].pageX
                     pageY = e.touches[0].pageY
@@ -115,13 +117,13 @@ export const baseWidget = {
             if (x > 12 && y > 12) {
                 document.addEventListener('mousemove', follow)
                 document.addEventListener('mouseup', unfollow)
-                document.addEventListener('touchmove', follow)
+                document.addEventListener('touchmove', follow, { passive: false })
                 document.addEventListener('touchend', unfollow)
                 // e.preventDefault()
             } else {
                 document.addEventListener('mousemove', resize)
                 document.addEventListener('mouseup', unresize)
-                document.addEventListener('touchmove', resize)
+                document.addEventListener('touchmove', resize, { passive: false })
                 document.addEventListener('touchend', unresize)
                 e.preventDefault()
             }
