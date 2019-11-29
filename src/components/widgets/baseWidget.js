@@ -112,13 +112,13 @@ export const baseWidget = {
             }
 
             // Add follow listener if not resizing
-            if (x > 12 && y > 12) {
+            if (x > w - 20 && y > h - 20) {
                 document.addEventListener('mousemove', follow)
                 document.addEventListener('mouseup', unfollow)
                 document.addEventListener('touchmove', follow, { passive: false })
                 document.addEventListener('touchend', unfollow)
                 // e.preventDefault()
-            } else {
+            } else if (x < 25 && y < 25) {
                 document.addEventListener('mousemove', resize)
                 document.addEventListener('mouseup', unresize)
                 document.addEventListener('touchmove', resize, { passive: false })
