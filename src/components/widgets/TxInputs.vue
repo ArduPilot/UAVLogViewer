@@ -191,6 +191,7 @@ export default {
         justify-content: center;
         font-size: 11px;
         border-radius: 15px 0px;
+        cursor: se-resize;
     }
 
      div #paneinputViewer::after {
@@ -208,6 +209,7 @@ export default {
         justify-content: center;
         font-size: 17px;
         border-radius: 15px 0px;
+        cursor: grab;
     }
 
     div.circle {

@@ -105,6 +105,7 @@ export default {
         align-items: center;
         justify-content: center;
         font-size: 14px;
+        cursor: se-resize;
     }
 
      div #paneMessageViewer::after {
@@ -121,6 +122,7 @@ export default {
         align-items: center;
         justify-content: center;
         font-size: 17px;
+         cursor: grab;
     }
 
     div#paneContent {
