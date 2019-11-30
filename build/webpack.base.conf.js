@@ -37,7 +37,8 @@ module.exports = {
     publicPath: process.env.NODE_ENV === 'production'
       ? config.build.assetsPublicPath
       : config.dev.assetsPublicPath,
-    sourcePrefix: ' '
+    sourcePrefix: ' ',
+    globalObject: 'this'
   },
   amd: {
     // Enable webpack-friendly use of require in Cesium
@@ -108,5 +109,27 @@ module.exports = {
     net: 'empty',
     tls: 'empty',
     child_process: 'empty'
-  }
+  },
+    optimization: {
+        splitChunks: {
+            chunks: 'all',
+            minSize: 30000,
+            maxSize: 0,
+            minChunks: 1,
+            maxAsyncRequests: 6,
+            maxInitialRequests: 4,
+            automaticNameDelimiter: '~',
+            cacheGroups: {
+                vendors: {
+                    test: /[\\/]node_modules[\\/]/,
+                    priority: -10
+                },
+                default: {
+                    minChunks: 2,
+                    priority: -20,
+                    reuseExistingChunk: true
+                }
+            }
+        }
+    }
 }
