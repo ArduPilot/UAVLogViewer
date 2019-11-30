@@ -98,6 +98,7 @@ export default {
         justify-content: center;
         font-size: 14px;
         border-radius: 4px;
+        cursor: se-resize;
     }
 
       div #paneParamViewer::after {
@@ -114,6 +115,7 @@ export default {
         align-items: center;
         justify-content: center;
         font-size: 17px;
+        cursor: grab;
     }
 
     div#paneContent {
