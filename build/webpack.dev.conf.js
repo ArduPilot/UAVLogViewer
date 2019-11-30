@@ -9,7 +9,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const portfinder = require('portfinder')
-
+const VueLoaderPlugin      = require('vue-loader/lib/plugin');
 const cesiumSource =  'node_modules/cesium/Source'
 const cesiumWorkers = '../Build/Cesium/Workers'
 
@@ -19,6 +19,7 @@ const HOST = '0.0.0.0'
 const PORT = process.env.PORT && Number(process.env.PORT)
 
 const devWebpackConfig = merge(baseWebpackConfig, {
+    mode: 'development',
   module: {
     rules: utils.styleLoaders({ sourceMap: config.dev.cssSourceMap, usePostCSS: true })
   },
@@ -71,7 +72,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       // Define relative base path in cesium for loading assets
       CESIUM_BASE_URL: JSON.stringify('')
     }),
-    new webpack.optimize.CommonsChunkPlugin('common.js'),
+
     new CopyWebpackPlugin([
       {
         from: path.resolve(__dirname, '../static'),
@@ -79,7 +80,8 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         ignore: ['.*']
       }
 
-    ])
+    ]),
+      new VueLoaderPlugin(),
   ]
 })
 
