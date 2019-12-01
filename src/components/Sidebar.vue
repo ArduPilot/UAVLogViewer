@@ -320,7 +320,7 @@ a.section {
     
     @media only screen and (max-width: 768px) {
         .nav-side-menu {
-            position: fixed;
+            position: fixed !important;
             width: 100%;
             margin-bottom: 10px;
             height: auto;
