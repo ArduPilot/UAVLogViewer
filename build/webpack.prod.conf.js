@@ -13,6 +13,7 @@ const cesiumSource =  'node_modules/cesium/Source'
 const cesiumWorkers = '../Build/Cesium/Workers'
 const TerserPlugin = require('terser-webpack-plugin')
 const VueLoaderPlugin      = require('vue-loader/lib/plugin');
+const CompressionPlugin = require('compression-webpack-plugin');
 
 const env = process.env.NODE_ENV === 'testing'
   ? require('../config/test.env')
@@ -34,6 +35,7 @@ const webpackConfig = merge(baseWebpackConfig, {
     chunkFilename: utils.assetsPath('js/[id].[chunkhash].js')
   },
   plugins: [
+      new CompressionPlugin(),
       new TerserPlugin({
           parallel: true,
           terserOptions: {
