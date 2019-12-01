@@ -122,7 +122,7 @@ a.section {
         overflow-x: hidden;
         padding: 0;
         background-color: #2e2e2e;
-        position: fixed;
+        position: fixed !important;
         top: 0px;
         height: 100%;
         color: #ffff;
@@ -380,11 +380,11 @@ a.section {
 
     @media only screen and (min-width: 996px) {
         .nav-side-menu {
-            max-width: 20%;
+            max-width: 20% !important;
         }
 
         .col-lg-10 {
-            max-width: 80%;
+            max-width: 80% !important;
         }
 
          .light-mode-button {
