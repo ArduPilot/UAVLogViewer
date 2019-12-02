@@ -10,7 +10,7 @@ let timeformat = ':02,2f'
 let plotOptions = {
     legend: {
         x: 0,
-        y: -0.4,
+        y: 1,
         traceorder: 'normal',
         borderwidth: 1
     },
@@ -458,7 +458,7 @@ export default {
                     title: 'time_boot (ms)',
                     tickformat: ':04,2f'
                 }
-                Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
+                Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true, editable: true})
             } else {
                 this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
             }
