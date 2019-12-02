@@ -18696,7 +18696,10 @@ MAVLink.prototype.parseType = function (type) {
                 index -= 1
             }
         }
-        messages.push(m)
+        // This filters out the first messages, which have no time_boot_ms information
+        if (m.time_boot_ms !== 0) {
+            messages.push(m)
+        }
     }
     this.emit('message', messages)
     return messages
