@@ -5,13 +5,13 @@
   "author": "Willian Galvani <williangalvani@gmail.com>",
   "private": true,
   "scripts": {
-    "dev": "node --max_old_space_size=4096 node_modules/.bin/webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
+    "dev": "node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js --inline --progress --config build/webpack.dev.conf.js",
     "start": "npm run dev",
     "unit": "jest --config test/unit/jest.conf.js --coverage",
     "e2e": "node test/e2e/runner.js",
     "test": "npm run unit && npm run e2e",
     "lint": "eslint --ext .js,.vue src test/unit test/e2e/specs",
-    "build": "node --max_old_space_size=4096 node_modules/.bin/webpack --config build/webpack.prod.conf.js",
+    "build": "node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js --config build/webpack.prod.conf.js",
     "postinstall": "patch-package"
   },
   "dependencies": {
