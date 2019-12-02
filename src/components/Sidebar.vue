@@ -1,6 +1,6 @@
 <template>
 <!-- HEADER -->
-    <div class="nav-side-menu col-sm-4 col-md-3 col-lg-2" :class="mode" @toggle="toggle">
+    <div class="nav-side-menu col-lg-2" :class="mode" @toggle="toggle">
         <h1 class="brand"> <b>TLog</b>viewer<i class="fas fa-plane"></i></h1>
         <!-- TABHOLDER -->
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
@@ -113,9 +113,13 @@ export default {
 <style>
 
 a.section {
-    margin-left: 8px;
+    font-size: 15px;
+    margin-left: 7px;
 }
 
+.col-lg-2 {
+    padding: 0 !important;
+}
 /* NAV SIDE MENU */
 
     .nav-side-menu {
@@ -176,11 +180,6 @@ a.section {
         border-bottom: 1px solid #23282e;
     }
 
-    .nav-side-menu li a {
-        text-decoration: none;
-        color: #e1ffff;
-    }
-
     .nav-side-menu li a i {
         padding-left: 0;
         width: 20px;
@@ -189,7 +188,7 @@ a.section {
 
     .nav-side-menu li:hover {
         border-left: 3px solid #d19b3d;
-        background-color: #5c5b5a48;
+        background-color: rgba(114, 114, 114, 0.2);
         -webkit-transition: all 1s ease;
         -moz-transition: all 1s ease;
         -o-transition: all 1s ease;
@@ -299,7 +298,7 @@ a.section {
         border-radius: 8px 8px 0px 0px;
         background-color: #58585856;
         background: linear-gradient(0deg, rgba(150, 150, 150, 0.486) 15%, rgba(63, 63, 63, 0.473) 100%);
-        color: #fff;
+        color: rgb(255, 255, 255);
     }
 
     .light-mode-button:hover {
@@ -320,9 +319,8 @@ a.section {
     
     @media only screen and (max-width: 768px) {
         .nav-side-menu {
-            position: fixed !important;
+            position: fixed;
             width: 100%;
-            margin-bottom: 10px;
             height: auto;
             max-height: 100%;
             z-index: 1002;
@@ -333,10 +331,11 @@ a.section {
             cursor: pointer;
             position: absolute;
             right: 10px;
-            top: 0px;
+            margin: 0;
+            top: 5px;
             z-index: 10 !important;
             padding: 3px;
-            background-color: #ffffffde;
+            background-color: rgba(248, 248, 248, 0.769);
             color: rgb(58, 58, 58);
             height: auto;
             width: 40px;
@@ -350,10 +349,6 @@ a.section {
             margin-top: 45px;
         }
 
-        .col-sm-4 {
-            max-width: 100%;
-        }
-
         .col-lg-10 {
             max-width: 100%;
             height: 93%;
@@ -361,6 +356,10 @@ a.section {
 
         .light-mode-button {
             display: none;
+        }
+
+        .col-md-9 {
+            max-width: 100% !important;
         }
     }
     
@@ -375,7 +374,10 @@ a.section {
         main {
             height: 100%;
         }
-
+        
+        .col-lg-2 {
+            max-width: 25%;
+        }
     }
 
     @media only screen and (min-width: 996px) {
