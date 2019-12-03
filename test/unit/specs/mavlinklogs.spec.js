@@ -1,15 +1,20 @@
 require('mavlink_common_v1.0/mavlink')
 let mavlinkparser = require('../../../src/tools/parsers/mavlinkParser.js')
+var glob = require('glob')
 
-describe('MavlinkParser', () => {
-    it('should be able to pre-parse the file', () => {
+// options is optional
+let files = glob.sync(require('path').join(__dirname, '../../testlogfiles/*.tlog'))
+
+describe('parse tlogs', () => {
+    test.each(files)('parse %s', (a) => {
         const fs = require('fs')
-        const logfile = fs.readFileSync(require('path').join(__dirname,'../../testlogfiles/vtol.tlog'))
+        const logfile = fs.readFileSync(a)
         const parser = new mavlinkparser.MavlinkParser()
-
         // Hide these two
-        parser.mavlinkParser.on = () => {}
-        self.postMessage = function (a) {}
+        parser.mavlinkParser.on = () => {
+        }
+        self.postMessage = function (a) {
+        }
         const messageTypes = parser.processData(logfile)
         expect(Object.keys(messageTypes)).toContain('HEARTBEAT')
     })
