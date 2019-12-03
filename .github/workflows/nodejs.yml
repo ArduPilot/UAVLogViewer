@@ -13,6 +13,20 @@ jobs:
 
         steps:
             - uses: actions/checkout@v1
+            - uses: actions/cache@v1
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node-
+
+            - uses: actions/cache@v1
+              with:
+                  path: /tmp/testlogs
+                  key: ${{ runner.os }}-testlogs-${{ hashFiles('**/logdownloader.sh') }}
+                  restore-keys: |
+                      ${{ runner.os }}-testlogs-
+
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v1
               with:
@@ -26,23 +40,29 @@ jobs:
             - run: sudo apt install -y ./google-chrome-unstable_72.0.3595.2-1_amd64.deb
             - run: sudo apt install -y default-jdk
             - run: npm run e2e
+            - run: ./test/testlogfiles/logdownloader.sh
             - run: npm run unit
               env:
                   CI: true
 
     testwindows:
         runs-on: windows-latest
+
         strategy:
             matrix:
                 node-version: [12.x]
 
         steps:
             - uses: actions/checkout@v1
-            - uses: actions/setup-node@v1
+            - uses: actions/cache@v1
+              with:
+                    path: ~\AppData\Roaming\npm-cache
+                    key: ${{ runner.os }}-node-${{ hashFiles('**\package-lock.json') }}
+                    restore-keys: |
+                        ${{ runner.os }}-node-
             - name: Use Node.js ${{ matrix.node-version }} in Windows
               uses: actions/setup-node@v1
               with:
                   node-version: ${{ matrix.node-version }}
             - run: npm install
             - run: npm run build --if-present
-            - run: npm run unit

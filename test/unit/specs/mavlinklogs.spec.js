@@ -3,7 +3,7 @@ let mavlinkparser = require('../../../src/tools/parsers/mavlinkParser.js')
 var glob = require('glob')
 
 // options is optional
-let files = glob.sync(require('path').join(__dirname, '../../testlogfiles/*.tlog'))
+let files = glob.sync('/tmp/testlogs/*.tlog')
 
 describe('parse tlogs', () => {
     test.each(files)('parse %s', (a) => {
