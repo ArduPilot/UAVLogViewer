@@ -130,7 +130,12 @@ function getModeString (mavtype, cmode) {
     if (mavtype === mavlink.MAV_TYPE_GCS) {
         return ''
     }
-    return getModeMap(mavtype)[cmode]
+    const map = getModeMap(mavtype)
+    if (map === null) {
+        console.log(mavtype, cmode)
+        return ''
+    }
+    return map[cmode]
 }
 
 let instance
