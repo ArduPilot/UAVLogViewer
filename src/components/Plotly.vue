@@ -596,4 +596,8 @@ export default {
     .js-plotly-plot {
         margin-left: 0 !important;
     }
+
+    .shapelayer path {
+        pointer-events: none !important;
+    }
 </style>
