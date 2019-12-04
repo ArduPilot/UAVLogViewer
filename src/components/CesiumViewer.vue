@@ -249,6 +249,9 @@ export default {
                     console.log(closeButton)
                     closeButton.addEventListener('click', function () {
                         this.state.show_map = false
+                        this.$nextTick(function () {
+                            this.$eventHub.$emit('force-resize-plotly')
+                        })
                     }.bind(this))
                 },
                 onCameraUpdate () {

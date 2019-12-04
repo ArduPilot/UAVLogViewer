@@ -112,6 +112,7 @@ Plotly.edits = {legendPosition: true}
 export default {
     created () {
         this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
+        this.$eventHub.$on('force-resize-plotly', this.resize)
         this.zoomInterval = null
     },
     mounted () {
@@ -128,8 +129,6 @@ export default {
         this.gd = gd3.node()
         let _this = this
         this.$nextTick(function () {
-            window.addEventListener('resize', _this.resize)
-            _this.resize()
             if (this.$route.query.hasOwnProperty('ranges')) {
                 let ranges = []
                 for (let field of this.$route.query.ranges.split(',')) {
@@ -162,7 +161,6 @@ export default {
         this.$eventHub.$on('clearPlot', this.clearPlot)
     },
     beforeDestroy () {
-        window.removeEventListener('resize', this.resize)
         this.$eventHub.$off('animation-changed')
         this.$eventHub.$off('cesium-time-changed')
         this.$eventHub.$off('addPlot')
@@ -458,9 +456,9 @@ export default {
                     title: 'time_boot (ms)',
                     tickformat: ':04,2f'
                 }
-                Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true, editable: true})
+                Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true, editable: true, responsive: true})
             } else {
-                this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true})
+                this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true, editable: true, responsive: true})
             }
             this.gd.on('plotly_relayout', this.onRangeChanged)
             this.gd.on('plotly_hover', function (data) {
