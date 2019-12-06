@@ -323,6 +323,7 @@ export default {
                         }
                     })
                     this.addModeShapes()
+                    this.addEvents()
                 }
             }
         },
@@ -538,6 +539,27 @@ export default {
             }
             Plotly.relayout(this.gd, {
                 shapes: shapes
+            })
+        },
+        addEvents () {
+            let annotations = []
+            for (let i of this.state.armed_events) {
+                annotations.push(
+                    {
+                        xref: 'x',
+                        yref: 'paper',
+                        x: i[0],
+                        y: 0.07,
+                        yanchor: 'bottom',
+                        text: i[1] ? 'Armed' : 'Disarmed',
+                        showarrow: true,
+                        ay: 50,
+                        ax: 0
+                    }
+                )
+            }
+            Plotly.relayout(this.gd, {
+                annotations: annotations
             })
         }
     },

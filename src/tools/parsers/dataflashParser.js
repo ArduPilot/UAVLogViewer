@@ -619,6 +619,7 @@ export class DataflashParser {
         this.parse_atOffset('XKQ2')
         this.parse_atOffset('PARM')
         this.parse_atOffset('MSG')
+        this.parse_atOffset('STAT')
         let metadata = {
             startTime: this.extractStartTime()
         }
