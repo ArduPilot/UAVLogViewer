@@ -7,6 +7,7 @@ export var store = {
     show_radio: false,
     show_messages: false,
     flight_mode_changes: [],
+    armed_events: [],
     cssColors: [],
     colors: [],
     map_available: false,
