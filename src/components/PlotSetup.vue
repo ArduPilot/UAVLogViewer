@@ -2,7 +2,7 @@
     <div>
         <li class="type">
             <div v-b-toggle.plotsetupcontent>
-                <a class="section">Plots Setup
+                <a class="section"> Plots Setup
                     <i class="expand fas fa-caret-down"></i></a>
             </div>
         </li>
@@ -10,7 +10,7 @@
             <ul class="colorpicker">
 
                 <li :key="field.name" class="field plotsetup" v-for="field in state.fields">
-                    <span class="plotname">{{field.name}}</span>
+                    <p class="plotname">{{field.name}}</p>
                     <select v-model.number="field.axis">
                         <option v-bind:key="'axisnumber'+axis" v-for="axis in state.allAxis">{{axis}}</option>
                     </select>
@@ -27,7 +27,7 @@
                     </a>
 
                 </li>
-                <li v-if="state.fields.length === 0"> Please plot something first.</li>
+                <li v-if="state.fields.length === 0">  Please plot something first.</li>
             </ul>
 
         </b-collapse>
@@ -56,6 +56,13 @@ export default {
 
     ul.colorpicker li {
         cursor: default;
+        font-size: 13px;
+        padding: 5px;
+    }
+
+    ul.colorpicker li:hover {
+        background-color: #2E2E2E;
+        border-left: 3px solid #2E2E2E;
     }
 
     ul.colorpicker li a {
@@ -76,11 +83,41 @@ export default {
         margin: 5px;
         padding: 0;
     }
-    span.plotname {
+
+    p.plotname {
+        display: inline-flex;
+        font-size: 13px;
+        width: 138px;
         white-space: nowrap;
         overflow: hidden;
+        text-overflow: ellipsis;
         direction: rtl;
-        display: block;
+    }
+
+    select {
+        border-radius: 3px;
+        border: 1px solid rgb(156, 156, 156);
+        background-color: rgb(255, 255, 255);
+        padding: 1px 2px;
+        color: #838282;
+    }
+
+    select:focus {
+        border: 1.5px solid #d47f00;
+        outline: none;
+    }
+
+    select option {
+        background-color: rgb(216, 215, 215);
+    }
+
+    select option:hover {
+        background-color: #d47f00;
+    }
+
+    .fa-trash {
+        margin: 1px;
+        font-size: 10px;
     }
 
 </style>
