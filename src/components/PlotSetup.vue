@@ -85,7 +85,9 @@ export default {
     }
 
     p.plotname {
-        display: inline-flex;
+        display: inline-block;
+        line-height: 15px;
+        margin-bottom: 0;
         font-size: 13px;
         width: 138px;
         white-space: nowrap;
@@ -95,6 +97,7 @@ export default {
     }
 
     select {
+        display: inline;
         border-radius: 3px;
         border: 1px solid rgb(156, 156, 156);
         background-color: rgb(255, 255, 255);
