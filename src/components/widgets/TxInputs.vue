@@ -51,7 +51,7 @@ export default {
             width: 294,
             height: 150,
             left: 50,
-            top: 12,
+            top: 12
         }
     },
     methods: {
@@ -141,13 +141,13 @@ export default {
             return -12 + 0.01 * (this.yaw) * this.width / 2
         },
         leftStickTop () {
-            return 0.02 * (100 - this.throttle) * this.circleHeight -6
+            return 0.02 * (100 - this.throttle) * this.circleHeight - 6
         },
         rightStickLeft: function () {
             return -12 + (0.01 * this.roll) * (this.width / 2)
         },
         rightStickTop () {
-            return 0.02 * (100 - this.pitch) * this.circleHeight -6
+            return 0.02 * (100 - this.pitch) * this.circleHeight - 6
         },
         circleHeight () {
             return this.height * (69 / 150)
