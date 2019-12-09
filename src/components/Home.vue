@@ -98,6 +98,9 @@ export default {
             if (this.state.flight_mode_changes.length === 0) {
                 this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
             }
+            if (this.state.armed_events.length === 0) {
+                this.state.armed_events = this.extractArmedEvents(this.state.messages)
+            }
             if (this.state.mission.length === 0) {
                 this.state.mission = this.extractMission(this.state.messages)
             }
@@ -335,6 +338,29 @@ export default {
                 }
             }
             return modes
+        },
+        extractArmedEvents (messages) {
+            let armedState = []
+            if ('HEARTBEAT' in messages) {
+                let msgs = messages['HEARTBEAT']
+                armedState = [[msgs.time_boot_ms[0], (msgs.base_mode[0] & 0b10000000) === 128]]
+                for (let i in msgs.time_boot_ms) {
+                    if (msgs.type[i] !== mavlink.MAV_TYPE_GCS) {
+                        if (((msgs.base_mode[i] & 0b10000000) === 128) !== armedState[armedState.length - 1][1]) {
+                            armedState.push([msgs.time_boot_ms[i], (msgs.base_mode[i] & 0b10000000) === 128])
+                        }
+                    }
+                }
+            } else if ('STAT' in messages) {
+                let msgs = messages['STAT']
+                armedState = [[msgs.time_boot_ms[0], msgs.Armed[0] === 1]]
+                for (let i in msgs.time_boot_ms) {
+                    if ((msgs.Armed[i] === 1) !== armedState[armedState.length - 1][1]) {
+                        armedState.push([msgs.time_boot_ms[i], msgs.Armed[i] === 1])
+                    }
+                }
+            }
+            return armedState
         },
         extractMission (messages) {
             let wps = []
