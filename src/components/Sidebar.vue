@@ -113,8 +113,7 @@ export default {
 <style>
 
 a.section {
-    font-size: 15px;
-    margin-left: 7px;
+    margin-left: 6px;
 }
 
 .col-lg-2 {
@@ -315,9 +314,13 @@ a.section {
     }
     /* MEDIA QUERIES */
 
-    /* MAX */
+    @media (min-width: 575px) and (max-width: 992px) {
+       a {
+        padding: 2px 60px 2px 55px !important;
+       }
+    }
     
-    @media only screen and (max-width: 768px) {
+    @media only screen and (max-width: 992px) {
         .nav-side-menu {
             position: fixed;
             width: 100%;
@@ -365,28 +368,17 @@ a.section {
     
     /* MIN */
 
-    @media (min-width: 769px) {
-        .nav-side-menu .menu-list .menu-content {
-            display: block;
-            height: 100%;
+    @media only screen and (min-width: 991px) and (max-width: 1439px) {
+        .nav-side-menu {
+            max-width: 27% !important;
+        }
+
+        .col-lg-10 {
+            max-width: 73% !important;
         }
 
         main {
             height: 100%;
-        }
-        
-        .col-lg-2 {
-            max-width: 25%;
-        }
-    }
-
-    @media only screen and (min-width: 996px) {
-        .nav-side-menu {
-            max-width: 20% !important;
-        }
-
-        .col-lg-10 {
-            max-width: 80% !important;
         }
 
          .light-mode-button {
@@ -396,13 +388,17 @@ a.section {
         }
     }
 
-    @media only screen and (min-width: 2000px) {
+    @media only screen and (min-width: 1440px) {
         .nav-side-menu {
-        max-width: 11%;  
+        max-width: 20% !important;  
+        }
+
+        main {
+            height: 100%;
         }
 
         .col-lg-10 {
-            max-width: 89.2%;
+            max-width: 80% !important;
         }
     }
 </style>
