@@ -89,7 +89,7 @@ export default {
         line-height: 15px;
         margin-bottom: 0;
         font-size: 13px;
-        width: 138px;
+        width: 60%;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -122,5 +122,19 @@ export default {
         margin: 1px;
         font-size: 10px;
     }
+
+/* MEDIA QUERIES */
+
+   @media (min-width: 1000px) and (max-width: 1440px) {
+       p.plotname {
+           width: 55%;
+       }
+   }
+
+   @media (min-width: 2000px) {
+       p.plotname {
+           width: 75%;
+       }       
+   }
 
 </style>
