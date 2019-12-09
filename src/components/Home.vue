@@ -351,12 +351,26 @@ export default {
                         }
                     }
                 }
-            } else if ('STAT' in messages) {
+            } else if ('STAT' in messages && messages['STAT'].length > 0) {
                 let msgs = messages['STAT']
                 armedState = [[msgs.time_boot_ms[0], msgs.Armed[0] === 1]]
                 for (let i in msgs.time_boot_ms) {
                     if ((msgs.Armed[i] === 1) !== armedState[armedState.length - 1][1]) {
                         armedState.push([msgs.time_boot_ms[i], msgs.Armed[i] === 1])
+                    }
+                }
+            } else if ('EV' in messages) {
+                armedState = []
+                let msgs = messages['EV']
+                let armed = false
+                for (let i in msgs.time_boot_ms) {
+                    if (armed) {
+                        armed = (msgs.Id[i] !== 11) // 10 means armed
+                    } else {
+                        armed = (msgs.Id[i] === 10) // 11 means disarmed
+                    }
+                    if (armedState.length === 0 || armed !== armedState[armedState.length - 1][1]) {
+                        armedState.push([msgs.time_boot_ms[i], armed])
                     }
                 }
             }
