@@ -83,7 +83,7 @@ export default {
                     this.uploadpercentage = 100 * e.loaded / e.total
                 }
             }.bind(this)
-                , false)
+            , false)
 
             oReq.send()
         },
@@ -157,7 +157,7 @@ export default {
                     this.uploadpercentage = 100 * e.loaded / e.total
                 }
             }.bind(this)
-                , false)
+            , false)
             request.open('POST', '/upload')
             request.send(formData)
         },
