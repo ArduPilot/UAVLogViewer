@@ -388,7 +388,7 @@ a.section {
         }
     }
 
-    @media only screen and (min-width: 1440px) {
+    @media only screen and (min-width: 1440px) and (max-width: 2000px) {
         .nav-side-menu {
         max-width: 20% !important;  
         }
@@ -399,6 +399,26 @@ a.section {
 
         .col-lg-10 {
             max-width: 80% !important;
+        }
+    }
+
+    @media only screen and (min-width: 2000px) {
+        .nav-side-menu {
+            max-width: 15% !important;
+        }
+        
+        main {
+            height: 100%;
+        }
+
+        .col-lg-10 {
+            max-width: 85% !important;
+        }
+
+        .light-mode-button {
+            margin-left: 7%;
+            display: block;
+            position: fixed;
         }
     }
 </style>
