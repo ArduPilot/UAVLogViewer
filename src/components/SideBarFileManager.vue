@@ -130,6 +130,7 @@ export default {
                     isTlog: (file.name.indexOf('tlog') > 1)
                 })
             }
+            this.state.log_type = file.name.indexOf('tlog') > 1 ? 'tlog' : 'bin'
 
             reader.readAsArrayBuffer(file)
         },
