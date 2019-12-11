@@ -132,7 +132,6 @@ function getModeString (mavtype, cmode) {
     }
     const map = getModeMap(mavtype)
     if (map === null) {
-        console.log(mavtype, cmode)
         return ''
     }
     return map[cmode]
@@ -288,7 +287,7 @@ export class MavlinkParser {
         self.postMessage({metadata: metadata})
         self.postMessage({availableMessages: messageTypes})
         // self.postMessage({done: true})
-        return messageTypes
+        return {types: messageTypes, messages: instance.messages}
     }
 
     loadType (type) {

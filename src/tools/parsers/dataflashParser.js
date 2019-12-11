@@ -378,9 +378,6 @@ export class DataflashParser {
         this.simplifyData(name)
         self.postMessage({percentage: 100})
         self.postMessage({messageType: name, messageList: this.messages[name]})
-        if (['FMTU', 'GPS', 'MSG'].indexOf(name) === -1) {
-            delete this.messages[name]
-        }
         return parsed
     }
 
@@ -422,8 +419,8 @@ export class DataflashParser {
                         this.findTimeBase(value)
                     }
                 } catch (e) {
-                    console.log('reached log end?')
-                    console.log(e)
+                    // console.log('reached log end?')
+                    // console.log(e)
                     this.offset += 1
                 }
                 if (attribute == '128') {
@@ -510,7 +507,7 @@ export class DataflashParser {
                 }
             }
         } else {
-            console.log('skipping ' + name)
+            // console.log('skipping ' + name)
         }
     }
 
@@ -627,6 +624,7 @@ export class DataflashParser {
         self.postMessage({metadata: metadata})
 
         // self.postMessage({done: true})
+        return {types: this.messageTypes, messages: this.messages}
     }
 
     loadType (type) {

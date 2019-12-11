@@ -25,7 +25,10 @@ export class ParamSeeker {
             this.currentIndex -= 1
         }
         if (this.currentIndex !== indexBefore) {
-            Vue.prototype.$eventHub.$emit('paramsUpdated')
+            if (Vue.prototype.$eventHub !== undefined) {
+                // this is undefined when running unit tests
+                Vue.prototype.$eventHub.$emit('paramsUpdated')
+            }
         }
         return this
     }
