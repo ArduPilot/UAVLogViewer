@@ -65,6 +65,7 @@ export default {
             let url
             if (file === 'sample') {
                 url = require('../assets/vtol.tlog')
+                this.state.log_type = 'tlog'
             } else {
                 url = ('/uploaded/' + file)
             }
@@ -130,7 +131,7 @@ export default {
                     isTlog: (file.name.indexOf('tlog') > 1)
                 })
             }
-            this.state.log_type = file.name.indexOf('tlog') > 1 ? 'tlog' : 'bin'
+            this.state.log_type = file.name.indexOf('tlog') !== -1 ? 'tlog' : 'bin'
 
             reader.readAsArrayBuffer(file)
         },

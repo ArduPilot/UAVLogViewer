@@ -55,10 +55,10 @@ import ParamViewer from './widgets/ParamViewer'
 import MessageViewer from './widgets/MessageViewer'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
-import {ParamSeeker} from '../tools/paramseeker'
 import {Color} from 'cesium/Cesium'
 import colormap from 'colormap'
-import {mavlink} from 'mavlink_common_v1.0/mavlink'
+import {DataflashDataExtractor} from '../tools/dataflashDataExtractor'
+import {MavlinkDataExtractor} from '../tools/mavlinkDataExtractor'
 
 export default {
     name: 'Home',
@@ -74,42 +74,57 @@ export default {
     },
     data () {
         return {
-            state: store
+            state: store,
+            dataExtractor: null
         }
     },
     methods: {
         extractFlightData () {
+            if (this.dataExtractor === null) {
+                if (this.state.log_type === 'tlog') {
+                    this.dataExtractor = MavlinkDataExtractor
+                } else {
+                    this.dataExtractor = DataflashDataExtractor
+                }
+            }
             if ('FMTU' in this.state.messages && this.state.messages['FMTU'].length === 0) {
                 this.state.processStatus = 'ERROR PARSING?'
             }
             if (Object.keys(this.state.time_attitude).length === 0) {
-                this.state.time_attitude = this.extractAttitudes(this.state.messages)
+                this.state.time_attitude = this.dataExtractor.extractAttitudes(this.state.messages)
             }
             let list = Object.keys(this.state.time_attitude)
             this.state.lastTime = parseInt(list[list.length - 1])
 
             if (Object.keys(this.state.time_attitudeQ).length === 0) {
-                this.state.time_attitudeQ = this.extractAttitudesQ(this.state.messages)
+                this.state.time_attitudeQ = this.dataExtractor.extractAttitudesQ(this.state.messages)
             }
             if (this.state.current_trajectory.length === 0) {
-                this.state.current_trajectory = this.extractTrajectory(this.state.messages)
+                let trajectories = this.dataExtractor.extractTrajectory(this.state.messages)
+                this.state.current_trajectory = trajectories.trajectory
+                this.state.time_trajectory = trajectories.time_trajectory
             }
 
             if (this.state.flight_mode_changes.length === 0) {
-                this.state.flight_mode_changes = this.extractFlightModes(this.state.messages)
+                this.state.flight_mode_changes = this.dataExtractor.extractFlightModes(this.state.messages)
             }
             if (this.state.armed_events.length === 0) {
-                this.state.armed_events = this.extractArmedEvents(this.state.messages)
+                this.state.armed_events = this.dataExtractor.extractArmedEvents(this.state.messages)
             }
             if (this.state.mission.length === 0) {
-                this.state.mission = this.extractMission(this.state.messages)
+                this.state.mission = this.dataExtractor.extractMission(this.state.messages)
             }
-            this.state.vehicle = this.extractVehicleType(this.state.messages)
+            this.state.vehicle = this.dataExtractor.extractVehicleType(this.state.messages)
             if (this.state.params === undefined) {
-                this.state.params = this.extractParams(this.state.messages)
+                this.state.params = this.dataExtractor.extractParams(this.state.messages)
+                if (this.state.params !== undefined) {
+                    this.$eventHub.$on('cesium-time-changed', (time) => {
+                        this.state.params.seek(time)
+                    })
+                }
             }
             if (this.state.textMessages.length === 0) {
-                this.state.textMessages = this.extractTextMessages(this.state.messages)
+                this.state.textMessages = this.dataExtractor.extractTextMessages(this.state.messages)
             }
             if (this.state.colors.length === 0) {
                 this.generateColorMMap()
@@ -120,307 +135,6 @@ export default {
             this.state.show_map = this.state.map_available
         },
 
-        extractParams (messages) {
-            let params = []
-            if ('PARM' in messages) {
-                let paramData = messages['PARM']
-                for (let i in paramData.time_boot_ms) {
-                    params.push(
-                        [
-                            paramData.time_boot_ms[i],
-                            paramData.Name[i],
-                            paramData.Value[i]
-                        ]
-                    )
-                }
-            }
-            if ('PARAM_VALUE' in messages) {
-                let paramData = messages['PARAM_VALUE']
-                for (let i in paramData.time_boot_ms) {
-                    params.push(
-                        [
-                            paramData.time_boot_ms[i],
-                            paramData.param_id[i].replace(/[^a-z0-9A-Z_]/ig, ''),
-                            paramData.param_value[i]
-                        ]
-                    )
-                }
-            }
-            if (params.length > 0) {
-                let seeker = new ParamSeeker(params)
-                this.$eventHub.$on('cesium-time-changed', (time) => {
-                    seeker.seek(time)
-                })
-                return seeker
-            } else {
-                return undefined
-            }
-        },
-
-        extractTextMessages (messages) {
-            let texts = []
-            if ('STATUSTEXT' in messages) {
-                let textMsgs = messages['STATUSTEXT']
-                for (let i in textMsgs.time_boot_ms) {
-                    texts.push([textMsgs.time_boot_ms[i], textMsgs.severity[i], textMsgs.text[i]])
-                }
-            }
-            if ('MSG' in messages) {
-                let textMsgs = messages['MSG']
-                for (let i in textMsgs.time_boot_ms) {
-                    texts.push([textMsgs.time_boot_ms[i], 0, textMsgs.Message[i]])
-                }
-            }
-            return texts
-        },
-
-        extractTrajectory (messages) {
-            let trajectory = []
-            this.state.time_trajectory = {}
-            let startAltitude = null
-            if ('GLOBAL_POSITION_INT' in messages) {
-                let gpsData = messages['GLOBAL_POSITION_INT']
-                for (let i in gpsData.time_boot_ms) {
-                    if (gpsData.lat[i] !== 0) {
-                        if (startAltitude === null) {
-                            startAltitude = gpsData.relative_alt[i]
-                        }
-                        trajectory.push(
-                            [
-                                gpsData.lon[i],
-                                gpsData.lat[i],
-                                gpsData.relative_alt[i] - startAltitude,
-                                gpsData.time_boot_ms[i]
-                            ]
-                        )
-                        this.state.time_trajectory[gpsData.time_boot_ms[i]] = [
-                            gpsData.lon[i],
-                            gpsData.lat[i],
-                            gpsData.relative_alt[i],
-                            gpsData.time_boot_ms[i]]
-                    }
-                }
-            } else if ('AHR2' in messages) {
-                let gpsData = messages['AHR2']
-                for (let i in gpsData.time_boot_ms) {
-                    if (gpsData.Lat[i] !== 0) {
-                        if (startAltitude === null) {
-                            startAltitude = gpsData.Alt[i]
-                        }
-                        trajectory.push(
-                            [
-                                gpsData.Lng[i],
-                                gpsData.Lat[i],
-                                gpsData.Alt[i] - startAltitude,
-                                gpsData.time_boot_ms[i]
-                            ]
-                        )
-                        this.state.time_trajectory[gpsData.time_boot_ms[i]] = [
-                            gpsData.Lng[i],
-                            gpsData.Lat[i],
-                            (gpsData.Alt[i] - startAltitude) / 1000,
-                            gpsData.time_boot_ms[i]]
-                    }
-                }
-            } else if ('GPS' in messages) {
-                let gpsData = messages['GPS']
-                for (let i in gpsData.time_boot_ms) {
-                    if (gpsData.Lat[i] !== 0) {
-                        if (startAltitude === null) {
-                            startAltitude = gpsData.Alt[i]
-                        }
-                        trajectory.push(
-                            [
-                                gpsData.Lng[i],
-                                gpsData.Lat[i],
-                                gpsData.Alt[i] - startAltitude,
-                                gpsData.time_boot_ms[i]
-                            ]
-                        )
-                        this.state.time_trajectory[gpsData.time_boot_ms[i]] = [
-                            gpsData.Lng[i],
-                            gpsData.Lat[i],
-                            gpsData.Alt[i] - startAltitude,
-                            gpsData.time_boot_ms[i]]
-                    }
-                }
-            }
-            // console.log(trajectory)
-            // console.log(this.state.time_trajectory)
-            // if (trajectory.length === 0) {
-            //     trajectory.push([1, 1, 10, 0])
-            //     trajectory.push([1, 1, 10, this.state.lastTime])
-            //     this.state.time_trajectory[0] = [1, 1, 10, 0]
-            //     this.state.time_trajectory[this.state.lastTime] = [1, 1, 10, this.state.lastTime]
-            // }
-            return trajectory
-        },
-        extractAttitudes (messages) {
-            let attitudes = {}
-            if ('ATTITUDE' in messages) {
-                let attitudeMsgs = messages['ATTITUDE']
-                for (let i in attitudeMsgs.time_boot_ms) {
-                    attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
-                        [
-                            attitudeMsgs.roll[i],
-                            attitudeMsgs.pitch[i],
-                            attitudeMsgs.yaw[i]
-                        ]
-                }
-            } else if ('AHR2' in messages) {
-                let attitudeMsgs = messages['AHR2']
-                for (let i in attitudeMsgs.time_boot_ms) {
-                    attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
-                        [
-                            attitudeMsgs.Roll[i],
-                            attitudeMsgs.Pitch[i],
-                            attitudeMsgs.Yaw[i]
-                        ]
-                }
-            } else if ('ATT' in messages) {
-                let attitudeMsgs = messages['ATT']
-                for (let i in attitudeMsgs.time_boot_ms) {
-                    attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
-                        [
-                            attitudeMsgs.Roll[i],
-                            attitudeMsgs.Pitch[i],
-                            attitudeMsgs.Yaw[i]
-                        ]
-                }
-            }
-            return attitudes
-        },
-        extractAttitudesQ (messages) {
-            let attitudes = {}
-            if ('XKQ1' in messages && messages['XKQ1'].length > 0) {
-                console.log('QUATERNIOS1')
-                let attitudeMsgs = messages['XKQ1']
-                for (let att of attitudeMsgs) {
-                    attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
-                    // attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
-                }
-                return attitudes
-            } else if ('NKQ1' in messages && messages['NKQ1'].length > 0) {
-                console.log('QUATERNIOS2')
-                let attitudeMsgs = messages['NKQ1']
-                for (let att of attitudeMsgs) {
-                    // attitudes[att.time_boot_ms] = [att.Q2, att.Q3, att.Q4, att.Q1]
-                    attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
-                }
-                return attitudes
-            }
-            return []
-        },
-        extractFlightModes (messages) {
-            let modes = []
-            if ('HEARTBEAT' in messages) {
-                let msgs = messages['HEARTBEAT']
-                modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
-                for (let i in msgs.time_boot_ms) {
-                    // TODO: fix this properly
-                    // eslint-disable-next-line
-                    if (msgs.type[i] !== mavlink.MAV_TYPE_GCS) {
-                        if (msgs.asText[i] === undefined) {
-                            msgs.asText[i] = 'Unknown'
-                        }
-                        if (msgs.asText[i] !== modes[modes.length - 1][1]) {
-                            modes.push([msgs.time_boot_ms[i], msgs.asText[i]])
-                        }
-                    }
-                }
-            } else if ('MODE' in messages) {
-                let msgs = messages['MODE']
-                modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
-                for (let i in msgs.time_boot_ms) {
-                    if (msgs.asText[i] !== modes[modes.length - 1][1]) {
-                        modes.push([msgs.time_boot_ms[i], msgs.asText[i]])
-                    }
-                }
-            }
-            return modes
-        },
-        extractArmedEvents (messages) {
-            let armedState = []
-            if ('HEARTBEAT' in messages) {
-                let msgs = messages['HEARTBEAT']
-                armedState = [[msgs.time_boot_ms[0], (msgs.base_mode[0] & 0b10000000) === 128]]
-                for (let i in msgs.time_boot_ms) {
-                    if (msgs.type[i] !== mavlink.MAV_TYPE_GCS) {
-                        if (((msgs.base_mode[i] & 0b10000000) === 128) !== armedState[armedState.length - 1][1]) {
-                            armedState.push([msgs.time_boot_ms[i], (msgs.base_mode[i] & 0b10000000) === 128])
-                        }
-                    }
-                }
-            } else if ('STAT' in messages && messages['STAT'].length > 0) {
-                let msgs = messages['STAT']
-                armedState = [[msgs.time_boot_ms[0], msgs.Armed[0] === 1]]
-                for (let i in msgs.time_boot_ms) {
-                    if ((msgs.Armed[i] === 1) !== armedState[armedState.length - 1][1]) {
-                        armedState.push([msgs.time_boot_ms[i], msgs.Armed[i] === 1])
-                    }
-                }
-            } else if ('EV' in messages) {
-                armedState = []
-                let msgs = messages['EV']
-                let armed = false
-                for (let i in msgs.time_boot_ms) {
-                    if (armed) {
-                        armed = (msgs.Id[i] !== 11) // 10 means armed
-                    } else {
-                        armed = (msgs.Id[i] === 10) // 11 means disarmed
-                    }
-                    if (armedState.length === 0 || armed !== armedState[armedState.length - 1][1]) {
-                        armedState.push([msgs.time_boot_ms[i], armed])
-                    }
-                }
-            }
-            return armedState
-        },
-        extractMission (messages) {
-            let wps = []
-            if ('CMD' in messages) {
-                let cmdMsgs = messages['CMD']
-                for (let i in cmdMsgs.time_boot_ms) {
-                    if (cmdMsgs.Lat[i] !== 0) {
-                        let lat = cmdMsgs.Lat[i]
-                        let lon = cmdMsgs.Lng[[i]]
-                        if (Math.abs(lat) > 180) {
-                            lat = lat / 10e6
-                            lon = lon / 10e6
-                        }
-                        wps.push([lon, lat, cmdMsgs.Alt[i]])
-                    }
-                }
-            }
-            return wps
-        },
-        extractVehicleType (messages) {
-            if ('MSG' in messages) {
-                let msgs = messages['MSG']
-                for (let i in msgs.Message) {
-                    if (msgs.Message[i].toLowerCase().indexOf('arduplane') > -1) {
-                        return 'airplane'
-                    }
-                    if (msgs.Message[i].toLowerCase().indexOf('ardusub') > -1) {
-                        return 'submarine'
-                    }
-                    if (msgs.Message[i].toLowerCase().toLowerCase().indexOf('rover') > -1) {
-                        return 'boat'
-                    }
-                    if (msgs.Message[i].toLowerCase().indexOf('tracker') > -1) {
-                        return 'tracker'
-                    }
-                }
-                return 'quadcopter'
-            }
-            if ('HEARTBEAT' in messages) {
-                for (let i in messages['HEARTBEAT'].craft) {
-                    if (messages['HEARTBEAT'].craft[i] !== undefined) {
-                        return messages['HEARTBEAT'].craft[i]
-                    }
-                }
-            }
-        },
         generateColorMMap () {
             let colorMapOptions = {
                 colormap: 'hsv',
