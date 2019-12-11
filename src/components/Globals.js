@@ -3,6 +3,7 @@ export var store = {
     // time_trajectory: {},
     // time_attitude: {},
     // time_attitudeQ: {},
+    log_type: '',
     show_params: false,
     show_radio: false,
     show_messages: false,
