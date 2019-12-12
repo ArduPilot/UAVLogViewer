@@ -1,6 +1,6 @@
 <template>
 <!-- HEADER -->
-    <div class="nav-side-menu col-lg-2" :class="mode" @toggle="toggle">
+    <div class="nav-side-menu col-lg-2">
         <h1 class="brand"> <b>TLog</b>viewer<i class="fas fa-plane"></i></h1>
         <!-- TABHOLDER -->
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
@@ -74,12 +74,6 @@
                 </div>
             </b-collapse>
         </div>
-        <button class="light-mode-button"> Dark Mode
-            <input type="checkbox"
-            :checked="(mode === 'dark') ? 'checked' : false"
-            @change="toggle"
-            />
-        </button>
     </div>
 </template>
 <script>
@@ -94,20 +88,10 @@ export default {
     data () {
         return {
             selected: 'home',
-            state: store,
-            mode: 'dark'
+            state: store
         }
     },
-    components: {PlotSetup, MessageMenu, Dropzone},
-    methods: {
-        toggle () {
-      if (this.mode === "dark") {
-        this.mode = "light"
-      } else {
-        this.mode = "dark"
-      }
-        }
-    }
+    components: {PlotSetup, MessageMenu, Dropzone}
 }
 </script>
 <style>
@@ -283,35 +267,6 @@ a.section {
         background-color: rgb(175, 177, 175);
     }
 
-    /* LIGHT MODE */
-
-    .light-mode-button {
-        font-size: 12px;
-        display: block;
-        position: fixed;
-        margin-left: 95px;
-        bottom: 0; 
-        text-decoration: none;
-        padding: 6px;
-        border: none;
-        border-radius: 8px 8px 0px 0px;
-        background-color: #58585856;
-        background: linear-gradient(0deg, rgba(150, 150, 150, 0.486) 15%, rgba(63, 63, 63, 0.473) 100%);
-        color: rgb(255, 255, 255);
-    }
-
-    .light-mode-button:hover {
-        background-color: #686868;
-    }
-
-    .light {
-        background: rgb(231, 231, 231);
-        color: rgb(148, 147, 147);
-    }
-
-    .dark {
-        background-color: #2e2e2e;
-    }
     /* MEDIA QUERIES */
 
     @media (min-width: 575px) and (max-width: 992px) {
@@ -357,10 +312,6 @@ a.section {
             height: 93%;
         }
 
-        .light-mode-button {
-            display: none;
-        }
-
         .col-md-9 {
             max-width: 100% !important;
         }
@@ -379,12 +330,6 @@ a.section {
 
         main {
             height: 100%;
-        }
-
-         .light-mode-button {
-            margin-left: 7%;
-            display: block;
-            position: fixed;
         }
     }
 
@@ -413,12 +358,6 @@ a.section {
 
         .col-lg-10 {
             max-width: 85% !important;
-        }
-
-        .light-mode-button {
-            margin-left: 7%;
-            display: block;
-            position: fixed;
         }
     }
 </style>
