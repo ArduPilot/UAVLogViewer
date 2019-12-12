@@ -1,0 +1,42 @@
+name: Node CI
+
+on:
+    push:
+        branches:
+            - master
+
+jobs:
+    build:
+
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                node-version: [12.x]
+
+        steps:
+            - uses: actions/checkout@v1
+            - uses: actions/cache@v1
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node-
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v1
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - name: deploy to server
+                  uses: AEnterprise/rsync-deploy@v1.0
+                  env:
+                      DEPLOY_KEY: ${{ secrets.SERVER_SSH_KEY }}
+                      ARGS: "-e -c -r --delete"
+                      SERVER_PORT: ${{ secrets.SERVER_PORT }}
+                      FOLDER: "build"
+                      SERVER_IP: ${{ secrets.SERVER_IP }}
+                      USERNAME: ${{ secrets.USERNAME }}
+                      SERVER_DESTINATION: ${{ secrets.SERVER_DESTINATION }}
+            - run: npm install
+            - run: npm run build --if-present
