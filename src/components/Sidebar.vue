@@ -55,6 +55,7 @@
                         <label><input type="checkbox" v-model="state.showTrajectory">
                         Trajectory <i class="fa fa-map" aria-hidden="true"></i> </label>
                     </div>
+                    <!-- PARAM/MESSAGES/RADIO -->
                     <div v-if="state.processDone">
                         <label v-if="state.params"><input type="checkbox" v-model="state.show_params"> Show
                             Parameters <i class="fa fa-cogs"></i> </label>
