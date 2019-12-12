@@ -69,13 +69,13 @@
                     <div v-if="state.processDone" class="show-hide">
                         <label v-if="state.params">
                           <i class="fa fa-cogs circle"></i>
-                          <input type="checkbox" v-model="state.show_params"> 
+                          <input type="checkbox" v-model="state.show_params">
                           <a class="check-font"> Parameters </a>
                         </label>
                         <label>
                           <i class="fa fa-gamepad circle"></i>
                           <input type="checkbox" v-model="state.show_radio">
-                          <a class="check-font"> Radio Sticks </a> 
+                          <a class="check-font"> Radio Sticks </a>
                         </label>
                         <label v-if="state.textMessages">
                           <i class="fa fa-comment circle"></i>
