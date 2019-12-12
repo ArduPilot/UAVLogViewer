@@ -459,7 +459,16 @@ export default {
                 }
                 Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true, editable: true, responsive: true})
             } else {
-                this.plotInstance = Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true, editable: true, responsive: true})
+                this.plotInstance = Plotly.newPlot(
+                    this.gd,
+                    plotData,
+                    plotOptions,
+                    {
+                        scrollZoom: true,
+                        editable: true,
+                        responsive: true
+                    }
+                )
             }
             this.gd.on('plotly_relayout', this.onRangeChanged)
             this.gd.on('plotly_hover', function (data) {
@@ -577,6 +586,7 @@ export default {
             if (this.state.timeRange != null) {
                 return this.state.timeRange
             }
+            return undefined
         },
         fields () {
             return this.state.fields
@@ -601,6 +611,7 @@ export default {
                     })
                 }.bind(this), 500)
             }
+            return range // make linter happy, it says this is a computed property(?)
         },
         fields: {
             deep: true,
