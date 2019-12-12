@@ -710,6 +710,7 @@ export default {
             if (this.state.timeRange !== null) {
                 return this.state.timeRange
             }
+            return undefined
         },
         modelScale () {
             return this.state.modelScale
