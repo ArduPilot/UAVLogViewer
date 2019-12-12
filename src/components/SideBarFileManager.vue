@@ -216,17 +216,17 @@ export default {
     #drop_zone {
         padding-top: 25px;
         padding-left: 10px;
-        border: 1px solid dimgrey;
+        border: 1px dashed #434b52da;
         width: auto;
         height: 100px;
         margin: 20px;
-        border-radius: 10px;
+        border-radius: 5px;
         cursor: default;
-        background-color: rgba(0, 0, 0, 0.0);
+        background-color: rgba(0, 0, 0, 0);
     }
 
     #drop_zone:hover {
-        background-color: rgba(0, 0, 0, 0.05);
+        background-color: #171e2450;
     }
 
     .uploadCheckbox {

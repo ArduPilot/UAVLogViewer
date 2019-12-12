@@ -82,35 +82,37 @@ export default {
         min-width: 220px;
         min-height: 150px;
         position: absolute;
-        background: rgba(51, 49, 49, 0.938);
-        color: rgba(255, 255, 255, 0.918);
+        background: rgba(253, 254, 255, 0.856);
+        color: #141924;
         font-size: 11px;
+        font-weight: 600;
         text-transform: uppercase;
         z-index: 10000;
         box-shadow: 9px 9px 3px -6px rgba(26, 26, 26, 0.699);
-        border-radius: 1px;
+        border-radius: 5px;
     }
 
     div #paneMessageViewer::before {
         content: '\25e2';
-        color: rgb(202, 99, 15);
-        background-color: rgba(51, 49, 49, 0.938);
+        color: #ffffff;
+        background-color: rgb(38, 53, 71);
         position: absolute;
-        bottom: 0;
+        bottom: -1px;
         right: 0;
-        width: 20px;
-        height: 20px;
-        padding: 0px 5px;
+        width: 17px;
+        height: 21px;
+        padding: 2px 3px;
+        border-radius: 10px 0px 1px 0px;
         box-sizing: border-box;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
+        font-size: 10px;
         cursor: se-resize;
     }
 
      div #paneMessageViewer::after {
         content: '\2725';
-        color: rgb(202, 99, 15);
+        color: #2E3F54;
         position: absolute;
         top: 0;
         left: 0;
