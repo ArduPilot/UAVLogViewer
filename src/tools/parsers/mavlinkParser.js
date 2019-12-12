@@ -1,6 +1,5 @@
 /* eslint-disable no-undef */
-import {MAVLink} from'mavlink_common_v1.0/mavlink'
-import {mavlink} from'mavlink_common_v1.0/mavlink'
+import {MAVLink, mavlink} from 'mavlink_common_v1.0/mavlink'
 
 let modeMappingApm = {
     0: 'MANUAL',
@@ -189,7 +188,8 @@ export class MavlinkParser {
                 //
                 // // TODO: Fix this logic, it is probably wrong.
                 // if ((+message.time_boot_ms + instance.forcedTimeOffset) < instance.lastTime) {
-                //     console.log('Time going backwards detected, adding an offset. This means SYSTEM_TIME is now out of sync!')
+                //     console.log(
+                //     'Time going backwards detected, adding an offset.This means SYSTEM_TIME is now out of sync!')
                 //     instance.forcedTimeOffset = +instance.lastTime - message.time_boot_ms + 100000
                 // }
 
@@ -216,7 +216,6 @@ export class MavlinkParser {
                 }
             }
         }
-
 
         let fields = messages[0].fieldnames
         if (fields.indexOf('time_boot_ms') === -1) {
