@@ -264,11 +264,11 @@ export default {
     }
     input:focus {
         outline: none;
-        border: 2px solid rgba(194, 100, 19, 0.849);
+        border: 2px solid #135388;
     }
     .input-li:hover {
-        background-color: #2e2e2e;
-        border-left: 3px solid #2e2e2e;
+        background-color: rgba(30, 37, 54, 0.205);
+        border-left: 3px solid rgba(24, 30, 44, 0.212);
     }
     ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
         color: rgb(148, 147, 147);

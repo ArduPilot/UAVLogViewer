@@ -61,8 +61,8 @@ export default {
     }
 
     ul.colorpicker li:hover {
-        background-color: #2E2E2E;
-        border-left: 3px solid #2E2E2E;
+        background-color: #1E2536;
+        border-left: 3px solid #1E2536;
     }
 
     ul.colorpicker li a {

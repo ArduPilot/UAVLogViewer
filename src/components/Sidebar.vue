@@ -8,10 +8,10 @@
             <div class="tabholder">
                 <!-- Home -->
                 <a :class="selected === 'home' ? 'selected' : ''" @click="selected='home'">
-                <i class="fas fa-home"></i> Home </a>
+                <i class="fas fa-home"></i>Home</a>
                 <!-- Plot -->
                 <a :class="selected === 'plot' ? 'selected' : ''" @click="selected='plot'"
-                   v-if="state.processDone"> <i class="fas fa-pen"></i> Plot </a>
+                   v-if="state.processDone"> <i class="fas fa-pen"></i>Plot</a>
                 <!-- 3D -->
                 <a :class="selected ==='3d' ? 'selected' : ''" @click="selected='3d'"
                    v-if="state.map_available && state.show_map">  <i class="fas fa-cube"></i> 3D </a>
@@ -108,11 +108,12 @@ a.section {
     .nav-side-menu {
         overflow-x: hidden;
         padding: 0;
-        background-color: #2e2e2e;
+        background-color: rgb(29, 36, 52);
+        background: linear-gradient(0deg, rgb(20, 25, 36) 51%, rgb(37, 47, 71) 100%);
         position: fixed !important;
         top: 0px;
         height: 100%;
-        color: #ffff;
+        color: rgb(255, 255, 255);
     }
     .nav-side-menu .toggle-btn {
         display: none;
@@ -170,8 +171,8 @@ a.section {
     }
 
     .nav-side-menu li:hover {
-        border-left: 3px solid #d19b3d;
-        background-color: rgba(114, 114, 114, 0.2);
+        border-left: 3px solid #01204191;
+        background-color: rgba(52, 70, 100, 0.336);
         -webkit-transition: all 1s ease;
         -moz-transition: all 1s ease;
         -o-transition: all 1s ease;
@@ -191,11 +192,12 @@ a.section {
     }
 
     ::-webkit-scrollbar-thumb {
-        border-radius: 0px;
+        border-radius: 5px;
         box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
         -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
         -moz-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-        background-color: #ac4e0f;
+        background: rgb(30,37,53);
+        background: linear-gradient(0deg, rgb(28, 42, 73) 51%, rgb(39, 51, 78) 100%);
     }
 
     .custom-control-inline {
@@ -215,9 +217,8 @@ a.section {
         padding-left: 20px;
         line-height: 50px;
         margin-bottom: 0;
-        background: rgb(94,94,93);
-        background: linear-gradient(90deg, rgba(94,94,93,1) 20%, rgba(66, 65, 65, 0.856) 100%);
-        color: #eeeeee;
+        color: rgb(54, 72, 114);
+        background-color: rgba(248, 248, 248, 0.918);
         display: block;
     }
 
@@ -230,23 +231,24 @@ a.section {
         overflow: hidden;
         padding: 12px 0px 12px 0px;
         cursor: pointer;
+        font-size: 16px;
     }
 
     .tabholder a {
-        background:rgba(59, 59, 59, 0.829);
+        background: rgb(41,51,75);
         float: left;
-        padding: 2px 10px 2px 5px;
-        border-radius: 15px 0px 15px 0px;
+        padding: 2px 12px 2px 5px;
+        border: 1px solid rgba(91, 100, 117, 0.76);
+        border-radius: 30px;
     }
 
     a.selected {
-        color: #fff !important;
-        background: rgb(150,150,150);
-        background: linear-gradient(0deg, rgba(150, 150, 150, 0.808) 15%, rgba(63, 63, 63, 0.829) 100%);
+        color: rgb(247, 248, 248) !important;
+        box-shadow: 0px 0px 12px 0px rgba(125,125,125,0.55);
     }
 
     .tabholder a:hover {
-        background-color: #686868;
+        box-shadow: 0px 0px 12px 0px rgba(125,125,125,0.55);
         -webkit-transition: all 1s ease;
         -moz-transition: all 1s ease;
         -o-transition: all 1s ease;

@@ -75,35 +75,37 @@ export default {
         min-width: 220px;
         min-height: 150px;
         position: absolute;
-        background: rgba(51, 49, 49, 0.938);
-        color: rgba(255, 255, 255, 0.918);
+        background: rgba(253, 254, 255, 0.856);
+        color: #141924;
         font-size: 11px;
+        font-weight: 600;
         text-transform: uppercase;
         z-index: 10000;
         box-shadow: 9px 9px 3px -6px rgba(26, 26, 26, 0.699);
-        border-radius: 1px;
+        border-radius: 5px;
     }
 
     div #paneParamViewer::before {
         content: '\25e2';
-        color: rgb(202, 99, 15);
+        color: #fff;
+        background-color: rgb(38, 53, 71);
         position: absolute;
         bottom: 0;
         right: 0;
         width: 20px;
         height: 20px;
-        padding: 0px 5px;
+        padding: 2px 5px;
         box-sizing: border-box;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
-        border-radius: 4px;
+        font-size: 11px;
+        border-radius: 10px 0px 1px 0px;
         cursor: se-resize;
     }
 
       div #paneParamViewer::after {
         content: '\2725';
-        color: rgb(202, 99, 15);
+        color: #141924;
         position: absolute;
         top: 0;
         left: 0;
@@ -135,7 +137,7 @@ export default {
 
     input#filterbox:focus {
         outline: none;
-        border: 1px solid rgba(194, 100, 19, 0.849);
+        border: 1px solid #162442;
     }
 
     ul#params {
