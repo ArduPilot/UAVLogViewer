@@ -29,14 +29,14 @@ jobs:
                   node-version: ${{ matrix.node-version }}
 
             - name: deploy to server
-                  uses: AEnterprise/rsync-deploy@v1.0
-                  env:
-                      DEPLOY_KEY: ${{ secrets.SERVER_SSH_KEY }}
-                      ARGS: "-e -c -r --delete"
-                      SERVER_PORT: ${{ secrets.SERVER_PORT }}
-                      FOLDER: "build"
-                      SERVER_IP: ${{ secrets.SERVER_IP }}
-                      USERNAME: ${{ secrets.USERNAME }}
-                      SERVER_DESTINATION: ${{ secrets.SERVER_DESTINATION }}
+              uses: AEnterprise/rsync-deploy@v1.0
+              env:
+                  DEPLOY_KEY: ${{ secrets.SERVER_SSH_KEY }}
+                  ARGS: "-e -c -r --delete"
+                  SERVER_PORT: ${{ secrets.SERVER_PORT }}
+                  FOLDER: "build"
+                  SERVER_IP: ${{ secrets.SERVER_IP }}
+                  USERNAME: ${{ secrets.USERNAME }}
+                  SERVER_DESTINATION: ${{ secrets.SERVER_DESTINATION }}
             - run: npm install
             - run: npm run build --if-present
