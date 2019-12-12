@@ -108,7 +108,7 @@ const units = {
     'b': 'B', // bytes
     'k': 'deg/s', // degrees per second. Degrees are NOT SI, but is some situations more user-friendly than radians
     'D': 'deglatitude', // degrees of latitude
-    'e': 'deg/s/s', // degrees per second per second. Degrees are NOT SI, but is some situations more user-friendly than radians
+    'e': 'deg/s/s', // degrees per second per second. Degrees are NOT SI, but is some situations more user-friendly
     'E': 'rad/s', // radians per second
     'G': 'Gauss', // Gauss is not an SI unit, but 1 tesla = 10000 gauss so a simple replacement is not possible here
     'h': 'degheading', // 0.? to 359.?
@@ -163,7 +163,7 @@ function getModeMap (mavType) {
     return map
 }
 
-function assign_column (obj) {
+function assignColumn (obj) {
     var ArrayOfString = obj.split(',')
     return ArrayOfString
 }
@@ -210,7 +210,7 @@ export class DataflashParser {
             fieldnames: obj.Columns.split(',')
         }
 
-        let column = assign_column(obj.Columns)
+        let column = assignColumn(obj.Columns)
         let low
         let n
         for (let i = 0; i < obj.Format.length; i++) {
@@ -265,14 +265,18 @@ export class DataflashParser {
                 this.offset += 4
                 break
             case 'n':
+                // TODO: fix these regex and unsilent linter
+                // eslint-disable-next-line
                 dict[column[i]] = String.fromCharCode.apply(null, new Uint8Array(this.buffer, this.offset, 4)).replace(/\x00+$/g, '')
                 this.offset += 4
                 break
             case 'N':
+                // eslint-disable-next-line
                 dict[column[i]] = String.fromCharCode.apply(null, new Uint8Array(this.buffer, this.offset, 16)).replace(/\x00+$/g, '')
                 this.offset += 16
                 break
             case 'Z':
+                // eslint-disable-next-line
                 dict[column[i]] = String.fromCharCode.apply(null, new Uint8Array(this.buffer, this.offset, 64)).replace(/\x00+$/g, '')
                 this.offset += 64
                 break
@@ -328,6 +332,7 @@ export class DataflashParser {
     getMsgType (element) {
         for (let i = 0; i < this.FMT.length; i++) {
             if (this.FMT[i] != null) {
+                // eslint-disable-next-line
                 if (this.FMT[i].Name == element) {
                     return i
                 }
@@ -351,7 +356,7 @@ export class DataflashParser {
         }
     }
 
-    parse_atOffset (name) {
+    parseAtOffset (name) {
         let type = this.getMsgType(name)
         var parsed = []
         for (var i = 0; i < this.msgType.length; i++) {
@@ -381,7 +386,7 @@ export class DataflashParser {
         return parsed
     }
 
-    time_stamp (TimeUs) {
+    timestamp (TimeUs) {
         let temp = this.timebase + TimeUs * 0.000001
         if (temp > 0) {
             TimeUs = temp
@@ -399,7 +404,7 @@ export class DataflashParser {
         return formattedTime
     }
 
-    DF_reader () {
+    DfReader () {
         let lastOffset = 0
         while (this.offset < (this.buffer.byteLength - 3)) {
             if (this.data.getUint8(this.offset) !== HEAD1 || this.data.getUint8(this.offset + 1) !== HEAD2) {
@@ -423,7 +428,7 @@ export class DataflashParser {
                     // console.log(e)
                     this.offset += 1
                 }
-                if (attribute == '128') {
+                if (attribute === 128) {
                     this.FMT[value['Type']] = {
                         'Type': value['Type'],
                         'length': value['Length'],
@@ -566,9 +571,9 @@ export class DataflashParser {
     processData (data) {
         this.buffer = data
         this.data = new DataView(this.buffer)
-        this.DF_reader()
+        this.DfReader()
         let messageTypes = {}
-        this.parse_atOffset('FMTU')
+        this.parseAtOffset('FMTU')
         this.populateUnits()
         let typeSet = new Set(this.msgType)
         for (let msg of this.FMT) {
@@ -605,19 +610,19 @@ export class DataflashParser {
         }
         self.postMessage({availableMessages: messageTypes})
         this.messageTypes = messageTypes
-        this.parse_atOffset('CMD')
-        this.parse_atOffset('MSG')
-        this.parse_atOffset('MODE')
-        this.parse_atOffset('ATT')
-        this.parse_atOffset('GPS')
-        this.parse_atOffset('XKQ1')
-        this.parse_atOffset('NKQ1')
-        this.parse_atOffset('NKQ2')
-        this.parse_atOffset('XKQ2')
-        this.parse_atOffset('PARM')
-        this.parse_atOffset('MSG')
-        this.parse_atOffset('STAT')
-        this.parse_atOffset('EV')
+        this.parseAtOffset('CMD')
+        this.parseAtOffset('MSG')
+        this.parseAtOffset('MODE')
+        this.parseAtOffset('ATT')
+        this.parseAtOffset('GPS')
+        this.parseAtOffset('XKQ1')
+        this.parseAtOffset('NKQ1')
+        this.parseAtOffset('NKQ2')
+        this.parseAtOffset('XKQ2')
+        this.parseAtOffset('PARM')
+        this.parseAtOffset('MSG')
+        this.parseAtOffset('STAT')
+        this.parseAtOffset('EV')
         let metadata = {
             startTime: this.extractStartTime()
         }
@@ -628,7 +633,7 @@ export class DataflashParser {
     }
 
     loadType (type) {
-        this.parse_atOffset(type)
+        this.parseAtOffset(type)
         console.log('done')
     }
 }
