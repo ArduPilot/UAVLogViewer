@@ -55,21 +55,32 @@
                         <label><input type="checkbox" v-model="state.showTrajectory">
                         Trajectory <i class="fa fa-map" aria-hidden="true"></i> </label>
                     </div>
-                    <!-- PARAM/MESSAGES/RADIO -->
-                    <div v-if="state.processDone">
-                        <label v-if="state.params"><input type="checkbox" v-model="state.show_params"> Show
-                            Parameters <i class="fa fa-cogs"></i> </label>
-                        <label><input type="checkbox" v-model="state.show_radio">
-                        Show Radio Sticks <i class="fa fa-gamepad"></i> </label>
-                        <label v-if="state.textMessages"><input type="checkbox" v-model="state.show_messages"> Show
-                            Messages <i class="fa fa-comment"></i> </label>
-                    </div>
                     <!-- WINGSPAN -->
                     <div>
                         <label><i class="fa fa-fighter-jet" aria-hidden="true"></i> Wingspan (m)
                             <input max="15" min="0.1" step="0.01" type="range"
                             class="custom-range" v-model="state.modelScale">
                             <input class="wingspan-text" size="5" type="text" v-model="state.modelScale">
+                        </label>
+                    </div>
+                    <!-- PARAM/MESSAGES/RADIO -->
+                    <hr>
+                    <a class="section"> Show / hide </a>
+                    <div v-if="state.processDone" class="show-hide">
+                        <label v-if="state.params">
+                          <i class="fa fa-cogs circle"></i>
+                          <input type="checkbox" v-model="state.show_params"> 
+                          <a class="check-font"> Parameters </a>
+                        </label>
+                        <label>
+                          <i class="fa fa-gamepad circle"></i>
+                          <input type="checkbox" v-model="state.show_radio">
+                          <a class="check-font"> Radio Sticks </a> 
+                        </label>
+                        <label v-if="state.textMessages">
+                          <i class="fa fa-comment circle"></i>
+                          <input type="checkbox" v-model="state.show_messages">
+                          <a class="check-font"> Messages </a>
                         </label>
                     </div>
                 </div>
@@ -183,6 +194,33 @@ a.section {
 
     i {
         margin: 10px;
+    }
+
+    /* SHOW / HIDE */
+
+    .show-hide {
+        text-align: center;
+    }
+
+    .circle {
+        display: block;
+        margin-left: 8px;
+        background-color: rgba(47, 60, 83, 0.63);
+        width: 52px;
+        height: 52px;
+        padding: 17px;
+        border-radius: 50px;
+    }
+
+    .show-hide input[type=checkbox] {
+        display: none;
+        visibility: hidden;
+    }
+
+    .check-font {
+        padding: 0 !important;
+        font-size: 13px;
+        color: rgb(146, 143, 143);
     }
 
     /* SCROLLBAR */
