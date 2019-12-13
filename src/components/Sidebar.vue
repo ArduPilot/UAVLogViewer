@@ -203,6 +203,7 @@ a.section {
     }
 
     .circle {
+        cursor: pointer;
         display: block;
         margin-left: 8px;
         background-color: rgba(47, 60, 83, 0.63);
@@ -210,6 +211,11 @@ a.section {
         height: 52px;
         padding: 17px;
         border-radius: 50px;
+    }
+
+    .circle:hover {
+        background-color: rgba(58, 71, 94, 0.63);
+         box-shadow: 0px 0px 12px 0px rgba(24, 106, 173, 0.281);
     }
 
     .show-hide input[type=checkbox] {
