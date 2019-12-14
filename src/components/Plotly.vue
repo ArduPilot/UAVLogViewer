@@ -5,6 +5,7 @@
 <script>
 import Plotly from 'plotly.js'
 import {store} from './Globals.js'
+let Color = require('color')
 
 let timeformat = ':02,2f'
 let plotOptions = {
@@ -107,8 +108,6 @@ let plotOptions = {
 
 }
 
-Plotly.editable = true
-Plotly.edits = {legendPosition: true}
 export default {
     created () {
         this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
@@ -521,6 +520,9 @@ export default {
         getModeColor (time) {
             return this.state.cssColors[this.setOfModes.indexOf(this.getMode(time))]
         },
+        darker (color) {
+            return Color(color).darken(0.2).string()
+        },
         addModeShapes () {
             let shapes = []
             let modeChanges = this.state.flight_mode_changes
@@ -539,7 +541,7 @@ export default {
                         x1: modeChanges[i + 1][0],
                         y1: 1,
                         fillcolor: this.getModeColor(modeChanges[i][0] + 1),
-                        opacity: 0.2,
+                        opacity: 0.15,
                         line: {
                             width: 0
                         }
@@ -558,12 +560,33 @@ export default {
                         xref: 'x',
                         yref: 'paper',
                         x: i[0],
-                        y: 0.07,
+                        y: 0,
                         yanchor: 'bottom',
                         text: i[1] ? 'Armed' : 'Disarmed',
                         showarrow: true,
-                        ay: 50,
+                        ay: 30,
                         ax: 0
+                    }
+                )
+            }
+            let modeChanges = this.state.flight_mode_changes
+            modeChanges.push([this.gd.layout.xaxis.range[1], null])
+            for (let i = 0; i < modeChanges.length - 1; i++) {
+                annotations.push(
+                    {
+                        xref: 'x',
+                        // y-reference is assigned to the plot paper [0,1]
+                        yref: 'paper',
+                        x: modeChanges[i][0],
+                        xanchor: 'left',
+                        y: 0,
+                        textangle: 90,
+                        text: '<b>' + modeChanges[i][1] + '</b>',
+                        showarrow: false,
+                        font: {
+                            color: this.darker(this.getModeColor(modeChanges[i][0] + 1))
+                        },
+                        opacity: 1
                     }
                 )
             }
