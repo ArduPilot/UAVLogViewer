@@ -11,7 +11,7 @@
             <a :href="'/uploaded/' + url" class="section" target="_blank"><i class="fas fa-download"></i> Download</a>
         </li>
         <div @click="browse" @dragover.prevent @drop="onDrop" id="drop_zone" v-if="uploadpercentage===-1">
-            <p>Drop *.tlog file here or click to browse</p>
+            <p>Drop *.tlog or *.bin file here or click to browse</p>
             <input @change="onChange" id="choosefile" style="opacity: 0;" type="file">
         </div>
         <b-form-checkbox @change="uploadFile()" class="uploadCheckbox" v-if="file!=null && !uploadStarted"> Upload
