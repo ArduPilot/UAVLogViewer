@@ -31,15 +31,6 @@
                         <CesiumViewer ref="cesiumViewer"/>
                     </div>
                 </div>
-                <div id="toolbar">
-                    <table class="infoPanel">
-                        <tbody>
-                        <tr v-bind:key="index" v-for="(mode, index) in setOfModes">
-                            <td class="mode" v-bind:style="{ color: state.cssColors[index] } ">{{ mode }}</td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
             </main>
 
         </div>
@@ -243,31 +234,6 @@ export default {
         opacity: 0.75;
         text-align: center;
     }
-
-    #toolbar {
-        margin: 5px;
-        padding: 2px 5px;
-        position: absolute;
-        top: 0;
-        color: #eee;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 9pt;
-    }
-
-    /* INFO PANEL */
-
-    .infoPanel {
-        background: rgba(41, 41, 41, 0.678);
-        padding: 5px;
-        border-collapse: separate;
-        margin: 8px;
-        border-radius: 5px;
-        font-weight: bold;
-        float: left;
-        box-shadow: inset 0 0 10px rgb(0, 0, 0);
-        letter-spacing: 1px;
-    }
-
     /* ATOM SPINNER */
 
       div .atom-spinner {

@@ -17,6 +17,7 @@
   "dependencies": {
     "@babel/register": "^7.7.4",
     "bootstrap-vue": "^2.1.0",
+    "color": "^3.1.2",
     "colormap": "^2.3.1",
     "epic-spinners": "^1.1.0",
     "jquery": "^3.4.1",

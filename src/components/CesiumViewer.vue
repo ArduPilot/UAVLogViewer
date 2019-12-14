@@ -1,5 +1,14 @@
 <template>
     <div id="wrapper">
+        <div id="toolbar">
+            <table class="infoPanel">
+                <tbody>
+                <tr v-bind:key="index" v-for="(mode, index) in setOfModes">
+                    <td class="mode" v-bind:style="{ color: state.cssColors[index] } ">{{ mode }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
         <div id="cesiumContainer"></div>
     </div>
 </template>
@@ -798,20 +807,21 @@ export default {
         color: #eee;
         font-family: 'Montserrat', sans-serif;
         font-size: 9pt;
+        z-index: 1;
     }
+
+    /* INFO PANEL */
 
     .infoPanel {
-        background: rgba(42, 42, 42, 0.8);
-        margin: 5px;
-        border: 1px solid #444;
-        border-radius: 10px;
-        font-size: 100%;
+        background: rgba(41, 41, 41, 0.678);
+        padding: 5px;
+        border-collapse: separate;
+        margin: 8px;
+        border-radius: 5px;
         font-weight: bold;
         float: left;
-    }
-
-    .infoPanel > tbody {
-        padding: 15px;
+        box-shadow: inset 0 0 10px rgb(0, 0, 0);
+        letter-spacing: 1px;
     }
 
     #wrapper {
