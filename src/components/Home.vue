@@ -123,7 +123,6 @@ export default {
             this.state.processStatus = 'Processed!'
             this.state.processDone = true
             this.state.map_available = this.state.current_trajectory.length > 0
-            this.state.show_map = this.state.map_available
         },
 
         generateColorMMap () {
