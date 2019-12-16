@@ -133,7 +133,7 @@ export default {
 
    @media (min-width: 2000px) {
        p.plotname {
-           width: 70%;
+           width: 60%;
        }
    }
 
