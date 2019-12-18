@@ -426,7 +426,8 @@ export default {
                     y: y,
                     yaxis: 'y' + (field.axis + 1),
                     line: {
-                        color: field.color
+                        color: field.color,
+                        width: 1.5
                     }
                 })
                 let axisname = field.axis > 0 ? ('yaxis' + (field.axis + 1)) : 'yaxis'
