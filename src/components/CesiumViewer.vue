@@ -178,7 +178,8 @@ export default {
             handler.setInputAction(this.onLeftDown, ScreenSpaceEventType.LEFT_DOWN)
             handler.setInputAction(this.onClick, ScreenSpaceEventType.LEFT_CLICK)
             handler.setInputAction(this.onLeftUp, ScreenSpaceEventType.LEFT_UP)
-            this.viewer.camera.moveEnd.addEventListener(this.onCameraUpdate)
+            // TODO: fix saving and sharing state
+            // this.viewer.camera.moveEnd.addEventListener(this.onCameraUpdate)
 
             knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
         }
