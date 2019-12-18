@@ -106,16 +106,25 @@ export default {
                     ['VIBRATION.vibration_y', 0],
                     ['VIBRATION.vibration_z', 0]
                 ]
-            }
+            },
+            userPresets: {}
         }
     },
     created () {
         this.$eventHub.$on('messageTypes', this.handleMessageTypes)
+        this.$eventHub.$on('presetsChanged', this.loadLocalPresets)
+        this.loadLocalPresets()
     },
     beforeDestroy () {
         this.$eventHub.$off('messageTypes')
     },
     methods: {
+        loadLocalPresets () {
+            let saved = window.localStorage.getItem('savedFields')
+            if (saved !== null) {
+                this.userPresets = JSON.parse(saved)
+            }
+        },
         handleMessageTypes (messageTypes) {
             if (this.$route.query.hasOwnProperty('plots')) {
                 this.state.plot_on = true
@@ -198,14 +207,28 @@ export default {
         },
         availableMessagePresets () {
             let dict = {}
+            // do it for default messages
             for (const [key, value] of Object.entries(this.messagePresets)) {
                 for (let field of value) {
                     // If any of the fields match, add this and move on
                     if (field[0].split('.')[0] in this.state.messageTypes) {
                         if (!(key in dict)) {
-                            dict[key] = [field]
+                            dict[key] = {messages: [field]}
                         } else {
-                            dict[key].push(field)
+                            dict[key].messages.push(field)
+                        }
+                    }
+                }
+            }
+            // And again for user presets
+            for (const [key, value] of Object.entries(this.userPresets)) {
+                for (let field of value) {
+                    // If any of the fields match, add this and move on
+                    if (field[0].split('.')[0] in this.state.messageTypes) {
+                        if (!(key in dict)) {
+                            dict[key] = {messages: [field], user: true}
+                        } else {
+                            dict[key].messages.push(field)
                         }
                     }
                 }

@@ -411,7 +411,7 @@ export default {
                 let x = this.state.messages[msgtype].time_boot_ms
                 let y = []
 
-                if (field.func === undefined) {
+                if (field.func === undefined || field.func === null) {
                     y = this.state.messages[msgtype][msgfield]
                 } else {
                     for (let i in this.state.messages[msgtype].time_boot_ms) {

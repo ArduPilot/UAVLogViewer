@@ -29,19 +29,75 @@
                 </li>
                 <li v-if="state.fields.length === 0">  Please plot something first.</li>
             </ul>
-
+            <b-button v-if="state.fields.length > 0" v-b-modal.modal-prevent-closing>Save Preset</b-button>
         </b-collapse>
+        <b-modal
+            id="modal-prevent-closing"
+            ref="modal"
+            @show="resetModal"
+            @hidden="resetModal"
+            @ok="handleOk"
+        >
+            <form ref="form" @submit.stop.prevent="handleOk">
+                <b-form-group
+                    label="New Preset Name"
+                    label-for="name-input"
+                >
+                    <b-form-input
+                        id="name-input"
+                        v-model="name"
+                        placeholder="Attitude/OtherRoll"
+                        required
+                    ></b-form-input>
+                </b-form-group>
+            </form>
+        </b-modal>
     </div>
 </template>
 <script>
-
 import {store} from './Globals.js'
 
 export default {
     name: 'plotSetup',
     data () {
         return {
-            state: store
+            state: store,
+            name: ''
+        }
+    },
+    methods: {
+        savePreset (name) {
+            let myStorage = window.localStorage
+            let saved = myStorage.getItem('savedFields')
+            if (saved === null) {
+                saved = {}
+            } else {
+                saved = JSON.parse(saved)
+            }
+            saved[name] = []
+            for (let field of this.state.fields) {
+                saved[name].push([field.name, field.axis, field.color, field.function])
+            }
+            myStorage.setItem('savedFields', JSON.stringify(saved))
+            this.$eventHub.$emit('presetsChanged')
+        },
+
+        resetModal () {
+            this.name = ''
+        },
+        handleOk (bvModalEvt) {
+            // Prevent modal from closing
+            bvModalEvt.preventDefault()
+
+            if (this.name.lenght > 0) {
+                return
+            }
+            this.savePreset(this.name)
+
+            // Hide the modal manually
+            this.$nextTick(() => {
+                this.$refs.modal.hide()
+            })
         }
     }
 }
