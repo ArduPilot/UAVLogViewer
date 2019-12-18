@@ -29,7 +29,8 @@
                 </li>
                 <li v-if="state.fields.length === 0">  Please plot something first.</li>
             </ul>
-            <b-button v-if="state.fields.length > 0" v-b-modal.modal-prevent-closing>Save Preset</b-button>
+            <button class="save-preset" v-if="state.fields.length > 0" v-b-modal.modal-prevent-closing>
+            <i class="fa fa-check-circle" aria-hidden="true"></i>Save Preset</button>
         </b-collapse>
         <b-modal
             id="modal-prevent-closing"
@@ -177,6 +178,28 @@ export default {
     .fa-trash {
         margin: 1px;
         font-size: 10px;
+    }
+
+/* SAVE PRESET BUTTON */
+
+    .save-preset {
+        background-color:rgb(33, 41, 61);
+        color: #fff;
+        border-radius: 15px;
+        padding: 0px 10px 0px 0px;
+        border: 1px solid rgba(91, 100, 117, 0.76);
+        margin-left: 32%;
+        font-size: 13px;
+    }
+
+    .save-preset:hover {
+        background-color: rgb(47, 58, 87);
+        box-shadow: 0px 0px 12px 0px rgba(37, 78, 133, 0.55);
+        transition: all 0.5s ease;
+    }
+
+    .save-preset:focus {
+        outline: none;
     }
 
 /* MEDIA QUERIES */
