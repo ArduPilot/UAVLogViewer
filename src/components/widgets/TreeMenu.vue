@@ -1,6 +1,6 @@
 <template>
     <div>
-        <li v-b-toggle="label"  :style="{'margin-left': ''+level*10+'px'}">
+        <li v-b-toggle="label"  :style="{'margin-left': ''+level*15+'px'}">
             <a class="section">
                 {{label}}
                 <i class="fas fa-caret-down"></i></a>
@@ -9,17 +9,25 @@
             <b-collapse :id="label">
                 <template v-for="(newNode, nodeName) in nodes">
                     <tree-menu
-                        v-if="newNode.length === undefined"
+                        v-if="newNode.length === undefined && newNode.messages === undefined"
                         :label="nodeName"
                         :nodes="newNode"
                         :level="level+1"
+                        :name="name+nodeName+ '/'"
                         :key="newNode+nodeName">
                     </tree-menu>
-                    <li v-if="newNode.length !== undefined"
+                    <li :style="{'margin-left': ''+(level+1)*15+'px'}"
+                        v-if="newNode.messages !== undefined && newNode.messages.length !== undefined"
                         class="type"
                         v-bind:key="nodeName">
-                        <a :style="{'margin-left': ''+(level+3)*10+'px'}"  @click="openPreset(newNode)" class="section">
+                        <a
+                            @click="openPreset(newNode.messages)"
+                            class="section"
+                        >
                             {{nodeName}}
+                        </a>
+                        <a @click="deletePreset(name+nodeName)" v-if="newNode.user">
+                            <i class="remove-icon fas fa-trash" title="Delete preset"></i>
                         </a>
 
                     </li>
@@ -38,7 +46,11 @@ export default {
     props: {
         label: String,
         nodes: Object,
-        level: Number
+        level: Number,
+        name: {
+            type: String,
+            default: ''
+        }
     },
     name: 'tree-menu',
     data () {
@@ -47,6 +59,18 @@ export default {
         }
     },
     methods: {
+        deletePreset (preset) {
+            let myStorage = window.localStorage
+            let saved = myStorage.getItem('savedFields')
+            if (saved === null) {
+                return
+            } else {
+                saved = JSON.parse(saved)
+            }
+            delete saved[preset]
+            myStorage.setItem('savedFields', JSON.stringify(saved))
+            this.$eventHub.$emit('presetsChanged')
+        },
         openPreset (preset) {
             this.$eventHub.$emit('clearPlot')
             this.state.plot_on = true
