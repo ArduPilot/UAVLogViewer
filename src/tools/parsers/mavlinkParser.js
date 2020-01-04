@@ -203,12 +203,6 @@ export class MavlinkParser {
                 } else {
                     instance.messages[message.name] = [MavlinkParser.fixData(message)]
                 }
-                let percentage = 100 * (instance.totalSize - this.buf.byteLength) / instance.totalSize
-                if ((percentage - instance.lastPercentage) > instance.maxPercentageInterval) {
-                    self.postMessage({percentage: percentage})
-                    instance.lastPercentage = percentage
-                }
-
                 // TODO: FIX THIS!
                 // This a hack to detect the end of the buffer and only them message the main thread
                 if (this.buf.length < 100 && instance.sent === false) {
@@ -240,7 +234,6 @@ export class MavlinkParser {
             }
         }
         instance.messages[name] = mergedData
-        self.postMessage({percentage: 100})
         self.postMessage({messages: instance.messages})
     }
 
@@ -253,13 +246,19 @@ export class MavlinkParser {
     processData (data) {
         this.mavlinkParser.pushBuffer(Buffer.from(data))
         let availableMessages = this.mavlinkParser.preParse()
-        this.mavlinkParser.parseType('SYSTEM_TIME')
-        this.mavlinkParser.parseType('HEARTBEAT')
-        this.mavlinkParser.parseType('ATTITUDE')
-        this.mavlinkParser.parseType('AHRS')
-        this.mavlinkParser.parseType('GLOBAL_POSITION_INT')
-        this.mavlinkParser.parseType('PARAM_VALUE')
-        this.mavlinkParser.parseType('STATUSTEXT')
+        let preparseList = [
+            'SYSTEM_TIME',
+            'HEARTBEAT',
+            'ATTITUDE',
+            'AHRS',
+            'GLOBAL_POSITION_INT',
+            'PARAM_VALUE',
+            'STATUSTEXT']
+        for (let i in preparseList) {
+            this.mavlinkParser.parseType(preparseList[i])
+            self.postMessage({percentage: (i / preparseList.length) * 100})
+        }
+        self.postMessage({percentage: 100})
         let messageTypes = {}
         for (let msg of availableMessages) {
             let fields = mavlink.messageFields[msg]
