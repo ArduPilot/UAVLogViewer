@@ -93,6 +93,9 @@ let vehicles = {
     19: 'airplane', // Two-rotor VTOL using control surfaces in vertical operation in addition. Tailsitter.
     20: 'airplane', // Quad-rotor VTOL using a V-shaped quad config in vertical operation. Tailsitter.
     21: 'quadcopter', // Tiltrotor VTOL
+    22: 'airplane',
+    23: 'airplane',
+    24: 'airplane',
     29: 'quadcopter' // Dodecarotor
 }
 
@@ -133,7 +136,11 @@ function getModeString (mavtype, cmode) {
     if (map === null) {
         return ''
     }
-    return map[cmode]
+    try {
+        return map[cmode]
+    } catch {
+        return 'Unknown'
+    }
 }
 
 let instance
@@ -238,20 +245,27 @@ export class MavlinkParser {
     }
 
     extractStartTime () {
-        let length = instance.messages['SYSTEM_TIME'].time_boot_ms.length
-        let lastmsg = instance.messages['SYSTEM_TIME'].time_unix_usec[length - 1]
-        return new Date(lastmsg[0] / 1e3 + lastmsg[1] * ((2 ** 32) / 1e3))
+        try {
+            let length = instance.messages['SYSTEM_TIME'].time_boot_ms.length
+            let lastmsg = instance.messages['SYSTEM_TIME'].time_unix_usec[length - 1]
+            return new Date(lastmsg[0] / 1e3 + lastmsg[1] * ((2 ** 32) / 1e3))
+        } catch {
+            let timeUsec = instance.messages['GPS_RAW_INT'].time_boot_ms[0]
+            return new Date(timeUsec * ((2 ** 32) / 1e3))
+        }
     }
 
     processData (data) {
         this.mavlinkParser.pushBuffer(Buffer.from(data))
         let availableMessages = this.mavlinkParser.preParse()
+        console.log(availableMessages)
         let preparseList = [
             'SYSTEM_TIME',
+            'GLOBAL_POSITION_INT',
+            'GPS_RAW_INT',
             'HEARTBEAT',
             'ATTITUDE',
             'AHRS',
-            'GLOBAL_POSITION_INT',
             'PARAM_VALUE',
             'STATUSTEXT']
         for (let i in preparseList) {

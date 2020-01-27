@@ -19,7 +19,7 @@ export class MavlinkDataExtractor {
     }
 
     static extractAttitudesQ (messages) {
-        return []
+        return {}
     }
 
     static extractFlightModes (messages) {
@@ -111,6 +111,28 @@ export class MavlinkDataExtractor {
                         gpsData.lon[i],
                         gpsData.lat[i],
                         gpsData.relative_alt[i],
+                        gpsData.time_boot_ms[i]]
+                }
+            }
+        } else if ('GPS_RAW_INT' in messages) {
+            let gpsData = messages['GPS_RAW_INT']
+            for (let i in gpsData.time_boot_ms) {
+                if (gpsData.lat[i] !== 0) {
+                    if (startAltitude === null) {
+                        startAltitude = gpsData.alt_ellipsoid[0]
+                    }
+                    trajectory.push(
+                        [
+                            gpsData.lon[i],
+                            gpsData.lat[i],
+                            gpsData.alt_ellipsoid[i] - startAltitude,
+                            gpsData.time_boot_ms[i]
+                        ]
+                    )
+                    timeTrajectory[gpsData.time_boot_ms[i]] = [
+                        gpsData.lon[i],
+                        gpsData.lat[i],
+                        gpsData.alt_ellipsoid[i],
                         gpsData.time_boot_ms[i]]
                 }
             }
