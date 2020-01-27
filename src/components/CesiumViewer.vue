@@ -51,10 +51,12 @@ Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmNTJjO
         'Yi1iZWQ2NTc5YzliNWIiLCJpZCI6MjczNywiaWF0IjoxNTM0Mzg3NzM3fQ.Qe6EcCmGUfM_FRKYuJEORsT4tQAvRkdmFyNk9bkARqM'
 
 function getMinTime (data) {
+    // returns the minimum time in the array. Used to define the time range
     return data.reduce((min, p) => p[3] < min ? p[3] : min, data[0][3])
 }
 
 function getMaxTime (data) {
+    // returns the maximum time in the array. Used to define the time range
     return data.reduce((max, p) => p[3] > max ? p[3] : max, data[0][3])
 }
 
@@ -68,67 +70,25 @@ export default {
         }
     },
     created () {
-        this.viewer = null
+        // The objects declared here are not watched by Vue
+        this.viewer = null // Cesium viewer instance
+        this.model = null // Vehicle model
+        this.waypoints = null // Autopilot Waypoints
+        this.trajectory = null // GPS trajectory (in degrees)
+        this.corrected_trajectory = [] // GPS trajectory (Cartographic array)
 
-        this.lastHoveredTime = 0
-        this.model = null
-        this.clickableTrajectory = null
-        this.waypoints = null
-        this.trajectory = null
-        this.corrected_trajectory = []
-
+        // Link time with plot updates
         this.$eventHub.$on('hoveredTime', this.showAttitude)
+        // This fires up the loading spinner
         this.state.map_loading = true
     },
     beforeDestroy () {
         this.$eventHub.$off('hoveredTime')
     },
     mounted () {
-        let imageryProviders = createDefaultImageryProviderViewModels()
-        imageryProviders.push(new ProviderViewModel({
-            name: 'StatKart',
-            iconUrl: require('../assets/statkart.jpg'),
-            tooltip: 'Statkart aerial imagery \nhttp://statkart.no/',
-            creationFunction: function () {
-                return new UrlTemplateImageryProvider({
-                    url: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
-                    credit: 'Map tiles by Statkart.'
-                })
-            }
-        }))
-        imageryProviders.push(new ProviderViewModel({
-            name: 'Eniro',
-            iconUrl: require('../assets/eniro.png'),
-            tooltip: 'Eniro aerial imagery \nhttp://map.eniro.com/',
-            creationFunction: function () {
-                return new UrlTemplateImageryProvider({
-                    // url: 'http://map.eniro.com/geowebcache/service/tms1.0.0/map/{z}/{x}/{reverseY}.png',
-                    url: '/eniro/{z}/{x}/{reverseY}.png',
-                    credit: 'Map tiles by Eniro.'
-                })
-            }
-        }))
-        imageryProviders.push(new ProviderViewModel({
-            name: 'OpenSeaMap',
-            iconUrl: require('../assets/openseamap.png'),
-            tooltip: 'OpenSeaMap Nautical Maps \nhttp://openseamap.org/',
-            parameters: {
-                transparent: 'true',
-                format: 'image/png'
-            },
-            creationFunction: function () {
-                return [
-                    new UrlTemplateImageryProvider({
-                        url: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        credit: 'Map tiles by OpenStreetMap.'
-                    }),
-                    new UrlTemplateImageryProvider({
-                        url: 'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
-                        credit: 'Map tiles by OpenSeaMap.'
-                    })
-                ]
-            }
-        }))
+        // create eniro, statkart, and openseamap providers
+        let imageryProviders = this.createAdditionalProviders()
+
         if (this.viewer == null) {
             this.viewer = new Viewer(
                 'cesiumContainer',
@@ -199,6 +159,54 @@ export default {
 
     methods:
             {
+                createAdditionalProviders () {
+                    let imageryProviders = createDefaultImageryProviderViewModels()
+                    imageryProviders.push(new ProviderViewModel({
+                        name: 'StatKart',
+                        iconUrl: require('../assets/statkart.jpg'),
+                        tooltip: 'Statkart aerial imagery \nhttp://statkart.no/',
+                        creationFunction: function () {
+                            return new UrlTemplateImageryProvider({
+                                url: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
+                                credit: 'Map tiles by Statkart.'
+                            })
+                        }
+                    }))
+                    imageryProviders.push(new ProviderViewModel({
+                        name: 'Eniro',
+                        iconUrl: require('../assets/eniro.png'),
+                        tooltip: 'Eniro aerial imagery \nhttp://map.eniro.com/',
+                        creationFunction: function () {
+                            return new UrlTemplateImageryProvider({
+                                // url: 'http://map.eniro.com/geowebcache/service/tms1.0.0/map/{z}/{x}/{reverseY}.png',
+                                url: '/eniro/{z}/{x}/{reverseY}.png',
+                                credit: 'Map tiles by Eniro.'
+                            })
+                        }
+                    }))
+                    imageryProviders.push(new ProviderViewModel({
+                        name: 'OpenSeaMap',
+                        iconUrl: require('../assets/openseamap.png'),
+                        tooltip: 'OpenSeaMap Nautical Maps \nhttp://openseamap.org/',
+                        parameters: {
+                            transparent: 'true',
+                            format: 'image/png'
+                        },
+                        creationFunction: function () {
+                            return [
+                                new UrlTemplateImageryProvider({
+                                    url: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                    credit: 'Map tiles by OpenStreetMap.'
+                                }),
+                                new UrlTemplateImageryProvider({
+                                    url: 'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
+                                    credit: 'Map tiles by OpenSeaMap.'
+                                })
+                            ]
+                        }
+                    }))
+                    return imageryProviders
+                },
                 setup2 (updatedPositions) {
                     this.heightOffset = updatedPositions[0].height
                     this.processTrajectory(this.state.current_trajectory)
