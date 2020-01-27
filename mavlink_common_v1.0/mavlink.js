@@ -18674,6 +18674,10 @@ MAVLink.prototype.parseType = function (type) {
     if (!Object.keys(mavlink.nameMap).includes(type)) {
         throw new Error('no message!! ' + type)
     }
+    if (this.bufmap[mavlink.nameMap[type]] === undefined) {
+        console.log('could not find message: ' + type)
+        return
+    }
     for (let i of this.bufmap[mavlink.nameMap[type]]) {
         let m = this.decode(this.buf.slice(i[0], i[1]))
 
@@ -18701,7 +18705,10 @@ MAVLink.prototype.parseType = function (type) {
             messages.push(m)
         }
     }
-    this.emit('message', messages)
+    if (messages.length > 0) {
+        console.log('emitting ' + type)
+        this.emit('message', messages)
+    }
     return messages
 }
 
