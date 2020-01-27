@@ -128,18 +128,27 @@ function getModeMap (mavType) {
     return map
 }
 
-function getModeString (mavtype, cmode) {
+function getModeString (mavtype, cmode, basemode) {
     if (mavtype === mavlink.MAV_TYPE_GCS) {
         return ''
     }
     const map = getModeMap(mavtype)
     if (map === null) {
-        return ''
+        if ((basemode & 4) > 0) {
+            return 'Auto'
+        }
+        if ((basemode & 8) > 0) {
+            return 'Guided'
+        }
+        if ((basemode & 16) > 0) {
+            return 'Stabilize'
+        }
+        return 'Unknown'
     }
     try {
         return map[cmode]
     } catch {
-        return 'Unknown'
+
     }
 }
 
@@ -167,7 +176,7 @@ export class MavlinkParser {
             message.relative_alt = message.relative_alt / 1000
             return message
         } else if (message.name === 'HEARTBEAT') {
-            message.asText = getModeString(message.type, message.custom_mode)
+            message.asText = getModeString(message.type, message.custom_mode, message.base_mode)
             message.craft = vehicles[message.type]
             return message
         }
