@@ -17,6 +17,10 @@
                    v-if="state.map_available && state.show_map">  <i class="fas fa-cube"></i> 3D </a>
                 <a :class="selected ==='3d' ? 'selected' : ''" @click="state.show_map=trueselected='3d'"
                    v-if="state.map_available && !state.show_map">3D</a>
+                <!-- more -->
+                <a :class="selected ==='other' ? 'selected' : ''" @click="selected='other'" v-if="state.processDone">
+                    <i class="fas fa-ellipsis-v"></i>
+                </a>
             </div>
         </b-collapse>
         <!-- TOGGLE MENU -->
@@ -63,9 +67,11 @@
                             <input class="wingspan-text" size="5" type="text" v-model="state.modelScale">
                         </label>
                     </div>
+                </div>
+                <div v-if="selected==='other'">
                     <!-- PARAM/MESSAGES/RADIO -->
                     <hr>
-                    <a class="section"> Show / hide </a>
+                    <a class="centered-section"> Show / hide </a>
                     <div v-if="state.processDone" class="show-hide">
                         <label v-if="state.params">
                           <i class="fa fa-cogs circle"></i>
@@ -110,6 +116,11 @@ export default {
 
 a.section {
     margin-left: 6px;
+}
+
+a.centered-section {
+    text-align: center;
+    display: block;
 }
 
 .col-lg-2 {
