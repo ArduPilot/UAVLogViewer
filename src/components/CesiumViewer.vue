@@ -239,7 +239,8 @@ export default {
                                     this.viewer.camera.position = position
                                     this.viewer.camera.direction = direction
                                 } */
-                    this.state.map_loading = false
+                    // TODO: Find a better way to know that cesium finished loading
+                    setTimeout(() => { this.state.map_loading = false }, 2000)
                     this.state.cameraType = 'follow'
                     this.changeCamera()
                     setTimeout(this.updateTimelineColors, 500)
