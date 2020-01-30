@@ -628,7 +628,7 @@ export default {
                         xaxis: {
                             title: 'Time since boot',
                             range: range,
-                            domain: [0.15, this.calculateXAxisDomain()],
+                            domain: this.calculateXAxisDomain(),
                             rangeslider: {},
                             tickformat: timeformat
                         }
