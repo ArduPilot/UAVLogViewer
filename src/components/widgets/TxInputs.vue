@@ -133,6 +133,7 @@ export default {
                 }
                 _this.interpolated = new Interpolator(x, y)
                 _this.$eventHub.$on('cesium-time-changed', _this.setTime)
+                _this.$eventHub.$on('hoveredTime', _this.setTime)
             })
         }
     },
