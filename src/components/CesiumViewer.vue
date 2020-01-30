@@ -160,6 +160,9 @@ export default {
     methods:
             {
                 createAdditionalProviders () {
+                    /*
+                    *  Creates and returns the providers for viewing the Eniro, Statkart, and OpenSeaMap map layers
+                    * */
                     let imageryProviders = createDefaultImageryProviderViewModels()
                     imageryProviders.push(new ProviderViewModel({
                         name: 'StatKart',
@@ -208,6 +211,9 @@ export default {
                     return imageryProviders
                 },
                 setup2 (updatedPositions) {
+                    /*
+                    * Second step of setup, happens after the height of the starting point has been returned by Cesium
+                    * */
                     this.heightOffset = updatedPositions[0].height
                     this.processTrajectory(this.state.current_trajectory)
                     this.addModel()
@@ -246,6 +252,7 @@ export default {
                     setTimeout(this.updateTimelineColors, 500)
                 },
                 addCloseButton () {
+                    /* Creates the close button on the Cesium toolbar */
                     let toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
 
                     let closeButton = document.createElement('span')
