@@ -18,6 +18,7 @@ export default {
     mixins: [baseWidget],
     created () {
         this.$eventHub.$on('cesium-time-changed', this.setTime)
+        this.$eventHub.$on('hoveredTime', this.setTime)
     },
     data () {
         return {
