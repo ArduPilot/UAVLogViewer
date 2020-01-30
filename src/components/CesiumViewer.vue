@@ -587,7 +587,7 @@ export default {
                         orientation: sampledOrientation,
                         model: {
                             uri: this.getVehicleModel(),
-                            minimumPixelSize: 6,
+                            minimumPixelSize: 15,
                             scale: this.modelScale / 10
                         },
                         viewFrom: new Cartesian3(5, 0, 3)
