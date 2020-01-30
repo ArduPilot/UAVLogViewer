@@ -258,7 +258,7 @@ export default {
                         '<button type="button" ' +
                         'id="cesium-close-button" ' +
                         'class="cesium-button cesium-toolbar-button cesium-close-button" ' +
-                        'title="Navigation Instructions">' +
+                        'title="Close 3D view">' +
                         '<svg viewbox="0 0 40 40">' +
                         '<path class="close-x" d="M 10,10 L 30,30 M 30,10 L 10,30" />' +
                         '</svg>' +
