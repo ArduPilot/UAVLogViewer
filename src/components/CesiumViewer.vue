@@ -648,7 +648,7 @@ export default {
 
                         }
                     })
-                    if (!this.$route.query.hasOwnProperty('cam')) {
+                    if (this.state.cameraType !== 'follow') {
                         this.viewer.zoomTo(this.viewer.entities)
                     }
                     for (let entity of oldEntities) {
