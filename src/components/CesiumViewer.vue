@@ -42,7 +42,9 @@ import {
     Ellipsoid,
     Quaternion,
     when,
-    defined} from 'cesium/Cesium'
+    defined,
+    SingleTileImageryProvider,
+    Rectangle} from 'cesium/Cesium'
 
 import 'cesium/Widgets/widgets.css'
 import {store} from './Globals.js'
@@ -142,6 +144,13 @@ export default {
             // this.viewer.camera.moveEnd.addEventListener(this.onCameraUpdate)
 
             knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
+            let layers = this.viewer.scene.imageryLayers
+            let xofs = 0.00001
+            layers.addImageryProvider(new SingleTileImageryProvider({
+                url: require('../assets/home2.png'),
+                rectangle: Rectangle.fromDegrees(-48.530077110530044 + xofs, -27.490619277419633,
+                    -48.52971476731231 + xofs, -27.49044182943895)
+            }))
         }
 
         this.addCloseButton()
