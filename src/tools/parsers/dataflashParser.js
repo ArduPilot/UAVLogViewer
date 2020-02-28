@@ -479,7 +479,7 @@ export class DataflashParser {
     }
 
     fixData (message) {
-        if (message.name === 'GPS') {
+        if (['GPS', 'POS'].includes(message.name)) {
             message.Lat = message.Lat / 1e7
             message.Lng = message.Lng / 1e7
             // message.Alt = message.Alt / 1e4
@@ -615,6 +615,7 @@ export class DataflashParser {
         this.parseAtOffset('MODE')
         this.parseAtOffset('ATT')
         this.parseAtOffset('GPS')
+        this.parseAtOffset('POS')
         this.parseAtOffset('XKQ1')
         this.parseAtOffset('NKQ1')
         this.parseAtOffset('NKQ2')

@@ -185,7 +185,29 @@ export class DataflashDataExtractor {
         let trajectory = []
         let timeTrajectory = {}
         let startAltitude = null
-        if ('AHR2' in messages) {
+        if ('POS' in messages) {
+            let gpsData = messages['POS']
+            for (let i in gpsData.time_boot_ms) {
+                if (gpsData.Lat[i] !== 0) {
+                    if (startAltitude === null) {
+                        startAltitude = gpsData.Alt[i]
+                    }
+                    trajectory.push(
+                        [
+                            gpsData.Lng[i],
+                            gpsData.Lat[i],
+                            gpsData.Alt[i] - startAltitude,
+                            gpsData.time_boot_ms[i]
+                        ]
+                    )
+                    timeTrajectory[gpsData.time_boot_ms[i]] = [
+                        gpsData.Lng[i],
+                        gpsData.Lat[i],
+                        (gpsData.Alt[i] - startAltitude) / 1000,
+                        gpsData.time_boot_ms[i]]
+                }
+            }
+        } else if ('AHR2' in messages) {
             let gpsData = messages['AHR2']
             for (let i in gpsData.time_boot_ms) {
                 if (gpsData.Lat[i] !== 0) {
