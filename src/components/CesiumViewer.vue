@@ -748,6 +748,10 @@ export default {
             return undefined
         },
         modelScale () {
+            // TODO: scale the model instead
+            if (this.state.vehicle === 'submarine') {
+                return this.state.modelScale * 6.86
+            }
             return this.state.modelScale
         },
         cameraType () {
