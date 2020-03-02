@@ -226,7 +226,7 @@ export default {
                     this.heightOffset = updatedPositions[0].height
                     this.processTrajectory(this.state.current_trajectory)
                     this.addModel()
-                    this.plotTrajectories()
+                    this.updateAndPlotTrajectory()
                     this.plotMission(this.state.mission)
                     document.addEventListener('setzoom', this.onTimelineZoom)
                     this.$eventHub.$on('rangeChanged', this.onRangeChanged)
@@ -395,7 +395,7 @@ export default {
                     if (this.trajectoryUpdateTimeout !== null) {
                         clearTimeout(this.trajectoryUpdateTimeout)
                     }
-                    setTimeout(this.plotTrajectories, 500)
+                    setTimeout(this.updateAndPlotTrajectory, 500)
                 },
 
                 onLeftDown (movement) {
@@ -610,7 +610,7 @@ export default {
                         viewFrom: new Cartesian3(5, 0, 3)
                     })
                 },
-                plotTrajectories () {
+                updateAndPlotTrajectory () {
                     let oldEntities = this.trajectory._children.slice()
 
                     // Add polyline representing the path under the points
