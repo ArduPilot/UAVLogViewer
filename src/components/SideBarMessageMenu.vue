@@ -138,6 +138,16 @@ export default {
                         ['ATTITUDE.roll', 0, undefined, function (a) { return degrees(a) }],
                         ['ATTITUDE.pitch', 0, undefined, function (a) { return degrees(a) }]
                     ],
+                'Position Control':
+                    [
+                        ['PSC.PX', 0],
+                        ['PSC.TPX', 0],
+                        ['PSC.VX', 1],
+                        ['PSC.TVX', 1],
+                        ['RCIN.C4', 2],
+                        ['RCIN.C5', 2],
+                        ['RCIN.C6', 2]
+                    ],
                 'Attitude/Attitude Control ':
                     [
                         ['ATT.DesRoll', 0],
