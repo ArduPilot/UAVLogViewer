@@ -115,10 +115,12 @@ export class MavlinkDataExtractor {
                         gpsData.time_boot_ms[i]]
                 }
             }
-            ret['GLOBAL_POSITION_INT'] = {
-                startAltitude: startAltitude,
-                trajectory: trajectory,
-                timeTrajectory: timeTrajectory
+            if (trajectory.length) {
+                ret['GLOBAL_POSITION_INT'] = {
+                    startAltitude: startAltitude,
+                    trajectory: trajectory,
+                    timeTrajectory: timeTrajectory
+                }
             }
         }
         if ('GPS_RAW_INT' in messages) {
@@ -146,10 +148,12 @@ export class MavlinkDataExtractor {
                         gpsData.time_boot_ms[i]]
                 }
             }
-            ret['GPS_RAW_INT'] = {
-                startAltitude: startAltitude,
-                trajectory: trajectory,
-                timeTrajectory: timeTrajectory
+            if (trajectory.length) {
+                ret['GPS_RAW_INT'] = {
+                    startAltitude: startAltitude,
+                    trajectory: trajectory,
+                    timeTrajectory: timeTrajectory
+                }
             }
         }
         if ('AHRS2' in messages) {

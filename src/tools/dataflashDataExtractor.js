@@ -209,10 +209,12 @@ export class DataflashDataExtractor {
                         gpsData.time_boot_ms[i]]
                 }
             }
-            ret['POS'] = {
-                startAltitude: startAltitude,
-                trajectory: trajectory,
-                timeTrajectory: timeTrajectory
+            if (trajectory.length) {
+                ret['POS'] = {
+                    startAltitude: startAltitude,
+                    trajectory: trajectory,
+                    timeTrajectory: timeTrajectory
+                }
             }
         }
         if ('AHR2' in messages) {
@@ -240,10 +242,12 @@ export class DataflashDataExtractor {
                         gpsData.time_boot_ms[i]]
                 }
             }
-            ret['AHR2'] = {
-                startAltitude: startAltitude,
-                trajectory: trajectory,
-                timeTrajectory: timeTrajectory
+            if (trajectory.length) {
+                ret['AHR2'] = {
+                    startAltitude: startAltitude,
+                    trajectory: trajectory,
+                    timeTrajectory: timeTrajectory
+                }
             }
         }
         if ('GPS' in messages) {
@@ -271,10 +275,12 @@ export class DataflashDataExtractor {
                         gpsData.time_boot_ms[i]]
                 }
             }
-            ret['GPS'] = {
-                startAltitude: startAltitude,
-                trajectory: trajectory,
-                timeTrajectory: timeTrajectory
+            if (trajectory.length) {
+                ret['GPS'] = {
+                    startAltitude: startAltitude,
+                    trajectory: trajectory,
+                    timeTrajectory: timeTrajectory
+                }
             }
         }
         return ret
