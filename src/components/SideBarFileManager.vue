@@ -10,7 +10,8 @@
         <li v-if="url">
             <a :href="'/uploaded/' + url" class="section" target="_blank"><i class="fas fa-download"></i> Download</a>
         </li>
-        <div @click="browse" @dragover.prevent @drop="onDrop" id="drop_zone" v-if="file==null && uploadpercentage===-1">
+        <div @click="browse" @dragover.prevent @drop="onDrop" id="drop_zone"
+        v-if="file==null && uploadpercentage===-1  && !sampleLoaded">
             <p>Drop *.tlog or *.bin file here or click to browse</p>
             <input @change="onChange" id="choosefile" style="opacity: 0;" type="file">
         </div>
