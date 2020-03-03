@@ -276,7 +276,9 @@ export class MavlinkParser {
             'ATTITUDE',
             'AHRS',
             'PARAM_VALUE',
-            'STATUSTEXT']
+            'STATUSTEXT',
+            'AHRS2',
+            'AHRS3']
         for (let i in preparseList) {
             this.mavlinkParser.parseType(preparseList[i])
             self.postMessage({percentage: (i / preparseList.length) * 100})

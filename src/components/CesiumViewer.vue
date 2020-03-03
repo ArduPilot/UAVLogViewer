@@ -228,6 +228,7 @@ export default {
                     this.addModel()
                     this.updateAndPlotTrajectory()
                     this.plotMission(this.state.mission)
+                    this.viewer.zoomTo(this.viewer.entities)
                     document.addEventListener('setzoom', this.onTimelineZoom)
                     this.$eventHub.$on('rangeChanged', this.onRangeChanged)
                     /*            if (this.$route.query.hasOwnProperty('cam')) {
@@ -338,7 +339,7 @@ export default {
                     return false
                 },
                 changeCamera () {
-                    if (this.cameraType === 'follow') {
+                    if (this.cameraType === 'follow' && this.viewer.trackedEntity !== this.model) {
                         this.viewer.trackedEntity = this.model
                     } else {
                         this.viewer.trackedEntity = undefined
@@ -477,7 +478,11 @@ export default {
                 },
 
                 processTrajectory () {
-                    this.points = this.state.current_trajectory
+                    this.corrected_trajectory = []
+                    this.points = this.state.trajectories[this.state.trajectorySource].trajectory
+                    for (let pos of this.points) {
+                        this.corrected_trajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
+                    }
                     // process time_boot_ms into cesium time
                     this.startTimeMs = getMinTime(this.points)
                     let timespan = getMaxTime(this.points) - this.startTimeMs
@@ -490,7 +495,6 @@ export default {
                     this.timelineStart = this.start
                     this.timelineStop = this.stop
                     viewer.clock.stopTime = this.stop.clone()
-                    viewer.clock.currentTime = this.start.clone()
                     viewer.clock.clockRange = ClockRange.LOOP_STOP
                     viewer.clock.multiplier = 1
                     // Set timeline to simulation bounds
@@ -535,6 +539,9 @@ export default {
                 },
                 addModel () {
                     console.log('model')
+                    if (this.model !== null) {
+                        this.viewer.entities.remove(this.model)
+                    }
                     let points = this.points
                     // Create sampled aircraft orientation
                     let position = Cartesian3.fromDegrees(points[0][0], points[0][1], points[0][2] + this.heightOffset)
@@ -665,9 +672,6 @@ export default {
 
                         }
                     })
-                    if (this.state.cameraType !== 'follow') {
-                        this.viewer.zoomTo(this.viewer.entities)
-                    }
                     for (let entity of oldEntities) {
                         this.viewer.entities.remove(entity)
                     }
@@ -765,6 +769,9 @@ export default {
         },
         showWaypoints () {
             return this.state.showWaypoints
+        },
+        trajectorySource () {
+            return this.state.trajectorySource
         }
     },
     watch: {
@@ -802,6 +809,12 @@ export default {
         },
         showWaypoints () {
             this.updateVisibility()
+        },
+        trajectorySource () {
+            this.processTrajectory(this.state.trajectories[this.state.trajectorySource].trajectory)
+            this.addModel()
+            this.updateAndPlotTrajectory()
+            this.changeCamera()
         }
     }
 }

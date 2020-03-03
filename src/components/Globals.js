@@ -1,5 +1,7 @@
 export var store = {
     // current_trajectory: [],
+    trajectorySource: '',
+    trajectories: {},
     time_trajectory: {},
     time_attitude: {},
     time_attitudeQ: {},

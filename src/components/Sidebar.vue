@@ -67,6 +67,16 @@
                             <input class="wingspan-text" size="5" type="text" v-model="state.modelScale">
                         </label>
                     </div>
+                    <!-- Trajectory Source -->
+                    <div>
+                        <label><i class="fas fa-map"></i> Trajectory Source</label>
+                        <select class="cesium-button" v-model="state.trajectorySource">
+                            <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
+                            <option v-for="(item, key) in state.trajectories" :key="key">
+                                {{key}}
+                            </option>
+                        </select>
+                    </div>
                 </div>
                 <div v-if="selected==='other'">
                     <!-- PARAM/MESSAGES/RADIO -->

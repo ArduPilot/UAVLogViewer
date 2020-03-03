@@ -90,11 +90,15 @@ export default {
             if (Object.keys(this.state.time_attitudeQ).length === 0) {
                 this.state.time_attitudeQ = this.dataExtractor.extractAttitudesQ(this.state.messages)
             }
-            if (this.state.current_trajectory.length === 0) {
-                let trajectories = this.dataExtractor.extractTrajectory(this.state.messages)
-                this.state.current_trajectory = trajectories.trajectory
-                this.state.time_trajectory = trajectories.time_trajectory
+
+            let trajectories = this.dataExtractor.extractTrajectory(this.state.messages)
+            if (Object.keys(trajectories).length > 0) {
+                let first = Object.keys(trajectories)[0]
+                this.state.trajectorySource = first
+                this.state.current_trajectory = trajectories[first].trajectory
+                this.state.time_trajectory = trajectories[first].time_trajectory
             }
+            this.state.trajectories = trajectories
 
             if (this.state.flight_mode_changes.length === 0) {
                 this.state.flight_mode_changes = this.dataExtractor.extractFlightModes(this.state.messages)

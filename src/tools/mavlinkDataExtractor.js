@@ -89,10 +89,11 @@ export class MavlinkDataExtractor {
     }
 
     static extractTrajectory (messages) {
-        let trajectory = []
-        let timeTrajectory = {}
-        let startAltitude = null
+        let ret = {}
         if ('GLOBAL_POSITION_INT' in messages) {
+            let trajectory = []
+            let timeTrajectory = {}
+            let startAltitude = null
             let gpsData = messages['GLOBAL_POSITION_INT']
             for (let i in gpsData.time_boot_ms) {
                 if (gpsData.lat[i] !== 0) {
@@ -114,31 +115,110 @@ export class MavlinkDataExtractor {
                         gpsData.time_boot_ms[i]]
                 }
             }
-        } else if ('GPS_RAW_INT' in messages) {
+            ret['GLOBAL_POSITION_INT'] = {
+                startAltitude: startAltitude,
+                trajectory: trajectory,
+                timeTrajectory: timeTrajectory
+            }
+        }
+        if ('GPS_RAW_INT' in messages) {
+            let trajectory = []
+            let timeTrajectory = {}
+            let startAltitude = null
             let gpsData = messages['GPS_RAW_INT']
             for (let i in gpsData.time_boot_ms) {
                 if (gpsData.lat[i] !== 0) {
                     if (startAltitude === null) {
-                        startAltitude = gpsData.alt_ellipsoid[0]
+                        startAltitude = gpsData.alt[0] / 1000
                     }
                     trajectory.push(
                         [
-                            gpsData.lon[i],
-                            gpsData.lat[i],
-                            gpsData.alt_ellipsoid[i] - startAltitude,
+                            gpsData.lon[i] * 1e-7,
+                            gpsData.lat[i] * 1e-7,
+                            gpsData.alt[i] / 1000 - startAltitude,
                             gpsData.time_boot_ms[i]
                         ]
                     )
                     timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.lon[i],
-                        gpsData.lat[i],
-                        gpsData.alt_ellipsoid[i],
+                        gpsData.lon[i] * 1e-7,
+                        gpsData.lat[i] * 1e-7,
+                        gpsData.alt[i] / 1000,
                         gpsData.time_boot_ms[i]]
                 }
             }
+            ret['GPS_RAW_INT'] = {
+                startAltitude: startAltitude,
+                trajectory: trajectory,
+                timeTrajectory: timeTrajectory
+            }
         }
-
-        return {trajectory: trajectory, time_trajectory: timeTrajectory}
+        if ('AHRS2' in messages) {
+            let trajectory = []
+            let timeTrajectory = {}
+            let startAltitude = null
+            let gpsData = messages['AHRS2']
+            for (let i in gpsData.time_boot_ms) {
+                if (gpsData.lat[i] !== 0) {
+                    if (startAltitude === null) {
+                        startAltitude = gpsData.altitude[0]
+                    }
+                    trajectory.push(
+                        [
+                            gpsData.lng[i] * 1e-7,
+                            gpsData.lat[i] * 1e-7,
+                            gpsData.altitude[i] - startAltitude,
+                            gpsData.time_boot_ms[i]
+                        ]
+                    )
+                    timeTrajectory[gpsData.time_boot_ms[i]] = [
+                        gpsData.lng[i] * 1e-7,
+                        gpsData.lat[i] * 1e-7,
+                        gpsData.altitude[i],
+                        gpsData.time_boot_ms[i]]
+                }
+            }
+            if (trajectory.length) {
+                ret['AHRS2'] = {
+                    startAltitude: startAltitude,
+                    trajectory: trajectory,
+                    timeTrajectory: timeTrajectory
+                }
+            }
+        }
+        if ('AHRS3' in messages) {
+            let trajectory = []
+            let timeTrajectory = {}
+            let startAltitude = null
+            let gpsData = messages['AHRS3']
+            for (let i in gpsData.time_boot_ms) {
+                if (gpsData.lat[i] !== 0) {
+                    if (startAltitude === null) {
+                        startAltitude = gpsData.altitude[0]
+                    }
+                    trajectory.push(
+                        [
+                            gpsData.lng[i] * 1e-7,
+                            gpsData.lat[i] * 1e-7,
+                            gpsData.altitude[i] - startAltitude,
+                            gpsData.time_boot_ms[i]
+                        ]
+                    )
+                    timeTrajectory[gpsData.time_boot_ms[i]] = [
+                        gpsData.lng[i] * 1e-7,
+                        gpsData.lat[i] * 1e-7,
+                        gpsData.altitude[i],
+                        gpsData.time_boot_ms[i]]
+                }
+            }
+            if (trajectory.length) {
+                ret['AHRS3'] = {
+                    startAltitude: startAltitude,
+                    trajectory: trajectory,
+                    timeTrajectory: timeTrajectory
+                }
+            }
+        }
+        return ret
     }
 
     static extractParams (messages) {

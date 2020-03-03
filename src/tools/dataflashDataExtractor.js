@@ -184,10 +184,10 @@ export class DataflashDataExtractor {
     static extractTrajectory (messages) {
         // returns a dict with the trajectories found
         let ret = {}
-        let trajectory = []
-        let timeTrajectory = {}
-        let startAltitude = null
         if ('POS' in messages) {
+            let trajectory = []
+            let timeTrajectory = {}
+            let startAltitude = null
             let gpsData = messages['POS']
             for (let i in gpsData.time_boot_ms) {
                 if (gpsData.Lat[i] !== 0) {
@@ -214,7 +214,11 @@ export class DataflashDataExtractor {
                 trajectory: trajectory,
                 timeTrajectory: timeTrajectory
             }
-        } else if ('AHR2' in messages) {
+        }
+        if ('AHR2' in messages) {
+            let trajectory = []
+            let timeTrajectory = {}
+            let startAltitude = null
             let gpsData = messages['AHR2']
             for (let i in gpsData.time_boot_ms) {
                 if (gpsData.Lat[i] !== 0) {
@@ -241,7 +245,11 @@ export class DataflashDataExtractor {
                 trajectory: trajectory,
                 timeTrajectory: timeTrajectory
             }
-        } else if ('GPS' in messages) {
+        }
+        if ('GPS' in messages) {
+            let trajectory = []
+            let timeTrajectory = {}
+            let startAltitude = null
             let gpsData = messages['GPS']
             for (let i in gpsData.time_boot_ms) {
                 if (gpsData.Lat[i] !== 0) {
