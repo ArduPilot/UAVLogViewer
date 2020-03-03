@@ -1,7 +1,7 @@
 <template>
 <!-- HEADER -->
     <div class="nav-side-menu col-lg-2">
-        <h1 class="brand"> <b>TLog</b>viewer<i class="fas fa-plane"></i></h1>
+        <h1 class="brand"> <a class="brand" href="/"><b>TLog</b>viewer<i class="fas fa-plane"></i></a></h1>
         <!-- TABHOLDER -->
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <b-collapse class="menu-content collapse out" id="menucontent" visible>
@@ -283,9 +283,14 @@ a.centered-section {
         padding-left: 20px;
         line-height: 50px;
         margin-bottom: 0;
-        color: rgb(54, 72, 114);
+        color: rgb(54, 72, 114) !important;
         background-color: rgba(248, 248, 248, 0.918);
         display: block;
+        text-decoration: none;
+    }
+
+    a:hover {
+        text-decoration: none !important;
     }
 
     /* TABHOLDER */
