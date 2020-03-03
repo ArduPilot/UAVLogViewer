@@ -7,7 +7,7 @@
         <b-collapse class="menu-content collapse out" id="menucontent" visible>
             <div class="tabholder">
                 <!-- Home -->
-                <a :class="selected === 'home' ? 'selected' : ''" @click="selected='home'">
+                <a :class="selected === 'home' ? 'selected' : ''" @click="selected='home'" v-if="!state.processDone">
                 <i class="fas fa-home"></i>Home</a>
                 <!-- Plot -->
                 <a :class="selected === 'plot' ? 'selected' : ''" @click="selected='plot'"
