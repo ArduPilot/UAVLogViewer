@@ -1,7 +1,9 @@
-  # tlogviewer
+# TlogViewer
 
- This is a Javascript based log viewer for mavlink telemetry logs and (soon) dataflash logs.
- The latest version can be seen [here](http://tlog.ibexcps.com)
+![log seeking](preview.gif "Logo Title Text 1")
+
+ This is a Javascript based log viewer for Mavlink telemetry and dataflash logs.
+ [Live demo here](http://tlog.ibexcps.com).
 
 ## Build Setup
 
@@ -15,9 +17,6 @@ npm run dev
 # build for production with minification
 npm run build
 
-# build for production and view the bundle analyzer report
-npm run build --report
-
 # run unit tests
 npm run unit
 
@@ -27,5 +26,3 @@ npm run e2e
 # run all tests
 npm test
 ```
-
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
