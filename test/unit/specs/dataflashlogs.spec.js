@@ -5,6 +5,7 @@ var glob = require('glob')
 
 // options is optional
 let files = glob.sync('/tmp/testlogs/*.bin')
+console.log('Testing datalash files:')
 console.log(files)
 describe('parse binary logs', () => {
     test.each(files)('parse %s', (a) => {
@@ -18,7 +19,6 @@ describe('parse binary logs', () => {
         const messageTypes = result.types
         const messages = result.messages
         expect(Object.keys(messageTypes)).toContain('MODE')
-        console.log(a)
         if (a.indexOf('Plane') !== -1 && a.indexOf('rover') !== -1) {
             expect(DataflashDataExtractor.extractArmedEvents(messages).length).toBeGreaterThan(0)
         }

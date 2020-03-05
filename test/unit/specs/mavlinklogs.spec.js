@@ -5,7 +5,8 @@ var glob = require('glob')
 
 // options is optional
 let files = glob.sync('/tmp/testlogs/*.tlog')
-
+console.log('Testing MAVLink files:')
+console.log(files)
 describe('parse tlogs', () => {
     test.each(files)('parse %s', (a) => {
         const fs = require('fs')
