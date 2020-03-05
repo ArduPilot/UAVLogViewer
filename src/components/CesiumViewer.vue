@@ -100,7 +100,7 @@ export default {
                     animation: true,
                     requestRenderMode: true,
                     shouldAnimate: false,
-                    scene3DOnly: true,
+                    scene3DOnly: false,
                     selectionIndicator: false,
                     shadows: true,
                     imageryProviderViewModels: imageryProviders
@@ -119,6 +119,11 @@ export default {
             this.trajectoryUpdateTimeout = null
             this.viewer.scene.globe.enableLighting = true
             this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
+            this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
+            this.viewer.scene.morphComplete.addEventListener(
+                function () {
+                    this.viewer.zoomTo(this.viewer.entities)
+                }.bind(this))
             this.viewer.animation.viewModel.setShuttleRingTicks([0.1, 0.25, 0.5, 0.75, 1, 2, 5, 10, 15])
             this.viewer.scene.globe.depthTestAgainstTerrain = true
             this.viewer.shadowMap.maxmimumDistance = 10000.0
