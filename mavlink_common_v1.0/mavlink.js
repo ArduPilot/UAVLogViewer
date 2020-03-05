@@ -18706,7 +18706,6 @@ MAVLink.prototype.parseType = function (type) {
         }
     }
     if (messages.length > 0) {
-        console.log('emitting ' + type)
         this.emit('message', messages)
     }
     return messages
