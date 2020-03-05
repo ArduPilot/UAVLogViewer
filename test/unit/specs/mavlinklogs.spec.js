@@ -29,6 +29,7 @@ describe('parse tlogs', () => {
         expect(MavlinkDataExtractor.extractTextMessages(messages).length).toBeGreaterThan(0)
         let trajectory = MavlinkDataExtractor.extractTrajectory(messages)
         expect(Object.keys(trajectory).length).toBeGreaterThan(1)
-        expect(trajectory.trajectory.length).toBeGreaterThan(100)
+        let firstItem = Object.keys(trajectory)[0]
+        expect(trajectory[firstItem].trajectory.length).toBeGreaterThan(100)
     })
 })
