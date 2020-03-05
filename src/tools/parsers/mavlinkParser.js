@@ -267,7 +267,6 @@ export class MavlinkParser {
     processData (data) {
         this.mavlinkParser.pushBuffer(Buffer.from(data))
         let availableMessages = this.mavlinkParser.preParse()
-        console.log(availableMessages)
         let preparseList = [
             'SYSTEM_TIME',
             'GLOBAL_POSITION_INT',
