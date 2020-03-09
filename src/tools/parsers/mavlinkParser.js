@@ -296,7 +296,7 @@ export class MavlinkParser {
                 }
             }
             messageTypes[msg] = {
-                fields: fields,
+                expressions: fields,
                 units: null,
                 multipiers: null,
                 complexFields: complexFields

@@ -201,7 +201,7 @@ export default {
         },
         onRangeChanged (event) {
             let query = Object.create(this.$route.query) // clone it
-            query['plots'] = this.state.fields.join(',')
+            query['plots'] = this.state.expressions.join(',')
             let list = [
                 this.gd._fullLayout.xaxis.range[0].toFixed(0),
                 this.gd._fullLayout.xaxis.range[1].toFixed(0)
@@ -243,7 +243,7 @@ export default {
             }
         },
         isPlotted (fieldname) {
-            for (let field of this.state.fields) {
+            for (let field of this.state.expressions) {
                 if (field.name === fieldname) {
                     return true
                 }
@@ -254,7 +254,7 @@ export default {
             // get free axis number
             for (let i of this.state.allAxis) {
                 let taken = false
-                for (let field of this.state.fields) {
+                for (let field of this.state.expressions) {
                     // eslint-disable-next-line
                     if (field.axis == i) {
                         taken = true
@@ -270,7 +270,7 @@ export default {
             // get free color
             for (let i of this.state.allColors) {
                 let taken = false
-                for (let field of this.state.fields) {
+                for (let field of this.state.expressions) {
                     // eslint-disable-next-line
                     if (field.color == i) {
                         taken = true
@@ -297,75 +297,101 @@ export default {
             }
         },
 
-        addPlot (fieldname, axis, color, func) {
+        addPlot (expression, axis, color, func) {
             // ensure we have the data
             this.state.plot_loading = true
-            if (!this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
-                console.log('missing message type: ' + fieldname.split('.')[0])
-                this.waitForMessage(fieldname).then(function () {
-                    this.addPlot(fieldname, axis, color, func)
-                    console.log('got message ' + fieldname)
-                }.bind(this))
-            } else {
-                if (!this.isPlotted(fieldname)) {
-                    this.state.fields.push(this.createNewField(fieldname, axis, color, func))
+            const RE = /[A-Z0-9_]+\.[a-zA-Z0-9]+/g
+            let messages = expression.match(RE)
+            let miss = false
+            if (messages !== null) {
+                for (const message of messages) {
+                    if (!this.state.messages.hasOwnProperty(message.split('.')[0])) {
+                        console.log('missing message type: ' + message.split('.')[0])
+                        this.waitForMessage(message).then(function () {
+                            this.addPlot(expression, axis, color, func)
+                            console.log('got message ' + message)
+                        }.bind(this))
+                        miss = true
+                    }
                 }
-                this.plot()
-                this.state.plot_loading = false
-                if (this.state.fields.length === 1) {
-                    Plotly.relayout(this.gd, {
-                        xaxis: {
-                            range: this.timeRange,
-                            domain: this.calculateXAxisDomain(),
-                            rangeslider: {},
-                            title: 'time_boot (ms)'
-                        }
-                    })
-                    this.addModeShapes()
-                    this.addEvents()
+            }
+            // not match ATT, GPS
+            let RE2 = /[A-Z][A-Z0-9_]+\b/g
+            messages = expression.match(RE2)
+            miss = false
+            if (messages !== null) {
+                for (const message of messages) {
+                    if (!(message in this.state.messages)) {
+                        console.log('missing message type: ' + message)
+                        this.waitForMessage(message).then(function () {
+                            this.addPlot(expression, axis, color, func)
+                            console.log('got message ' + message)
+                        }.bind(this))
+                        miss = true
+                    }
                 }
+            }
+            if (miss) {
+                return
+            }
+            if (!this.isPlotted(expression)) {
+                this.state.expressions.push(this.createNewField(expression, axis, color, func))
+            }
+            this.plot()
+            this.state.plot_loading = false
+            if (this.state.expressions.length === 1) {
+                Plotly.relayout(this.gd, {
+                    xaxis: {
+                        range: this.timeRange,
+                        domain: this.calculateXAxisDomain(),
+                        rangeslider: {},
+                        title: 'time_boot (ms)'
+                    }
+                })
+                this.addModeShapes()
+                this.addEvents()
             }
         },
         removePlot (fieldname) {
-            var index = this.state.fields.indexOf(fieldname) // <-- Not supported in <IE9
+            var index = this.state.expressions.indexOf(fieldname) // <-- Not supported in <IE9
             if (index !== -1) {
-                this.state.fields = this.state.fields.splice(index, 1)
+                this.state.expressions = this.state.expressions.splice(index, 1)
             }
             this.plot()
-            if (this.state.fields.length === 0) {
+            if (this.state.expressions.length === 0) {
                 this.state.plot_on = false
             }
             this.onRangeChanged()
         },
         clearPlot () {
-            while (this.state.fields.length) {
-                this.state.fields.pop()
+            while (this.state.expressions.length) {
+                this.state.expressions.pop()
             }
-            this.state.fields.lenght = 0
+            this.state.expressions.lenght = 0
         },
         togglePlot (fieldname, axis, color, func) {
             if (this.isPlotted((fieldname))) {
                 let index
-                for (let i in this.state.fields) {
-                    if (this.state.fields[i].name === fieldname) {
+                for (let i in this.state.expressions) {
+                    if (this.state.expressions[i].name === fieldname) {
                         index = i
                     }
                 }
-                this.state.fields.splice(index, 1)
-                if (this.state.fields.length === 0) {
+                this.state.expressions.splice(index, 1)
+                if (this.state.expressions.length === 0) {
                     this.state.plot_on = false
                 }
                 this.onRangeChanged()
             } else {
                 this.addPlot(fieldname, axis, color, func)
             }
-            console.log(this.state.fields)
+            console.log(this.state.expressions)
             this.plot()
         },
         calculateXAxisDomain () {
             let start = 0.02
             let end = 0.98
-            for (let field of this.state.fields) {
+            for (let field of this.state.expressions) {
                 if (field.axis === 0) {
                     start = Math.max(start, 0.03)
                 } else if (field.axis === 1) {
@@ -384,66 +410,101 @@ export default {
         },
         getAxisTitle (fieldAxis) {
             let names = []
-            for (let field of this.state.fields) {
+            for (let field of this.state.expressions) {
                 if (field.axis === fieldAxis) {
-                    names.push(field.name.split('.')[1])
+                    names.push(field.name)
                 }
             }
             return names.join(', ')
+        },
+        expressionCanBePlotted (expression) {
+            let RE = /[A-Z][A-Z0-9_]+\b/g
+            console.log(expression)
+            let fields = expression.name.match(RE)
+            for (let field of fields) {
+                if (!(field in this.state.messages) || this.state.messages[field].length === 0) {
+                    console.log('ERROR: attempted to plot unavailable message: ' + field)
+                    return false
+                }
+            }
+            return true
+        },
+        evaluateExpression (expression) {
+            let RE = /[A-Z][A-Z0-9_]+\b/g
+            let fields = expression.match(RE)
+            let messages = (fields.map(field => field.split('.')[0]))
+            // use time of first message for now
+            let x = this.state.messages[messages[0]].time_boot_ms
+            // used to find the corresponding time indexes between messages
+            let timeIndexes = new Array(fields.length).fill(0)
+            let y = []
+
+            // eslint-disable-next-line
+            for (let field in fields) {
+                if (isNaN(field)) {
+                    break
+                }
+                expression = expression.replace(fields[field], 'arguments[' + field + ']')
+            }
+            // eslint-disable-next-line
+            let f = new Function('arguments', 'return ' + expression)
+            for (let time of x) {
+                let vals = []
+                const newobj = {}
+                for (let fieldIndex in timeIndexes) { // array of indexes, one for each field
+                    while (this.state.messages[messages[fieldIndex]].time_boot_ms[timeIndexes[fieldIndex]] < time) {
+                        timeIndexes[fieldIndex] += 1
+                    }
+
+                    for (let key of Object.keys(this.state.messages[messages[fieldIndex]])) {
+                        newobj[key] = this.state.messages[messages[fieldIndex]][key][timeIndexes[fieldIndex]]
+                    }
+                    vals.push(newobj)
+                }
+                y.push(f(vals))
+            }
+            return {
+                x: x,
+                y: y
+            }
         },
         plot () {
             let _this = this
             let datasets = []
 
-            for (let field of this.state.fields) {
-                let msgtype = field.name.split('.')[0]
-                let msgfield = field.name.split('.')[1]
-                if (!(msgtype in this.state.messages) || this.state.messages[msgtype].length === 0) {
-                    console.log('ERROR: attempted to plot unavailable message: ' + msgtype)
-                    return
-                }
-                if (('' + this.state.messageTypes[msgtype].fields).indexOf(msgfield) === -1) {
-                    console.log('ERROR: Attempt to plot invalid field ' + msgfield + ' of ' + msgtype)
-                    console.log('available options ' + this.state.messageTypes[msgtype].fields)
+            for (let expression of this.state.expressions) {
+                if (!this.expressionCanBePlotted(expression)) {
                     return
                 }
 
-                let x = this.state.messages[msgtype].time_boot_ms
-                let y = []
-
-                if (field.func === undefined || field.func === null) {
-                    y = this.state.messages[msgtype][msgfield]
-                } else {
-                    for (let i in this.state.messages[msgtype].time_boot_ms) {
-                        y.push(field.func(this.state.messages[msgtype][msgfield][i]))
-                    }
-                }
+                let data = this.evaluateExpression(expression.name)
 
                 datasets.push({
-                    name: msgtype + '.' + msgfield,
-                    mode: 'scattergl',
-                    x: x,
-                    y: y,
-                    yaxis: 'y' + (field.axis + 1),
+                    name: expression.name,
+                    // type: 'scattergl',
+                    mode: 'lines+markers',
+                    x: data.x,
+                    y: data.y,
+                    yaxis: 'y' + (expression.axis + 1),
                     line: {
-                        color: field.color,
+                        color: expression.color,
                         width: 1.5
                     }
                 })
-                let axisname = field.axis > 0 ? ('yaxis' + (field.axis + 1)) : 'yaxis'
+                let axisname = expression.axis > 0 ? ('yaxis' + (expression.axis + 1)) : 'yaxis'
 
-                if (field.axis <= 6) {
+                if (expression.axis <= 6) {
                     plotOptions[axisname].title = {
-                        text: this.getAxisTitle(field.axis),
+                        text: this.getAxisTitle(expression.axis),
                         font: {
-                            color: field.color
+                            color: expression.color
                         }
                     }
-                    plotOptions[axisname].tickfont.color = field.color
-                    if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
-                        plotOptions[axisname].title.text +=
+                    plotOptions[axisname].tickfont.color = expression.color
+                    /* if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
+                         plotOptions[axisname].title.text +=
                             ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
-                    }
+                    } */
                 }
             }
 
@@ -612,8 +673,8 @@ export default {
             }
             return undefined
         },
-        fields () {
-            return this.state.fields
+        expressions () {
+            return this.state.expressions
         }
     },
     watch: {
@@ -637,7 +698,7 @@ export default {
             }
             return range // make linter happy, it says this is a computed property(?)
         },
-        fields: {
+        expressions: {
             deep: true,
             handler () {
                 this.plot()

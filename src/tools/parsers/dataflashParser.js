@@ -518,11 +518,11 @@ export class DataflashParser {
 
     simplifyData (name) {
         if (name === 'MODE') {
-            this.messageTypes[name].fields.push('asText')
+            this.messageTypes[name].expressions.push('asText')
         }
         if (['FMTU'].indexOf(name) === -1) {
             if (this.messageTypes.hasOwnProperty(name)) {
-                let fields = this.messageTypes[name].fields
+                let fields = this.messageTypes[name].expressions
                 fields.push('time_boot_ms')
                 let mergedData = {}
                 for (let field of fields) {
@@ -580,7 +580,7 @@ export class DataflashParser {
             if (msg) {
                 if (typeSet.has(msg.Type)) {
                     let fields = msg.Columns.split(',')
-                    // fields = fields.filter(e => e !== 'TimeUS')
+                    // expressions = expressions.filter(e => e !== 'TimeUS')
                     let complexFields = {}
                     if (msg.hasOwnProperty('units')) {
                         for (let field in fields) {
@@ -600,7 +600,7 @@ export class DataflashParser {
                         }
                     }
                     messageTypes[msg.Name] = {
-                        fields: fields,
+                        expressions: fields,
                         units: msg.units,
                         multipiers: msg.multipliers,
                         complexFields: complexFields
