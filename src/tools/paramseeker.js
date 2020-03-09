@@ -12,6 +12,8 @@ export class ParamSeeker {
             this.values[change[1]] = change[2]
         }
         this.seek(0)
+        // export to window so the mavextra functions can access them
+        window.params = this.values
     }
 
     seek (time) {

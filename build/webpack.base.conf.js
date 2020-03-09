@@ -65,6 +65,10 @@ module.exports = {
         use: { loader: 'worker-loader' }
       },
       {
+        test: /\.xml$/,
+        use: { loader: 'raw-loader' }
+      },
+      {
         test: /\.vue$/,
         loader: 'vue-loader',
         options: vueLoaderConfig

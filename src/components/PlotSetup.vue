@@ -9,7 +9,7 @@
         <b-collapse class="menu-content collapse out" id="plotsetupcontent" visible>
             <ul class="colorpicker">
 
-                <li :key="field.name" class="field plotsetup" v-for="field in state.fields">
+                <li :key="field.name" class="field plotsetup" v-for="field in state.expressions">
                     <p class="plotname">{{field.name}}</p>
                     <select v-model.number="field.axis">
                         <option v-bind:key="'axisnumber'+axis" v-for="axis in state.allAxis">{{axis}}</option>
@@ -27,9 +27,9 @@
                     </a>
 
                 </li>
-                <li v-if="state.fields.length === 0">  Please plot something first.</li>
+                <li v-if="state.expressions.length === 0">  Please plot something first.</li>
             </ul>
-            <button class="save-preset" v-if="state.fields.length > 0" v-b-modal.modal-prevent-closing>
+            <button class="save-preset" v-if="state.expressions.length > 0" v-b-modal.modal-prevent-closing>
             <i class="fa fa-check-circle" aria-hidden="true"></i>Save Preset</button>
         </b-collapse>
         <b-modal
@@ -76,7 +76,7 @@ export default {
                 saved = JSON.parse(saved)
             }
             saved[name] = []
-            for (let field of this.state.fields) {
+            for (let field of this.state.expressions) {
                 saved[name].push([field.name, field.axis, field.color, field.function])
             }
             myStorage.setItem('savedFields', JSON.stringify(saved))
