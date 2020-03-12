@@ -113,6 +113,7 @@ export default {
         this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
         this.$eventHub.$on('force-resize-plotly', this.resize)
         this.zoomInterval = null
+        this.cache = {}
     },
     mounted () {
         let d3 = Plotly.d3
@@ -151,18 +152,20 @@ export default {
             }
             if (this.$route.query.hasOwnProperty('plots')) {
                 for (let field of this.$route.query.plots.split(',')) {
-                    _this.addPlot(field)
+                    _this.addPlots([field])
                 }
             }
         })
         this.instruction = ''
         this.$eventHub.$on('togglePlot', this.togglePlot)
+        this.$eventHub.$on('addPlots', this.addPlots)
+        this.$eventHub.$on('plot', this.plot)
         this.$eventHub.$on('clearPlot', this.clearPlot)
     },
     beforeDestroy () {
         this.$eventHub.$off('animation-changed')
         this.$eventHub.$off('cesium-time-changed')
-        this.$eventHub.$off('addPlot')
+        this.$eventHub.$off('addPlots')
         this.$eventHub.$off('hidePlot')
         this.$eventHub.$off('togglePlot')
         clearInterval(this.interval)
@@ -178,25 +181,29 @@ export default {
         resize () {
             Plotly.Plots.resize(this.gd)
         },
-        waitForMessage (fieldname) {
-            this.$eventHub.$emit('loadType', fieldname.split('.')[0])
+        waitForMessages (messages) {
+            for (let message of messages) {
+                this.$eventHub.$emit('loadType', message)
+            }
             let interval
             let _this = this
             let counter = 0
             return new Promise((resolve, reject) => {
                 interval = setInterval(function () {
-                    if (_this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
-                        clearInterval(interval)
-                        counter += 1
-                        resolve()
-                    } else {
-                        if (counter > 6) {
-                            console.log('not resolving')
-                            clearInterval(interval)
-                            reject(new Error('Could not load messageType'))
+                    for (let message of messages) {
+                        if (!_this.state.messages.hasOwnProperty(message)) {
+                            counter += 1
+                            if (counter > 6) {
+                                console.log('not resolving')
+                                clearInterval(interval)
+                                reject(new Error('Could not load messageType'))
+                            }
+                            return
                         }
                     }
-                }, 2000)
+                    clearInterval(interval)
+                    resolve()
+                }, 300)
             })
         },
         onRangeChanged (event) {
@@ -282,9 +289,11 @@ export default {
             }
             return this.state.allColors[this.state.allColors.length - 1]
         },
-        createNewField (fieldname, axis, color, func) {
+        createNewField (fieldname, axis, color) {
             if (color === undefined) {
                 color = this.getFirstFreeColor()
+            } else if (!isNaN(color)) {
+                color = this.state.allColors[color]
             }
             if (axis === undefined) {
                 axis = this.getFirstFreeAxis()
@@ -292,65 +301,64 @@ export default {
             return {
                 name: fieldname,
                 color: color,
-                axis: axis,
-                func: func
+                axis: axis
             }
         },
 
-        addPlot (expression, axis, color, func) {
-            // ensure we have the data
+        addPlots (plots) {
+            console.log(plots)
             this.state.plot_loading = true
-            const RE = /[A-Z0-9_]+\.[a-zA-Z0-9]+/g
-            let messages = expression.match(RE)
-            let miss = false
-            if (messages !== null) {
-                for (const message of messages) {
-                    if (!this.state.messages.hasOwnProperty(message.split('.')[0])) {
-                        console.log('missing message type: ' + message.split('.')[0])
-                        this.waitForMessage(message).then(function () {
-                            this.addPlot(expression, axis, color, func)
-                            console.log('got message ' + message)
-                        }.bind(this))
-                        miss = true
-                    }
-                }
-            }
-            // not match ATT, GPS
+            let requested = new Set()
+            const RE = /[A-Z][A-Z0-9_]+\.[a-zA-Z0-9]+/g
             let RE2 = /[A-Z][A-Z0-9_]+\b/g
-            messages = expression.match(RE2)
-            miss = false
-            if (messages !== null) {
-                for (const message of messages) {
-                    if (!(message in this.state.messages)) {
-                        console.log('missing message type: ' + message)
-                        this.waitForMessage(message).then(function () {
-                            this.addPlot(expression, axis, color, func)
-                            console.log('got message ' + message)
-                        }.bind(this))
-                        miss = true
+            for (let plot of plots) {
+                let expression = plot[0]
+                // ensure we have the data
+                let messages = expression.match(RE)
+
+                if (messages !== null) {
+                    for (const message of messages) {
+                        if (!this.state.messages.hasOwnProperty(message.split('.')[0])) {
+                            let msgName = message.split('.')[0]
+                            if (requested.has(msgName)) {
+                                continue
+                            }
+                            console.log('missing message type: ' + msgName)
+                            requested.add(msgName)
+                        }
+                    }
+                }
+                // not match ATT, GPS
+                messages = expression.match(RE2)
+                if (messages !== null) {
+                    for (const message of messages) {
+                        if (!(message in this.state.messages)) {
+                            if (requested.has(message)) {
+                                continue
+                            }
+                            console.log('missing message type: ' + message)
+                            requested.add(message)
+                        }
                     }
                 }
             }
-            if (miss) {
+            if ([...requested].length > 0) {
+                console.log([...requested])
+                this.waitForMessages([...requested]).then(function () {
+                    this.addPlots(plots)
+                }.bind(this))
                 return
             }
-            if (!this.isPlotted(expression)) {
-                this.state.expressions.push(this.createNewField(expression, axis, color, func))
+            let newplots = []
+            for (let plot of plots) {
+                let expression = plot[0]
+                let axis = plot[1]
+                let color = plot[2]
+                if (!this.isPlotted(expression)) {
+                    newplots.push(this.createNewField(expression, axis, color))
+                }
             }
-            this.plot()
-            this.state.plot_loading = false
-            if (this.state.expressions.length === 1) {
-                Plotly.relayout(this.gd, {
-                    xaxis: {
-                        range: this.timeRange,
-                        domain: this.calculateXAxisDomain(),
-                        rangeslider: {},
-                        title: 'time_boot (ms)'
-                    }
-                })
-                this.addModeShapes()
-                this.addEvents()
-            }
+            this.state.expressions.push(...newplots)
         },
         removePlot (fieldname) {
             var index = this.state.expressions.indexOf(fieldname) // <-- Not supported in <IE9
@@ -369,7 +377,7 @@ export default {
             }
             this.state.expressions.lenght = 0
         },
-        togglePlot (fieldname, axis, color, func) {
+        togglePlot (fieldname, axis, color, silent) {
             if (this.isPlotted((fieldname))) {
                 let index
                 for (let i in this.state.expressions) {
@@ -383,10 +391,13 @@ export default {
                 }
                 this.onRangeChanged()
             } else {
-                this.addPlot(fieldname, axis, color, func)
+                this.addPlots([[fieldname, axis, color]])
             }
             console.log(this.state.expressions)
-            this.plot()
+            // if (silent !== true) {
+            //     this.plot()
+            //     this.state.plot_loading = false
+            // }
         },
         calculateXAxisDomain () {
             let start = 0.02
@@ -419,35 +430,41 @@ export default {
         },
         expressionCanBePlotted (expression) {
             let RE = /[A-Z][A-Z0-9_]+\b/g
-            console.log(expression)
             let fields = expression.name.match(RE)
             for (let field of fields) {
                 if (!(field in this.state.messages) || this.state.messages[field].length === 0) {
                     console.log('ERROR: attempted to plot unavailable message: ' + field)
                     return false
                 }
+                console.log(field + ' is plottable')
             }
             return true
         },
-        evaluateExpression (expression) {
+        evaluateExpression (expression1) {
+            let start = new Date()
+            if (expression1 in this.cache) {
+                console.log('HIT: ' + expression1)
+                return this.cache[expression1]
+            }
+            console.log('MISS! evaluating : ' + expression1)
             let RE = /[A-Z][A-Z0-9_]+\b/g
-            let fields = expression.match(RE)
+            let fields = expression1.match(RE)
             let messages = (fields.map(field => field.split('.')[0]))
             // use time of first message for now
             let x = this.state.messages[messages[0]].time_boot_ms
             // used to find the corresponding time indexes between messages
             let timeIndexes = new Array(fields.length).fill(0)
             let y = []
-
+            let expression = expression1
             // eslint-disable-next-line
             for (let field in fields) {
                 if (isNaN(field)) {
                     break
                 }
-                expression = expression.replace(fields[field], 'arguments[' + field + ']')
+                expression = expression.replace(fields[field], 'a[' + field + ']')
             }
             // eslint-disable-next-line
-            let f = new Function('arguments', 'return ' + expression)
+            let f = new Function('a', 'return ' + expression)
             for (let time of x) {
                 let vals = []
                 const newobj = {}
@@ -461,23 +478,36 @@ export default {
                     }
                     vals.push(newobj)
                 }
-                y.push(f(vals))
+                try {
+                    y.push(f(vals))
+                } catch (e) {
+                    return {x: 0, y: 0}
+                }
             }
-            return {
+            console.log('evaluated ' + expression)
+            let data = {
                 x: x,
                 y: y
             }
+            this.cache[expression1] = data
+            console.log('Evaluation took ' + (new Date() - start) + 'ms')
+            return data
         },
         plot () {
+            console.log('plot()')
             let _this = this
             let datasets = []
 
             for (let expression of this.state.expressions) {
                 if (!this.expressionCanBePlotted(expression)) {
+                    setTimeout(this.plot, 300)
+                    console.log('plot() postponed!')
                     return
                 }
-
+            }
+            for (let expression of this.state.expressions) {
                 let data = this.evaluateExpression(expression.name)
+                console.log(data)
 
                 datasets.push({
                     name: expression.name,
@@ -489,6 +519,10 @@ export default {
                     line: {
                         color: expression.color,
                         width: 1.5
+                    },
+                    marker: {
+                        size: 4,
+                        color: expression.color
                     }
                 })
                 let axisname = expression.axis > 0 ? ('yaxis' + (expression.axis + 1)) : 'yaxis'
@@ -507,18 +541,20 @@ export default {
                     } */
                 }
             }
+            let start = new Date()
+            console.log('starting plotting itself...')
 
             let plotData = datasets
 
+            plotOptions.xaxis = {
+                rangeslider: {},
+                domain: this.calculateXAxisDomain(),
+                title: 'time_boot (ms)',
+                tickformat: ':04,2f'
+            }
             if (this.plotInstance !== null) {
-                plotOptions.xaxis = {
-                    rangeslider: {},
-                    range: this.gd._fullLayout.xaxis.range,
-                    domain: this.calculateXAxisDomain(),
-                    title: 'time_boot (ms)',
-                    tickformat: ':04,2f'
-                }
-                Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true, editable: true, responsive: true})
+                plotOptions.xaxis.range = this.gd._fullLayout.xaxis.range
+                Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true, responsive: true})
             } else {
                 this.plotInstance = Plotly.newPlot(
                     this.gd,
@@ -531,6 +567,8 @@ export default {
                     }
                 )
             }
+            console.log('plotting done in ' + (new Date() - start) + 'ms')
+            start = new Date()
             this.gd.on('plotly_relayout', this.onRangeChanged)
             this.gd.on('plotly_hover', function (data) {
                 let infotext = data.points.map(function (d) {
@@ -538,6 +576,12 @@ export default {
                 })
                 _this.$eventHub.$emit('hoveredTime', infotext[0])
             })
+
+            this.addModeShapes()
+            this.addEvents()
+
+            this.state.plot_loading = false
+
             let bglayer = document.getElementsByClassName('bglayer')[0]
             let rect = bglayer.childNodes[0]
             this.cursor = document.createElementNS('http://www.w3.org/2000/svg', 'line')
@@ -552,6 +596,7 @@ export default {
             this.cursor.setAttribute('stroke-width', 1)
             this.cursor.setAttribute('stroke', 'black')
             bglayer.append(this.cursor)
+            console.log('layout done in ' + (new Date() - start) + 'ms')
         },
         setCursorTime (time) {
             try {

@@ -110,6 +110,7 @@ export default {
             let igraphs = result['graphs']
             for (let graph of igraphs.graph) {
                 let i = ''
+                let axis = 0
                 let name = graph['@_name']
                 if (!Array.isArray(graph.expression)) {
                     graph.expression = [graph.expression]
@@ -117,7 +118,7 @@ export default {
                 for (const expression of graph.expression) {
                     let fields = []
                     for (let exp of expression.split(' ')) {
-                        fields.push([exp, 0])
+                        fields.push([exp, 0, axis++])
                     }
                     graphs[name + i] = fields
                     // workaround to avoid replacing a key

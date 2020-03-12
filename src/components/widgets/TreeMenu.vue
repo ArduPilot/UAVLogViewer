@@ -75,9 +75,11 @@ export default {
             this.$eventHub.$emit('clearPlot')
             this.state.plot_on = true
             this.$nextTick(function () {
+                let msgs = []
                 for (let msg of preset) {
-                    this.$eventHub.$emit('togglePlot', msg[0], msg[1], msg[2], msg[3])
+                    msgs.push([msg[0], msg[1], msg[2]])
                 }
+                this.$eventHub.$emit('addPlots', msgs)
             })
         }
     }
