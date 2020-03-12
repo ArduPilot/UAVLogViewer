@@ -171,3 +171,35 @@ window.mag_heading_df = function (MAG, ATT, declination, SENSOR_OFFSETS, ofs) {
     }
     return heading
 }
+
+window.mag_field = function (RAW_IMU, SENSOR_OFFSETS, ofs) {
+    // calculate magnetic field strength from raw magnetometer'
+    let mag_x = RAW_IMU.xmag
+    let mag_y = RAW_IMU.ymag
+    let mag_z = RAW_IMU.zmag
+    if (SENSOR_OFFSETS !== undefined) {
+        mag_x += ofs[0] - SENSOR_OFFSETS.mag_ofs_x
+        mag_y += ofs[1] - SENSOR_OFFSETS.mag_ofs_y
+        mag_z += ofs[2] - SENSOR_OFFSETS.mag_ofs_z
+    }
+    return Math.sqrt(mag_x ** 2 + mag_y ** 2 + mag_z ** 2)
+}
+
+window.mag_field_df = function (MAG, ofs) {
+// calculate magnetic field strength from raw magnetometer (dataflash version)'''
+    return Math.sqrt(MAG.MagX ** 2 + MAG.MagY ** 2 + MAG.MagZ ** 2)
+}
+
+window.sqrt = Math.sqrt
+
+window.lastLowpass = null
+window.lowpass = function (variable, key, factor) {
+    if (window.lastLowpass == null) {
+        window.lastLowpass = variable
+    } else {
+        window.lastLowpass = factor * window.lastLowpass + (1.0 - factor) * variable
+    }
+    let ret = window.lastLowpass
+    window.lastLowpass = null
+    return ret
+}

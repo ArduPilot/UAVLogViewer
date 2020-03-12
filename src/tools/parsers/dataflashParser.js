@@ -201,6 +201,7 @@ export class DataflashParser {
         this.sent = false
         this.maxPercentageInterval = 0.05
         this.messageTypes = {}
+        this.alreadyParsed = []
     }
 
     FORMAT_TO_STRUCT (obj) {
@@ -357,6 +358,10 @@ export class DataflashParser {
     }
 
     parseAtOffset (name) {
+        if (this.alreadyParsed.includes(name)) {
+            console.log('refusing request to re-parse ' + name)
+            return
+        }
         let type = this.getMsgType(name)
         var parsed = []
         for (var i = 0; i < this.msgType.length; i++) {
@@ -383,6 +388,7 @@ export class DataflashParser {
         this.simplifyData(name)
         self.postMessage({percentage: 100})
         self.postMessage({messageType: name, messageList: this.messages[name]})
+        this.alreadyParsed.push(name)
         return parsed
     }
 
