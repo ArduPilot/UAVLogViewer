@@ -92,16 +92,25 @@ window.kmh = function (mps) {
     return mps * 3.6
 }
 
+window.getParam = function (name, default_) {
+    if (!(name in window.params)) {
+        return default_
+    }
+    return window.params[name]
+}
+
 // calculate barometric altitude
 window.altitude = function (SCALED_PRESSURE, groundPressure, groundTemp) {
-    if (groundPressure === null) {
-        if (window.param('GND_ABS_PRESS')) {
+    if (groundPressure === undefined) {
+        if (!('GND_ABS_PRESS' in window.params)) {
             return 0
         }
     }
-    groundPressure = window.param('GND_ABS_PRESS')
-    if (groundTemp === null) {
-        groundTemp = self.param('GND_TEMP', 0)
+    groundPressure = window.params['GND_ABS_PRESS']
+    if (groundTemp === undefined) {
+        if ('GND_ABS_PRESS' in window.params) {
+            groundTemp = window.params['GND_TEMP']
+        }
     }
     let scaling = groundPressure / (SCALED_PRESSURE.press_abs * 100.0)
     let temp = groundTemp + 273.15
@@ -111,13 +120,13 @@ window.altitude = function (SCALED_PRESSURE, groundPressure, groundTemp) {
 window.altitude2 = function (SCALED_PRESSURE, groundPressure, groundTemp) {
     // calculate barometric altitude'
     if (groundPressure == null) {
-        if (window.param('GND_ABS_PRESS') === null) {
+        if (window.params['GND_ABS_PRESS'] === null) {
             return 0
         }
     }
-    groundPressure = self.param('GND_ABS_PRESS', 1)
+    groundPressure = window.getParam('GND_ABS_PRESS', 1)
     if (groundTemp === null) {
-        groundTemp = self.param('GND_TEMP', 0)
+        groundTemp = window.getParam('GND_TEMP', 0)
     }
     let scaling = SCALED_PRESSURE.press_abs * 100.0 / groundPressure
     let temp = groundTemp + 273.15
