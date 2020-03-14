@@ -55,7 +55,7 @@ export class DataflashDataExtractor {
             let msgs = messages['MODE']
             modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
             for (let i in msgs.time_boot_ms) {
-                if (msgs.asText[i] !== modes[modes.length - 1][1]) {
+                if (i !== 0 && (msgs.asText[i] !== modes[modes.length - 1][1]) && msgs.asText[i] !== null) {
                     modes.push([msgs.time_boot_ms[i], msgs.asText[i]])
                 }
             }
