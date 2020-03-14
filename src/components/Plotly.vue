@@ -481,6 +481,7 @@ export default {
                 try {
                     y.push(f(vals))
                 } catch (e) {
+                    console.log(e)
                     return {x: 0, y: 0}
                 }
             }
