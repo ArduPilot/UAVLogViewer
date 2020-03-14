@@ -11,7 +11,7 @@
                 <i class="fas fa-home"></i>Home</a>
                 <!-- Plot -->
                 <a :class="selected === 'plot' ? 'selected' : ''" @click="selected='plot'"
-                   v-if="state.processDone"> <i class="fas fa-pen"></i>Plot</a>
+                   v-if="state.processDone"> <i class="fas fa-chart-line"></i>Plot</a>
                 <!-- 3D -->
                 <a :class="selected ==='3d' ? 'selected' : ''" @click="selected='3d'"
                    v-if="state.map_available && state.show_map">  <i class="fas fa-cube"></i> 3D </a>
