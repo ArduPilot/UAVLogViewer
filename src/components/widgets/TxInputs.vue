@@ -51,7 +51,12 @@ export default {
             width: 294,
             height: 150,
             left: 50,
-            top: 12
+            top: 12,
+            rollMap: 0,
+            pitchMap: 1,
+            throttleMap: 2,
+            yawMap: 3,
+            channels: [50, 50, 50, 50]
         }
     },
     methods: {
@@ -102,17 +107,27 @@ export default {
                         this.state.params.get('RC1_TRIM')
                     ]
                 }
-                this.yaw = ((sticks[3] - trims[0]) * reverses[3] + 1500 - 1000) / 10
-                this.throttle = ((sticks[2] - trims[1]) * reverses[2] + 1500 - 1000) / 10
-                this.pitch = ((sticks[1] - trims[2]) * reverses[1] + 1500 - 1000) / 10
-                this.roll = ((sticks[0] - trims[3]) * reverses[0] + 1500 - 1000) / 10
+                if (this.state.params.get('RCMAP_ROLL') !== undefined) {
+                    // validate as some logs have weird values here...
+                    if (this.state.params.get('RCMAP_ROLL') > 0 && this.state.params.get('RCMAP_ROLL') < 4) {
+                        this.rollMap = parseInt(this.state.params.get('RCMAP_ROLL')) - 1
+                        this.pitchMap = parseInt(this.state.params.get('RCMAP_PITCH')) - 1
+                        this.throttleMap = parseInt(this.state.params.get('RCMAP_THROTTLE')) - 1
+                        this.yawMap = parseInt(this.state.params.get('RCMAP_YAW')) - 1
+                    }
+                }
+                this.channels = [
+                    ((sticks[0] - trims[3]) * reverses[0] + 1500 - 1000) / 10,
+                    ((sticks[1] - trims[2]) * reverses[1] + 1500 - 1000) / 10,
+                    ((sticks[2] - trims[1]) * reverses[2] + 1500 - 1000) / 10,
+                    ((sticks[3] - trims[0]) * reverses[3] + 1500 - 1000) / 10
+                ]
             } catch (e) {
                 console.log(e)
             }
         },
         setup () {
             const _this = this
-
             this.waitForMessage('RC_CHANNELS.*').then(function () {
                 let x = _this.state.messages['RC_CHANNELS'].time_boot_ms
                 let y = []
@@ -138,17 +153,17 @@ export default {
         }
     },
     computed: {
-        leftStickLeft: function () {
-            return -29 + 0.01 * (this.yaw) * this.width / 2
+        leftStickLeft () {
+            return -29 + 0.01 * this.channels[this.yawMap] * this.width / 2
         },
         leftStickTop () {
-            return 0.02 * (100 - this.throttle) * this.circleHeight - 22
+            return 0.02 * (100 - this.channels[this.throttleMap]) * this.circleHeight - 22
         },
-        rightStickLeft: function () {
-            return -29 + (0.01 * this.roll) * (this.width / 2)
+        rightStickLeft () {
+            return -29 + (0.01 * this.channels[this.rollMap]) * (this.width / 2)
         },
         rightStickTop () {
-            return 0.02 * (100 - this.pitch) * this.circleHeight - 22
+            return 0.02 * (100 - this.channels[this.pitchMap]) * this.circleHeight - 22
         },
         circleHeight () {
             return this.height * (69 / 150)
