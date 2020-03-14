@@ -12,7 +12,8 @@ const portfinder = require('portfinder')
 const VueLoaderPlugin      = require('vue-loader/lib/plugin');
 const cesiumSource =  'node_modules/cesium/Source'
 const cesiumWorkers = '../Build/Cesium/Workers'
-
+const GitRevisionPlugin = require('git-revision-webpack-plugin')
+const gitRevisionPlugin = new GitRevisionPlugin()
 
 
 const HOST = '0.0.0.0'
@@ -52,7 +53,9 @@ const devWebpackConfig = merge(baseWebpackConfig, {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env': require('../config/dev.env')
+      'process.env': require('../config/dev.env'),
+      '_COMMIT_': JSON.stringify(gitRevisionPlugin.commithash()),
+      '_BUILDDATE_': JSON.stringify((new Date().toString()))
     }),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.

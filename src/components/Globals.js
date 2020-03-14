@@ -41,7 +41,11 @@ export var store = {
         '#2ca02c',
         '#d62728',
         '#9467BD',
-        '#8C564B']
+        '#8C564B'],
+    /* global _COMMIT_ */
+    commit: _COMMIT_.slice(0, 6),
+    /* global _BUILDDATE_ */
+    buildDate: _BUILDDATE_
 }
 
 // TODO: Move these to their own file mavextra.js

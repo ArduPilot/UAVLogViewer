@@ -14,6 +14,8 @@ const cesiumWorkers = '../Build/Cesium/Workers'
 const TerserPlugin = require('terser-webpack-plugin')
 const VueLoaderPlugin      = require('vue-loader/lib/plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
+const GitRevisionPlugin = require('git-revision-webpack-plugin')
+const gitRevisionPlugin = new GitRevisionPlugin()
 
 const env = process.env.NODE_ENV === 'testing'
   ? require('../config/test.env')
@@ -44,7 +46,9 @@ const webpackConfig = merge(baseWebpackConfig, {
       }),
     new webpack.DefinePlugin({
       // Define relative base path in cesium for loading assets
-      CESIUM_BASE_URL: JSON.stringify('')
+      CESIUM_BASE_URL: JSON.stringify(''),
+      '_COMMIT_': JSON.stringify(gitRevisionPlugin.commithash()),
+      '_BUILDDATE_': JSON.stringify((new Date().toString()))
     }),
     // http://vuejs.github.io/vue-loader/en/workflow/production.html
     new webpack.DefinePlugin({
