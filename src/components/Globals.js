@@ -17,7 +17,7 @@ export var store = {
     colors: [],
     map_available: false,
     mission: [],
-    show_map: true,
+    show_map: false,
     currentTime: false,
     processDone: false,
     plot_on: false,

@@ -93,6 +93,7 @@ export default {
 
             let trajectories = this.dataExtractor.extractTrajectory(this.state.messages)
             if (Object.keys(trajectories).length > 0) {
+                this.state.show_map = true
                 let first = Object.keys(trajectories)[0]
                 this.state.trajectorySource = first
                 this.state.current_trajectory = trajectories[first].trajectory
