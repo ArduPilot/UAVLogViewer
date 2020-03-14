@@ -512,7 +512,7 @@ export default {
                 datasets.push({
                     name: expression.name,
                     // type: 'scattergl',
-                    mode: 'lines+markers',
+                    mode: 'lines',
                     x: data.x,
                     y: data.y,
                     yaxis: 'y' + (expression.axis + 1),
