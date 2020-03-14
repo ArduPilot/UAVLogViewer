@@ -429,7 +429,7 @@ export default {
             return names.join(', ')
         },
         expressionCanBePlotted (expression) {
-            let RE = /[A-Z][A-Z0-9_]+\b/g
+            let RE = /(?<!\.)[A-Z][A-Z0-9_]+\b/g
             let fields = expression.name.match(RE)
             for (let field of fields) {
                 if (!(field in this.state.messages) || this.state.messages[field].length === 0) {
@@ -447,7 +447,7 @@ export default {
                 return this.cache[expression1]
             }
             console.log('MISS! evaluating : ' + expression1)
-            let RE = /[A-Z][A-Z0-9_]+\b/g
+            let RE = /(?<!\.)[A-Z][A-Z0-9_]+\b/g
             let fields = expression1.match(RE)
             let messages = (fields.map(field => field.split('.')[0]))
             // use time of first message for now
