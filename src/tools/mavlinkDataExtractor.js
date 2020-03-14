@@ -34,7 +34,7 @@ export class MavlinkDataExtractor {
                     if (msgs.asText[i] === undefined) {
                         msgs.asText[i] = 'Unknown'
                     }
-                    if (msgs.asText[i] !== modes[modes.length - 1][1]) {
+                    if (msgs.asText[i] !== null && msgs.asText[i] !== modes[modes.length - 1][1]) {
                         modes.push([msgs.time_boot_ms[i], msgs.asText[i]])
                     }
                 }
