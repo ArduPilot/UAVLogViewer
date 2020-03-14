@@ -139,16 +139,16 @@ export default {
     },
     computed: {
         leftStickLeft: function () {
-            return -12 + 0.01 * (this.yaw) * this.width / 2
+            return -29 + 0.01 * (this.yaw) * this.width / 2
         },
         leftStickTop () {
-            return 0.02 * (100 - this.throttle) * this.circleHeight - 6
+            return 0.02 * (100 - this.throttle) * this.circleHeight - 22
         },
         rightStickLeft: function () {
-            return -12 + (0.01 * this.roll) * (this.width / 2)
+            return -29 + (0.01 * this.roll) * (this.width / 2)
         },
         rightStickTop () {
-            return 0.02 * (100 - this.pitch) * this.circleHeight - 6
+            return 0.02 * (100 - this.pitch) * this.circleHeight - 22
         },
         circleHeight () {
             return this.height * (69 / 150)
