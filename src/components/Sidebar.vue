@@ -33,6 +33,8 @@
                 </div>
                 <div v-if="selected==='home'">
                     <Dropzone/>
+                    <span class="buildinfo">Commit {{state.commit}}</span>
+                    <span class="buildinfo">Built {{state.buildDate}}</span>
                 </div>
                 <div v-if="selected==='3d' && state.map_available">
                     <!--<li v-if="!state.map_available" @click="state.map_available=true">-->
@@ -123,6 +125,13 @@ export default {
 }
 </script>
 <style>
+
+span.buildinfo {
+    font-size: 70%;
+    margin-left: 30px;
+    display: block;
+    opacity: 50%;
+}
 
 a.section {
     margin-left: 6px;
