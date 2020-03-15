@@ -247,6 +247,9 @@ export default {
                 if (event.hasOwnProperty('xaxis.range[0]')) {
                     this.state.timeRange = [event['xaxis.range[0]'], event['xaxis.range[1]']]
                 }
+                if (event.hasOwnProperty('xaxis.autorange')) {
+                    this.state.timeRange = [this.gd.layout.xaxis.range[0], this.gd.layout.xaxis.range[1]]
+                }
             }
         },
         isPlotted (fieldname) {
