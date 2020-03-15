@@ -364,11 +364,11 @@ export default {
                     let colors = []
                     let previousColor = null
                     for (let change of this.state.flight_mode_changes) {
-                        if (change[0] > start && change[0] < end) {
-                            if (previousColor === null) {
-                                previousColor = this.getModeColor(change[0] - 1)
-                                colors.push([0, previousColor])
-                            }
+                        if (change[0] < start || previousColor === null) {
+                            previousColor = this.getModeColor(change[0])
+                            colors = [[0, previousColor]]
+                        }
+                        if ((change[0] > start) && change[0] < end) {
                             let percentage = (change[0] - start) * 100 / (end - start)
                             colors.push([percentage - 0.001, previousColor])
                             colors.push([percentage, this.getModeColor(change[0])])
