@@ -378,7 +378,6 @@ export default {
                     colors.push([100, previousColor])
 
                     let string = 'linear-gradient(to right'
-                    console.log(colors)
                     if (colors.length > 1) {
                         for (let change of colors) {
                             string = string + ', rgba(' + change[1].red * 150 + ',' + change[1].green * 150 + ',' +
