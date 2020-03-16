@@ -110,7 +110,6 @@ export default {
             let igraphs = result['graphs']
             for (let graph of igraphs.graph) {
                 let i = ''
-                let color = 0
                 let name = graph['@_name']
                 if (!Array.isArray(graph.expression)) {
                     graph.expression = [graph.expression]
@@ -120,9 +119,9 @@ export default {
                     for (let exp of expression.split(' ')) {
                         if (exp.indexOf(':') >= 0) {
                             exp = exp.replace(':2', '')
-                            fields.push([exp, 1, color++])
+                            fields.push([exp, 1])
                         } else {
-                            fields.push([exp, 0, color++])
+                            fields.push([exp, 0])
                         }
                     }
                     graphs[name + i] = fields
@@ -225,6 +224,7 @@ export default {
             // do it for default messages
             for (const [key, value] of Object.entries(this.messagePresets)) {
                 let missing = false
+                let color = 0
                 for (let field of value) {
                     // If all of the expressions match, add this and move on
                     if (field[0] === '') {
@@ -238,9 +238,9 @@ export default {
                     }
                     if (!missing) {
                         if (!(key in dict)) {
-                            dict[key] = {messages: [field]}
+                            dict[key] = {messages: [[...field, color++]]}
                         } else {
-                            dict[key].messages.push(field)
+                            dict[key].messages.push([...field, color++])
                         }
                     }
                 }
@@ -251,6 +251,7 @@ export default {
             // And again for user presets
             for (const [key, value] of Object.entries(this.userPresets)) {
                 let missing = false
+                let color = 0
                 for (let field of value) {
                     // If all of the expressions match, add this and move on
                     for (let match of field[0].match(RE)) {
@@ -260,9 +261,9 @@ export default {
                     }
                     if (!missing) {
                         if (!(key in dict)) {
-                            dict[key] = {messages: [field]}
+                            dict[key] = {messages: [[...field, color++]]}
                         } else {
-                            dict[key].messages.push(field)
+                            dict[key].messages.push([...field, color++])
                         }
                     }
                 }
