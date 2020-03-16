@@ -244,6 +244,9 @@ export default {
                         }
                     }
                 }
+                if (missing) {
+                    delete dict[key]
+                }
             }
             // And again for user presets
             for (const [key, value] of Object.entries(this.userPresets)) {
