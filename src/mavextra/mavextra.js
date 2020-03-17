@@ -292,17 +292,7 @@ window.expected_earth_field = function (GPS) {
     return window.earth_field
 }
 
-window.expected_mag = function (GPS, ATT, rollAdjust, pitchAdjust, yawAdjust) {
-    if (rollAdjust === undefined) {
-        rollAdjust = 0
-    }
-    if (pitchAdjust === undefined) {
-        pitchAdjust = 0
-    }
-    if (yawAdjust === undefined) {
-        yawAdjust = 0
-    }
-
+window.expected_mag = function (GPS, ATT, rollAdjust = 0, pitchAdjust = 0, yawAdjust = 0) {
     window.expected_earth_field(GPS)
     if (window.earth_field === null) {
         return new Vector3(0, 0, 0)
