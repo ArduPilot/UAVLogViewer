@@ -164,6 +164,7 @@ export default {
             return (this.state.flight_mode_changes !== undefined &&
                     this.state.current_trajectory !== undefined &&
                     this.state.current_trajectory.length > 0 &&
+                    this.state.metadata !== null &&
                     (Object.keys(this.state.time_attitude).length > 0 ||
                         Object.keys(this.state.time_attitudeQ).length > 0))
         },

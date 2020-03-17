@@ -29,6 +29,7 @@ export var store = {
     plot_loading: false,
     timeRange: null,
     textMessages: [],
+    metadata: null,
     // cesium menu:
     modelScale: 1.0,
     showClickableTrajectory: false,
