@@ -22,7 +22,7 @@
             <li class="input-li">
                 <input id="filterbox" placeholder=" Type here to filter..." v-model="filter">
             </li>
-            <template v-for="(message, key) in messageTypesFiltered">
+            <template v-for="key of messageTypesFilteredSorted">
                 <li class="type" v-bind:key="key">
                     <div v-b-toggle="'type' + key">
                         <a class="section">{{key}}
@@ -30,7 +30,7 @@
                     </div>
                 </li>
                 <b-collapse :id="'type' + key" v-bind:key="key+'1'">
-                    <template v-for="item in message.complexFields">
+                    <template v-for="item in messageTypes[key].complexFields">
                         <li @click="toggle(key, item.name)"
                             class="field"
                             v-bind:key="key+'.'+item.name"
@@ -217,6 +217,11 @@ export default {
                 }
             }
             return filtered
+        },
+        messageTypesFilteredSorted () {
+            const keys = Object.keys(this.messageTypes)
+            keys.sort()
+            return keys
         },
         availableMessagePresets () {
             let dict = {}
