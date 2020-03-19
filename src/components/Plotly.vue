@@ -483,8 +483,14 @@ export default {
                 }
                 expression = expression.replace(fields[field], 'a[' + field + ']')
             }
-            // eslint-disable-next-line
-            let f = new Function('a', 'return ' + expression)
+            let f
+            try {
+                // eslint-disable-next-line
+                f = new Function('a', 'return ' + expression)
+            } catch (e) {
+                console.log(e)
+                return {x: 0, y: 0}
+            }
             for (let time of x) {
                 let vals = []
                 const newobj = {}
