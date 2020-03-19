@@ -141,7 +141,6 @@ window.lowpass = function (variable, key, factor) {
         window.lastLowpass = factor * window.lastLowpass + (1.0 - factor) * variable
     }
     let ret = window.lastLowpass
-    window.lastLowpass = null
     return ret
 }
 
