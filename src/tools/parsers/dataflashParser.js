@@ -97,6 +97,12 @@ const multipliers = {
     '/': 3600 // (ampere*second => ampere*hour)
 }
 
+const multipliersTable = {
+    0.000001: 'n',
+    1000: 'M',
+    0.001: 'm'
+}
+
 const HEAD1 = 163
 const HEAD2 = 149
 
@@ -592,7 +598,7 @@ export class DataflashParser {
                         for (let field in fields) {
                             complexFields[fields[field]] = {
                                 name: fields[field],
-                                units: msg.units[field],
+                                units: (multipliersTable[msg.multipliers[field]] || '') + msg.units[field],
                                 multiplier: msg.multipliers[field]
                             }
                         }
