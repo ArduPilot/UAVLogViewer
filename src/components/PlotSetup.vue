@@ -9,8 +9,8 @@
         <b-collapse class="menu-content collapse out" id="plotsetupcontent" visible>
             <ul class="colorpicker">
 
-                <li :key="field.name" class="field plotsetup" v-for="field in state.expressions">
-                    <p class="plotname">{{field.name}}</p>
+                <li :key="'field'+index" class="field plotsetup" v-for="(field, index) in state.expressions">
+                    <input class="plotname" v-model.lazy="field.name" v-debounce="1000">
                     <select v-model.number="field.axis">
                         <option v-bind:key="'axisnumber'+axis" v-for="axis in state.allAxis">{{axis}}</option>
                     </select>
@@ -29,6 +29,8 @@
                 </li>
                 <li v-if="state.expressions.length === 0">  Please plot something first.</li>
             </ul>
+            <button class="add-expression" @click="createNewExpression()">
+            <i class="fa fa-plus" aria-hidden="true"></i>Add Expression</button>
             <button class="save-preset" v-if="state.expressions.length > 0" v-b-modal.modal-prevent-closing>
             <i class="fa fa-check-circle" aria-hidden="true"></i>Save Preset</button>
         </b-collapse>
@@ -57,6 +59,7 @@
 </template>
 <script>
 import {store} from './Globals.js'
+import debounce from 'v-debounce'
 
 export default {
     name: 'plotSetup',
@@ -67,6 +70,49 @@ export default {
         }
     },
     methods: {
+        createNewExpression () {
+            this.state.plot_on = true
+            this.$nextTick(() => {
+                this.state.expressions.push({
+                    name: '1+1',
+                    color: this.getFirstFreeColor(),
+                    axis: this.getFirstFreeAxis()
+                })
+            })
+        },
+        // TODO: this is duplicated in Plotly.vue, refactor it out!
+        getFirstFreeAxis () {
+            // get free axis number
+            for (let i of this.state.allAxis) {
+                let taken = false
+                for (let field of this.state.expressions) {
+                    // eslint-disable-next-line
+                    if (field.axis == i) {
+                        taken = true
+                    }
+                }
+                if (!taken) {
+                    return i
+                }
+            }
+            return this.state.allAxis.length - 1
+        },
+        getFirstFreeColor () {
+            // get free color
+            for (let i of this.state.allColors) {
+                let taken = false
+                for (let field of this.state.expressions) {
+                    // eslint-disable-next-line
+                    if (field.color == i) {
+                        taken = true
+                    }
+                }
+                if (!taken) {
+                    return i
+                }
+            }
+            return this.state.allColors[this.state.allColors.length - 1]
+        },
         savePreset (name) {
             let myStorage = window.localStorage
             let saved = myStorage.getItem('savedFields')
@@ -100,6 +146,9 @@ export default {
                 this.$refs.modal.hide()
             })
         }
+    },
+    directives: {
+        debounce
     }
 }
 </script>
@@ -115,6 +164,8 @@ export default {
         cursor: default;
         font-size: 13px;
         padding: 5px;
+        padding-bottom: 1px;
+        padding-top: 1px;
     }
 
     ul.colorpicker li:hover {
@@ -141,16 +192,12 @@ export default {
         padding: 0;
     }
 
-    p.plotname {
+    .plotname {
         display: inline-block;
         line-height: 15px;
         margin-bottom: 0;
         font-size: 13px;
         width: 60%;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        direction: rtl;
     }
 
     select {
@@ -199,6 +246,28 @@ export default {
     }
 
     .save-preset:focus {
+        outline: none;
+    }
+
+/* ADD EXPRESSION BUTTON */
+
+    .add-expression {
+        background-color:rgb(33, 41, 61);
+        color: #fff;
+        border-radius: 15px;
+        padding: 0px 10px 0px 0px;
+        border: 1px solid rgba(91, 100, 117, 0.76);
+        margin-left: 32%;
+        font-size: 13px;
+    }
+
+    .add-expression:hover {
+        background-color: rgb(47, 58, 87);
+        box-shadow: 0px 0px 12px 0px rgba(37, 78, 133, 0.55);
+        transition: all 0.5s ease;
+    }
+
+    .add-expression:focus {
         outline: none;
     }
 

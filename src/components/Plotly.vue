@@ -431,12 +431,18 @@ export default {
             }
             return names.join(', ')
         },
-        expressionCanBePlotted (expression) {
+        expressionCanBePlotted (expression, reask = false) {
             let RE = /(?<!\.)[A-Z][A-Z0-9_]+\b/g
             let fields = expression.name.match(RE)
+            if (fields === null) {
+                return true
+            }
             for (let field of fields) {
                 if (!(field in this.state.messages) || this.state.messages[field].length === 0) {
                     console.log('ERROR: attempted to plot unavailable message: ' + field)
+                    if (reask) {
+                        this.$eventHub.$emit('loadType', field)
+                    }
                     return false
                 }
                 console.log(field + ' is plottable')
@@ -452,9 +458,20 @@ export default {
             console.log('MISS! evaluating : ' + expression1)
             let RE = /(?<!\.)[A-Z][A-Z0-9_]+\b/g
             let fields = expression1.match(RE)
-            let messages = (fields.map(field => field.split('.')[0]))
+            fields = fields === null ? [] : fields
+            let messages = fields.lenght !== 0 ? (fields.map(field => field.split('.')[0])) : []
+
             // use time of first message for now
-            let x = this.state.messages[messages[0]].time_boot_ms
+            let x
+            if (messages.lenght > 0) {
+                x = this.state.messages[messages[0]].time_boot_ms
+            } else {
+                try {
+                    x = this.state.messages['ATT'].time_boot_ms
+                } catch {
+                    x = this.state.messages['ATTITUDE'].time_boot_ms
+                }
+            }
             // used to find the corresponding time indexes between messages
             let timeIndexes = new Array(fields.length).fill(0)
             let y = []
@@ -503,9 +520,9 @@ export default {
             let datasets = []
 
             for (let expression of this.state.expressions) {
-                if (!this.expressionCanBePlotted(expression)) {
+                if (!this.expressionCanBePlotted(expression, true)) {
                     setTimeout(this.plot, 300)
-                    console.log('plot() postponed!')
+                    console.log('plot() postponed and re-asked')
                     return
                 }
             }
