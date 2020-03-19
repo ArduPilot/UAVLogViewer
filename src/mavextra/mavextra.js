@@ -135,7 +135,10 @@ window.sqrt = Math.sqrt
 
 window.lastLowpass = null
 window.lowpass = function (variable, key, factor) {
-    if (window.lastLowpass == null) {
+    if (!isNaN(key)) {
+        factor = key
+    }
+    if (window.lastLowpass === null || isNaN(window.lastLowpass)) {
         window.lastLowpass = variable
     } else {
         window.lastLowpass = factor * window.lastLowpass + (1.0 - factor) * variable
