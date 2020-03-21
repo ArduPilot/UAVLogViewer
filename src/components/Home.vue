@@ -127,6 +127,9 @@ export default {
             }
             this.state.processStatus = 'Processed!'
             this.state.processDone = true
+            // Change to plot view after 2 seconds so the Processed status is readable
+            setTimeout(() => { this.$eventHub.$emit('set-selected', 'plot') }, 2000)
+
             this.state.map_available = this.state.current_trajectory.length > 0
         },
 
