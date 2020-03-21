@@ -380,6 +380,18 @@ export default {
             }
             this.state.expressions.lenght = 0
         },
+        resetAxis (index) {
+            // Resets the Y axis so that the next plot autoranges
+            // unfortunately the axis are named yaxis, yaxis2, yaxis3... and so on
+            let suffix = ''
+            suffix = index === 0 ? suffix : parseInt(index) + 1
+            let key = 'yaxis' + suffix
+            let obj = {}
+            // Use older dict and set autorange to true
+            obj[key] = plotOptions[key]
+            obj[key].autorange = true
+            Plotly.relayout(this.gd, obj)
+        },
         togglePlot (fieldname, axis, color, silent) {
             if (this.isPlotted((fieldname))) {
                 let index
@@ -388,6 +400,7 @@ export default {
                         index = i
                     }
                 }
+                this.resetAxis(this.state.expressions[index].axis)
                 this.state.expressions.splice(index, 1)
                 if (this.state.expressions.length === 0) {
                     this.state.plot_on = false
