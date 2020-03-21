@@ -121,6 +121,15 @@ export default {
             state: store
         }
     },
+    methods: {
+        setSelected (selected) {
+            this.selected = selected
+        }
+
+    },
+    created () {
+        this.$eventHub.$on('set-selected', this.setSelected)
+    },
     components: {PlotSetup, MessageMenu, Dropzone}
 }
 </script>
