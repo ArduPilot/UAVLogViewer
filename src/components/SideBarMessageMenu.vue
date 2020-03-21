@@ -22,7 +22,7 @@
             <li class="input-li">
                 <input id="filterbox" placeholder=" Type here to filter..." v-model="filter">
             </li>
-            <template v-for="key of messageTypesFilteredSorted">
+            <template v-for="key of Object.keys(this.messageTypesFiltered).sort()">
                 <li class="type" v-bind:key="key">
                     <div v-b-toggle="'type' + key">
                         <a class="section">{{key}}
@@ -192,6 +192,20 @@ export default {
         },
         isPlottable (msgtype, item) {
             return item !== 'TimeUS'
+        },
+        collapse (name) {
+            if (document.getElementById(name) &&
+                document.getElementById(name).style &&
+                document.getElementById(name).style.display !== 'none') {
+                this.$root.$emit('bv::toggle::collapse', name)
+            }
+        },
+        expand (name) {
+            if (document.getElementById(name) &&
+                document.getElementById(name).style &&
+                document.getElementById(name).style.display === 'none') {
+                this.$root.$emit('bv::toggle::collapse', name)
+            }
         }
     },
     computed: {
@@ -202,26 +216,22 @@ export default {
             let filtered = {}
             for (let key of Object.keys(this.messageTypes)) {
                 if (this.hiddenTypes.indexOf(key) === -1) {
+                    if (this.filter === '') {
+                        this.collapse('type' + key)
+                        filtered[key] = this.messageTypes[key]
+                        continue
+                    }
                     if (this.messageTypes[key].expressions
                         .filter(field => field.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1).length > 0) {
                         filtered[key] = this.messageTypes[key]
                         // console.log('type' + key, document.getElementById('type' + key))
-                        if (document.getElementById('type' + key) &&
-                                document.getElementById('type' + key).style &&
-                                document.getElementById('type' + key).style.display === 'none'
-                        ) {
-                            console.log(document.getElementById('type' + key).style.display)
-                            this.$root.$emit('bv::toggle::collapse', 'type' + key)
-                        }
+                        this.expand('type' + key)
+                    } else {
+                        this.collapse('type' + key)
                     }
                 }
             }
             return filtered
-        },
-        messageTypesFilteredSorted () {
-            const keys = Object.keys(this.messageTypes)
-            keys.sort()
-            return keys
         },
         availableMessagePresets () {
             let dict = {}
