@@ -110,14 +110,14 @@ const units = {
     '-': '', // no units e.g. Pi, or a string
     '?': 'UNKNOWN', // Units which haven't been worked out yet....
     'A': 'A', // Ampere
-    'd': 'deg', // of the angular variety, -180 to 180
+    'd': '°', // of the angular variety, -180 to 180
     'b': 'B', // bytes
-    'k': 'deg/s', // degrees per second. Degrees are NOT SI, but is some situations more user-friendly than radians
-    'D': 'deglatitude', // degrees of latitude
-    'e': 'deg/s/s', // degrees per second per second. Degrees are NOT SI, but is some situations more user-friendly
+    'k': '°/s', // degrees per second. Degrees are NOT SI, but is some situations more user-friendly than radians
+    'D': '°', // degrees of latitude
+    'e': '°/s/s', // degrees per second per second. Degrees are NOT SI, but is some situations more user-friendly
     'E': 'rad/s', // radians per second
     'G': 'Gauss', // Gauss is not an SI unit, but 1 tesla = 10000 gauss so a simple replacement is not possible here
-    'h': 'degheading', // 0.? to 359.?
+    'h': '°', // 0.? to 359.?
     'i': 'A.s', // Ampere second
     'J': 'W.s', // Joule (Watt second)
     // { 'l', "l" },          // litres
@@ -126,13 +126,13 @@ const units = {
     'n': 'm/s', // metres per second
     // { 'N', "N" },          // Newton
     'o': 'm/s/s', // metres per second per second
-    'O': 'degC', // degrees Celsius. Not SI, but Kelvin is too cumbersome for most users
+    'O': '°C', // degrees Celsius. Not SI, but Kelvin is too cumbersome for most users
     '%': '%', // percent
     'S': 'satellites', // number of satellites
     's': 's', // seconds
     'q': 'rpm', // rounds per minute. Not SI, but sometimes more intuitive than Hertz
     'r': 'rad', // radians
-    'U': 'deglongitude', // degrees of longitude
+    'U': '°', // degrees of longitude
     'u': 'ppm', // pulses per minute
     'v': 'V', // Volt
     'P': 'Pa', // Pascal
