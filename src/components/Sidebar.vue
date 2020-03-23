@@ -342,7 +342,7 @@ a.centered-section {
     .tabholder a {
         background: rgb(41,51,75);
         float: left;
-        padding: 2px 12px 2px 5px;
+        padding: 2px 9px 2px 9px;
         border: 1px solid rgba(91, 100, 117, 0.76);
         border-radius: 30px;
     }
