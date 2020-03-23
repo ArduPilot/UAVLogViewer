@@ -285,8 +285,8 @@ a.centered-section {
         box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
         -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
         -moz-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-        background: rgb(30,37,53);
-        background: linear-gradient(0deg, rgb(28, 42, 73) 51%, rgb(39, 51, 78) 100%);
+        background: rgb(60, 75, 112);
+        background: linear-gradient(0deg, rgb(67, 95, 155) 51%, rgb(61, 79, 121) 100%);
     }
 
     .custom-control-inline {
