@@ -212,15 +212,23 @@ export default {
         line-height: 15px;
         margin-bottom: 0;
         font-size: 13px;
-        width: 58%;
+        width: 59%;
+        border: 1px solid grey;
+        padding: 4.5px;
+        border-radius: 20px;
+    }
+
+    .plotname:focus {
+        background-color: rgba(241, 248, 255, 0.966);
+        outline: none;
     }
 
     select {
         display: inline;
-        border-radius: 3px;
+        border-radius: 5px;
         border: 1px solid rgb(156, 156, 156);
         background-color: rgb(255, 255, 255);
-        padding: 1px 2px;
+        padding: 2px 2.5px;
         color: #838282;
     }
 
