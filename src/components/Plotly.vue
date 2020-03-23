@@ -672,7 +672,7 @@ export default {
         },
         addModeShapes () {
             let shapes = []
-            let modeChanges = this.state.flight_mode_changes
+            let modeChanges = [...this.state.flight_mode_changes]
             modeChanges.push([this.gd.layout.xaxis.range[1], null])
 
             for (let i = 0; i < modeChanges.length - 1; i++) {
@@ -716,7 +716,7 @@ export default {
                     }
                 )
             }
-            let modeChanges = this.state.flight_mode_changes
+            let modeChanges = [...this.state.flight_mode_changes]
             modeChanges.push([this.gd.layout.xaxis.range[1], null])
             for (let i = 0; i < modeChanges.length - 2; i++) {
                 annotations.push(
