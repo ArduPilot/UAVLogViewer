@@ -445,7 +445,7 @@ export default {
             return names.join(', ')
         },
         expressionCanBePlotted (expression, reask = false) {
-            let RE = /(?<!\.)[A-Z][A-Z0-9_]+\b/g
+            let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
             let fields = expression.name.match(RE)
             if (fields === null) {
                 return true
@@ -469,7 +469,7 @@ export default {
                 return this.cache[expression1]
             }
             console.log('MISS! evaluating : ' + expression1)
-            let RE = /(?<!\.)[A-Z][A-Z0-9_]+\b/g
+            let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
             let fields = expression1.match(RE)
             fields = fields === null ? [] : fields
             let messages = fields.lenght !== 0 ? (fields.map(field => field.split('.')[0])) : []
