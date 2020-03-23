@@ -7,7 +7,7 @@
             </div>
         </li>
         <b-collapse class="menu-content collapse out" id="plotsetupcontent" visible>
-            <ul class="colorpicker">
+            <ul class="colorpicker plot-wrapper">
                 <template v-for="(field, index) in state.expressions">
                     <li :key="'field'+index" class="field plotsetup">
                         <input class="plotname" v-model.lazy="field.name" v-debounce="1000">
@@ -35,11 +35,15 @@
                 </template>
                 <li v-if="state.expressions.length === 0">  Please plot something first.</li>
             </ul>
+            <!-- BUTTONS -->
+            <div class="btns-wrapper">
             <button class="add-expression" @click="createNewExpression()">
             <i class="fa fa-plus" aria-hidden="true"></i>Add Expression</button>
             <button class="save-preset" v-if="state.expressions.length > 0" v-b-modal.modal-prevent-closing>
             <i class="fa fa-check-circle" aria-hidden="true"></i>Save Preset</button>
+            </div>
         </b-collapse>
+        <!-- MODAL -->
         <b-modal
             id="modal-prevent-closing"
             ref="modal"
@@ -159,18 +163,23 @@ export default {
 }
 </script>
 <style>
+/* MAIN */
+    .plot-wrapper {
+        max-height: 160px;
+        overflow: hidden;
+        overflow-y: scroll;
+    }
 
-    /* COLOR PICKER */
+/* COLOR PICKER */
 
     ul.colorpicker {
         font-family: 'Montserrat', sans-serif;
     }
 
     ul.colorpicker li {
+        text-align: center;
         cursor: default;
         font-size: 13px;
-        padding: 5px;
-        padding-bottom: 1px;
         padding-top: 1px;
     }
 
@@ -203,7 +212,7 @@ export default {
         line-height: 15px;
         margin-bottom: 0;
         font-size: 13px;
-        width: 60%;
+        width: 58%;
     }
 
     select {
@@ -236,6 +245,14 @@ export default {
     .error {
         color: red;
     }
+/* BUTTONS */
+
+.btns-wrapper {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+    margin: 10px;
+}
 
 /* SAVE PRESET BUTTON */
 
@@ -245,7 +262,6 @@ export default {
         border-radius: 15px;
         padding: 0px 10px 0px 0px;
         border: 1px solid rgba(91, 100, 117, 0.76);
-        margin-left: 32%;
         font-size: 13px;
     }
 
@@ -267,7 +283,6 @@ export default {
         border-radius: 15px;
         padding: 0px 10px 0px 0px;
         border: 1px solid rgba(91, 100, 117, 0.76);
-        margin-left: 32%;
         font-size: 13px;
     }
 
