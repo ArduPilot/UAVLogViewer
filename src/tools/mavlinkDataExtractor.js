@@ -43,7 +43,7 @@ export class MavlinkDataExtractor {
         return modes
     }
 
-    static extractArmedEvents (messages) {
+    static extractEvents (messages) {
         let armedState = []
         if ('HEARTBEAT' in messages) {
             let msgs = messages['HEARTBEAT']

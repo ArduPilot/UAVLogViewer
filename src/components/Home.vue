@@ -104,8 +104,8 @@ export default {
             if (this.state.flight_mode_changes.length === 0) {
                 this.state.flight_mode_changes = this.dataExtractor.extractFlightModes(this.state.messages)
             }
-            if (this.state.armed_events.length === 0) {
-                this.state.armed_events = this.dataExtractor.extractArmedEvents(this.state.messages)
+            if (this.state.events.length === 0) {
+                this.state.events = this.dataExtractor.extractEvents(this.state.messages)
             }
             if (this.state.mission.length === 0) {
                 this.state.mission = this.dataExtractor.extractMission(this.state.messages)
