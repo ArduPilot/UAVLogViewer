@@ -495,10 +495,6 @@ export class DataflashParser {
             message.Lat = message.Lat / 1e7
             message.Lng = message.Lng / 1e7
             // message.Alt = message.Alt / 1e4
-        } else if (message.name === 'ATT' || message.name === 'AHR2') {
-            message.Roll = Math.radians(message.Roll)
-            message.Pitch = Math.radians(message.Pitch)
-            message.Yaw = Math.radians(message.Yaw)
         } else if (message.name === 'MODE') {
             message.asText = this.getModeString(message['Mode'])
         }
