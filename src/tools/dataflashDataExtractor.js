@@ -8,9 +8,9 @@ export class DataflashDataExtractor {
             for (let i in attitudeMsgs.time_boot_ms) {
                 attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
                     [
-                        attitudeMsgs.Roll[i],
-                        attitudeMsgs.Pitch[i],
-                        attitudeMsgs.Yaw[i]
+                        Math.radians(attitudeMsgs.Roll[i]),
+                        Math.radians(attitudeMsgs.Pitch[i]),
+                        Math.radians(attitudeMsgs.Yaw[i])
                     ]
             }
         } else if ('ATT' in messages) {
@@ -18,9 +18,9 @@ export class DataflashDataExtractor {
             for (let i in attitudeMsgs.time_boot_ms) {
                 attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
                     [
-                        attitudeMsgs.Roll[i],
-                        attitudeMsgs.Pitch[i],
-                        attitudeMsgs.Yaw[i]
+                        Math.radians(attitudeMsgs.Roll[i]),
+                        Math.radians(attitudeMsgs.Pitch[i]),
+                        Math.radians(attitudeMsgs.Yaw[i])
                     ]
             }
         }
