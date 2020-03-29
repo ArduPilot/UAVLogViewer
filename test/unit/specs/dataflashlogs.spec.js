@@ -22,7 +22,7 @@ describe('parse binary logs', () => {
         const messages = result.messages
         expect(Object.keys(messageTypes)).toContain('MODE')
         if (a.indexOf('Plane') !== -1 && a.indexOf('rover') !== -1) {
-            expect(DataflashDataExtractor.extractArmedEvents(messages).length).toBeGreaterThan(0)
+            expect(DataflashDataExtractor.extractEvents(messages).length).toBeGreaterThan(0)
         }
         expect(Object.keys(DataflashDataExtractor.extractAttitudes(messages)).length).toBeGreaterThan(50)
         expect(DataflashDataExtractor.extractFlightModes(messages).length).toBeGreaterThan(0)

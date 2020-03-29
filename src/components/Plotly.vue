@@ -719,7 +719,7 @@ export default {
         },
         addEvents () {
             let annotations = []
-            for (let i of this.state.armed_events) {
+            for (let i of this.state.events) {
                 annotations.push(
                     {
                         xref: 'x',
@@ -727,7 +727,7 @@ export default {
                         x: i[0],
                         y: 0,
                         yanchor: 'bottom',
-                        text: i[1] ? 'Armed' : 'Disarmed',
+                        text: i[1].toLowerCase(),
                         showarrow: true,
                         ay: 30,
                         ax: 0

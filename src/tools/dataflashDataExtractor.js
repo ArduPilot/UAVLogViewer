@@ -4,6 +4,69 @@ window.radians = function (a) {
     return 0.0174533 * a
 }
 
+let events = {
+    7: 'AP_STATE',
+    9: 'INIT_SIMPLE_BEARING',
+    10: 'ARMED',
+    11: 'DISARMED',
+    15: 'AUTO_ARMED',
+    17: 'LAND_COMPLETE_MAYBE',
+    18: 'LAND_COMPLETE',
+    28: 'NOT_LANDED',
+    19: 'LOST_GPS',
+    21: 'FLIP_START',
+    22: 'FLIP_END',
+    25: 'SET_HOME',
+    26: 'SET_SIMPLE_ON',
+    27: 'SET_SIMPLE_OFF',
+    29: 'SET_SUPERSIMPLE_ON',
+    30: 'AUTOTUNE_INITIALISED',
+    31: 'AUTOTUNE_OFF',
+    32: 'AUTOTUNE_RESTART',
+    33: 'AUTOTUNE_SUCCESS',
+    34: 'AUTOTUNE_FAILED',
+    35: 'AUTOTUNE_REACHED_LIMIT',
+    36: 'AUTOTUNE_PILOT_TESTING',
+    37: 'AUTOTUNE_SAVEDGAINS',
+    38: 'SAVE_TRIM',
+    39: 'SAVEWP_ADD_WP',
+    41: 'FENCE_ENABLE',
+    42: 'FENCE_DISABLE',
+    43: 'ACRO_TRAINER_DISABLED',
+    44: 'ACRO_TRAINER_LEVELING',
+    45: 'ACRO_TRAINER_LIMITED',
+    46: 'GRIPPER_GRAB',
+    47: 'GRIPPER_RELEASE',
+    49: 'PARACHUTE_DISABLED',
+    50: 'PARACHUTE_ENABLED',
+    51: 'PARACHUTE_RELEASED',
+    52: 'LANDING_GEAR_DEPLOYED',
+    53: 'LANDING_GEAR_RETRACTED',
+    54: 'MOTORS_EMERGENCY_STOPPED',
+    55: 'MOTORS_EMERGENCY_STOP_CLEARED',
+    56: 'MOTORS_INTERLOCK_DISABLED',
+    57: 'MOTORS_INTERLOCK_ENABLED',
+    58: 'ROTOR_RUNUP_COMPLETE', // Heli only
+    59: 'ROTOR_SPEED_BELOW_CRITICAL', // Heli only
+    60: 'EKF_ALT_RESET',
+    61: 'LAND_CANCELLED_BY_PILOT',
+    62: 'EKF_YAW_RESET',
+    63: 'AVOIDANCE_ADSB_ENABLE',
+    64: 'AVOIDANCE_ADSB_DISABLE',
+    65: 'AVOIDANCE_PROXIMITY_ENABLE',
+    66: 'AVOIDANCE_PROXIMITY_DISABLE',
+    67: 'GPS_PRIMARY_CHANGED',
+    68: 'WINCH_RELAXED',
+    69: 'WINCH_LENGTH_CONTROL',
+    70: 'WINCH_RATE_CONTROL',
+    71: 'ZIGZAG_STORE_A',
+    72: 'ZIGZAG_STORE_B',
+    73: 'LAND_REPO_ACTIVE',
+    163: 'SURFACED',
+    164: 'NOT_SURFACED',
+    165: 'BOTTOMED',
+    166: 'NOT_BOTTOMED'
+}
 export class DataflashDataExtractor {
     static extractAttitudes (messages) {
         let attitudes = {}
@@ -67,7 +130,7 @@ export class DataflashDataExtractor {
         return modes
     }
 
-    static extractArmedEvents (messages) {
+    static extractEvents (messages) {
         let armedState = []
         if ('STAT' in messages && messages['STAT'].length > 0) {
             let msgs = messages['STAT']
@@ -80,16 +143,9 @@ export class DataflashDataExtractor {
         } else if ('EV' in messages) {
             armedState = []
             let msgs = messages['EV']
-            let armed = false
             for (let i in msgs.time_boot_ms) {
-                if (armed) {
-                    armed = (msgs.Id[i] !== 11) // 10 means armed
-                } else {
-                    armed = (msgs.Id[i] === 10) // 11 means disarmed
-                }
-                if (armedState.length === 0 || armed !== armedState[armedState.length - 1][1]) {
-                    armedState.push([msgs.time_boot_ms[i], armed])
-                }
+                const event = events[msgs.Id[i]]
+                armedState.push([msgs.time_boot_ms[i], event])
             }
         }
         return armedState
