@@ -491,11 +491,7 @@ export class DataflashParser {
     }
 
     fixData (message) {
-        if (['GPS', 'POS'].includes(message.name)) {
-            message.Lat = message.Lat / 1e7
-            message.Lng = message.Lng / 1e7
-            // message.Alt = message.Alt / 1e4
-        } else if (message.name === 'MODE') {
+        if (message.name === 'MODE') {
             message.asText = this.getModeString(message['Mode'])
         }
         message.time_boot_ms = message.TimeUS / 1000
