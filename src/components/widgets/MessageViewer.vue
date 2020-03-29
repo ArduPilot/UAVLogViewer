@@ -3,7 +3,9 @@
          v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
         <div id="paneContent">
             <ul>
-                <li v-bind:key="msg[0]+msg[1]" v-for="msg in filteredData"> {{ msg[2] }}</li>
+                <li v-bind:key="msg[0]+msg[1]" v-for="msg in filteredData">
+                    [{{timeFormatter(msg[0])}}]: {{ msg[2] }}
+                </li>
             </ul>
         </div>
     </div>
@@ -34,6 +36,17 @@ export default {
         }
     },
     methods: {
+        timeFormatter (milliseconds) {
+            let outputString = ''
+            let seconds = (milliseconds / 1000) % 60
+            let minutes = Math.floor((milliseconds / 1000) / 60)
+            let hours = Math.floor(minutes / 60)
+            minutes = minutes % 60
+            outputString = seconds.toFixed(1).padStart(4, '0')
+            outputString = minutes.toFixed(0).padStart(2, '0') + ':' + outputString
+            outputString = hours.toFixed(0).padStart(2, '0') + ':' + outputString
+            return outputString
+        },
         setTime (time) {
             this.cursorTime = time
         },
