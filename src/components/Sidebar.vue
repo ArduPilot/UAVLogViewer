@@ -1,7 +1,12 @@
 <template>
 <!-- HEADER -->
     <div class="nav-side-menu col-lg-2">
-        <h1 class="brand"> <a class="brand" href="/"><b>TLog</b>viewer<i class="fas fa-plane"></i></a></h1>
+
+        <h1 class="brand">
+            <a class="github" href="https://github.com/williangalvani/tlogviewer">
+            <img :src="require('../assets/GitHub-Mark-64px.png')"/>
+            </a>
+            <a href="/"><b>TLog</b>viewer<i class="fas fa-plane"></i></a></h1>
         <!-- TABHOLDER -->
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <b-collapse class="menu-content collapse out" id="menucontent" visible>
@@ -298,13 +303,24 @@ a.centered-section {
     .brand {
         text-align: center;
         font-size: 22px;
-        padding-left: 20px;
+        padding-left: 0px;
         line-height: 50px;
         margin-bottom: 0;
         color: rgb(54, 72, 114) !important;
         background-color: rgba(248, 248, 248, 0.918);
         display: block;
+    }
+
+    .brand a {
         text-decoration: none;
+        color: rgb(54, 72, 114) !important;
+    }
+
+    .github img {
+        float: left;
+        max-height: 30px;
+        margin-left: 8px;
+        margin-top: 10px;
     }
 
     a:hover {
