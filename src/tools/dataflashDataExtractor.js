@@ -1,5 +1,9 @@
 import {ParamSeeker} from '../tools/paramseeker'
 
+window.radians = function (a) {
+    return 0.0174533 * a
+}
+
 export class DataflashDataExtractor {
     static extractAttitudes (messages) {
         let attitudes = {}
