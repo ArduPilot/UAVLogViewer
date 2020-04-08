@@ -5,6 +5,7 @@ var glob = require('glob')
 
 // options is optional
 let files = glob.sync('/tmp/testlogs/*.tlog')
+files = files.length > 0 ? files : glob.sync('test/testlogfiles/*.tlog')
 console.log('Testing MAVLink files:')
 console.log(files)
 describe('parse tlogs', () => {

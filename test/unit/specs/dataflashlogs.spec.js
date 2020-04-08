@@ -5,6 +5,8 @@ var glob = require('glob')
 
 // options is optional
 let files = glob.sync('/tmp/testlogs/*.bin')
+files = files.length > 0 ? files : glob.sync('test/testlogfiles/*.bin')
+console.log(files)
 console.log('Testing datalash files:')
 console.log(files)
 describe('parse binary logs', () => {
