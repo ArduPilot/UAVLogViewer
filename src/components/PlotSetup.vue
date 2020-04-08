@@ -8,25 +8,31 @@
         </li>
         <b-collapse class="menu-content collapse out" id="plotsetupcontent" visible>
             <ul class="colorpicker">
-
-                <li :key="'field'+index" class="field plotsetup" v-for="(field, index) in state.expressions">
-                    <input class="plotname" v-model.lazy="field.name" v-debounce="1000">
-                    <select v-model.number="field.axis">
-                        <option v-bind:key="'axisnumber'+axis" v-for="axis in state.allAxis">{{axis}}</option>
-                    </select>
-                    <select :style="{color: field.color}" v-model="field.color">
-                        <option
-                            v-bind:key="'axisColor'+color"
-                            :style="{color: color}"
-                            v-bind:value="color"
-                            v-for="color in state.allColors">■
-                        </option>
-                    </select>
-                    <a class="remove-button" @click="$eventHub.$emit('togglePlot', field.name)">
-                        <i class="expand fas fa-trash" title="Remove data"></i>
-                    </a>
-
-                </li>
+                <template v-for="(field, index) in state.expressions">
+                    <li :key="'field'+index" class="field plotsetup">
+                        <input class="plotname" v-model.lazy="field.name" v-debounce="1000">
+                        <select v-model.number="field.axis">
+                            <option v-bind:key="'axisnumber'+axis" v-for="axis in state.allAxis">{{axis}}</option>
+                        </select>
+                        <select :style="{color: field.color}" v-model="field.color">
+                            <option
+                                v-bind:key="'axisColor'+color"
+                                :style="{color: color}"
+                                v-bind:value="color"
+                                v-for="color in state.allColors">■
+                            </option>
+                        </select>
+                        <a class="remove-button" @click="$eventHub.$emit('togglePlot', field.name)">
+                            <i class="expand fas fa-trash" title="Remove data"></i>
+                        </a>
+                    </li>
+                    <li :key="'field'+index+'err'" v-if="state.expressionErrors[index]" class="error">
+                        <i class="fas fa-exclamation-circle error"
+                           :title="state.expressionErrors[index]">
+                        </i>
+                        {{state.expressionErrors[index]}}
+                    </li>
+                </template>
                 <li v-if="state.expressions.length === 0">  Please plot something first.</li>
             </ul>
             <button class="add-expression" @click="createNewExpression()">
@@ -225,6 +231,10 @@ export default {
     .fa-trash {
         margin: 1px;
         font-size: 10px;
+    }
+
+    .error {
+        color: red;
     }
 
 /* SAVE PRESET BUTTON */
