@@ -501,8 +501,7 @@ export default {
                 // eslint-disable-next-line
                 f = new Function('a', 'return ' + expression)
             } catch (e) {
-                console.log(e)
-                return {x: 0, y: 0}
+                return {'error': e}
             }
             for (let time of x) {
                 let vals = []
@@ -520,8 +519,7 @@ export default {
                 try {
                     y.push(f(vals))
                 } catch (e) {
-                    console.log(e)
-                    return {x: 0, y: 0}
+                    return {'error': e}
                 }
             }
             console.log('evaluated ' + expression)
@@ -545,10 +543,16 @@ export default {
                     return
                 }
             }
+            this.state.expressionErrors = []
             for (let expression of this.state.expressions) {
                 let data = this.evaluateExpression(expression.name)
+                if ('error' in data) {
+                    this.state.expressionErrors.push(data['error'])
+                    data = {x: 0, y: 0}
+                } else {
+                    this.state.expressionErrors.push(null)
+                }
                 console.log(data)
-
                 datasets.push({
                     name: expression.name,
                     // type: 'scattergl',
