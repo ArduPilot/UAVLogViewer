@@ -3,10 +3,10 @@
     <div class="nav-side-menu col-lg-2">
 
         <h1 class="brand">
-            <a class="github" href="https://github.com/williangalvani/tlogviewer">
+            <a class="github" href="https://github.com/williangalvani/uavlogviewer">
             <img :src="require('../assets/GitHub-Mark-64px.png')"/>
             </a>
-            <a href="/"><b>TLog</b>viewer<i class="fas fa-plane"></i></a></h1>
+            <a href="/"><b>UAV</b> Log Viewer<i class="fas fa-plane"></i></a></h1>
         <!-- TABHOLDER -->
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <b-collapse class="menu-content collapse out" id="menucontent" visible>

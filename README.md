@@ -1,4 +1,4 @@
-# TlogViewer
+# UAV Log Viewer
 
 ![log seeking](preview.gif "Logo Title Text 1")
 
