@@ -206,6 +206,14 @@ export default {
                 document.getElementById(name).style.display === 'none') {
                 this.$root.$emit('bv::toggle::collapse', name)
             }
+        },
+        findMessagesInExpression (expression) {
+            // delete all expressions after dots (and dots)
+            let toDelete = /\.[A-Za-z-0-9_]+/g
+            let name = expression.replace(toDelete, '')
+            let RE = /[A-Z][A-Z0-9_]+/g
+            let fields = name.match(RE)
+            return fields
         }
     },
     computed: {
@@ -235,7 +243,6 @@ export default {
         },
         availableMessagePresets () {
             let dict = {}
-            let RE = /[A-Z][A-Z0-9_]+\b/g
             // do it for default messages
             for (const [key, value] of Object.entries(this.messagePresets)) {
                 let missing = false
@@ -245,7 +252,7 @@ export default {
                     if (field[0] === '') {
                         continue
                     }
-                    for (let match of field[0].match(RE)) {
+                    for (let match of this.findMessagesInExpression(field[0])) {
                         if (!(match in this.state.messageTypes)) {
                             missing = true
                             console.log(match + ' is missing!')
@@ -269,7 +276,7 @@ export default {
                 let color = 0
                 for (let field of value) {
                     // If all of the expressions match, add this and move on
-                    for (let match of field[0].match(RE)) {
+                    for (let match of this.findMessagesInExpression(field[0])) {
                         if (!(match.split('.')[0] in this.state.messageTypes)) {
                             missing = true
                         }
