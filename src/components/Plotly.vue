@@ -444,9 +444,20 @@ export default {
             }
             return names.join(', ')
         },
+        findMessagesInExpression (expression) {
+            // delete all expressions after dots (and dots)
+            let toDelete = /\.[A-Za-z-0-9_]+/g
+            let name = expression.replace(toDelete, '')
+            let RE = /[A-Z][A-Z0-9_]+/g
+            let fields = name.match(RE)
+            return fields
+        },
         expressionCanBePlotted (expression, reask = false) {
-            let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
-            let fields = expression.name.match(RE)
+            // TODO: USE this regex with lookahead once firefox supports it
+            // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
+            // let fields = expression.name.match(RE)
+            let fields = this.findMessagesInExpression(expression.name)
+
             if (fields === null) {
                 return true
             }
@@ -469,8 +480,9 @@ export default {
                 return this.cache[expression1]
             }
             console.log('MISS! evaluating : ' + expression1)
-            let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
-            let fields = expression1.match(RE)
+            // TODO: USE this regex with lookahead once firefox supports it
+            // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
+            let fields = this.findMessagesInExpression(expression1)
             fields = fields === null ? [] : fields
             let messages = fields.lenght !== 0 ? (fields.map(field => field.split('.')[0])) : []
 
