@@ -564,10 +564,7 @@ export class DataflashParser {
             if (msgs.GWk[i] > 1000) { // lousy validation
                 let weeks = msgs.GWk[i]
                 let ms = msgs.GMS[i]
-                let datum = new Date(1980, 1, 6, 0, 0, 0)
-                datum.setDate(datum.getDate() + weeks * 7)
-                datum.setSeconds(datum.getSeconds() + ms / 1000)
-                return datum
+                return new Date((315964800.0 + ((60 * 60 * 24 * 7) * weeks) + ms / 1000.0) * 1000.0)
             }
         }
     }
