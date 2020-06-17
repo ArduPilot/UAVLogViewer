@@ -136,6 +136,12 @@ export default {
             let saved = window.localStorage.getItem('savedFields')
             if (saved !== null) {
                 this.userPresets = JSON.parse(saved)
+                for (let preset in this.userPresets) {
+                    for (let message in this.userPresets[preset]) {
+                        // Field 3 means it is a user preset and can be deleted
+                        this.userPresets[preset][message][3] = 1
+                    }
+                }
             }
         },
         handleMessageTypes (messageTypes) {
@@ -213,6 +219,9 @@ export default {
             let name = expression.replace(toDelete, '')
             let RE = /[A-Z][A-Z0-9_]+/g
             let fields = name.match(RE)
+            if (fields === null) {
+                return []
+            }
             return fields
         }
     },

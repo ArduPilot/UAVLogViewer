@@ -26,7 +26,8 @@
                         >
                             {{nodeName}}
                         </a>
-                        <a @click="deletePreset(name+nodeName)" v-if="newNode.user">
+                        <!-- TODO: remove this hacky check when presets use a better data sctructure -->
+                        <a @click="deletePreset(name+nodeName)" v-if="newNode[Object.keys(newNode)[0]][0][3] === 1">
                             <i class="remove-icon fas fa-trash" title="Delete preset"></i>
                         </a>
 
