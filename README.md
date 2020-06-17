@@ -3,7 +3,7 @@
 ![log seeking](preview.gif "Logo Title Text 1")
 
  This is a Javascript based log viewer for Mavlink telemetry and dataflash logs.
- [Live demo here](http://tlog.ibexcps.com).
+ [Live demo here](http://plot.ardupilot.com).
 
 ## Build Setup
 
