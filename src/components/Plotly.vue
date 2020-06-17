@@ -547,15 +547,17 @@ export default {
             console.log('plot()')
             let _this = this
             let datasets = []
-
+            this.state.expressionErrors = []
+            let errors = []
             for (let expression of this.state.expressions) {
-                if (!this.expressionCanBePlotted(expression, true)) {
-                    setTimeout(this.plot, 300)
-                    console.log('plot() postponed and re-asked')
+                if (!this.expressionCanBePlotted(expression, false)) {
+                    errors.push('INVALID MESSAGE')
+                    this.state.expressionErrors = errors
                     return
                 }
+                errors.push(null)
             }
-            this.state.expressionErrors = []
+
             for (let expression of this.state.expressions) {
                 let data = this.evaluateExpression(expression.name)
                 if ('error' in data) {
