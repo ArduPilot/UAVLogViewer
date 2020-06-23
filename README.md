@@ -26,3 +26,23 @@ npm run e2e
 # run all tests
 npm test
 ```
+
+# Docker
+
+``` bash
+
+# Build Docker Image
+docker build -t <your username>/uavlogviewer .
+
+# Run Docker Image
+docker run -p 8080:8080 -d <your username>/uavlogviewer
+
+# View Running Containers
+docker ps
+
+# View Container Log
+docker logs <container id>
+
+# Navigate to localhost:8080 in your web browser
+
+```
