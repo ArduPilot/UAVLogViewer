@@ -36,7 +36,7 @@ jobs:
             - run: selenium-standalone start &
             - run: npm install
             - run: npm run build --if-present
-            - run: wget https://dl.google.com/linux/deb/pool/main/g/google-chrome-stable/google-chrome-stable_70.0.3538.77-1_amd64.deb
+            - run: wget http://mirror.unesp.br/deepin/pool/non-free/g/google-chrome-stable/google-chrome-stable_70.0.3538.77-1_amd64.deb
             - run: sudo apt update
             - run: sudo apt install -y ./google-chrome-stable_70.0.3538.77-1_amd64.deb --allow-downgrades
             - run: sudo apt install -y default-jdk
