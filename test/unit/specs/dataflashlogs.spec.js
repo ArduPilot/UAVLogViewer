@@ -24,7 +24,7 @@ describe('parse binary logs', () => {
         if (a.indexOf('Plane') !== -1 && a.indexOf('rover') !== -1) {
             expect(DataflashDataExtractor.extractArmedEvents(messages).length).toBeGreaterThan(0)
         }
-        expect(Object.keys(DataflashDataExtractor.extractAttitudes(messages)).length).toBeGreaterThan(100)
+        expect(Object.keys(DataflashDataExtractor.extractAttitudes(messages)).length).toBeGreaterThan(50)
         expect(DataflashDataExtractor.extractFlightModes(messages).length).toBeGreaterThan(0)
 
         expect(DataflashDataExtractor.extractParams(messages)).toBeDefined()
@@ -33,6 +33,6 @@ describe('parse binary logs', () => {
         let trajectory = DataflashDataExtractor.extractTrajectory(messages)
         expect(Object.keys(trajectory).length).toBeGreaterThan(1)
         let firstItem = Object.keys(trajectory)[0]
-        expect(trajectory[firstItem].trajectory.length).toBeGreaterThan(100)
+        expect(trajectory[firstItem].trajectory.length).toBeGreaterThan(10)
     })
 })
