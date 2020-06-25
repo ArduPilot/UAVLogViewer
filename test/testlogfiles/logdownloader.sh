@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-if [ -d "/tmp/testlogs" ]
-then
-    echo "cache exists, quitting"
-else
+if [ ! -d "/tmp/testlogs" ]; then
+    echo "log files not found, downloading..."
     mkdir /tmp/testlogs
     wget http://autotest.ardupilot.org/HeliCopter-test.tlog --directory-prefix=/tmp/testlogs/
     wget http://autotest.ardupilot.org/ArduPlane-test.tlog --directory-prefix=/tmp/testlogs/
