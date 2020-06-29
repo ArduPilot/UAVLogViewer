@@ -330,10 +330,11 @@ export default {
         width: 100%;
     }
     li.field {
-        line-height: 25px;
+        line-height: 29px;
         padding-left: 40px;
         font-size: 90%;
         display: inline-block;
+        vertical-align: middle;
         width: 100%;
     }
     li.type {
