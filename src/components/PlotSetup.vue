@@ -193,7 +193,7 @@ export default {
     }
 
     li.field {
-        line-height: 20px;
+        line-height: 26px;
         padding-left: 20px;
         font-size: 90%;
     }
@@ -246,8 +246,9 @@ export default {
     }
 
     .fa-trash {
-        margin: 1px;
+        margin: 12px 5px 10px 1px !important;
         font-size: 10px;
+        float: right;
     }
 
     .error {

@@ -237,7 +237,7 @@ a.centered-section {
     }
 
     i {
-        margin: 10px;
+        margin: 8px;
     }
 
     /* SHOW / HIDE */
