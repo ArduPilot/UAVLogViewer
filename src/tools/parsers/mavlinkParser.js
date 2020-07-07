@@ -234,8 +234,6 @@ export class MavlinkParser {
         if (messages[0].name === 'HEARTBEAT') {
             fields.push('asText')
             fields.push('craft')
-        } else if (messages[0].name === 'PARAM_VALUE') {
-            fields.push('param_id')
         } else if (messages[0].name === 'SYSTEM_TIME') {
             fields.push('time_unix_usec')
         }
