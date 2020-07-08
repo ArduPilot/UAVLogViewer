@@ -193,7 +193,7 @@ export default {
                     for (let message of messages) {
                         if (!_this.state.messages.hasOwnProperty(message)) {
                             counter += 1
-                            if (counter > 6) {
+                            if (counter > 30) { // 30 * 300ms = 9 s timeout
                                 console.log('not resolving')
                                 clearInterval(interval)
                                 reject(new Error('Could not load messageType'))
