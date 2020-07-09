@@ -18689,7 +18689,10 @@ MAVLink.prototype.parseType = function (type) {
             this.startTime = timestamp/1000
         }
         m.time_boot_ms = timestamp/1000 - this.startTime
-        messages.push(m)
+        // Bad sanity checker, ignore messages if they claim to be more than 100 days after start of logging
+        if (m.time_boot_ms < 8640000000) {
+            messages.push(m)
+        }
     }
     if (messages.length > 0) {
         this.emit('message', messages)
