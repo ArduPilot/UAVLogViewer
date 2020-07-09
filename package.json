@@ -22,6 +22,7 @@
     "epic-spinners": "^1.1.0",
     "fast-xml-parser": "^3.16.0",
     "git-revision-webpack-plugin": "^3.0.4",
+    "int64-buffer": "^0.99.1007",
     "jquery": "^3.4.1",
     "jspack": "0.0.4",
     "mavlink_common_v1.0": "file:mavlink_common_v1.0",

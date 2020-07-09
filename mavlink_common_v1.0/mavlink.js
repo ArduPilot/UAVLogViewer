@@ -6,6 +6,7 @@ Generated from: ardupilotmega.xml,common.xml,uAvionix.xml,icarous.xml
 Note: this file has been auto-generated. DO NOT EDIT
 */
 
+const Uint64BE = require("int64-buffer").Uint64BE;
 const jspack = require('jspack').jspack
 const _ = require('underscore')
 const events = require('events')
@@ -18250,7 +18251,7 @@ MAVLink = function (logger, srcSystem, srcComponent) {
     this.buf = Buffer.alloc(0)
     this.bufInError = Buffer.alloc(0)
     this.bufmap = {}
-    this.timemap = {}
+    this.startTime = null
 
     this.srcSystem = typeof srcSystem === 'undefined' ? 0 : srcSystem
     this.srcComponent = typeof srcComponent === 'undefined' ? 0 : srcComponent
@@ -18678,32 +18679,17 @@ MAVLink.prototype.parseType = function (type) {
         console.log('could not find message: ' + type)
         return
     }
-    for (let i of this.bufmap[mavlink.nameMap[type]]) {
-        let m = this.decode(this.buf.slice(i[0], i[1]))
-
-        // TODO: Fix this somehow. this is a hack to add time information to messages without it.
-        // It populates a "timemap", which is dict of timestamp at each offset, and whenever a message has no
-        // time information, it goes back in time until it finds an time information
-        let start = i[0]
-        // If there is a timestamp, save to the map
-        if ('time_boot_ms' in m) {
-            this.timemap[start] = m.time_boot_ms
-        } else {
-            // if there is not, seek back until we find a valid timestamp, and use that
-            m.time_boot_ms = 0
-            let index = start
-            while (index > 0) {
-                if (index in this.timemap) {
-                    m.time_boot_ms = this.timemap[index]
-                    break
-                }
-                index -= 1
-            }
+    for (let offsets of this.bufmap[mavlink.nameMap[type]]) {
+        let m = this.decode(this.buf.slice(offsets[0], offsets[1]))
+        // The 8 bytes preceding the mavlink message are actually a very useful timestamp saved by the GCS!
+        let slice = this.buf.slice(offsets[0]-8, offsets[0])
+        let timestamp = new Uint64BE(slice)
+        if (this.startTime === null)
+        {
+            this.startTime = timestamp/1000
         }
-        // This filters out the first messages, which have no time_boot_ms information
-        if (m.time_boot_ms !== 0) {
-            messages.push(m)
-        }
+        m.time_boot_ms = timestamp/1000 - this.startTime
+        messages.push(m)
     }
     if (messages.length > 0) {
         this.emit('message', messages)
