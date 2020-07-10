@@ -91,12 +91,6 @@ export default {
                         parseFloat(this.state.params.get('RC2_REV')),
                         parseFloat(this.state.params.get('RC3_REV')),
                         parseFloat(this.state.params.get('RC4_REV'))]
-                } else if (this.state.params.get('RC1_REVERSED') !== undefined) {
-                    reverses = [
-                        parseFloat(this.state.params.get('RC1_REVERSED')) ? -1 : 1,
-                        parseFloat(this.state.params.get('RC2_REVERSED')) ? -1 : 1,
-                        parseFloat(this.state.params.get('RC3_REVERSED')) ? -1 : 1,
-                        parseFloat(this.state.params.get('RC4_REVERSED')) ? -1 : 1]
                 }
                 let trims = [1500, 1500, 1500, 1500]
                 if (this.state.params.get('RC4_TRIM') !== undefined) {
