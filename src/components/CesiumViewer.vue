@@ -228,7 +228,10 @@ export default {
                     /*
                     * Second step of setup, happens after the height of the starting point has been returned by Cesium
                     * */
-                    this.heightOffset = updatedPositions[0].height
+                    this.heightOffset = 0
+                    for (let pos of updatedPositions) {
+                        this.heightOffset = Math.max(this.heightOffset, pos.height)
+                    }
                     this.processTrajectory(this.state.current_trajectory)
                     this.addModel()
                     this.updateAndPlotTrajectory()
@@ -522,7 +525,7 @@ export default {
                             position = Cartesian3.fromDegrees(
                                 pos[0],
                                 pos[1],
-                                Math.max(pos[2] + this.heightOffset, this.corrected_trajectory[posIndex].height)
+                                pos[2] + this.heightOffset
                             )
                         }
                         this.positions.push(position)
@@ -645,7 +648,7 @@ export default {
                         this.position = Cartesian3.fromDegrees(
                             pos[0],
                             pos[1],
-                            Math.max(pos[2] + this.heightOffset, this.heightOffset)
+                            pos[2] + this.heightOffset
                         )
                         trajectory.push(this.position)
                         let color = this.getModeColor(pos[3])
