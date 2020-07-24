@@ -309,11 +309,10 @@ export default {
         },
 
         addPlots (plots) {
-            console.log(plots)
             this.state.plot_loading = true
             let requested = new Set()
-            const RE = /[A-Z][A-Z0-9_]+\.[a-zA-Z0-9]+/g
-            let RE2 = /[A-Z][A-Z0-9_]+\b/g
+            const RE = /[A-Z][A-Z0-9_]+(\[[0-9]\])\.[a-zA-Z0-9]+/g
+            let RE2 = /[A-Z][A-Z0-9_]+(\[[0-9]\])/g
             for (let plot of plots) {
                 let expression = plot[0]
                 // ensure we have the data
@@ -448,7 +447,7 @@ export default {
             // delete all expressions after dots (and dots)
             let toDelete = /\.[A-Za-z-0-9_]+/g
             let name = expression.replace(toDelete, '')
-            let RE = /[A-Z][A-Z0-9_]+/g
+            let RE = /[A-Z][A-Z0-9_]+(\[[0-9]\])?/g
             let fields = name.match(RE)
             return fields
         },
