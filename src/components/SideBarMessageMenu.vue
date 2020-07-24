@@ -25,7 +25,7 @@
             <template v-for="key of Object.keys(this.messageTypesFiltered).sort()">
                 <li class="type" v-bind:key="key">
                     <div v-b-toggle="'type' + key">
-                        <a class="section">{{key}}
+                        <a class="section">{{key}} <span v-if="messageTypes[key].isArray">{{"[...]"}}</span>
                             <i class="expand fas fa-caret-down"></i></a>
                     </div>
                 </li>
@@ -217,7 +217,7 @@ export default {
             // delete all expressions after dots (and dots)
             let toDelete = /\.[A-Za-z-0-9_]+/g
             let name = expression.replace(toDelete, '')
-            let RE = /[A-Z][A-Z0-9_]+/g
+            let RE = /[A-Z][A-Z0-9_]+(\[0-9\])?/g
             let fields = name.match(RE)
             if (fields === null) {
                 return []

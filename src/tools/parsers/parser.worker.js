@@ -17,6 +17,6 @@ self.addEventListener('message', function (event) {
         let data = event.data.file
         parser.processData(data)
     } else if (event.data.action === 'loadType') {
-        parser.loadType(event.data.type)
+        parser.loadType(event.data.type.split('[')[0])
     }
 })

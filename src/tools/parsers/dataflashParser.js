@@ -389,13 +389,68 @@ export class DataflashParser {
             }
         }
         delete this.messages[name]
+        console.log(parsed)
         this.messages[name] = parsed
-        this.fixDataOnce(name)
-        this.simplifyData(name)
+
         self.postMessage({percentage: 100})
-        self.postMessage({messageType: name, messageList: this.messages[name]})
+        if (parsed.length && Object.keys(parsed[0]).includes('C')) {
+            let instances = []
+            for (let msg of parsed) {
+                try {
+                    instances[msg.C].push(msg)
+                } catch (e) {
+                    instances[msg.C] = [ msg ]
+                }
+            }
+            let i = 0
+            for (let instance of instances) {
+                let newName = name + '[' + i + ']'
+                this.messages[newName] = instance
+                console.log(instance)
+                this.fixDataOnce(newName)
+                console.log(this.messages[newName])
+                this.simplifyData(newName)
+                self.postMessage({messageType: newName,
+                    messageList: this.messages[newName]})
+                console.log(this.messages[newName])
+                i += 1
+            }
+            console.log(instances)
+        } else {
+            this.fixDataOnce(name)
+            this.simplifyData(name)
+            self.postMessage({messageType: name, messageList: this.messages[name]})
+        }
         this.alreadyParsed.push(name)
         return parsed
+    }
+
+    checkNumberOfInstances (name) {
+        // Similar to parseOffset, but finishes earlier and updates messageTypes
+        let type = this.getMsgType(name)
+        let numberOfInstances = 1
+        for (var i = 0; i < this.msgType.length; i++) {
+            if (type === this.msgType[i]) {
+                this.offset = this.offsetArray[i]
+                try {
+                    let temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
+                    if (temp['name'] != null) {
+                        let msg = temp
+                        if (!msg.hasOwnProperty('C')) {
+                            break
+                        }
+                        if ((msg['C'] + 1) < numberOfInstances) {
+                            return numberOfInstances
+                        } else {
+                            numberOfInstances = msg['C'] + 1
+                        }
+                    }
+                } catch (e) {
+                    console.log(e)
+                }
+            }
+        }
+        return numberOfInstances
     }
 
     timestamp (TimeUs) {
@@ -527,7 +582,9 @@ export class DataflashParser {
         if (['FMTU'].indexOf(name) === -1) {
             if (this.messageTypes.hasOwnProperty(name)) {
                 let fields = this.messageTypes[name].expressions
-                fields.push('time_boot_ms')
+                if (!fields.includes('time_boot_ms')) {
+                    fields.push('time_boot_ms')
+                }
                 let mergedData = {}
                 for (let field of fields) {
                     mergedData[field] = []
@@ -600,11 +657,23 @@ export class DataflashParser {
                             }
                         }
                     }
-                    messageTypes[msg.Name] = {
-                        expressions: fields,
-                        units: msg.units,
-                        multipiers: msg.multipliers,
-                        complexFields: complexFields
+                    let numberOfInstances = this.checkNumberOfInstances(msg.Name)
+                    if (numberOfInstances > 1) {
+                        for (let instance = 0; instance < numberOfInstances; instance++) {
+                            messageTypes[msg.Name + '[' + instance + ']'] = {
+                                expressions: fields,
+                                units: msg.units,
+                                multipiers: msg.multipliers,
+                                complexFields: complexFields
+                            }
+                        }
+                    } else {
+                        messageTypes[msg.Name] = {
+                            expressions: fields,
+                            units: msg.units,
+                            multipiers: msg.multipliers,
+                            complexFields: complexFields
+                        }
                     }
                 }
             }
