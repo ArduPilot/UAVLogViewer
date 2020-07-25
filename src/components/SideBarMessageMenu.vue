@@ -103,31 +103,38 @@ export default {
     methods: {
         loadXmlPresets () {
             // eslint-disable-next-line
-            let contents = require('../assets/mavgraphs.xml')
             let graphs = {}
-            let result = fastXmlParser.parse(contents.default, {ignoreAttributes: false})
-            console.log(result)
-            let igraphs = result['graphs']
-            for (let graph of igraphs.graph) {
-                let i = ''
-                let name = graph['@_name']
-                if (!Array.isArray(graph.expression)) {
-                    graph.expression = [graph.expression]
-                }
-                for (const expression of graph.expression) {
-                    let fields = []
-                    for (let exp of expression.split(' ')) {
-                        if (exp.indexOf(':') >= 0) {
-                            exp = exp.replace(':2', '')
-                            fields.push([exp, 1])
-                        } else {
-                            fields.push([exp, 0])
-                        }
+            let files = [
+                require('../assets/mavgraphs.xml'),
+                require('../assets/mavgraphs2.xml'),
+                require('../assets/ekfGraphs.xml'),
+                require('../assets/ekf3Graphs.xml')
+            ]
+            for (let contents of files) {
+                let result = fastXmlParser.parse(contents.default, {ignoreAttributes: false})
+                console.log(result)
+                let igraphs = result['graphs']
+                for (let graph of igraphs.graph) {
+                    let i = ''
+                    let name = graph['@_name']
+                    if (!Array.isArray(graph.expression)) {
+                        graph.expression = [graph.expression]
                     }
-                    graphs[name + i] = fields
-                    // workaround to avoid replacing a key
-                    // TODO: implement this in a way that doesn't need this hack
-                    i += ' '
+                    for (const expression of graph.expression) {
+                        let fields = []
+                        for (let exp of expression.split(' ')) {
+                            if (exp.indexOf(':') >= 0) {
+                                exp = exp.replace(':2', '')
+                                fields.push([exp, 1])
+                            } else {
+                                fields.push([exp, 0])
+                            }
+                        }
+                        graphs[name + i] = fields
+                        // workaround to avoid replacing a key
+                        // TODO: implement this in a way that doesn't need this hack
+                        i += ' '
+                    }
                 }
             }
             return graphs
