@@ -311,7 +311,7 @@ export default {
         addPlots (plots) {
             this.state.plot_loading = true
             let requested = new Set()
-            const RE = /[A-Z][A-Z0-9_]+(\[[0-9]\])\.[a-zA-Z0-9]+/g
+            const RE = /[A-Z][A-Z0-9_]+(\[[0-9]\])?\.[a-zA-Z0-9]+/g
             let RE2 = /[A-Z][A-Z0-9_]+(\[[0-9]\])/g
             for (let plot of plots) {
                 let expression = plot[0]
@@ -463,6 +463,7 @@ export default {
             for (let field of fields) {
                 if (!(field in this.state.messages) || this.state.messages[field].length === 0) {
                     console.log('ERROR: attempted to plot unavailable message: ' + field)
+                    this.state.plot_loading = false
                     if (reask) {
                         this.$eventHub.$emit('loadType', field)
                     }

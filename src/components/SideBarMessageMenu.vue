@@ -230,6 +230,25 @@ export default {
                 return []
             }
             return fields
+        },
+        isAvailable (msg) {
+            console.log(msg)
+            let msgRe = /[A-Z][A-Z0-9_]+(\[[0-9]\])?(\.[a-zA-Z0-9_]+)?/g
+            let match = msg[0].match(msgRe)
+            if (!match) {
+                return false
+            }
+            let msgName = match[0].split('.')[0]
+            if (!this.messageTypes.hasOwnProperty(msgName)) {
+                console.log('missing message ' + msgName)
+                return false
+            }
+            let fieldName = match[0].split('.')[1]
+            if (!this.messageTypes[msgName].complexFields.hasOwnProperty(fieldName)) {
+                console.log('missing field ' + msgName + '.' + fieldName)
+                return false
+            }
+            return true
         }
     },
     computed: {
@@ -268,12 +287,7 @@ export default {
                     if (field[0] === '') {
                         continue
                     }
-                    for (let match of this.findMessagesInExpression(field[0])) {
-                        if (!(match in this.state.messageTypes)) {
-                            missing = true
-                            console.log(match + ' is missing!')
-                        }
-                    }
+                    missing = missing || !this.isAvailable(field)
                     if (!missing) {
                         if (!(key in dict)) {
                             dict[key] = {messages: [[...field, color++]]}
@@ -292,11 +306,7 @@ export default {
                 let color = 0
                 for (let field of value) {
                     // If all of the expressions match, add this and move on
-                    for (let match of this.findMessagesInExpression(field[0])) {
-                        if (!(match.split('.')[0] in this.state.messageTypes)) {
-                            missing = true
-                        }
-                    }
+                    missing = missing || !this.isAvailable(field)
                     if (!missing) {
                         if (!(key in dict)) {
                             dict[key] = {messages: [[...field, color++]]}
