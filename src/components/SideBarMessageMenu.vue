@@ -319,7 +319,7 @@ export default {
             let newDict = {}
             for (const [key, value] of Object.entries(dict)) {
                 let current = newDict
-                let fields = key.split('/')
+                let fields = key.trim().split('/')
                 let lastField = fields.pop()
                 for (let field of fields) {
                     if (!(field in current)) {
