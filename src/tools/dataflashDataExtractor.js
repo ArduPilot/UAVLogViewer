@@ -145,7 +145,11 @@ export class DataflashDataExtractor {
             let msgs = messages['EV']
             for (let i in msgs.time_boot_ms) {
                 const event = events[msgs.Id[i]]
-                armedState.push([msgs.time_boot_ms[i], event])
+                if (event === undefined) {
+                    armedState.push([msgs.time_boot_ms[i], 'Unk: ' + msgs.Id[i]])
+                } else {
+                    armedState.push([msgs.time_boot_ms[i], event])
+                }
             }
         }
         return armedState

@@ -47,11 +47,14 @@ export class MavlinkDataExtractor {
         let armedState = []
         if ('HEARTBEAT' in messages) {
             let msgs = messages['HEARTBEAT']
-            armedState = [[msgs.time_boot_ms[0], (msgs.base_mode[0] & 0b10000000) === 128]]
+            let event = (msgs.base_mode[0] & 0b10000000) === 128 ? 'Armed' : 'Disarmed'
+            armedState = [[msgs.time_boot_ms[0], event]]
             for (let i in msgs.time_boot_ms) {
                 if (msgs.type[i] !== mavlink.MAV_TYPE_GCS) {
-                    if (((msgs.base_mode[i] & 0b10000000) === 128) !== armedState[armedState.length - 1][1]) {
-                        armedState.push([msgs.time_boot_ms[i], (msgs.base_mode[i] & 0b10000000) === 128])
+                    let newEvent = (msgs.base_mode[i] & 0b10000000) === 128 ? 'Armed' : 'Disarmed'
+                    if (newEvent !== armedState[armedState.length - 1][1]) {
+                        let event = (msgs.base_mode[i] & 0b10000000) === 128 ? 'Armed' : 'Disarmed'
+                        armedState.push([msgs.time_boot_ms[i], event])
                     }
                 }
             }

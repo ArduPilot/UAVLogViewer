@@ -8,6 +8,34 @@ import {store} from './Globals.js'
 let Color = require('color')
 
 let timeformat = ':02,2f'
+let annotationsEvents = []
+let annotationsModes = []
+
+const updatemenus = [
+    {
+        buttons: [
+            {
+                args: ['annotations', [...annotationsEvents, ...annotationsModes]],
+                label: 'Events',
+                method: 'relayout'
+            },
+            {
+                args: ['annotations', annotationsModes],
+                label: 'No events',
+                method: 'relayout'
+            }
+        ],
+        direction: 'left',
+        pad: {'r': 10, 't': 10},
+        showactive: true,
+        type: 'buttons',
+        x: 0.1,
+        xanchor: 'left',
+        y: 1.1,
+        yanchor: 'top'
+    }
+]
+
 let plotOptions = {
     legend: {
         x: 0,
@@ -718,26 +746,34 @@ export default {
             })
         },
         addEvents () {
-            let annotations = []
-            for (let i of this.state.events) {
-                annotations.push(
+            annotationsEvents = []
+            let i = -300
+            for (let event of this.state.events) {
+                console.log(event)
+                annotationsEvents.push(
                     {
                         xref: 'x',
                         yref: 'paper',
-                        x: i[0],
+                        x: event[0],
                         y: 0,
                         yanchor: 'bottom',
-                        text: i[1].toLowerCase(),
+                        text: event[1].toLowerCase(),
                         showarrow: true,
-                        ay: 30,
+                        arrowwidth: 1,
+                        arrowcolor: '#999999',
+                        ay: i,
                         ax: 0
                     }
                 )
+                i += 23
+                if (i > 0) {
+                    i = -300
+                }
             }
             let modeChanges = [...this.state.flight_mode_changes]
             modeChanges.push([this.gd.layout.xaxis.range[1], null])
             for (let i = 0; i < modeChanges.length - 2; i++) {
-                annotations.push(
+                annotationsModes.push(
                     {
                         xref: 'x',
                         // y-reference is assigned to the plot paper [0,1]
@@ -756,8 +792,10 @@ export default {
                 )
             }
             Plotly.relayout(this.gd, {
-                annotations: annotations
+                annotations: [...annotationsEvents, ...annotationsModes],
+                updatemenus: updatemenus
             })
+            updatemenus[0].buttons[0].args = ['annotations', [...annotationsEvents, ...annotationsModes]]
         }
     },
     computed: {
