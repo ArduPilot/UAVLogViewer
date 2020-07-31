@@ -10,10 +10,16 @@ let Color = require('color')
 let timeformat = ':02,2f'
 let annotationsEvents = []
 let annotationsModes = []
+let annotationsParams = []
 
 const updatemenus = [
     {
         buttons: [
+            {
+                args: ['annotations', [...annotationsEvents, ...annotationsModes, ...annotationsParams]],
+                label: 'Events + Params',
+                method: 'relayout'
+            },
             {
                 args: ['annotations', [...annotationsEvents, ...annotationsModes]],
                 label: 'Events',
@@ -21,7 +27,7 @@ const updatemenus = [
             },
             {
                 args: ['annotations', annotationsModes],
-                label: 'No events',
+                label: 'Nothing',
                 method: 'relayout'
             }
         ],
@@ -665,6 +671,7 @@ export default {
 
             this.addModeShapes()
             this.addEvents()
+            this.addParamChanges()
 
             this.state.plot_loading = false
 
@@ -795,7 +802,72 @@ export default {
                 annotations: [...annotationsEvents, ...annotationsModes],
                 updatemenus: updatemenus
             })
-            updatemenus[0].buttons[0].args = ['annotations', [...annotationsEvents, ...annotationsModes]]
+            updatemenus[0].buttons[0].args = ['annotations', [...annotationsEvents, ...annotationsModes,
+                ...annotationsParams]]
+            updatemenus[0].buttons[1].args = ['annotations', [...annotationsEvents, ...annotationsModes]]
+            updatemenus[0].buttons[2].args = ['annotations', annotationsModes]
+        },
+        addParamChanges () {
+            let i = -300
+            annotationsParams = []
+            let firstFetch = new Set()
+            let startAt = null
+            for (let change of this.state.params.changeArray) {
+                if (!firstFetch.has(change[1])) {
+                    firstFetch.add(change[1])
+                } else {
+                    startAt = change[0]
+                    break
+                }
+            }
+            let last = [0, 0]
+            for (let change of this.state.params.changeArray) {
+                if (change[0] < startAt) {
+                    continue
+                }
+                if (change[2] === last[2] && change[1] === last[1]) {
+                    console.log('got a repeated bastard')
+                    continue
+                }
+                last = change
+                annotationsEvents.push(
+                    {
+                        xref: 'x',
+                        yref: 'paper',
+                        x: change[0],
+                        y: 0,
+                        yanchor: 'bottom',
+                        text: change[1] + '->' + change[2].toFixed(4),
+                        showarrow: true,
+                        arrowwidth: 1,
+                        arrowcolor: '#999999',
+                        ay: i,
+                        ax: 0
+                    }
+                )
+                i += 23
+                if (i > 0) {
+                    i = -300
+                }
+            }
+            Plotly.relayout(this.gd, {
+                annotations:
+                [
+                    ...annotationsEvents,
+                    ...annotationsModes,
+                    ...annotationsParams
+                ],
+                updatemenus: updatemenus
+            })
+            updatemenus[0].buttons[0].args =
+            [
+                'annotations',
+                [
+                    ...annotationsEvents,
+                    ...annotationsModes,
+                    ...annotationsParams
+                ]
+            ]
         }
     },
     computed: {
