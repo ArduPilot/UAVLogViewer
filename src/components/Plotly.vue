@@ -766,7 +766,6 @@ export default {
             annotationsEvents = []
             let i = -300
             for (let event of this.state.events) {
-                console.log(event)
                 annotationsEvents.push(
                     {
                         xref: 'x',
@@ -835,8 +834,8 @@ export default {
                 if (change[0] < startAt) {
                     continue
                 }
+                // This takes care of repeated param changed logs we get for some reason
                 if (change[2] === last[2] && change[1] === last[1]) {
-                    console.log('got a repeated bastard')
                     continue
                 }
                 last = change

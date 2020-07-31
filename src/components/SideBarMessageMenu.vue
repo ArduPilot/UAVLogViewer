@@ -112,7 +112,6 @@ export default {
             ]
             for (let contents of files) {
                 let result = fastXmlParser.parse(contents.default, {ignoreAttributes: false})
-                console.log(result)
                 let igraphs = result['graphs']
                 for (let graph of igraphs.graph) {
                     let i = ''
@@ -232,7 +231,6 @@ export default {
             return fields
         },
         isAvailable (msg) {
-            console.log(msg)
             let msgRe = /[A-Z][A-Z0-9_]+(\[[0-9]\])?(\.[a-zA-Z0-9_]+)?/g
             let match = msg[0].match(msgRe)
             if (!match) {
@@ -240,7 +238,6 @@ export default {
             }
             let msgName = match[0].split('.')[0]
             if (!this.messageTypes.hasOwnProperty(msgName)) {
-                console.log('missing message ' + msgName)
                 return false
             }
             let fieldName = match[0].split('.')[1]

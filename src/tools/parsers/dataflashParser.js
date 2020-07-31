@@ -389,7 +389,6 @@ export class DataflashParser {
             }
         }
         delete this.messages[name]
-        console.log(parsed)
         this.messages[name] = parsed
 
         self.postMessage({percentage: 100})
