@@ -244,6 +244,9 @@ export default {
                 return false
             }
             let fieldName = match[0].split('.')[1]
+            if (fieldName === undefined) {
+                return true
+            }
             if (!this.messageTypes[msgName].complexFields.hasOwnProperty(fieldName)) {
                 console.log('missing field ' + msgName + '.' + fieldName)
                 return false

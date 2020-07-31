@@ -351,19 +351,6 @@ export default {
                 let expression = plot[0]
                 // ensure we have the data
                 let messages = expression.match(RE)
-
-                if (messages !== null) {
-                    for (const message of messages) {
-                        if (!this.state.messages.hasOwnProperty(message.split('.')[0])) {
-                            let msgName = message.split('.')[0]
-                            if (requested.has(msgName)) {
-                                continue
-                            }
-                            console.log('missing message type: ' + msgName)
-                            requested.add(msgName)
-                        }
-                    }
-                }
                 // not match ATT, GPS
                 messages = expression.match(RE2)
                 if (messages !== null) {
@@ -495,7 +482,7 @@ export default {
                 return true
             }
             for (let field of fields) {
-                if (!(field in this.state.messages) || this.state.messages[field].length === 0) {
+                if ((!(field in this.state.messageTypes) && !((field + '[0]') in this.state.messageTypes))) {
                     console.log('ERROR: attempted to plot unavailable message: ' + field)
                     this.state.plot_loading = false
                     if (reask) {
@@ -504,6 +491,20 @@ export default {
                     return false
                 }
                 console.log(field + ' is plottable')
+            }
+            return true
+        },
+        messagesAreAvailable (messages) {
+            // TODO: USE this regex with lookahead once firefox supports it
+            // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
+            // let fields = expression.name.match(RE)
+            for (let message of messages) {
+                if (!(message in this.state.messages) || this.state.messages[message].lenght === 0) {
+                    if (!((message + '[0]') in this.state.messages) ||
+                        this.state.messages[message + '[0]'].lenght === 0) {
+                        return false
+                    }
+                }
             }
             return true
         },
@@ -583,6 +584,7 @@ export default {
             let datasets = []
             this.state.expressionErrors = []
             let errors = []
+
             for (let expression of this.state.expressions) {
                 if (!this.expressionCanBePlotted(expression, false)) {
                     errors.push('INVALID MESSAGE')
@@ -590,6 +592,14 @@ export default {
                     return
                 }
                 errors.push(null)
+            }
+
+            let messages = []
+            for (let expression of this.state.expressions) {
+                messages = [...messages, ...this.findMessagesInExpression(expression.name)]
+            }
+            if (!this.messagesAreAvailable(messages)) {
+                this.waitForMessages(messages).then(this.plot).bind(this)
             }
 
             for (let expression of this.state.expressions) {
