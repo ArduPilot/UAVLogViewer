@@ -394,13 +394,19 @@ export class DataflashParser {
 
         self.postMessage({percentage: 100})
         if (parsed.length && Object.keys(parsed[0]).includes('C')) {
-            let instances = []
+            let instances = {}
             for (let msg of parsed) {
                 try {
                     instances[msg.C].push(msg)
                 } catch (e) {
                     instances[msg.C] = [ msg ]
                 }
+            }
+            if (Object.keys(instances).length === 1) {
+                this.fixDataOnce(name)
+                this.simplifyData(name)
+                self.postMessage({messageType: name, messageList: this.messages[name]})
+                return parsed
             }
             let i = 0
             for (let instance of instances) {
