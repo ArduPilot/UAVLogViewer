@@ -31,16 +31,8 @@ jobs:
               uses: actions/setup-node@v1
               with:
                   node-version: ${{ matrix.node-version }}
-            - run: npm install selenium-standalone@latest -g
-            - run: selenium-standalone install
-            - run: selenium-standalone start &
             - run: npm install
             - run: npm run build --if-present
-            - run: wget http://mirror.unesp.br/deepin/pool/non-free/g/google-chrome-stable/google-chrome-stable_70.0.3538.77-1_amd64.deb
-            - run: sudo apt update
-            - run: sudo apt install -y ./google-chrome-stable_70.0.3538.77-1_amd64.deb --allow-downgrades
-            - run: sudo apt install -y default-jdk
-            - run: npm run e2e
             - run: ./test/testlogfiles/logdownloader.sh
             - run: npm run unit
               env:
