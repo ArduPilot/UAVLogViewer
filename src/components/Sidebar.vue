@@ -6,7 +6,7 @@
             <a class="github" href="https://github.com/ardupilot/uavlogviewer">
             <img :src="require('../assets/GitHub-Mark-64px.png')"/>
             </a>
-            <a href="/"><b>UAV</b> Log Viewer<i class="fas fa-plane"></i></a></h1>
+            <a href="/"><b>UAV</b> Log Viewer<i class="fas fa-plane"></i></a><a class="github" href="https://ardupilot.org/copter/docs/common-uavlogviewer.html"><img :src="require('../assets/wiki.svg')"/></a></h1>
         <!-- TABHOLDER -->
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <b-collapse class="menu-content collapse out" id="menucontent" visible>
