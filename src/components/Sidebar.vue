@@ -3,7 +3,7 @@
     <div class="nav-side-menu col-lg-2">
 
         <h1 class="brand">
-            <a class="github" href="https://github.com/williangalvani/uavlogviewer">
+            <a class="github" href="https://github.com/ardupilot/uavlogviewer">
             <img :src="require('../assets/GitHub-Mark-64px.png')"/>
             </a>
             <a href="/"><b>UAV</b> Log Viewer<i class="fas fa-plane"></i></a></h1>
