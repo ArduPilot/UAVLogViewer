@@ -230,16 +230,23 @@ export class MavlinkDataExtractor {
 
     static extractParams (messages) {
         let params = []
+        let lastValue = {}
         if ('PARAM_VALUE' in messages) {
             let paramData = messages['PARAM_VALUE']
             for (let i in paramData.time_boot_ms) {
+                let paramName = paramData.param_id[i].replace(/[^a-z0-9A-Z_]/ig, '')
+                let paramValue = paramData.param_value[i]
+                if (lastValue.hasOwnProperty(paramName) && lastValue[paramName] === paramValue) {
+                    continue
+                }
                 params.push(
                     [
                         paramData.time_boot_ms[i],
-                        paramData.param_id[i].replace(/[^a-z0-9A-Z_]/ig, ''),
-                        paramData.param_value[i]
+                        paramName,
+                        paramValue
                     ]
                 )
+                lastValue[paramName] = paramValue
             }
         }
         if (params.length > 0) {
