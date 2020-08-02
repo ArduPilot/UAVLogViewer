@@ -24,7 +24,7 @@
             </li>
             <template v-for="key of Object.keys(this.messageTypesFiltered).sort()">
                 <li class="type" v-bind:key="key">
-                    <div v-b-toggle="'type' + key">
+                    <div v-b-toggle="'type' + key" :title="messageDocs[key] ? messageDocs[key].doc : ''">
                         <a class="section">{{key}} <span v-if="messageTypes[key].isArray">{{"[...]"}}</span>
                             <i class="expand fas fa-caret-down"></i></a>
                     </div>
@@ -33,6 +33,7 @@
                     <template v-for="item in messageTypes[key].complexFields">
                         <li @click="toggle(key, item.name)"
                             class="field"
+                            :title="messageDocs[key] ? messageDocs[key][item.name] : ''"
                             v-bind:key="key+'.'+item.name"
                             v-if="isPlottable(key,item.name)
                                 && item.name.toLowerCase().indexOf(filter.toLowerCase()) !== -1">
@@ -88,13 +89,15 @@ export default {
             // TODO: lists are nor clear, use objects instead
             messagePresets: {
             },
-            userPresets: {}
+            userPresets: {},
+            messageDocs: {}
         }
     },
     created () {
         this.$eventHub.$on('messageTypes', this.handleMessageTypes)
         this.$eventHub.$on('presetsChanged', this.loadLocalPresets)
         this.messagePresets = this.loadXmlPresets()
+        this.messageDocs = this.loadXmlDocs()
         this.loadLocalPresets()
     },
     beforeDestroy () {
@@ -149,6 +152,26 @@ export default {
                     }
                 }
             }
+        },
+        loadXmlDocs () {
+            let logDocs = {}
+            let files = [
+                require('../assets/logmetadata/plane.xml'),
+                require('../assets/logmetadata/copter.xml'),
+                require('../assets/logmetadata/tracker.xml'),
+                require('../assets/logmetadata/rover.xml')
+            ]
+            for (let contents of files) {
+                let result = fastXmlParser.parse(contents.default, {ignoreAttributes: false})
+                let igraphs = result['loggermessagefile']
+                for (let graph of igraphs.logformat) {
+                    logDocs[graph['@_name']] = {'doc': graph['description']}
+                    for (let field of graph.fields.field) {
+                        logDocs[graph['@_name']][field['@_name']] = field['description']
+                    }
+                }
+            }
+            return logDocs
         },
         handleMessageTypes (messageTypes) {
             if (this.$route.query.hasOwnProperty('plots')) {
