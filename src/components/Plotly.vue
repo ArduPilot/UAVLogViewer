@@ -839,7 +839,7 @@ export default {
                     continue
                 }
                 last = change
-                annotationsEvents.push(
+                annotationsParams.push(
                     {
                         xref: 'x',
                         yref: 'paper',
