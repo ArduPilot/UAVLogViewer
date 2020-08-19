@@ -19,10 +19,10 @@ import {
     Color,
     createDefaultImageryProviderViewModels,
     ProviderViewModel,
-    MapboxStyleImageryProvider,
     UrlTemplateImageryProvider,
     Viewer, createWorldTerrain,
     PointPrimitiveCollection,
+    IonImageryProvider,
     Entity,
     SceneMode,
     ScreenSpaceEventHandler,
@@ -104,7 +104,7 @@ export default {
                     scene3DOnly: false,
                     selectionIndicator: false,
                     shadows: true,
-                    // selectedImageryProviderViewModel: this.mapboxprovider,
+                    selectedImageryProviderViewModel: this.sentinelProvider,
                     imageryProviderViewModels: imageryProviders
 
                 })
@@ -179,6 +179,7 @@ export default {
                     *  Creates and returns the providers for viewing the Eniro, Statkart, and OpenSeaMap map layers
                     * */
                     let imageryProviders = createDefaultImageryProviderViewModels()
+                    console.log(imageryProviders)
                     imageryProviders.push(new ProviderViewModel({
                         name: 'StatKart',
                         iconUrl: require('../assets/statkart.jpg'),
@@ -191,19 +192,15 @@ export default {
                         }
                     }))
                     // save this one so it can be referenced when creating the cesium viewer
-                    this.mapboxprovider = new ProviderViewModel({
-                        name: 'MapBox',
-                        iconUrl: require('../assets/mapbox.png'),
-                        tooltip: 'Mapbox aerial imagery \nhttps://www.mapbox.com/',
+                    this.sentinelProvider = new ProviderViewModel({
+                        name: 'Sentinel 2',
+                        iconUrl: '/Widgets/Images/ImageryProviders/sentinel-2.png',
+                        tooltip: 'Sentinel 2 Imagery',
                         creationFunction: function () {
-                            return new MapboxStyleImageryProvider({
-                                styleId: 'satellite-streets-v11',
-                                accessToken: 'sk.eyJ1Ijoid2lsbGlhbmdhbHZhbmkiLCJhIjoi' +
-                                'Y2tlMWphbDU5MGVtYzJybWZ3M3BsNzA0ZiJ9.auDGkWkW_r7SFfkcCp1PNg'
-                            })
+                            return new IonImageryProvider({ assetId: 3954 })
                         }
                     })
-                    imageryProviders.push(this.mapboxprovider)
+                    imageryProviders.push(this.sentinelProvider)
                     imageryProviders.push(new ProviderViewModel({
                         name: 'Eniro',
                         iconUrl: require('../assets/eniro.png'),
