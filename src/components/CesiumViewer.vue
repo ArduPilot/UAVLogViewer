@@ -19,6 +19,7 @@ import {
     Color,
     createDefaultImageryProviderViewModels,
     ProviderViewModel,
+    MapboxStyleImageryProvider,
     UrlTemplateImageryProvider,
     Viewer, createWorldTerrain,
     PointPrimitiveCollection,
@@ -103,10 +104,10 @@ export default {
                     scene3DOnly: false,
                     selectionIndicator: false,
                     shadows: true,
+                    selectedImageryProviderViewModel: this.mapboxprovider,
                     imageryProviderViewModels: imageryProviders
 
                 })
-
             this.viewer.scene.debugShowFramesPerSecond = true
             if (this.state.vehicle !== 'boat') {
                 this.viewer.terrainProvider = createWorldTerrain()
@@ -189,6 +190,20 @@ export default {
                             })
                         }
                     }))
+                    // save this one so it can be referenced when creating the cesium viewer
+                    this.mapboxprovider = new ProviderViewModel({
+                        name: 'MapBox',
+                        iconUrl: require('../assets/mapbox.png'),
+                        tooltip: 'Mapbox aerial imagery \nhttps://www.mapbox.com/',
+                        creationFunction: function () {
+                            return new MapboxStyleImageryProvider({
+                                styleId: 'satellite-streets-v11',
+                                accessToken: 'sk.eyJ1Ijoid2lsbGlhbmdhbHZhbmkiLCJhIjoi' +
+                                'Y2tlMWphbDU5MGVtYzJybWZ3M3BsNzA0ZiJ9.auDGkWkW_r7SFfkcCp1PNg'
+                            })
+                        }
+                    })
+                    imageryProviders.push(this.mapboxprovider)
                     imageryProviders.push(new ProviderViewModel({
                         name: 'Eniro',
                         iconUrl: require('../assets/eniro.png'),
