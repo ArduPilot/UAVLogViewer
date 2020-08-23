@@ -75,7 +75,6 @@ export default {
                 'HOME_POSITION',
                 'STRT',
                 'ARM',
-                'STAT',
                 'FMT',
                 'PARM',
                 'MSG',
