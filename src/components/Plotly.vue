@@ -581,6 +581,7 @@ export default {
         },
         plot () {
             console.log('plot()')
+            plotOptions.title = this.state.file
             let _this = this
             let datasets = []
             this.state.expressionErrors = []
