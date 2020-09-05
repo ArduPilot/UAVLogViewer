@@ -14,10 +14,11 @@ let annotationsParams = []
 
 const updatemenus = [
     {
+        active: 0,
         buttons: [
             {
-                args: ['annotations', [...annotationsEvents, ...annotationsModes, ...annotationsParams]],
-                label: 'Events + Params',
+                args: ['annotations', annotationsModes],
+                label: 'Nothing',
                 method: 'relayout'
             },
             {
@@ -26,8 +27,8 @@ const updatemenus = [
                 method: 'relayout'
             },
             {
-                args: ['annotations', annotationsModes],
-                label: 'Nothing',
+                args: ['annotations', [...annotationsEvents, ...annotationsModes, ...annotationsParams]],
+                label: 'Events + Params',
                 method: 'relayout'
             }
         ],
@@ -808,13 +809,13 @@ export default {
                 )
             }
             Plotly.relayout(this.gd, {
-                annotations: [...annotationsEvents, ...annotationsModes],
+                annotations: annotationsModes,
                 updatemenus: updatemenus
             })
-            updatemenus[0].buttons[0].args = ['annotations', [...annotationsEvents, ...annotationsModes,
-                ...annotationsParams]]
+            updatemenus[0].buttons[0].args = ['annotations', annotationsModes]
             updatemenus[0].buttons[1].args = ['annotations', [...annotationsEvents, ...annotationsModes]]
-            updatemenus[0].buttons[2].args = ['annotations', annotationsModes]
+            updatemenus[0].buttons[2].args = ['annotations', [...annotationsEvents, ...annotationsModes,
+                ...annotationsParams]]
         },
         addParamChanges () {
             let i = -300
@@ -859,16 +860,15 @@ export default {
                     i = -300
                 }
             }
+            updatemenus[0].active = 0
             Plotly.relayout(this.gd, {
                 annotations:
                 [
-                    ...annotationsEvents,
-                    ...annotationsModes,
-                    ...annotationsParams
+                    ...annotationsModes
                 ],
                 updatemenus: updatemenus
             })
-            updatemenus[0].buttons[0].args =
+            updatemenus[0].buttons[2].args =
             [
                 'annotations',
                 [
