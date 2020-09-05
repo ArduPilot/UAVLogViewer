@@ -65,6 +65,7 @@ export default {
         onLoadSample (file) {
             let url
             if (file === 'sample') {
+                this.state.file = 'sample'
                 url = require('../assets/vtol.tlog')
                 this.state.log_type = 'tlog'
             } else {
@@ -120,6 +121,7 @@ export default {
             })
         },
         process: function (file) {
+            this.state.file = file.name
             this.state.processStatus = 'Pre-processing...'
             this.state.processPercentage = 100
             this.file = file

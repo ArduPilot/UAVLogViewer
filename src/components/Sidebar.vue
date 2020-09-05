@@ -10,6 +10,7 @@
         <!-- TABHOLDER -->
         <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
         <b-collapse class="menu-content collapse out" id="menucontent" visible>
+            <span v-if="state.file" class="filename">Current file: {{state.file}}</span>
             <div class="tabholder">
                 <!-- Home -->
                 <a :class="selected === 'home' ? 'selected' : ''" @click="selected='home'" v-if="!state.processDone">
@@ -334,7 +335,7 @@ a.centered-section {
         flex-flow: row wrap;
         justify-content: space-evenly;
         overflow: hidden;
-        padding: 12px 0px 12px 0px;
+        padding: 0px 0px 12px 0px;
         cursor: pointer;
         font-size: 16px;
     }
@@ -466,5 +467,12 @@ a.centered-section {
         .col-lg-10 {
             max-width: 85% !important;
         }
+    }
+
+    .filename {
+        display: block;
+        text-align: center;
+        opacity: 0.8;
+        margin: 6px;
     }
 </style>

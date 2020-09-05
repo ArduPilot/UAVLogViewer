@@ -14,6 +14,7 @@ export var store = {
     show_radio: false,
     show_messages: false,
     flight_mode_changes: [],
+    file: null,
     events: [],
     cssColors: [],
     colors: [],
