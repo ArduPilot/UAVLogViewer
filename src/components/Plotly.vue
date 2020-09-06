@@ -625,8 +625,13 @@ export default {
                         width: 1.5
                     },
                     marker: {
-                        size: 4,
-                        color: expression.color
+                        size: 5,
+                        symbol: 'cross-thin',
+                        color: expression.color,
+                        line: {
+                            color: expression.color,
+                            width: 1
+                        }
                     }
                 })
                 let axisname = expression.axis > 0 ? ('yaxis' + (expression.axis + 1)) : 'yaxis'
