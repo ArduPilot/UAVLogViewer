@@ -653,7 +653,7 @@ export default {
             plotOptions.xaxis = {
                 rangeslider: {},
                 domain: this.calculateXAxisDomain(),
-                title: 'time_boot (ms)',
+                title: ' ',
                 tickformat: ':04,2f'
             }
             if (this.plotInstance !== null) {
