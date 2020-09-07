@@ -574,13 +574,28 @@ export default {
                 }
             }
             console.log('evaluated ' + expression)
-            let data = {
+            let data = this.addGaps({
                 x: x,
                 y: y
-            }
+            })
             this.cache[expression1] = data
             console.log('Evaluation took ' + (new Date() - start) + 'ms')
             return data
+        },
+        addGaps (data) {
+            // Creates artifical gaps in order to break lines in plot when messages are not being received
+            let newData = {x: [], y: []}
+            let lastx = data.x[0]
+            for (let i = 0; i < data.x.length; i++) {
+                if ((data.x[i] - lastx) > 1000) {
+                    newData.x.push(data.x[i] - 1)
+                    newData.y.push(null)
+                }
+                newData.x.push(data.x[i])
+                newData.y.push(data.y[i])
+                lastx = data.x[i]
+            }
+            return newData
         },
         plot () {
             console.log('plot()')
