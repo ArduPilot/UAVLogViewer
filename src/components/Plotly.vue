@@ -471,6 +471,9 @@ export default {
             let name = expression.replace(toDelete, '')
             let RE = /[A-Z][A-Z0-9_]+(\[[0-9]\])?/g
             let fields = name.match(RE)
+            if (fields === null) {
+                return []
+            }
             return fields
         },
         expressionCanBePlotted (expression, reask = false) {
