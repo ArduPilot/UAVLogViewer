@@ -520,11 +520,11 @@ export default {
             // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
             let fields = this.findMessagesInExpression(expression1)
             fields = fields === null ? [] : fields
-            let messages = fields.lenght !== 0 ? (fields.map(field => field.split('.')[0])) : []
+            let messages = fields.length !== 0 ? (fields.map(field => field.split('.')[0])) : []
 
             // use time of first message for now
             let x
-            if (messages.lenght > 0) {
+            if (messages.length > 0) {
                 x = this.state.messages[messages[0]].time_boot_ms
             } else {
                 try {
