@@ -104,7 +104,7 @@ export default {
                     scene3DOnly: false,
                     selectionIndicator: false,
                     shadows: true,
-                    selectedImageryProviderViewModel: this.mapboxprovider,
+                    // selectedImageryProviderViewModel: this.mapboxprovider,
                     imageryProviderViewModels: imageryProviders
 
                 })
