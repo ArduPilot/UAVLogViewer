@@ -5,7 +5,8 @@ export const baseWidget = {
     props: {
         'snappable': {type: Boolean, default: false},
         'fixedAspectRatio': {type: Boolean, default: false},
-        'aspectRatio': {type: Number, default: 2}
+        'aspectRatio': {type: Number, default: 2},
+        'resizeable': {type: Boolean, default: true}
     },
     data () {
         return {
@@ -69,6 +70,9 @@ export const baseWidget = {
             }
 
             const resize = (e) => {
+                if (!this.resizeable) {
+                    return
+                }
                 if (e.touches !== undefined) {
                     pageX = e.touches[0].pageX
                     pageY = e.touches[0].pageY

@@ -12,6 +12,7 @@
         <TxInputs fixed-aspect-ratio v-if="state.mapAvailable && state.showMap && state.showRadio"></TxInputs>
         <ParamViewer v-if="state.showParams"></ParamViewer>
         <MessageViewer v-if="state.showMessages"></MessageViewer>
+        <AttitudeViewer v-if="state.showAttitude"></AttitudeViewer>
         <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
             <sidebar/>
@@ -44,6 +45,7 @@ import Sidebar from './Sidebar'
 import TxInputs from './widgets/TxInputs'
 import ParamViewer from './widgets/ParamViewer'
 import MessageViewer from './widgets/MessageViewer'
+import AttitudeViewer from './widgets/AttitudeWidget'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
 import {Color} from 'cesium/Cesium'
@@ -160,7 +162,8 @@ export default {
         AtomSpinner,
         TxInputs,
         ParamViewer,
-        MessageViewer
+        MessageViewer,
+        AttitudeViewer
     },
     computed: {
         mapOk () {
