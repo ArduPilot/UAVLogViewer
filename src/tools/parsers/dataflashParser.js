@@ -548,6 +548,7 @@ export class DataflashParser {
         if (message.name === 'MODE') {
             message.asText = this.getModeString(message['Mode'])
         }
+        // eslint-disable-next-line
         message.time_boot_ms = message.TimeUS / 1000
         delete message.TimeUS
         delete message.fieldnames

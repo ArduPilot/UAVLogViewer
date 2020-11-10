@@ -81,7 +81,7 @@ export default {
     },
     methods: {
         createNewExpression () {
-            this.state.plot_on = true
+            this.state.plotOn = true
             this.$nextTick(() => {
                 this.state.expressions.push({
                     name: '1+1',

@@ -1,6 +1,6 @@
 <template>
     <div id='vuewrapper' style="height: 100%;">
-        <template v-if="state.map_loading || state.plot_loading">
+        <template v-if="state.mapLoading || state.plotLoading">
             <div id="waiting">
                 <atom-spinner
                     :animation-duration="1000"
@@ -9,9 +9,9 @@
                 />
             </div>
         </template>
-        <TxInputs fixed-aspect-ratio v-if="state.map_available && state.show_map && state.show_radio"></TxInputs>
-        <ParamViewer v-if="state.show_params"></ParamViewer>
-        <MessageViewer v-if="state.show_messages"></MessageViewer>
+        <TxInputs fixed-aspect-ratio v-if="state.mapAvailable && state.showMap && state.showRadio"></TxInputs>
+        <ParamViewer v-if="state.showParams"></ParamViewer>
+        <MessageViewer v-if="state.showMessages"></MessageViewer>
         <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
             <sidebar/>
@@ -19,14 +19,14 @@
             <main class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex" role="main">
 
                 <div class="row"
-                     v-bind:class="[state.show_map ? 'h-50' : 'h-100']"
-                     v-if="state.plot_on">
+                     v-bind:class="[state.showMap ? 'h-50' : 'h-100']"
+                     v-if="state.plotOn">
                     <div class="col-12">
                         <Plotly/>
                     </div>
                 </div>
-                <div class="row" v-bind:class="[state.plot_on ? 'h-50' : 'h-100']"
-                     v-if="state.map_available && map_ok && state.show_map">
+                <div class="row" v-bind:class="[state.plotOn ? 'h-50' : 'h-100']"
+                     v-if="state.mapAvailable && mapOk && state.showMap">
                     <div class="col-12 noPadding">
                         <CesiumViewer ref="cesiumViewer"/>
                     </div>
@@ -56,9 +56,9 @@ export default {
     created () {
         this.$eventHub.$on('messages', this.extractFlightData)
         this.state.messages = {}
-        this.state.time_attitude = []
-        this.state.time_attitudeQ = []
-        this.state.current_trajectory = []
+        this.state.timeAttitude = []
+        this.state.timeAttitudeQ = []
+        this.state.currentTrajectory = []
     },
     beforeDestroy () {
         this.$eventHub.$off('messages')
@@ -72,7 +72,7 @@ export default {
     methods: {
         extractFlightData () {
             if (this.dataExtractor === null) {
-                if (this.state.log_type === 'tlog') {
+                if (this.state.logType === 'tlog') {
                     this.dataExtractor = MavlinkDataExtractor
                 } else {
                     this.dataExtractor = DataflashDataExtractor
@@ -81,28 +81,28 @@ export default {
             if ('FMTU' in this.state.messages && this.state.messages['FMTU'].length === 0) {
                 this.state.processStatus = 'ERROR PARSING?'
             }
-            if (Object.keys(this.state.time_attitude).length === 0) {
-                this.state.time_attitude = this.dataExtractor.extractAttitudes(this.state.messages)
+            if (Object.keys(this.state.timeAttitude).length === 0) {
+                this.state.timeAttitude = this.dataExtractor.extractAttitudes(this.state.messages)
             }
-            let list = Object.keys(this.state.time_attitude)
+            let list = Object.keys(this.state.timeAttitude)
             this.state.lastTime = parseInt(list[list.length - 1])
 
-            if (Object.keys(this.state.time_attitudeQ).length === 0) {
-                this.state.time_attitudeQ = this.dataExtractor.extractAttitudesQ(this.state.messages)
+            if (Object.keys(this.state.timeAttitudeQ).length === 0) {
+                this.state.timeAttitudeQ = this.dataExtractor.extractAttitudesQ(this.state.messages)
             }
 
             let trajectories = this.dataExtractor.extractTrajectory(this.state.messages)
             if (Object.keys(trajectories).length > 0) {
-                this.state.show_map = true
+                this.state.showMap = true
                 let first = Object.keys(trajectories)[0]
                 this.state.trajectorySource = first
-                this.state.current_trajectory = trajectories[first].trajectory
-                this.state.time_trajectory = trajectories[first].time_trajectory
+                this.state.currentTrajectory = trajectories[first].trajectory
+                this.state.timeTrajectory = trajectories[first].timeTrajectory
             }
             this.state.trajectories = trajectories
 
-            if (this.state.flight_mode_changes.length === 0) {
-                this.state.flight_mode_changes = this.dataExtractor.extractFlightModes(this.state.messages)
+            if (this.state.flightModeChanges.length === 0) {
+                this.state.flightModeChanges = this.dataExtractor.extractFlightModes(this.state.messages)
             }
             if (this.state.events.length === 0) {
                 this.state.events = this.dataExtractor.extractEvents(this.state.messages)
@@ -130,7 +130,7 @@ export default {
             // Change to plot view after 2 seconds so the Processed status is readable
             setTimeout(() => { this.$eventHub.$emit('set-selected', 'plot') }, 2000)
 
-            this.state.map_available = this.state.current_trajectory.length > 0
+            this.state.mapAvailable = this.state.currentTrajectory.length > 0
         },
 
         generateColorMMap () {
@@ -163,20 +163,20 @@ export default {
         MessageViewer
     },
     computed: {
-        map_ok () {
-            return (this.state.flight_mode_changes !== undefined &&
-                    this.state.current_trajectory !== undefined &&
-                    this.state.current_trajectory.length > 0 &&
+        mapOk () {
+            return (this.state.flightModeChanges !== undefined &&
+                    this.state.currentTrajectory !== undefined &&
+                    this.state.currentTrajectory.length > 0 &&
                     this.state.metadata !== null &&
-                    (Object.keys(this.state.time_attitude).length > 0 ||
-                        Object.keys(this.state.time_attitudeQ).length > 0))
+                    (Object.keys(this.state.timeAttitude).length > 0 ||
+                        Object.keys(this.state.timeAttitudeQ).length > 0))
         },
         setOfModes () {
             let set = []
-            if (!this.state.flight_mode_changes) {
+            if (!this.state.flightModeChanges) {
                 return []
             }
-            for (let mode of this.state.flight_mode_changes) {
+            for (let mode of this.state.flightModeChanges) {
                 if (!set.includes(mode[1])) {
                     set.push(mode[1])
                 }

@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+/* eslint-disable camelcase */
 import {Matrix3} from './matrix3'
 import {Vector3} from './vector3'
 

@@ -74,7 +74,7 @@ export default {
         },
         openPreset (preset) {
             this.$eventHub.$emit('clearPlot')
-            this.state.plot_on = true
+            this.state.plotOn = true
             this.$nextTick(function () {
                 let msgs = []
                 for (let msg of preset) {

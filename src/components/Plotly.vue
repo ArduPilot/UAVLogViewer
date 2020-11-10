@@ -50,7 +50,9 @@ let plotOptions = {
         traceorder: 'normal',
         borderwidth: 1
     },
+    // eslint-disable-next-line
     plot_bgcolor: '#f8f8f8',
+    // eslint-disable-next-line
     paper_bgcolor: 'white',
     // autosize: true,
     margin: {t: 20, l: 0, b: 30, r: 10},
@@ -344,7 +346,7 @@ export default {
         },
 
         addPlots (plots) {
-            this.state.plot_loading = true
+            this.state.plotLoading = true
             let requested = new Set()
             const RE = /[A-Z][A-Z0-9_]+(\[[0-9]\])?\.[a-zA-Z0-9]+/g
             let RE2 = /[A-Z][A-Z0-9_]+(\[[0-9]\])/g
@@ -391,7 +393,7 @@ export default {
             }
             this.plot()
             if (this.state.expressions.length === 0) {
-                this.state.plot_on = false
+                this.state.plotOn = false
             }
             this.onRangeChanged()
         },
@@ -424,7 +426,7 @@ export default {
                 this.resetAxis(this.state.expressions[index].axis)
                 this.state.expressions.splice(index, 1)
                 if (this.state.expressions.length === 0) {
-                    this.state.plot_on = false
+                    this.state.plotOn = false
                 }
                 this.onRangeChanged()
             } else {
@@ -433,7 +435,7 @@ export default {
             console.log(this.state.expressions)
             // if (silent !== true) {
             //     this.plot()
-            //     this.state.plot_loading = false
+            //     this.state.plotLoading = false
             // }
         },
         calculateXAxisDomain () {
@@ -488,7 +490,7 @@ export default {
             for (let field of fields) {
                 if ((!(field in this.state.messageTypes) && !((field + '[0]') in this.state.messageTypes))) {
                     console.log('ERROR: attempted to plot unavailable message: ' + field)
-                    this.state.plot_loading = false
+                    this.state.plotLoading = false
                     if (reask) {
                         this.$eventHub.$emit('loadType', field)
                     }
@@ -703,7 +705,7 @@ export default {
             this.addEvents()
             this.addParamChanges()
 
-            this.state.plot_loading = false
+            this.state.plotLoading = false
 
             let bglayer = document.getElementsByClassName('bglayer')[0]
             let rect = bglayer.childNodes[0]
@@ -737,15 +739,15 @@ export default {
             }
         },
         getMode (time) {
-            for (let mode in this.state.flight_mode_changes) {
-                if (this.state.flight_mode_changes[mode][0] > time) {
+            for (let mode in this.state.flightModeChanges) {
+                if (this.state.flightModeChanges[mode][0] > time) {
                     if (mode - 1 < 0) {
-                        return this.state.flight_mode_changes[0][1]
+                        return this.state.flightModeChanges[0][1]
                     }
-                    return this.state.flight_mode_changes[mode - 1][1]
+                    return this.state.flightModeChanges[mode - 1][1]
                 }
             }
-            return this.state.flight_mode_changes[this.state.flight_mode_changes.length - 1][1]
+            return this.state.flightModeChanges[this.state.flightModeChanges.length - 1][1]
         },
         getModeColor (time) {
             return this.state.cssColors[this.setOfModes.indexOf(this.getMode(time))]
@@ -755,7 +757,7 @@ export default {
         },
         addModeShapes () {
             let shapes = []
-            let modeChanges = [...this.state.flight_mode_changes]
+            let modeChanges = [...this.state.flightModeChanges]
             modeChanges.push([this.gd.layout.xaxis.range[1], null])
 
             for (let i = 0; i < modeChanges.length - 1; i++) {
@@ -806,7 +808,7 @@ export default {
                     i = -300
                 }
             }
-            let modeChanges = [...this.state.flight_mode_changes]
+            let modeChanges = [...this.state.flightModeChanges]
             modeChanges.push([this.gd.layout.xaxis.range[1], null])
             for (let i = 0; i < modeChanges.length - 1; i++) {
                 annotationsModes.push(
@@ -901,7 +903,7 @@ export default {
     computed: {
         setOfModes () {
             let set = []
-            for (let mode of this.state.flight_mode_changes) {
+            for (let mode of this.state.flightModeChanges) {
                 if (!set.includes(mode[1])) {
                     set.push(mode[1])
                 }
