@@ -11,6 +11,7 @@ export var store = {
     showParams: false,
     showRadio: false,
     showMessages: false,
+    showAttitude: false,
     flightModeChanges: [],
     file: null,
     events: [],

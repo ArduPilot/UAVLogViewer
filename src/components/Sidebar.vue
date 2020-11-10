@@ -106,6 +106,11 @@
                           <input type="checkbox" v-model="state.showMessages">
                           <a class="check-font"> Messages </a>
                         </label>
+                        <label>
+                          <i class="fa fa-plane-departure circle"></i>
+                          <input type="checkbox" v-model="state.showAttitude">
+                          <a class="check-font"> Attitude </a>
+                        </label>
                     </div>
                 </div>
             </b-collapse>
