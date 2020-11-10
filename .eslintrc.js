@@ -33,7 +33,7 @@ module.exports = {
     // allow debugger during development
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     "indent": ["error", 4],
-    "camelcase": [2, {"properties": "never"}],
+    "camelcase": [2, {"properties": "always"}],
     'vue/no-parsing-error': [2, {
           "invalid-first-character-of-tag-name": false
       }]
