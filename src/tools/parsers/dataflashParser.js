@@ -407,20 +407,14 @@ export class DataflashParser {
                 self.postMessage({messageType: name, messageList: this.messages[name]})
                 return parsed
             }
-            let i = 0
-            for (let instance of instances) {
-                let newName = name + '[' + i + ']'
-                this.messages[newName] = instance
-                console.log(instance)
+            for (let [index, messages] of Object.entries(instances)) {
+                let newName = name + '[' + index + ']'
+                this.messages[newName] = messages
                 this.fixDataOnce(newName)
-                console.log(this.messages[newName])
                 this.simplifyData(newName)
                 self.postMessage({messageType: newName,
                     messageList: this.messages[newName]})
-                console.log(this.messages[newName])
-                i += 1
             }
-            console.log(instances)
         } else {
             this.fixDataOnce(name)
             this.simplifyData(name)
