@@ -20,9 +20,9 @@
                    v-if="state.processDone"> <i class="fas fa-chart-line"></i>Plot</a>
                 <!-- 3D -->
                 <a :class="selected ==='3d' ? 'selected' : ''" @click="selected='3d'"
-                   v-if="state.map_available && state.show_map">  <i class="fas fa-cube"></i> 3D </a>
-                <a :class="selected ==='3d' ? 'selected' : ''" @click="state.show_map=trueselected='3d'"
-                   v-if="state.map_available && !state.show_map">3D</a>
+                   v-if="state.mapAvailable && state.showMap">  <i class="fas fa-cube"></i> 3D </a>
+                <a :class="selected ==='3d' ? 'selected' : ''" @click="state.showMap=trueselected='3d'"
+                   v-if="state.mapAvailable && !state.showMap">3D</a>
                 <!-- more -->
                 <a :class="selected ==='other' ? 'selected' : ''" @click="selected='other'" v-if="state.processDone">
                     <i class="fas fa-ellipsis-v"></i>
@@ -42,12 +42,12 @@
                     <span class="buildinfo">Commit {{state.commit}}</span>
                     <span class="buildinfo">Built {{state.buildDate}}</span>
                 </div>
-                <div v-if="selected==='3d' && state.map_available">
-                    <!--<li v-if="!state.map_available" @click="state.map_available=true">-->
+                <div v-if="selected==='3d' && state.mapAvailable">
+                    <!--<li v-if="!state.mapAvailable" @click="state.mapAvailable=true">-->
                     <!--<a class="section">-->
                     <!--<i class="fas fa-eye fa-lg"></i> Show 3D View</a>-->
                     <!--</li>-->
-                    <!--<li v-if="state.map_available" @click="state.map_available=false">-->
+                    <!--<li v-if="state.mapAvailable" @click="state.mapAvailable=false">-->
                     <!--<a class="section">-->
                     <!--<i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>-->
                     <!--</li>-->
@@ -93,17 +93,17 @@
                     <div v-if="state.processDone" class="show-hide">
                         <label v-if="state.params">
                           <i class="fa fa-cogs circle"></i>
-                          <input type="checkbox" v-model="state.show_params">
+                          <input type="checkbox" v-model="state.showParams">
                           <a class="check-font"> Parameters </a>
                         </label>
                         <label>
                           <i class="fa fa-gamepad circle"></i>
-                          <input type="checkbox" v-model="state.show_radio">
+                          <input type="checkbox" v-model="state.showRadio">
                           <a class="check-font"> Radio Sticks </a>
                         </label>
                         <label v-if="state.textMessages">
                           <i class="fa fa-comment circle"></i>
-                          <input type="checkbox" v-model="state.show_messages">
+                          <input type="checkbox" v-model="state.showMessages">
                           <a class="check-font"> Messages </a>
                         </label>
                     </div>

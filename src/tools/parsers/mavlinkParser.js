@@ -173,6 +173,7 @@ export class MavlinkParser {
         if (message.name === 'GLOBAL_POSITION_INT') {
             message.lat = message.lat / 10000000
             message.lon = message.lon / 10000000
+            // eslint-disable-next-line
             message.relative_alt = message.relative_alt / 1000
             return message
         } else if (message.name === 'HEARTBEAT') {
@@ -210,6 +211,7 @@ export class MavlinkParser {
                 // }
 
                 if (+message.time_boot_ms < instance.lastTime) {
+                    // eslint-disable-next-line
                     message.time_boot_ms = +message.time_boot_ms + instance.forcedTimeOffset
                 }
                 instance.lastTime = +message.time_boot_ms

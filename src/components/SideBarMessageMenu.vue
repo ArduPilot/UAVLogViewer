@@ -1,7 +1,7 @@
 <template>
     <div v-if="hasMessages">
 
-        <!--<li v-if="state.plot_on" @click="state.plot_on=!state.plot_on">-->
+        <!--<li v-if="state.plotOn" @click="state.plotOn=!state.plotOn">-->
         <!--<a class="section">-->
         <!--<i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>-->
         <!--</li>-->
@@ -174,7 +174,7 @@ export default {
         },
         handleMessageTypes (messageTypes) {
             if (this.$route.query.hasOwnProperty('plots')) {
-                this.state.plot_on = true
+                this.state.plotOn = true
             }
             let newMessages = {}
             // populate list of message types
@@ -187,7 +187,7 @@ export default {
                 this.checkboxes[messageType] = {expressions: {}}
                 // for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
                 for (let field of messageTypes[messageType].expressions) {
-                    if (this.state.plot_on) {
+                    if (this.state.plotOn) {
                         this.checkboxes[messageType].expressions[field] =
                             this.$route.query.plots.indexOf(messageType + '.' + field) !== -1
                     } else {
@@ -219,7 +219,7 @@ export default {
             return numberFields
         },
         toggle (message, item) {
-            this.state.plot_on = true
+            this.state.plotOn = true
             this.$nextTick(function () {
                 this.$eventHub.$emit('togglePlot', message + '.' + item)
             })

@@ -78,12 +78,12 @@ export default {
         this.model = null // Vehicle model
         this.waypoints = null // Autopilot Waypoints
         this.trajectory = null // GPS trajectory (in degrees)
-        this.corrected_trajectory = [] // GPS trajectory (Cartographic array)
+        this.correctedTrajectory = [] // GPS trajectory (Cartographic array)
 
         // Link time with plot updates
         this.$eventHub.$on('hoveredTime', this.showAttitude)
         // This fires up the loading spinner
-        this.state.map_loading = true
+        this.state.mapLoading = true
     },
     beforeDestroy () {
         this.$eventHub.$off('hoveredTime')
@@ -160,15 +160,15 @@ export default {
         }
 
         this.addCloseButton()
-        for (let pos of this.state.current_trajectory) {
-            this.corrected_trajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
+        for (let pos of this.state.currentTrajectory) {
+            this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
         }
 
         if (this.state.vehicle !== 'boat') {
-            let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.corrected_trajectory)
+            let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.correctedTrajectory)
             when(promise, this.setup2)
         } else {
-            this.setup2(this.corrected_trajectory)
+            this.setup2(this.correctedTrajectory)
         }
     },
 
@@ -247,7 +247,7 @@ export default {
                     for (let pos of updatedPositions) {
                         this.heightOffset = Math.max(this.heightOffset, pos.height)
                     }
-                    this.processTrajectory(this.state.current_trajectory)
+                    this.processTrajectory(this.state.currentTrajectory)
                     this.addModel()
                     this.updateAndPlotTrajectory()
                     this.plotMission(this.state.mission)
@@ -279,7 +279,7 @@ export default {
                                     this.viewer.camera.direction = direction
                                 } */
                     // TODO: Find a better way to know that cesium finished loading
-                    setTimeout(() => { this.state.map_loading = false }, 2000)
+                    setTimeout(() => { this.state.mapLoading = false }, 2000)
                     this.state.cameraType = 'follow'
                     this.changeCamera()
                     setTimeout(this.updateTimelineColors, 500)
@@ -307,7 +307,7 @@ export default {
                     closeButton = document.getElementById('cesium-close-button')
                     console.log(closeButton)
                     closeButton.addEventListener('click', function () {
-                        this.state.show_map = false
+                        this.state.showMap = false
                         this.$nextTick(function () {
                             this.$eventHub.$emit('force-resize-plotly')
                         })
@@ -381,7 +381,7 @@ export default {
                     let timeline = document.getElementsByClassName('cesium-timeline-bar')[0]
                     let colors = []
                     let previousColor = null
-                    for (let change of this.state.flight_mode_changes) {
+                    for (let change of this.state.flightModeChanges) {
                         if (change[0] < start || previousColor === null) {
                             previousColor = this.getModeColor(change[0])
                             colors = [[0, previousColor]]
@@ -500,10 +500,10 @@ export default {
                 },
 
                 processTrajectory () {
-                    this.corrected_trajectory = []
+                    this.correctedTrajectory = []
                     this.points = this.state.trajectories[this.state.trajectorySource].trajectory
                     for (let pos of this.points) {
-                        this.corrected_trajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
+                        this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
                     }
                     // process time_boot_ms into cesium time
                     this.startTimeMs = getMinTime(this.points)
@@ -569,12 +569,12 @@ export default {
                     let position = Cartesian3.fromDegrees(points[0][0], points[0][1], points[0][2] + this.heightOffset)
                     let fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'west')
                     let sampledOrientation = new SampledProperty(Quaternion)
-                    if (Object.keys(this.state.time_attitudeQ).length > 0) {
+                    if (Object.keys(this.state.timeAttitudeQ).length > 0) {
                         console.log('plotting with QUATERNIOS')
                         fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'east')
-                        for (let atti in this.state.time_attitudeQ) {
-                            if (this.state.time_attitudeQ.hasOwnProperty(atti)) {
-                                let att = this.state.time_attitudeQ[atti]
+                        for (let atti in this.state.timeAttitudeQ) {
+                            if (this.state.timeAttitudeQ.hasOwnProperty(atti)) {
+                                let att = this.state.timeAttitudeQ[atti]
 
                                 let q1 = att[0]
                                 let q2 = att[1]
@@ -604,9 +604,9 @@ export default {
                         }
                     } else {
                         console.log('plotting with attitude')
-                        for (let atti in this.state.time_attitude) {
-                            if (this.state.time_attitude.hasOwnProperty(atti)) {
-                                let att = this.state.time_attitude[atti]
+                        for (let atti in this.state.timeAttitude) {
+                            if (this.state.timeAttitude.hasOwnProperty(atti)) {
+                                let att = this.state.timeAttitude[atti]
                                 let hpRoll = Transforms.headingPitchRollQuaternion(
                                     position,
                                     new HeadingPitchRoll(att[2], att[1], att[0]),
@@ -722,15 +722,15 @@ export default {
                     return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
                 },
                 getMode (time) {
-                    for (let mode in this.state.flight_mode_changes) {
-                        if (this.state.flight_mode_changes[mode][0] > time) {
+                    for (let mode in this.state.flightModeChanges) {
+                        if (this.state.flightModeChanges[mode][0] > time) {
                             if (mode - 1 < 0) {
-                                return this.state.flight_mode_changes[0][1]
+                                return this.state.flightModeChanges[0][1]
                             }
-                            return this.state.flight_mode_changes[mode - 1][1]
+                            return this.state.flightModeChanges[mode - 1][1]
                         }
                     }
-                    return this.state.flight_mode_changes[this.state.flight_mode_changes.length - 1][1]
+                    return this.state.flightModeChanges[this.state.flightModeChanges.length - 1][1]
                 },
                 updateVisibility () {
                     this.waypoints.show = this.showWaypoints
@@ -760,7 +760,7 @@ export default {
     computed: {
         setOfModes () {
             let set = []
-            for (let mode of this.state.flight_mode_changes) {
+            for (let mode of this.state.flightModeChanges) {
                 if (!set.includes(mode[1])) {
                     set.push(mode[1])
                 }
