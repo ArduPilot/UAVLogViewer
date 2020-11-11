@@ -111,6 +111,19 @@
                           <input type="checkbox" v-model="state.showAttitude">
                           <a class="check-font"> Attitude </a>
                         </label>
+                        <label v-if="!recording" v-on:click="startCapture">
+                            <i class="fa fa-play circle"></i>
+                            <a class="check-font"> Record </a>
+                        </label>
+                        <label v-if="recording" v-on:click="stopCapture">
+                            <i class="fa fa-stop circle"></i>
+                            <a class="check-font"> End Rec </a>
+                        </label>
+                        <label  v-if="this.chunks" v-on:click="download">
+                            <i class="fa fa-download circle"></i>
+                            <a class="check-font download-text" v-bind:href="downloadURL"
+                               v-bind:download="fileName" ref="downloadFile"> Download </a>
+                        </label>
                     </div>
                 </div>
             </b-collapse>
@@ -129,17 +142,65 @@ export default {
     data () {
         return {
             selected: 'home',
-            state: store
+            state: store,
+            chunks: false,
+            blob: null,
+            recording: false,
+            recorder: null,
+            stream: null,
+            downloadURL: '',
+            fileName: 'video.mp4'
         }
     },
     methods: {
         setSelected (selected) {
             this.selected = selected
-        }
+        },
 
+        startCapture (displayMediaOptions) {
+            navigator.mediaDevices.getDisplayMedia({video: { mediaSource: 'screen' }})
+                .then((stream) => {
+                    this.record(stream)
+                })
+                .catch(err => { console.error('Error:' + err); return null })
+        },
+
+        stopCapture () {
+            this.recorder.stop()
+            this.stream.getTracks().forEach(track => track.stop())
+
+        },
+
+        record (stream) {
+            const recorder = new MediaRecorder(stream)
+            const chunks = []
+            recorder.ondataavailable = e => chunks.push(e.data)
+
+            this.stream = stream
+            this.recorder = recorder
+            this.recorder.start()
+
+            this.recording = true
+
+            recorder.onstop = e => {
+                const completeBlob = new Blob(chunks, { type: chunks[0].type })
+                this.chunks = true
+                this.blob = completeBlob
+                this.recording = false
+            }
+        },
+
+        download () {
+            this.$refs.downloadFile.click()
+        }
     },
     created () {
         this.$eventHub.$on('set-selected', this.setSelected)
+    },
+    watch: {
+        blob () {
+            this.downloadURL = URL.createObjectURL(this.blob)
+        }
     },
     components: {PlotSetup, MessageMenu, Dropzone}
 }
@@ -305,7 +366,7 @@ a.centered-section {
         margin: 8px;
         font-size: 18px;
     }
-         
+
     .brand {
         text-align: center;
         font-size: 22px;
@@ -387,7 +448,7 @@ a.centered-section {
         padding: 2px 60px 2px 55px !important;
        }
     }
-    
+
     @media only screen and (max-width: 992px) {
         .nav-side-menu {
             position: fixed;
@@ -429,7 +490,7 @@ a.centered-section {
             max-width: 100% !important;
         }
     }
-    
+
     /* MIN */
 
     @media only screen and (min-width: 991px) and (max-width: 1439px) {
@@ -448,7 +509,7 @@ a.centered-section {
 
     @media only screen and (min-width: 1440px) and (max-width: 2000px) {
         .nav-side-menu {
-        max-width: 20% !important;  
+        max-width: 20% !important;
         }
 
         main {
@@ -464,7 +525,7 @@ a.centered-section {
         .nav-side-menu {
             max-width: 15% !important;
         }
-        
+
         main {
             height: 100%;
         }
@@ -479,5 +540,14 @@ a.centered-section {
         text-align: center;
         opacity: 0.8;
         margin: 6px;
+    }
+
+    .download-text {
+        color: #fff;
+        text-decoration: none;
+    }
+    .download-text:hover {
+        text-decoration: none;
+        color: #fff;
     }
 </style>
