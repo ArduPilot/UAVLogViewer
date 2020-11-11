@@ -70,7 +70,7 @@ export const baseWidget = {
             }
 
             const resize = (e) => {
-                if (!this.resizeable) {
+                if (!_this.resizeable) {
                     return
                 }
                 if (e.touches !== undefined) {
