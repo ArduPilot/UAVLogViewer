@@ -83,6 +83,7 @@ export default {
         z-index: 10000;
         box-shadow: 9px 9px 3px -6px rgba(26, 26, 26, 0.699);
         border-radius: 5px;
+        user-select: none;
     }
 
     div #paneParamViewer::before {

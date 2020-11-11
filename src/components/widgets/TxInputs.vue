@@ -186,6 +186,7 @@ export default {
         border-radius: 20px;
         border: 3px groove rgba(1, 133, 111, 0.541);
         box-shadow: inset 0px 0px 8px 6px rgba(0, 87, 72, 0.411);
+        user-select: none;
     }
 
     div #paneinputViewer::before {
