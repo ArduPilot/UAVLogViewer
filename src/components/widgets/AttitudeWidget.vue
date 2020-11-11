@@ -73,14 +73,14 @@ export default {
             y = []
             msg = this.state.messages['ATTITUDE']
             for (let i in msg.time_boot_ms) {
-                y.push([msg.roll[i] * -180 / Math.PI, msg.pitch[i] * -180 / Math.PI])
+                y.push([msg.roll[i] * -180 / Math.PI, msg.pitch[i] * 180 / Math.PI])
             }
         } else if ('ATT' in this.state.messages) {
             x = this.state.messages['ATT'].time_boot_ms
             y = []
             msg = this.state.messages['ATT']
             for (let i in msg.time_boot_ms) {
-                y.push([msg.Roll[i], msg.Pitch[i]])
+                y.push([-msg.Roll[i], msg.Pitch[i]])
             }
         }
         this.interpolated = new Interpolator(x, y)
