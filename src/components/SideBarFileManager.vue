@@ -81,11 +81,11 @@ export default {
                 var arrayBuffer = oReq.response
                 worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: (url.indexOf('.tlog') > -1)})
             }
-            oReq.addEventListener('progress', function (e) {
+            oReq.addEventListener('progress', (e) => {
                 if (e.lengthComputable) {
                     this.uploadpercentage = 100 * e.loaded / e.total
                 }
-            }.bind(this)
+            }
             , false)
 
             oReq.send()
@@ -146,7 +146,7 @@ export default {
             formData.append('file', this.file)
 
             let request = new XMLHttpRequest()
-            request.onload = function () {
+            request.onload = () => {
                 if (request.status >= 200 && request.status < 400) {
                     this.uploadpercentage = 100
                     this.url = request.responseText
@@ -156,12 +156,12 @@ export default {
                     this.transferMessage = 'Error Uploading'
                     console.log(request)
                 }
-            }.bind(this)
-            request.upload.addEventListener('progress', function (e) {
+            }
+            request.upload.addEventListener('progress', (e) => {
                 if (e.lengthComputable) {
                     this.uploadpercentage = 100 * e.loaded / e.total
                 }
-            }.bind(this)
+            }
             , false)
             request.open('POST', '/upload')
             request.send(formData)
@@ -189,7 +189,7 @@ export default {
         }
     },
     mounted () {
-        worker.onmessage = function (event) {
+        worker.onmessage = (event) => {
             if (event.data.hasOwnProperty('percentage')) {
                 this.state.processPercentage = event.data.percentage
             } else if (event.data.hasOwnProperty('availableMessages')) {
@@ -203,7 +203,7 @@ export default {
                 this.state.messages[event.data.messageType] = event.data.messageList
                 this.$eventHub.$emit('messages')
             }
-        }.bind(this)
+        }
         if (this.$route.params.hasOwnProperty('id')) {
             this.onLoadSample(this.$route.params.id)
         }
