@@ -122,9 +122,9 @@ export default {
             this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
             this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
             this.viewer.scene.morphComplete.addEventListener(
-                function () {
+                () => {
                     this.viewer.zoomTo(this.viewer.entities)
-                }.bind(this))
+                })
             this.viewer.animation.viewModel.setShuttleRingTicks([0.1, 0.25, 0.5, 0.75, 1, 2, 5, 10, 15])
             this.viewer.scene.globe.depthTestAgainstTerrain = true
             this.viewer.shadowMap.maxmimumDistance = 10000.0
@@ -132,12 +132,12 @@ export default {
             this.viewer.shadowMap.size = 4096
 
             this.viewer.camera.changed.addEventListener(
-                function () {
+                () => {
                     if (this.viewer.camera._suspendTerrainAdjustment && this.viewer.scene.mode === SceneMode.SCENE3D) {
                         this.viewer.camera._suspendTerrainAdjustment = false
                         this.viewer.camera._adjustHeightForTerrain()
                     }
-                }.bind(this)
+                }
             )
 
             // Attach hover handler
@@ -303,12 +303,12 @@ export default {
                     toolbar.append(closeButton)
                     closeButton = document.getElementById('cesium-close-button')
                     console.log(closeButton)
-                    closeButton.addEventListener('click', function () {
+                    closeButton.addEventListener('click', () => {
                         this.state.showMap = false
                         this.$nextTick(function () {
                             this.$eventHub.$emit('force-resize-plotly')
                         })
-                    }.bind(this))
+                    })
                 },
                 onCameraUpdate () {
                     console.log(this.viewer.camera)
