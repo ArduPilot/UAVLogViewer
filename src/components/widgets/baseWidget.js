@@ -139,8 +139,8 @@ export const baseWidget = {
         // $elem.addEventListener('moved', (e) => $elem.innerHTML = 'moved')
         // $elem.addEventListener('resized', (e) => $elem.innerHTML = 'resized')
         this.setup()
-        this.$eventHub.$on('paramsUpdated', function () {
+        this.$eventHub.$on('paramsUpdated', () => {
             this.forceRecompute += 1
-        }.bind(this))
+        })
     }
 }
