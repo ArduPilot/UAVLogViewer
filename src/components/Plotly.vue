@@ -370,9 +370,9 @@ export default {
             }
             if ([...requested].length > 0) {
                 console.log([...requested])
-                this.waitForMessages([...requested]).then(function () {
+                this.waitForMessages([...requested]).then(() => {
                     this.addPlots(plots)
-                }.bind(this))
+                })
                 return
             }
             let newplots = []
@@ -621,7 +621,7 @@ export default {
                 messages = [...messages, ...this.findMessagesInExpression(expression.name)]
             }
             if (!this.messagesAreAvailable(messages)) {
-                this.waitForMessages(messages).then(this.plot).bind(this)
+                this.waitForMessages(messages).then(this.plot)
             }
 
             for (let expression of this.state.expressions) {
@@ -927,7 +927,7 @@ export default {
                 if (this.zoomInterval !== null) {
                     clearTimeout(this.zoomInterval)
                 }
-                this.zoomInterval = setTimeout(function () {
+                this.zoomInterval = setTimeout(() => {
                     Plotly.relayout(this.gd, {
                         xaxis: {
                             title: 'Time since boot',
@@ -937,7 +937,7 @@ export default {
                             tickformat: timeformat
                         }
                     })
-                }.bind(this), 500)
+                }, 500)
             }
             return range // make linter happy, it says this is a computed property(?)
         },
