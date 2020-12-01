@@ -24,7 +24,6 @@ import {
     PointPrimitiveCollection,
     IonImageryProvider,
     Entity,
-    SceneMode,
     ScreenSpaceEventHandler,
     ScreenSpaceEventType,
     knockout,
@@ -130,15 +129,6 @@ export default {
             this.viewer.shadowMap.maxmimumDistance = 10000.0
             this.viewer.shadowMap.softShadows = true
             this.viewer.shadowMap.size = 4096
-
-            this.viewer.camera.changed.addEventListener(
-                () => {
-                    if (this.viewer.camera._suspendTerrainAdjustment && this.viewer.scene.mode === SceneMode.SCENE3D) {
-                        this.viewer.camera._suspendTerrainAdjustment = false
-                        this.viewer.camera._adjustHeightForTerrain()
-                    }
-                }
-            )
 
             // Attach hover handler
             let handler = new ScreenSpaceEventHandler(this.viewer.scene.canvas)
