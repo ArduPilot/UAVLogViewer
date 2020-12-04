@@ -589,7 +589,7 @@ export default {
             let newData = {x: [], y: []}
             let lastx = data.x[0]
             for (let i = 0; i < data.x.length; i++) {
-                if ((data.x[i] - lastx) > 1000) {
+                if ((data.x[i] - lastx) > 3000) {
                     newData.x.push(data.x[i] - 1)
                     newData.y.push(null)
                 }
