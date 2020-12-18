@@ -138,7 +138,8 @@ const units = {
     'P': 'Pa', // Pascal
     'w': 'Ohm', // Ohm
     'Y': 'us', // pulse width modulation in microseconds
-    'z': 'Hz' // Hertz
+    'z': 'Hz', // Hertz
+    '#': 'instance' // instance number for message
 }
 
 function getModeMap (mavType) {
@@ -363,6 +364,16 @@ export class DataflashParser {
         }
     }
 
+    messageHasInstances (name) {
+        let type = this.FMT.find(msg => msg !== undefined && msg.Name === name)
+        return type !== undefined && type.units !== undefined && type.units.indexOf('instance') !== -1
+    }
+
+    getInstancesFieldName (name) {
+        let type = this.FMT.find(msg => msg !== undefined && msg.Name === name)
+        return type.Columns.split(',')[type.units.indexOf('instance')]
+    }
+
     parseAtOffset (name) {
         if (this.alreadyParsed.includes(name)) {
             console.log('refusing request to re-parse ' + name)
@@ -392,13 +403,15 @@ export class DataflashParser {
         this.messages[name] = parsed
 
         self.postMessage({percentage: 100})
-        if (parsed.length && Object.keys(parsed[0]).includes('C')) {
+        console.log(name, this.messageHasInstances(name) ? 'has instances' : 'has no instances')
+        if (parsed.length && this.messageHasInstances(name)) {
+            let instanceField = this.getInstancesFieldName(name)
             let instances = {}
             for (let msg of parsed) {
                 try {
-                    instances[msg.C].push(msg)
+                    instances[msg[instanceField]].push(msg)
                 } catch (e) {
-                    instances[msg.C] = [ msg ]
+                    instances[msg[instanceField]] = [ msg ]
                 }
             }
             if (Object.keys(instances).length === 1) {
@@ -428,6 +441,7 @@ export class DataflashParser {
         // Similar to parseOffset, but finishes earlier and updates messageTypes
         let type = this.getMsgType(name)
         let numberOfInstances = 1
+        let instanceField = this.getInstancesFieldName(name)
         for (var i = 0; i < this.msgType.length; i++) {
             if (type === this.msgType[i]) {
                 this.offset = this.offsetArray[i]
@@ -435,13 +449,13 @@ export class DataflashParser {
                     let temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
                     if (temp['name'] != null) {
                         let msg = temp
-                        if (!msg.hasOwnProperty('C')) {
+                        if (!msg.hasOwnProperty(instanceField)) {
                             break
                         }
-                        if ((msg['C'] + 1) < numberOfInstances) {
+                        if ((msg[instanceField] + 1) < numberOfInstances) {
                             return numberOfInstances
                         } else {
-                            numberOfInstances = msg['C'] + 1
+                            numberOfInstances = msg[instanceField] + 1
                         }
                     }
                 } catch (e) {
