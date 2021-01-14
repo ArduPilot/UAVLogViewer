@@ -371,6 +371,9 @@ export class DataflashParser {
 
     getInstancesFieldName (name) {
         let type = this.FMT.find(msg => msg !== undefined && msg.Name === name)
+        if (type.units === undefined) {
+            return null
+        }
         return type.Columns.split(',')[type.units.indexOf('instance')]
     }
 
@@ -442,6 +445,9 @@ export class DataflashParser {
         let type = this.getMsgType(name)
         let numberOfInstances = 1
         let instanceField = this.getInstancesFieldName(name)
+        if (instanceField === null) {
+            return numberOfInstances
+        }
         for (var i = 0; i < this.msgType.length; i++) {
             if (type === this.msgType[i]) {
                 this.offset = this.offsetArray[i]
