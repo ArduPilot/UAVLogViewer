@@ -148,6 +148,17 @@ window.lowpass = function (variable, key, factor) {
     return ret
 }
 
+window.delta = function (variable, key) {
+    let ret = 0
+    if (window.lastDelta === null || isNaN(window.lastDelta)) {
+        window.lastDelta = variable
+    } else {
+        ret = variable - window.lastDelta
+        window.lastDelta = variable
+    }
+    return ret
+}
+
 window.SAMPLING_RES = 10.0
 window.SAMPLING_minLat = -90.0
 window.SAMPLING_MAX_LAT = 90.0
