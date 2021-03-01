@@ -95,7 +95,6 @@ export default {
 
             let trajectories = this.dataExtractor.extractTrajectory(this.state.messages)
             if (Object.keys(trajectories).length > 0) {
-                this.state.showMap = true
                 let first = Object.keys(trajectories)[0]
                 this.state.trajectorySource = first
                 this.state.currentTrajectory = trajectories[first].trajectory
@@ -132,7 +131,13 @@ export default {
             // Change to plot view after 2 seconds so the Processed status is readable
             setTimeout(() => { this.$eventHub.$emit('set-selected', 'plot') }, 2000)
 
-            this.state.mapAvailable = this.state.currentTrajectory.length > 0
+            // Only set showMap to true if it is available and was previously unavailable
+            if (!this.state.mapAvailable) {
+                this.state.mapAvailable = this.state.currentTrajectory.length > 0
+                if (this.state.mapAvailable) {
+                    this.state.showMap = true
+                }
+            }
         },
 
         generateColorMMap () {
