@@ -43,6 +43,7 @@ import {
     Quaternion,
     when,
     defined,
+    NearFarScalar,
     SingleTileImageryProvider,
     Rectangle} from 'cesium/Cesium'
 
@@ -104,7 +105,8 @@ export default {
                     selectionIndicator: false,
                     shadows: true,
                     selectedImageryProviderViewModel: this.sentinelProvider,
-                    imageryProviderViewModels: imageryProviders
+                    imageryProviderViewModels: imageryProviders,
+                    orderIndependentTranslucency: false
 
                 })
             this.viewer.scene.debugShowFramesPerSecond = true
@@ -147,6 +149,16 @@ export default {
                 rectangle: Rectangle.fromDegrees(-48.530077110530044 + xofs, -27.490619277419633,
                     -48.52971476731231 + xofs, -27.49044182943895)
             }))
+            this.viewer.scene.globe.translucency.frontFaceAlphaByDistance = new NearFarScalar(
+                400.0,
+                0.5,
+                800.0,
+                1.0
+            )
+            this.viewer.scene.globe.undergroundColorAlphaByDistance.near = 0
+            this.viewer.scene.globe.undergroundColorAlphaByDistance.far = 10000
+            this.viewer.scene.globe.undergroundColorAlphaByDistance.nearValue = 0
+            this.viewer.scene.globe.undergroundColorAlphaByDistance.farValue = 1
         }
 
         this.addCloseButton()
@@ -270,6 +282,33 @@ export default {
                     this.state.cameraType = 'follow'
                     this.changeCamera()
                     setTimeout(this.updateTimelineColors, 500)
+                    setInterval(this.updateGlobeOpacity, 1000)
+                },
+                updateGlobeOpacity () {
+                    /*
+                    Makes the Globe transparent when the vehicle is underground/underwater. Called every 1 second
+                    */
+                    let position = Cartographic.fromCartesian(this.model.position.getValue(
+                        this.viewer.clock.currentTime))
+                    let height = position.height
+                    let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider,
+                        [position])
+                    when(promise, (updatedPositions) => {
+                        let altitude = height - updatedPositions[0].height
+                        const globe = this.viewer.scene.globe
+                        if (altitude < 0) {
+                            globe.showGroundAtmosphere = false
+                            globe.translucency.enabled = true
+                            globe.translucency.frontFaceAlpha = 0.7
+                            globe.baseColor = Color.TRANSPARENT
+                        } else {
+                            globe.showGroundAtmosphere = true
+                            globe.baseColor = Color.BLUE
+                            globe.translucency.enabled = false
+                            globe.translucency.frontFaceAlpha = 1.0
+                            globe.undergroundColor = Color.BLACK
+                        }
+                    })
                 },
                 addCloseButton () {
                     /* Creates the close button on the Cesium toolbar */
