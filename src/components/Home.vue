@@ -143,7 +143,7 @@ export default {
         generateColorMMap () {
             let colorMapOptions = {
                 colormap: 'hsv',
-                nshades: Math.max(12, this.setOfModes.length),
+                nshades: Math.max(11, this.setOfModes.length),
                 format: 'rgbaString',
                 alpha: 1
             }
