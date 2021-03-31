@@ -243,9 +243,7 @@ export default {
                     * Second step of setup, happens after the height of the starting point has been returned by Cesium
                     * */
                     this.heightOffset = 0
-                    for (let pos of updatedPositions) {
-                        this.heightOffset = Math.max(this.heightOffset, pos.height)
-                    }
+                    this.heightOffset = Math.max(this.heightOffset, updatedPositions[0].height)
                     this.processTrajectory(this.state.currentTrajectory)
                     this.addModel()
                     this.updateAndPlotTrajectory()
