@@ -120,6 +120,13 @@ export default {
                     })
                 }
             }
+            if (this.state.vehicle === 'quadcopter') {
+                if (this.state.params.get('FRAME_TYPE') === 0) {
+                    this.state.vehicle += '+'
+                } else if (this.state.params.get('FRAME_TYPE') === 1) {
+                    this.state.vehicle += 'x'
+                }
+            }
             if (this.state.textMessages.length === 0) {
                 this.state.textMessages = this.dataExtractor.extractTextMessages(this.state.messages)
             }
