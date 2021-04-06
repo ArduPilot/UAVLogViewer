@@ -771,8 +771,11 @@ export default {
                     if (type === 'submarine') {
                         return require('../assets/bluerovsimple.glb')
                     }
-                    if (type === 'quadcopter') {
-                        return require('../assets/quad.glb')
+                    if (type === 'quadcopter+') {
+                        return require('../assets/quadp.glb')
+                    }
+                    if (type === 'quadcopterx' || type === 'quadcopter') {
+                        return require('../assets/quadx.glb')
                     }
                     if (type === 'boat') {
                         return require('../assets/boat.glb')
