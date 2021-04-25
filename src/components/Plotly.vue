@@ -50,6 +50,7 @@ let plotOptions = {
         traceorder: 'normal',
         borderwidth: 1
     },
+    showlegend: true,
     // eslint-disable-next-line
     plot_bgcolor: '#f8f8f8',
     // eslint-disable-next-line
@@ -244,6 +245,42 @@ export default {
             })
         },
         onRangeChanged (event) {
+            this.addMaxMinMeanToTitles()
+        },
+        addMaxMinMeanToTitles   () {
+            let average = arr => arr.reduce((p, c) => p + c, 0) / arr.length
+            var gd = this.gd
+            var xRange = gd.layout.xaxis.range
+            var yRange = gd.layout.yaxis.range
+
+            var needsRelayout = false
+
+            gd.data.forEach(trace => {
+                var len = Math.min(trace.x.length, trace.y.length)
+                var xInside = []
+                var yInside = []
+
+                for (var i = 0; i < len; i++) {
+                    var x = trace.x[i]
+                    var y = trace.y[i]
+
+                    if (x > xRange[0] && x < xRange[1] && y > yRange[0] && y < yRange[1]) {
+                        xInside.push(x)
+                        yInside.push(y)
+                    }
+                }
+                const extraData = ` | Min: ${Math.min(...yInside).toFixed(2)} \
+    Max: ${Math.max(...yInside).toFixed(2)} \
+    Mean: ${average(yInside).toFixed(2)}`
+
+                if (trace.name.indexOf(extraData) === -1) {
+                    trace.name = trace.name.split(' | ')[0] + extraData
+                    needsRelayout = true
+                }
+            })
+            if (needsRelayout) {
+                Plotly.relayout(this.gd, this.gd.layout)
+            }
         },
         isPlotted (fieldname) {
             for (let field of this.state.expressions) {
