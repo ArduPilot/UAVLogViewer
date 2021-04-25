@@ -38,14 +38,14 @@ const updatemenus = [
         type: 'buttons',
         x: 0.1,
         xanchor: 'left',
-        y: 1.1,
+        y: 1.2,
         yanchor: 'top'
     }
 ]
 
 let plotOptions = {
     legend: {
-        x: 0,
+        x: 0.1,
         y: 1,
         traceorder: 'normal',
         borderwidth: 1
