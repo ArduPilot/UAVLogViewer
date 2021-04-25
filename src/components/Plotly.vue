@@ -244,50 +244,6 @@ export default {
             })
         },
         onRangeChanged (event) {
-            let query = Object.create(this.$route.query) // clone it
-            query['plots'] = this.state.expressions.join(',')
-            let list = [
-                this.gd._fullLayout.xaxis.range[0].toFixed(0),
-                this.gd._fullLayout.xaxis.range[1].toFixed(0)
-            ]
-            this.state.xrange = list
-            if (this.gd._fullLayout.yaxis !== undefined) {
-                list.push(this.gd._fullLayout.yaxis.range[0].toFixed(0))
-                list.push(this.gd._fullLayout.yaxis.range[1].toFixed(0))
-            }
-            if (this.gd._fullLayout.yaxis2 !== undefined) {
-                list.push(this.gd._fullLayout.yaxis2.range[0].toFixed(0))
-                list.push(this.gd._fullLayout.yaxis2.range[1].toFixed(0))
-            }
-            if (this.gd._fullLayout.yaxis3 !== undefined) {
-                list.push(this.gd._fullLayout.yaxis3.range[0].toFixed(0))
-                list.push(this.gd._fullLayout.yaxis3.range[1].toFixed(0))
-            }
-            if (this.gd._fullLayout.yaxis4 !== undefined) {
-                list.push(this.gd._fullLayout.yaxis4.range[0].toFixed(0))
-                list.push(this.gd._fullLayout.yaxis4.range[1].toFixed(0))
-            }
-            query['ranges'] = list.join(',')
-
-            // this.$router.push({query: query})
-            // if (event.hasOwnProperty('xaxis.range')) {
-            //     this.$eventHub.$emit('rangeChanged', event['xaxis.range'])
-            // }
-            // if (event.hasOwnProperty('xaxis.range[0]')) {
-            //     this.$eventHub.$emit('rangeChanged', [event['xaxis.range[0]'], event['xaxis.range[1]']])
-            // }
-            if (event !== undefined) {
-                // this.$router.push({query: query})
-                if (event.hasOwnProperty('xaxis.range')) {
-                    this.state.timeRange = event['xaxis.range']
-                }
-                if (event.hasOwnProperty('xaxis.range[0]')) {
-                    this.state.timeRange = [event['xaxis.range[0]'], event['xaxis.range[1]']]
-                }
-                if (event.hasOwnProperty('xaxis.autorange')) {
-                    this.state.timeRange = [this.gd.layout.xaxis.range[0], this.gd.layout.xaxis.range[1]]
-                }
-            }
         },
         isPlotted (fieldname) {
             for (let field of this.state.expressions) {
