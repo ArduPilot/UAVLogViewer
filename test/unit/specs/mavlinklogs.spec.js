@@ -32,6 +32,6 @@ describe('parse tlogs', () => {
         let trajectory = MavlinkDataExtractor.extractTrajectory(messages)
         expect(Object.keys(trajectory).length).toBeGreaterThan(1)
         let firstItem = Object.keys(trajectory)[0]
-        expect(trajectory[firstItem].trajectory.length).toBeGreaterThan(100)
+        expect(trajectory[firstItem].trajectory.length).toBeGreaterThan(10)
     })
 })
