@@ -23,7 +23,7 @@ describe('parse tlogs', () => {
         const messages = result.messages
         expect(Object.keys(messageTypes)).toContain('HEARTBEAT')
         expect(MavlinkDataExtractor.extractEvents(messages).length).toBeGreaterThan(0)
-        expect(Object.keys(MavlinkDataExtractor.extractAttitudes(messages)).length).toBeGreaterThan(100)
+        expect(Object.keys(MavlinkDataExtractor.extractAttitudes(messages)).length).toBeGreaterThan(50)
         expect(MavlinkDataExtractor.extractFlightModes(messages).length).toBeGreaterThan(0)
 
         expect(MavlinkDataExtractor.extractParams(messages)).toBeDefined()
