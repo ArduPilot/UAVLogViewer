@@ -251,7 +251,6 @@ export default {
             let average = arr => arr.reduce((p, c) => p + c, 0) / arr.length
             var gd = this.gd
             var xRange = gd.layout.xaxis.range
-            var yRange = gd.layout.yaxis.range
 
             var needsRelayout = false
 
@@ -264,7 +263,7 @@ export default {
                     var x = trace.x[i]
                     var y = trace.y[i]
 
-                    if (x > xRange[0] && x < xRange[1] && y > yRange[0] && y < yRange[1]) {
+                    if (x > xRange[0] && x < xRange[1]) {
                         xInside.push(x)
                         yInside.push(y)
                     }
