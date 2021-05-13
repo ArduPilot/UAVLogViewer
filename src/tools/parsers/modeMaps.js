@@ -21,7 +21,8 @@ export let modeMappingApm = {
     20: 'QLAND',
     21: 'QRTL',
     22: 'QAUTOTUNE',
-    23: 'QACRO'
+    23: 'QACRO',
+    24: 'THERMAL'
 }
 export let modeMappingAcm = {
     0: 'STABILIZE',
