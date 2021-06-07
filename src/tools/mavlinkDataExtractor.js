@@ -30,7 +30,7 @@ export class MavlinkDataExtractor {
             for (let i in msgs.time_boot_ms) {
                 // TODO: fix this properly
                 // eslint-disable-next-line
-                if (msgs.type[i] !== mavlink.MAV_TYPE_GCS) {
+                if (msgs.type[i] !== mavlink.MAV_TYPE_GCS && msgs.type[i] !== mavlink.MAV_TYPE_GIMBAL) {
                     if (msgs.asText[i] === undefined) {
                         msgs.asText[i] = 'Unknown'
                     }
