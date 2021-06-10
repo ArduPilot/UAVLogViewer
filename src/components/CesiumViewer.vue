@@ -69,7 +69,8 @@ export default {
     data () {
         return {
             state: store,
-            startTimeMs: 0
+            startTimeMs: 0,
+            lastEmitted: 0
         }
     },
     created () {
@@ -496,9 +497,16 @@ export default {
                     // emits in "boot_time_ms" units.
                     let current = (this.viewer.clock.currentTime.secondsOfDay)
                     current = current > this.viewer.clock.startTime.secondsOfDay ? current : current + 86400
+                    const newFrameTime = (current - this.viewer.clock.startTime.secondsOfDay) * 1000 + this.startTimeMs
+                    if (newFrameTime === this.lastEmitted) {
+                        // False alarm.
+                        return
+                    }
+                    this.lastEmitted = newFrameTime
+                    console.log('new frame')
                     this.$eventHub.$emit(
                         'cesium-time-changed',
-                        (current - this.viewer.clock.startTime.secondsOfDay) * 1000 + this.startTimeMs
+                        newFrameTime
                     )
                     if (this.viewer.clock.currentTime < this.timelineStart ||
                         this.viewer.clock.currentTime > this.timelineStop) {
