@@ -246,6 +246,18 @@ export default {
         },
         onRangeChanged (event) {
             this.addMaxMinMeanToTitles()
+            if (event !== undefined) {
+                // this.$router.push({query: query})
+                if (event.hasOwnProperty('xaxis.range')) {
+                    this.state.timeRange = event['xaxis.range']
+                }
+                if (event.hasOwnProperty('xaxis.range[0]')) {
+                    this.state.timeRange = [event['xaxis.range[0]'], event['xaxis.range[1]']]
+                }
+                if (event.hasOwnProperty('xaxis.autorange')) {
+                    this.state.timeRange = [this.gd.layout.xaxis.range[0], this.gd.layout.xaxis.range[1]]
+                }
+            }
         },
         addMaxMinMeanToTitles   () {
             let average = arr => arr.reduce((p, c) => p + c, 0) / arr.length
