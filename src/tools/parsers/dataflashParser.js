@@ -367,11 +367,12 @@ export class DataflashParser {
     checkNumberOfInstances (name) {
         // Similar to parseOffset, but finishes earlier and updates messageTypes
         let type = this.getMsgType(name)
-        let numberOfInstances = 1
+        let availableInstances = []
         let instanceField = this.getInstancesFieldName(name)
         if (instanceField === null) {
-            return numberOfInstances
+            return [1]
         }
+        let repeats = 0
         for (var i = 0; i < this.msgType.length; i++) {
             if (type === this.msgType[i]) {
                 this.offset = this.offsetArray[i]
@@ -382,10 +383,15 @@ export class DataflashParser {
                         if (!msg.hasOwnProperty(instanceField)) {
                             break
                         }
-                        if ((msg[instanceField] + 1) < numberOfInstances) {
-                            return numberOfInstances
+                        // we do an early return after we get 20 repeated instance numbers. should we?
+                        const instance = msg[instanceField]
+                        if (availableInstances.indexOf(instance) !== -1) {
+                            repeats += 1
+                            if (repeats > 20) {
+                                return availableInstances
+                            }
                         } else {
-                            numberOfInstances = msg[instanceField] + 1
+                            availableInstances.push(instance)
                         }
                     }
                 } catch (e) {
@@ -393,7 +399,7 @@ export class DataflashParser {
                 }
             }
         }
-        return numberOfInstances
+        return availableInstances
     }
 
     timestamp (TimeUs) {
@@ -601,9 +607,9 @@ export class DataflashParser {
                             }
                         }
                     }
-                    let numberOfInstances = this.checkNumberOfInstances(msg.Name)
-                    if (numberOfInstances > 1) {
-                        for (let instance = 0; instance < numberOfInstances; instance++) {
+                    let availableInstances = this.checkNumberOfInstances(msg.Name)
+                    if (availableInstances.length > 1) {
+                        for (let instance of availableInstances) {
                             messageTypes[msg.Name + '[' + instance + ']'] = {
                                 expressions: fields,
                                 units: msg.units,
