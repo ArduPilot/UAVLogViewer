@@ -234,7 +234,7 @@ export default {
                             if (counter > 30) { // 30 * 300ms = 9 s timeout
                                 console.log('not resolving')
                                 clearInterval(interval)
-                                reject(new Error('Could not load messageType'))
+                                reject(new Error(`Could not load messageType ${message}`))
                             }
                             return
                         }
@@ -377,6 +377,10 @@ export default {
                 this.waitForMessages([...requested]).then(() => {
                     this.addPlots(plots)
                 })
+                    .catch((e) => {
+                        alert(e)
+                        this.plot()
+                    })
                 return
             }
             let newplots = []
@@ -626,6 +630,10 @@ export default {
             }
             if (!this.messagesAreAvailable(messages)) {
                 this.waitForMessages(messages).then(this.plot)
+                    .catch((e) => {
+                        alert(e)
+                        this.plot()
+                    })
             }
 
             for (let expression of this.state.expressions) {
