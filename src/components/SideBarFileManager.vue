@@ -57,11 +57,15 @@ export default {
     },
     created () {
         this.$eventHub.$on('loadType', this.loadType)
+        this.$eventHub.$on('trimFile', this.trimFile)
     },
     beforeDestroy () {
         this.$eventHub.$off('open-sample')
     },
     methods: {
+        trimFile () {
+            worker.postMessage({action: 'trimFile', time: this.state.timeRange})
+        },
         onLoadSample (file) {
             let url
             if (file === 'sample') {
@@ -186,6 +190,16 @@ export default {
             document.execCommand('copy')
             document.body.removeChild(el)
             this.shared = true
+        },
+        downloadFileFromURL (url) {
+            var a = document.createElement('a')
+            document.body.appendChild(a)
+            a.style = 'display: none'
+            a.href = url
+            a.download = this.state.file + '-trimmed.' + this.state.logType
+            a.click()
+            document.body.removeChild(a)
+            window.URL.revokeObjectURL(url)
         }
     },
     mounted () {
@@ -202,6 +216,8 @@ export default {
             } else if (event.data.hasOwnProperty('messageType')) {
                 this.state.messages[event.data.messageType] = event.data.messageList
                 this.$eventHub.$emit('messages')
+            } else if (event.data.hasOwnProperty('url')) {
+                this.downloadFileFromURL(event.data.url)
             }
         }
         if (this.$route.params.hasOwnProperty('id')) {

@@ -124,6 +124,13 @@
                             <a class="check-font download-text" v-bind:href="downloadURL"
                                v-bind:download="fileName" ref="downloadFile"> Download </a>
                         </label>
+                        <label v-if="state.logType==='tlog'" v-on:click="downloadTrimmed">
+                            <i
+                            class="fa fa-download circle"
+                            title="Download a log with starting and end time matching the current views">
+                            </i>
+                            <a class="check-font"> Trimmed log </a>
+                        </label>
                     </div>
                 </div>
             </b-collapse>
@@ -192,6 +199,9 @@ export default {
 
         download () {
             this.$refs.downloadFile.click()
+        },
+        downloadTrimmed () {
+            this.$eventHub.$emit('trimFile')
         }
     },
     created () {

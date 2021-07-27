@@ -18700,6 +18700,34 @@ MAVLink.prototype.parseType = function (type) {
     return messages
 }
 
+MAVLink.prototype.trimFile = function (start, end) {
+    let startOffset = null
+    let endOffset = null
+    let startTimestamp = null
+    for (let offsets of this.bufmap[mavlink.nameMap['HEARTBEAT']]) {
+        let m = this.decode(this.buf.slice(offsets[0], offsets[1]))
+        // The 8 bytes preceding the mavlink message are actually a very useful timestamp saved by the GCS!
+        let slice = this.buf.slice(offsets[0]-8, offsets[0])
+        let timestamp = new Uint64BE(slice)/1000 - this.startTime
+        if (timestamp > start && startOffset === null)
+        {
+            startOffset = offsets[0]
+        }
+        if (timestamp > end && endOffset === null) {
+            endOffset = offsets[0]
+            break
+        }
+    }
+    if (endOffset === null) {
+        const bufmap = this.bufmap[mavlink.nameMap['HEARTBEAT']]
+        endOffset = bufmap[bufmap.length-1][1]
+    }
+    const blob = new Blob([this.buf.slice(startOffset, endOffset)], {type: "application/octet-stream"});
+    const url = URL.creat
+    eObjectURL(blob);
+    return url
+}
+
 // Expose this code as a module
 module.exports.mavlink = mavlink
 module.exports.MAVLink = MAVLink

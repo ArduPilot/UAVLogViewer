@@ -18,5 +18,7 @@ self.addEventListener('message', function (event) {
         parser.processData(data)
     } else if (event.data.action === 'loadType') {
         parser.loadType(event.data.type.split('[')[0])
+    } else if (event.data.action === 'trimFile') {
+        parser.trimFile(event.data.time)
     }
 })

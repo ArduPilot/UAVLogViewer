@@ -236,6 +236,12 @@ export class MavlinkParser {
         return {types: messageTypes, messages: instance.messages}
     }
 
+    trimFile (time) {
+        const start = time[0]
+        const end = time[1]
+        console.log('triming', start, end)
+        self.postMessage({url: this.mavlinkParser.trimFile(start, end)})
+    }
     loadType (type) {
         this.mavlinkParser.parseType(type)
         console.log('done')
