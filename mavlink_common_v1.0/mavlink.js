@@ -18723,8 +18723,7 @@ MAVLink.prototype.trimFile = function (start, end) {
         endOffset = bufmap[bufmap.length-1][1]
     }
     const blob = new Blob([this.buf.slice(startOffset, endOffset)], {type: "application/octet-stream"});
-    const url = URL.creat
-    eObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     return url
 }
 
