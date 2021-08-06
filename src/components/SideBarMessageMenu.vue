@@ -24,7 +24,10 @@
             </li>
             <template v-for="key of Object.keys(this.messageTypesFiltered).sort()">
                 <li class="type" v-bind:key="key">
-                    <div v-b-toggle="'type' + key" :title="messageDocs[key] ? messageDocs[key].doc : ''">
+                    <div
+                        v-b-toggle="'type' + key"
+                        :title="messageDocs[key.split('[')[0]] ? messageDocs[key.split('[')[0]].doc : ''"
+                    >
                         <a class="section">{{key}} <span v-if="messageTypes[key].isArray">{{"[...]"}}</span>
                             <i class="expand fas fa-caret-down"></i></a>
                     </div>
