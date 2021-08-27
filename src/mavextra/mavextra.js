@@ -148,13 +148,18 @@ window.lowpass = function (variable, key, factor) {
     return ret
 }
 
+window.lastDelta = {}
+
 window.delta = function (variable, key) {
     let ret = 0
-    if (window.lastDelta === null || isNaN(window.lastDelta)) {
-        window.lastDelta = variable
+    if (!(key in window.lastDelta)) {
+        window.lastDelta[key] = variable
+    }
+    if (window.lastDelta[key] === null || isNaN(window.lastDelta[key])) {
+        window.lastDelta[key] = variable
     } else {
-        ret = variable - window.lastDelta
-        window.lastDelta = variable
+        ret = variable - window.lastDelta[key]
+        window.lastDelta[key] = variable
     }
     return ret
 }
