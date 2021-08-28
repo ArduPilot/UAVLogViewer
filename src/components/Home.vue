@@ -39,6 +39,7 @@
 </template>
 
 <script>
+import isOnline from 'is-online'
 import Plotly from './Plotly'
 import CesiumViewer from './CesiumViewer'
 import Sidebar from './Sidebar'
@@ -61,6 +62,7 @@ export default {
         this.state.timeAttitude = []
         this.state.timeAttitudeQ = []
         this.state.currentTrajectory = []
+        isOnline().then(a => { this.state.isOnline = a })
     },
     beforeDestroy () {
         this.$eventHub.$off('messages')
