@@ -91,29 +91,16 @@ export default {
     },
     mounted () {
         // create eniro, statkart, and openseamap providers
-        let imageryProviders = this.createAdditionalProviders()
-
         if (this.viewer == null) {
-            this.viewer = new Viewer(
-                'cesiumContainer',
-                {
-                    homeButton: false,
-                    timeline: true,
-                    animation: true,
-                    requestRenderMode: true,
-                    shouldAnimate: false,
-                    scene3DOnly: false,
-                    selectionIndicator: false,
-                    shadows: true,
-                    selectedImageryProviderViewModel: this.sentinelProvider,
-                    imageryProviderViewModels: imageryProviders,
-                    orderIndependentTranslucency: false
-
-                })
-            this.viewer.scene.debugShowFramesPerSecond = true
-            if (this.state.vehicle !== 'boat') {
-                this.viewer.terrainProvider = createWorldTerrain()
+            if (this.state.isOnline) {
+                this.viewer = this.createViewer(true)
+                if (this.state.vehicle !== 'boat') {
+                    this.viewer.terrainProvider = createWorldTerrain()
+                }
+            } else {
+                this.viewer = this.createViewer(false)
             }
+            this.viewer.scene.debugShowFramesPerSecond = true
 
             this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
             this.viewer.scene.postProcessStages.bloom.enabled = false
@@ -167,7 +154,7 @@ export default {
             this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
         }
 
-        if (this.state.vehicle !== 'boat') {
+        if (this.state.vehicle !== 'boat' && this.state.isOnline) {
             let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.correctedTrajectory)
             when(promise, this.setup2)
         } else {
@@ -177,6 +164,47 @@ export default {
 
     methods:
             {
+                createViewer (online) {
+                    if (online) {
+                        console.log('creating online viewer')
+                        let imageryProviders = this.createAdditionalProviders()
+                        return new Viewer(
+                            'cesiumContainer',
+                            {
+                                homeButton: false,
+                                timeline: true,
+                                animation: true,
+                                requestRenderMode: true,
+                                shouldAnimate: false,
+                                scene3DOnly: false,
+                                selectionIndicator: false,
+                                shadows: true,
+                                selectedImageryProviderViewModel: this.sentinelProvider,
+                                imageryProviderViewModels: imageryProviders,
+                                orderIndependentTranslucency: false
+                            }
+                        )
+                    }
+                    console.log('creating offline viewer')
+                    return new Viewer(
+                        'cesiumContainer',
+                        {
+                            homeButton: false,
+                            timeline: true,
+                            animation: true,
+                            requestRenderMode: true,
+                            shouldAnimate: false,
+                            scene3DOnly: false,
+                            selectionIndicator: false,
+                            shadows: true,
+                            orderIndependentTranslucency: false,
+                            baseLayerPicker: false,
+                            imageryProvider: false,
+                            geocoder: false
+                        }
+                    )
+                },
+
                 createAdditionalProviders () {
                     /*
                     *  Creates and returns the providers for viewing the Eniro, Statkart, and OpenSeaMap map layers
