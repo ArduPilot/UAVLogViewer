@@ -1,4 +1,3 @@
-require('mavlink_common_v1.0/mavlink')
 let mavlinkparser = require('../../../src/tools/parsers/mavlinkParser.js')
 import {MavlinkDataExtractor} from '../../../src/tools/mavlinkDataExtractor'
 var glob = require('glob')

@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import {mavlink} from 'mavlink_common_v1.0/mavlink'
+import {mavlink20 as mavlink} from '../../libs/mavlink'
 import {modeMappingAcm, modeMappingApm, modeMappingRover, modeMappingSub, modeMappingTracker} from './modeMaps'
 
 const multipliers = {
