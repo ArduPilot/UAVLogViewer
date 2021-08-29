@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import {MAVLink, mavlink} from 'mavlink_common_v1.0/mavlink'
+import {mavlink20 as mavlink, MAVLink20Processor as MAVLink} from '../../libs/mavlink'
 import {modeMappingAcm, modeMappingApm, modeMappingRover, modeMappingSub, modeMappingTracker} from './modeMaps'
 
 let vehicles = {
@@ -94,13 +94,13 @@ export class MavlinkParser {
     }
 
     static fixData (message) {
-        if (message.name === 'GLOBAL_POSITION_INT') {
+        if (message._name === 'GLOBAL_POSITION_INT') {
             message.lat = message.lat / 10000000
             message.lon = message.lon / 10000000
             // eslint-disable-next-line
             message.relative_alt = message.relative_alt / 1000
             return message
-        } else if (message.name === 'HEARTBEAT') {
+        } else if (message._name === 'HEARTBEAT') {
             message.asText = getModeString(message.type, message.custom_mode, message.base_mode)
             message.craft = vehicles[message.type]
             return message
@@ -117,12 +117,12 @@ export class MavlinkParser {
     }
 
     onMessage (messages) {
-        let name = messages[0].name
+        let name = messages[0]._name
         for (let message of messages) {
             if (instance.totalSize == null) { // for percentage calculation
                 instance.totalSize = this.buf.byteLength
             }
-            if (message.id !== -1) {
+            if (message._id !== -1) {
                 // if (message.time_boot_ms === undefined) {
                 //     message.time_boot_ms = instance.lastTime
                 // }
@@ -143,7 +143,7 @@ export class MavlinkParser {
                 if (message.name in instance.messages) {
                     MavlinkParser.fixData(message)
                 } else {
-                    instance.messages[message.name] = [MavlinkParser.fixData(message)]
+                    instance.messages[message._name] = [MavlinkParser.fixData(message)]
                 }
                 // TODO: FIX THIS!
                 // This a hack to detect the end of the buffer and only them message the main thread
@@ -157,10 +157,10 @@ export class MavlinkParser {
         if (fields.indexOf('time_boot_ms') === -1) {
             fields.push('time_boot_ms')
         }
-        if (messages[0].name === 'HEARTBEAT') {
+        if (messages[0]._name === 'HEARTBEAT') {
             fields.push('asText')
             fields.push('craft')
-        } else if (messages[0].name === 'SYSTEM_TIME') {
+        } else if (messages[0]._name === 'SYSTEM_TIME') {
             fields.push('time_unix_usec')
         }
         let mergedData = {}

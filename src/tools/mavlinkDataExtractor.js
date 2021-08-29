@@ -1,4 +1,4 @@
-import {mavlink} from 'mavlink_common_v1.0/mavlink'
+import {mavlink20 as mavlink} from '../libs/mavlink'
 import {ParamSeeker} from '../tools/paramseeker'
 
 export class MavlinkDataExtractor {
