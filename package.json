@@ -23,6 +23,7 @@
     "fast-xml-parser": "^3.16.0",
     "git-revision-webpack-plugin": "^3.0.4",
     "int64-buffer": "^0.99.1007",
+    "is-online": "^9.0.1",
     "jquery": "^3.4.1",
     "jspack": "0.0.4",
     "long": "^4.0.0",
