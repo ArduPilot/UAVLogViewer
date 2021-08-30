@@ -25,7 +25,7 @@ jobs:
                   path: /tmp/testlogs
                   key: ${{ runner.os }}-testlogs-${{ hashFiles('**/logdownloader.sh') }}
                   restore-keys: |
-                      ${{ runner.os }}-testlogs-
+                      ${{ runner.os }}-testlogs-${{ hashFiles('**/logdownloader.sh') }}
 
             - name: Use Node.js ${{ matrix.node-version }}
               uses: actions/setup-node@v1
