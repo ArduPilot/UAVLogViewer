@@ -73,16 +73,18 @@ export default {
                 url = require('../assets/vtol.tlog')
                 this.state.logType = 'tlog'
             } else {
-                url = ('/uploaded/' + file)
+                url = file
             }
-            this.transferMessage = 'Download Done'
-            this.sampleLoaded = true
             let oReq = new XMLHttpRequest()
+            this.state.logType = url.indexOf('.tlog') > -1 ? 'tlog' : 'bin'
             oReq.open('GET', url, true)
             oReq.responseType = 'arraybuffer'
 
             oReq.onload = function (oEvent) {
                 var arrayBuffer = oReq.response
+
+                this.transferMessage = 'Download Done'
+                this.sampleLoaded = true
                 worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: (url.indexOf('.tlog') > -1)})
             }
             oReq.addEventListener('progress', (e) => {
@@ -91,6 +93,10 @@ export default {
                 }
             }
             , false)
+            oReq.onerror = (error) => {
+                alert('unable to fetch remote file, check CORS settings in the target server')
+                console.log(error)
+            }
 
             oReq.send()
         },
@@ -220,8 +226,8 @@ export default {
                 this.downloadFileFromURL(event.data.url)
             }
         }
-        if (this.$route.params.hasOwnProperty('id')) {
-            this.onLoadSample(this.$route.params.id)
+        if (this.$route.query.hasOwnProperty('file')) {
+            this.onLoadSample(this.$route.query.file)
         }
     },
     components: {
