@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# update this file to trigger cache updates
 if [ ! -d "/tmp/testlogs" ]; then
     echo "log files not found, downloading..."
     mkdir /tmp/testlogs
