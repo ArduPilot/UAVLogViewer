@@ -29,14 +29,7 @@ jobs:
 
             - run: npm install
             - run: npm run build --if-present
-
-            - uses: actions/checkout@master
-            - name: Archive Release
-              uses: thedoctor0/zip-release@master
-              with:
-                type: 'tar'
-                filename: 'logviewer.tar.gz'
-                directory: 'dist'
+            - run: tar -czvf logviewer.tar.gz dist
             - name: Upload Release
               uses: ncipollo/release-action@v1
               with:
