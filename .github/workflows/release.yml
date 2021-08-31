@@ -1,0 +1,44 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+jobs:
+    build:
+
+        runs-on: ubuntu-latest
+
+        strategy:
+            matrix:
+                node-version: [12.x]
+
+        steps:
+            - uses: actions/checkout@v1
+            - uses: actions/cache@v1
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node-
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v1
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - run: npm install
+            - run: npm run build --if-present
+
+            - uses: actions/checkout@master
+            - name: Archive Release
+              uses: thedoctor0/zip-release@master
+              with:
+                type: 'tar'
+                filename: 'logviewer.tar.gz'
+                directory: 'dist'
+            - name: Upload Release
+              uses: ncipollo/release-action@v1
+              with:
+                artifacts: "logviewer.tar.gz"
+                token: ${{ secrets.GITHUB_TOKEN }}
