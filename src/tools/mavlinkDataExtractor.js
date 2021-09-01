@@ -1,6 +1,25 @@
 import {mavlink20 as mavlink} from '../libs/mavlink'
 import {ParamSeeker} from '../tools/paramseeker'
 
+const validGCSs = [
+    mavlink.MAV_TYPE_FIXED_WING,
+    mavlink.MAV_TYPE_QUADROTOR,
+    mavlink.MAV_TYPE_COAXIAL,
+    mavlink.MAV_TYPE_HELICOPTER,
+    mavlink.MAV_TYPE_ANTENNA_TRACKER,
+    mavlink.MAV_TYPE_AIRSHIP,
+    mavlink.MAV_TYPE_FREE_BALLOON,
+    mavlink.MAV_TYPE_ROCKET,
+    mavlink.MAV_TYPE_GROUND_ROVER,
+    mavlink.MAV_TYPE_SURFACE_BOAT,
+    mavlink.MAV_TYPE_SUBMARINE,
+    mavlink.MAV_TYPE_HEXAROTOR,
+    mavlink.MAV_TYPE_OCTOROTOR,
+    mavlink.MAV_TYPE_TRICOPTER,
+    mavlink.MAV_TYPE_FLAPPING_WING,
+    mavlink.MAV_TYPE_KITE
+]
+
 export class MavlinkDataExtractor {
     static extractAttitudes (messages) {
         let attitudes = {}
@@ -28,9 +47,7 @@ export class MavlinkDataExtractor {
             let msgs = messages['HEARTBEAT']
             modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
             for (let i in msgs.time_boot_ms) {
-                // TODO: fix this properly
-                // eslint-disable-next-line
-                if (msgs.type[i] !== mavlink.MAV_TYPE_GCS && msgs.type[i] !== mavlink.MAV_TYPE_GIMBAL) {
+                if (validGCSs.includes(msgs.type[i])) {
                     if (msgs.asText[i] === undefined) {
                         msgs.asText[i] = 'Unknown'
                     }
