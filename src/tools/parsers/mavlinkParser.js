@@ -178,14 +178,7 @@ export class MavlinkParser {
     }
 
     extractStartTime () {
-        try {
-            let length = instance.messages['SYSTEM_TIME'].time_boot_ms.length
-            let lastmsg = instance.messages['SYSTEM_TIME'].time_unix_usec[length - 1]
-            return new Date(lastmsg[0] / 1e3 + lastmsg[1] * ((2 ** 32) / 1e3))
-        } catch {
-            let timeUsec = instance.messages['GPS_RAW_INT'].time_boot_ms[0]
-            return new Date(timeUsec * ((2 ** 32) / 1e3))
-        }
+        return new Date(this.mavlinkParser.startTime)
     }
 
     processData (data) {
