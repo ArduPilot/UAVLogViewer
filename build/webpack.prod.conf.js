@@ -1,4 +1,7 @@
 'use strict'
+
+process.env.NODE_ENV = 'production'
+
 const path = require('path')
 const utils = require('./utils')
 const webpack = require('webpack')
