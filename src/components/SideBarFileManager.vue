@@ -76,7 +76,7 @@ export default {
                 url = file
             }
             let oReq = new XMLHttpRequest()
-            this.state.logType = url.indexOf('.tlog') > -1 ? 'tlog' : 'bin'
+            this.state.logType = url.endsWith('.tlog') ? 'tlog' : 'bin'
             oReq.open('GET', url, true)
             oReq.responseType = 'arraybuffer'
 
@@ -85,7 +85,7 @@ export default {
 
                 this.transferMessage = 'Download Done'
                 this.sampleLoaded = true
-                worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: (url.indexOf('.tlog') > -1)})
+                worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: (url.endsWith('.tlog'))})
             }
             oReq.addEventListener('progress', (e) => {
                 if (e.lengthComputable) {
@@ -141,10 +141,10 @@ export default {
                 worker.postMessage({
                     action: 'parse',
                     file: data,
-                    isTlog: (file.name.indexOf('tlog') > 1)
+                    isTlog: (file.name.endsWith('tlog'))
                 })
             }
-            this.state.logType = file.name.indexOf('tlog') !== -1 ? 'tlog' : 'bin'
+            this.state.logType = file.name.endsWith('tlog') ? 'tlog' : 'bin'
 
             reader.readAsArrayBuffer(file)
         },
