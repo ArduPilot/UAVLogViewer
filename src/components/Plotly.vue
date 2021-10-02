@@ -555,7 +555,7 @@ export default {
                 if (isNaN(field)) {
                     break
                 }
-                expression = expression.replace(fields[field], 'a[' + field + ']')
+                expression = expression.replaceAll(fields[field], 'a[' + field + ']')
             }
             let f
             try {
