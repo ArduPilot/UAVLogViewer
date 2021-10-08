@@ -573,7 +573,7 @@ export class DataflashParser {
                 let ms = msgs.GMS[i]
                 let d = new Date((315964800.0 + ((60 * 60 * 24 * 7) * weeks) + ms / 1000.0) * 1000.0)
                 // adjusting for leap seconds
-                d = new Date(d.getTime() - this.leapSecondsGPS(d.getUTCFullYear(), d.getUTCMonth()) * 1000)
+                d = new Date(d.getTime() - this.leapSecondsGPS(d.getUTCFullYear(), d.getUTCMonth() + 1) * 1000)
                 return d
             }
         }
