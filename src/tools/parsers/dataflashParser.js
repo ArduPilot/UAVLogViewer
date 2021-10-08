@@ -571,9 +571,30 @@ export class DataflashParser {
             if (msgs.GWk[i] > 1000) { // lousy validation
                 let weeks = msgs.GWk[i]
                 let ms = msgs.GMS[i]
-                return new Date((315964800.0 + ((60 * 60 * 24 * 7) * weeks) + ms / 1000.0) * 1000.0)
+                let d = new Date((315964800.0 + ((60 * 60 * 24 * 7) * weeks) + ms / 1000.0) * 1000.0)
+                // adjusting for leap seconds
+                d = new Date(d.getTime() - this.leapSecondsGPS(d.getUTCFullYear(), d.getUTCMonth()) * 1000)
+                return d
             }
         }
+    }
+
+    leapSecondsGPS (year, month) {
+        return this.leapSecondsTAI(year, month) - 19
+    }
+
+    leapSecondsTAI (year, month) {
+        const yyyymm = year * 100 + month
+        if (yyyymm >= 201701) return 37
+        if (yyyymm >= 201507) return 36
+        if (yyyymm >= 201207) return 35
+        if (yyyymm >= 200901) return 34
+        if (yyyymm >= 200601) return 33
+        if (yyyymm >= 199901) return 32
+        if (yyyymm >= 199707) return 31
+        if (yyyymm >= 199601) return 30
+
+        return 0
     }
 
     processData (data) {
