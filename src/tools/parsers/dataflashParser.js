@@ -638,6 +638,7 @@ export class DataflashParser {
         this.parseAtOffset('GPS')
         this.parseAtOffset('POS')
         this.parseAtOffset('XKQ1')
+        this.parseAtOffset('XKQ')
         this.parseAtOffset('NKQ1')
         this.parseAtOffset('NKQ2')
         this.parseAtOffset('XKQ2')

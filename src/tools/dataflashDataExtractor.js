@@ -96,20 +96,43 @@ export class DataflashDataExtractor {
 
     static extractAttitudesQ (messages) {
         let attitudes = {}
-        if ('XKQ1' in messages && messages['XKQ1'].length > 0) {
+        if ('XKQ1' in messages && Object.keys(messages['XKQ1']).length > 0) {
             console.log('QUATERNIOS1')
             let attitudeMsgs = messages['XKQ1']
-            for (let att of attitudeMsgs) {
-                attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
-                // attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
+            for (let i in attitudeMsgs.time_boot_ms) {
+                attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
+                    [
+                        attitudeMsgs.Q1[i],
+                        attitudeMsgs.Q2[i],
+                        attitudeMsgs.Q3[i],
+                        attitudeMsgs.Q4[i]
+                    ]
             }
             return attitudes
-        } else if ('NKQ1' in messages && messages['NKQ1'].length > 0) {
+        } else if ('NKQ1' in messages && Object.keys(messages['NKQ1']).length > 0) {
             console.log('QUATERNIOS2')
             let attitudeMsgs = messages['NKQ1']
-            for (let att of attitudeMsgs) {
-                // attitudes[att.time_boot_ms] = [att.Q2, att.Q3, att.Q4, att.Q1]
-                attitudes[att.time_boot_ms] = [att.Q1, att.Q2, att.Q3, att.Q4]
+            for (let i in attitudeMsgs.time_boot_ms) {
+                attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
+                    [
+                        attitudeMsgs.Q1[i],
+                        attitudeMsgs.Q2[i],
+                        attitudeMsgs.Q3[i],
+                        attitudeMsgs.Q4[i]
+                    ]
+            }
+            return attitudes
+        } else if ('XKQ' in messages && Object.keys(messages['XKQ']).length > 0) {
+            console.log('QUATERNIOS2')
+            let attitudeMsgs = messages['XKQ']
+            for (let i in attitudeMsgs.time_boot_ms) {
+                attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
+                    [
+                        attitudeMsgs.Q1[i],
+                        attitudeMsgs.Q2[i],
+                        attitudeMsgs.Q3[i],
+                        attitudeMsgs.Q4[i]
+                    ]
             }
             return attitudes
         }
