@@ -1,12 +1,20 @@
 <graphs>
   <graph name="Speed/Ground vs Air Speed">
     <expression>VFR_HUD.groundspeed VFR_HUD.airspeed</expression>
+    <expression>GPS[0].Spd GPS[1].Spd CTUN.As ARSP.Airspeed</expression>
+    <expression>GPS.Spd CTUN.As ARSP.Airspeed</expression>
     <expression>GPS.Spd ARSP.Airspeed</expression>
     <description>
       This shows the ground speed of the vehicle versus its air speed
     </description>
   </graph>
 
+  <graph name="Speed/Ground vs Corrected AirSpeed">
+    <expression>GPS[0].Spd GPS[1].Spd CTUN.As*CTUN.E2T</expression>
+    <expression>GPS.Spd CTUN.As*CTUN.E2T</expression>
+    <description>Airspeed correction</description>
+  </graph>
+  
   <graph name="Speed/Ground Speed">
     <expression>VFR_HUD.groundspeed</expression>
     <expression>GPS.Spd</expression>
@@ -32,6 +40,13 @@
     <expression>NAV_CONTROLLER_OUTPUT.nav_roll NAV_CONTROLLER_OUTPUT.nav_pitch degrees(ATTITUDE.roll) degrees(ATTITUDE.pitch)</expression>
     <expression>ATT.DesRoll ATT.Roll ATT.DesPitch ATT.Pitch</expression>
     <expression>CTUN.NavRoll CTUN.Roll CTUN.NavPitch CTUN.Pitch</expression>
+  </graph>
+
+  <graph name='Attitude/Circular Angle'>
+  <description>Total circular angle, as limited by ANGLE_MAX in Copter.</description>
+    <expression>sqrt(ATT.Roll*ATT.Roll+ATT.Pitch*ATT.Pitch)</expression>
+    <expression>sqrt(CTUN.Roll*CTUN.Roll+CTUN.Pitch*CTUN.Pitch)</expression>
+    <expression>degrees(sqrt(ATTITUDE.roll*ATTITUDE.roll+ATTITUDE.pitch*ATTITUDE.Pitch))</expression>
   </graph>
 
   <graph name='Sensors/Accelerometer/Accelerometers'>
@@ -376,14 +391,14 @@ If PIDR.I has a constant positive value then it means the aircraft is trimmed to
 
  <graph name='Sensors/Compass/EarthField Error EK3 Lane1'>
   <description></description>
-  <expression>earth_field_error(GPS,XKF2).x earth_field_error(GPS,XKF2).y earth_field_error(GPS,XKF2).z</expression>
   <expression>earth_field_error(GPS,XKF2[0]).x earth_field_error(GPS,XKF2[0]).y earth_field_error(GPS,XKF2[0]).z</expression>
+  <expression>earth_field_error(GPS,XKF2).x earth_field_error(GPS,XKF2).y earth_field_error(GPS,XKF2).z</expression>
  </graph>
 
  <graph name='Sensors/Compass/EarthField Error EK3 Lane2'>
   <description></description>
-  <expression>earth_field_error(GPS,XKF7).x earth_field_error(GPS,XKF7).y earth_field_error(GPS,XKF7).z</expression>
   <expression>earth_field_error(GPS,XKF2[1]).x earth_field_error(GPS,XKF2[1]).y earth_field_error(GPS,XKF2[1]).z</expression>
+  <expression>earth_field_error(GPS,XKF7).x earth_field_error(GPS,XKF7).y earth_field_error(GPS,XKF7).z</expression>
  </graph>
  
  <graph name='Copter/PID/PIDP'>
@@ -491,4 +506,28 @@ If PIDR.I has a constant positive value then it means the aircraft is trimmed to
   <expression>XKF1[0].PD-XKF1[100].PD{XKF1.C==100}</expression>
  </graph>
 
+ <graph name='Aliasing/AccX'>
+  <description></description>
+  <expression>lowpass(IMU[0].AccX,0,0.9) lowpass(IMU[1].AccX,1,0.9) lowpass(IMU[2].AccX,2,0.9)</expression>
+  <expression>lowpass(IMU[0].AccX,0,0.9) lowpass(IMU[1].AccX,1,0.9)</expression>
+  <expression>lowpass(IMU.AccX,0,0.9) lowpass(IMU2.AccX,1,0.9) lowpass(IMU3.AccX,2,0.9)</expression>
+  <expression>lowpass(IMU.AccX,0,0.9) lowpass(IMU2.AccX,1,0.9)</expression>
+ </graph>
+
+ <graph name='Aliasing/AccY'>
+  <description></description>
+  <expression>lowpass(IMU[0].AccY,0,0.9) lowpass(IMU[1].AccY,1,0.9) lowpass(IMU[2].AccY,2,0.9)</expression>
+  <expression>lowpass(IMU[0].AccY,0,0.9) lowpass(IMU[1].AccY,1,0.9)</expression>
+  <expression>lowpass(IMU.AccY,0,0.9) lowpass(IMU2.AccY,1,0.9) lowpass(IMU3.AccY,2,0.9)</expression>
+  <expression>lowpass(IMU.AccY,0,0.9) lowpass(IMU2.AccY,1,0.9)</expression>
+ </graph>
+
+ <graph name='Aliasing/AccZ'>
+  <description></description>
+  <expression>lowpass(IMU[0].AccZ,0,0.9) lowpass(IMU[1].AccZ,1,0.9) lowpass(IMU[2].AccZ,2,0.9)</expression>
+  <expression>lowpass(IMU[0].AccZ,0,0.9) lowpass(IMU[1].AccZ,1,0.9)</expression>
+  <expression>lowpass(IMU.AccZ,0,0.9) lowpass(IMU2.AccZ,1,0.9) lowpass(IMU3.AccZ,2,0.9)</expression>
+  <expression>lowpass(IMU.AccZ,0,0.9) lowpass(IMU2.AccZ,1,0.9)</expression>
+ </graph>
+ 
 </graphs>
