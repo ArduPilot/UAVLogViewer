@@ -29,8 +29,8 @@ export default {
             state: store,
             width: 220,
             height: 215,
-            left: 50,
-            top: 12,
+            left: 310,
+            top: 0,
             forceRecompute: 0,
             cursorTime: 0
         }
