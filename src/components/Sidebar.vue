@@ -131,6 +131,14 @@
                             </i>
                             <a class="check-font"> Trimmed log </a>
                         </label>
+                        <label>
+                            <i
+                            class="fa fa-microchip circle"
+                            title="Show a widget with the detected sensors">
+                            </i>
+                            <input type="checkbox" v-model="state.showDeviceIDs">
+                            <a class="check-font">  Sensors </a>
+                        </label>
                     </div>
                 </div>
             </b-collapse>
