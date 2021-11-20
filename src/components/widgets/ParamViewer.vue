@@ -30,8 +30,8 @@ export default {
             roll: 50,
             width: 220,
             height: 215,
-            left: 50,
-            top: 12,
+            left: 540,
+            top: 0,
             forceRecompute: 0
         }
     },
