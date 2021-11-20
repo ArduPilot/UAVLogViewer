@@ -12,6 +12,7 @@
         <TxInputs fixed-aspect-ratio v-if="state.mapAvailable && state.showMap && state.showRadio"></TxInputs>
         <ParamViewer v-if="state.showParams"></ParamViewer>
         <MessageViewer v-if="state.showMessages"></MessageViewer>
+        <DeviceIDViewer v-if="state.showDeviceIDs"></DeviceIDViewer>
         <AttitudeViewer v-if="state.showAttitude"></AttitudeViewer>
         <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
@@ -46,6 +47,7 @@ import Sidebar from './Sidebar'
 import TxInputs from './widgets/TxInputs'
 import ParamViewer from './widgets/ParamViewer'
 import MessageViewer from './widgets/MessageViewer'
+import DeviceIDViewer from './widgets/DeviceIDViewer'
 import AttitudeViewer from './widgets/AttitudeWidget'
 import {store} from './Globals.js'
 import {AtomSpinner} from 'epic-spinners'
@@ -177,6 +179,7 @@ export default {
         TxInputs,
         ParamViewer,
         MessageViewer,
+        DeviceIDViewer,
         AttitudeViewer
     },
     computed: {
