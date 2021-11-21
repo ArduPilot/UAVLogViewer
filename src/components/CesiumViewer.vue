@@ -70,7 +70,8 @@ export default {
         return {
             state: store,
             startTimeMs: 0,
-            lastEmitted: 0
+            lastEmitted: 0,
+            heightOffset: 0
         }
     },
     created () {
@@ -272,7 +273,7 @@ export default {
                     * Second step of setup, happens after the height of the starting point has been returned by Cesium
                     * */
                     this.heightOffset = 0
-                    this.heightOffset = Math.max(this.heightOffset, updatedPositions[0].height)
+                    this.heightOffset = updatedPositions[0].height
                     this.processTrajectory(this.state.currentTrajectory)
                     this.addModel()
                     this.updateAndPlotTrajectory()
