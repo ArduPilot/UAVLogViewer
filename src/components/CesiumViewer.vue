@@ -139,15 +139,18 @@ export default {
                     -48.52971476731231 + xofs, -27.49044182943895)
             }))
             this.viewer.scene.globe.translucency.frontFaceAlphaByDistance = new NearFarScalar(
-                400.0,
-                0.5,
-                800.0,
+                50.0,
+                0.4,
+                150.0,
                 1.0
             )
-            this.viewer.scene.globe.undergroundColorAlphaByDistance.near = 0
-            this.viewer.scene.globe.undergroundColorAlphaByDistance.far = 10000
-            this.viewer.scene.globe.undergroundColorAlphaByDistance.nearValue = 0
-            this.viewer.scene.globe.undergroundColorAlphaByDistance.farValue = 1
+            this.viewer.scene.globe.translucency.enabled = true
+            this.viewer.scene.screenSpaceCameraController.enableCollisionDetection = false
+            this.viewer.scene.globe.undergroundColor = Color.MIDNIGHTBLUE
+            this.viewer.scene.globe.undergroundColorAlphaByDistance.near = 2
+            this.viewer.scene.globe.undergroundColorAlphaByDistance.far = 10
+            this.viewer.scene.globe.undergroundColorAlphaByDistance.nearValue = 0.2
+            this.viewer.scene.globe.undergroundColorAlphaByDistance.farValue = 1.0
         }
 
         this.addCloseButton()
@@ -325,16 +328,10 @@ export default {
                         let altitude = height - updatedPositions[0].height
                         const globe = this.viewer.scene.globe
                         if (altitude < 0) {
-                            globe.showGroundAtmosphere = false
-                            globe.translucency.enabled = true
-                            globe.translucency.frontFaceAlpha = 0.7
-                            globe.baseColor = Color.TRANSPARENT
-                        } else {
                             globe.showGroundAtmosphere = true
-                            globe.baseColor = Color.BLUE
+                            globe.translucency.enabled = true
+                        } else {
                             globe.translucency.enabled = false
-                            globe.translucency.frontFaceAlpha = 1.0
-                            globe.undergroundColor = Color.BLACK
                         }
                     })
                 },
