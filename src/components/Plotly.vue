@@ -566,12 +566,11 @@ export default {
             }
             for (let time of x) {
                 let vals = []
-                const newobj = {}
                 for (let fieldIndex in timeIndexes) { // array of indexes, one for each field
                     while (this.state.messages[messages[fieldIndex]].time_boot_ms[timeIndexes[fieldIndex]] < time) {
                         timeIndexes[fieldIndex] += 1
                     }
-
+                    const newobj = {}
                     for (let key of Object.keys(this.state.messages[messages[fieldIndex]])) {
                         newobj[key] = this.state.messages[messages[fieldIndex]][key][timeIndexes[fieldIndex]]
                     }
