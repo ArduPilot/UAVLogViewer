@@ -476,37 +476,40 @@ export default {
             return names.join(', ')
         },
         findMessagesInExpression (expression) {
-            // delete all expressions after dots (and dots)
-            let toDelete = /\.[A-Za-z-0-9_]+/g
-            let name = expression.replace(toDelete, '')
-            let RE = /[A-Z][A-Z0-9_]+(\[[0-9]\])?/g
-            let fields = name.match(RE)
-            if (fields === null) {
-                return []
+            let RE = /(?<message>[A-Z][A-Z0-9_]+(\[[0-9]\])?)(\.(?<field>[A-Za-z-0-9_]+))?/g
+            let match = []
+            for (let m of expression.matchAll(RE)) {
+                match.push([m.groups.message, m.groups.field])
             }
-            return fields
+            return match
         },
         expressionCanBePlotted (expression, reask = false) {
             // TODO: USE this regex with lookahead once firefox supports it
             // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
             // let fields = expression.name.match(RE)
-            let fields = this.findMessagesInExpression(expression.name)
+            let messages = this.findMessagesInExpression(expression.name)
 
-            if (fields === null) {
-                return true
+            if (messages === null) {
+                return [true, '']
             }
-            for (let field of fields) {
-                if ((!(field in this.state.messageTypes) && !((field + '[0]') in this.state.messageTypes))) {
-                    console.log('ERROR: attempted to plot unavailable message: ' + field)
+            for (let [message, field] of messages) {
+                if ((!(message in this.state.messageTypes) && !((message + '[0]') in this.state.messageTypes))) {
+                    console.log('ERROR: attempted to plot unavailable message: ' + message)
                     this.state.plotLoading = false
                     if (reask) {
-                        this.$eventHub.$emit('loadType', field)
+                        this.$eventHub.$emit('loadType', message)
                     }
-                    return false
+                    return [false, `invalid message: ${message}`]
                 }
-                console.log(field + ' is plottable')
+                if (field !== undefined) {
+                    if (this.state.messageTypes[message].expressions.indexOf(field) < 0) {
+                        console.log('ERROR: attempted to plot unavailable field: ' + field)
+                        return [false, `invalid field: ${message}.${field}`]
+                    }
+                }
+                console.log(message + ' is plottable')
             }
-            return true
+            return [true, '']
         },
         messagesAreAvailable (messages) {
             // TODO: USE this regex with lookahead once firefox supports it
@@ -531,10 +534,9 @@ export default {
             console.log('MISS! evaluating : ' + expression1)
             // TODO: USE this regex with lookahead once firefox supports it
             // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
-            let fields = this.findMessagesInExpression(expression1)
+            let fields = this.findMessagesInExpression(expression1).map(field => field[0])
             fields = fields === null ? [] : fields
-            let messages = fields.length !== 0 ? (fields.map(field => field.split('.')[0])) : []
-
+            let messages = fields.length !== 0 ? (fields) : []
             // use time of first message for now
             let x
             if (messages.length > 0) {
@@ -615,8 +617,9 @@ export default {
             let errors = []
 
             for (let expression of this.state.expressions) {
-                if (!this.expressionCanBePlotted(expression, false)) {
-                    errors.push('INVALID MESSAGE')
+                let [canplot, error] = this.expressionCanBePlotted(expression, false)
+                if (!canplot) {
+                    errors.push(error)
                     this.state.expressionErrors = errors
                     return
                 }
@@ -625,7 +628,7 @@ export default {
 
             let messages = []
             for (let expression of this.state.expressions) {
-                messages = [...messages, ...this.findMessagesInExpression(expression.name)]
+                messages = [...messages, ...(this.findMessagesInExpression(expression.name).map(message => message[0]))]
             }
             if (!this.messagesAreAvailable(messages)) {
                 this.waitForMessages(messages).then(this.plot)
