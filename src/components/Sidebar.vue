@@ -75,6 +75,14 @@
                             <input class="wingspan-text" size="5" type="text" v-model="state.modelScale">
                         </label>
                     </div>
+                    <!-- ALTITUDE OFFSET -->
+                    <div>
+                        <label><i class="fa fa-arrows-v" aria-hidden="true"></i> Altitude Offset (m)
+                            <input max="3000" min="-1000" step="0.01" type="range"
+                            class="custom-range" v-model="state.heightOffset">
+                            <input class="wingspan-text" size="5" type="number" v-model="state.heightOffset">
+                        </label>
+                    </div>
                     <!-- Trajectory Source -->
                     <div>
                         <label><i class="fas fa-map"></i> Trajectory Source</label>

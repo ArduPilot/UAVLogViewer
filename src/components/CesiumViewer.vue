@@ -70,8 +70,7 @@ export default {
         return {
             state: store,
             startTimeMs: 0,
-            lastEmitted: 0,
-            heightOffset: 0
+            lastEmitted: 0
         }
     },
     created () {
@@ -275,8 +274,8 @@ export default {
                     /*
                     * Second step of setup, happens after the height of the starting point has been returned by Cesium
                     * */
-                    this.heightOffset = 0
-                    this.heightOffset = updatedPositions[0].height
+                    this.state.heightOffset = 0
+                    this.state.heightOffset = updatedPositions[0].height
                     this.processTrajectory(this.state.currentTrajectory)
                     this.addModel()
                     this.updateAndPlotTrajectory()
@@ -696,6 +695,7 @@ export default {
                         },
                         viewFrom: new Cartesian3(5, 0, 3)
                     })
+                    this.changeCamera()
                 },
                 updateAndPlotTrajectory () {
                     let oldEntities = this.trajectory._children.slice()
@@ -841,6 +841,9 @@ export default {
             }
             return this.state.modelScale
         },
+        heightOffset () {
+            return parseFloat(this.state.heightOffset)
+        },
         cameraType () {
             return this.state.cameraType
         },
@@ -862,6 +865,15 @@ export default {
             let value = parseFloat(scale)
             if (!isNaN(value)) {
                 this.model.model.scale = value / 10
+                this.viewer.scene.requestRender()
+            }
+        },
+        heightOffset (offset) {
+            let value = parseFloat(offset)
+            if (!isNaN(value)) {
+                this.updateAndPlotTrajectory()
+                this.processTrajectory()
+                this.addModel()
                 this.viewer.scene.requestRender()
             }
         },

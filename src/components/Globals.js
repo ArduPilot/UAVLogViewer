@@ -33,6 +33,7 @@ export var store = {
     metadata: null,
     // cesium menu:
     modelScale: 1.0,
+    heightOffset: 0.0,
     showClickableTrajectory: false,
     showTrajectory: true,
     showWaypoints: true,
