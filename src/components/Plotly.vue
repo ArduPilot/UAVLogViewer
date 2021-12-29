@@ -874,6 +874,10 @@ export default {
                 if (change[2] === last[2] && change[1] === last[1]) {
                     continue
                 }
+                // Filter some "noisy" parameters
+                if (['STAT_FLTTIME', 'STAT_RUNTIME'].includes(change[1])) {
+                    continue
+                }
                 last = change
                 annotationsParams.push(
                     {
