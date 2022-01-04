@@ -502,7 +502,7 @@ export default {
                     return [false, `invalid message: ${message}`]
                 }
                 if (field !== undefined) {
-                    if (this.state.messageTypes[message].expressions.indexOf(field) < 0) {
+                    if (field !== 'time_boot_ms' && this.state.messageTypes[message].expressions.indexOf(field) < 0) {
                         console.log('ERROR: attempted to plot unavailable field: ' + field)
                         return [false, `invalid field: ${message}.${field}`]
                     }
