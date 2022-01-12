@@ -595,16 +595,22 @@ export default {
         },
         addGaps (data) {
             // Creates artifical gaps in order to break lines in plot when messages are not being received
-            let newData = {x: [], y: []}
+            let newData = {x: [], y: [], isSwissCheese: false}
             let lastx = data.x[0]
+            let totalPoints = data.x.length
+            let totalGaps = 0
             for (let i = 0; i < data.x.length; i++) {
                 if ((data.x[i] - lastx) > 3000) {
                     newData.x.push(data.x[i] - 1)
                     newData.y.push(null)
+                    totalGaps += 1
                 }
                 newData.x.push(data.x[i])
                 newData.y.push(data.y[i])
                 lastx = data.x[i]
+            }
+            if (totalGaps > (totalPoints / 2)) {
+                newData.isSwissCheese = true
             }
             return newData
         },
@@ -647,10 +653,27 @@ export default {
                     this.state.expressionErrors.push(null)
                 }
                 console.log(data)
+                let mode = data.isSwissCheese ? 'lines+markers' : 'lines'
+
+                let regularMarker = {
+                    size: 4,
+                    color: expression.color
+                }
+
+                let crossMarker = {
+                    size: 5,
+                    symbol: 'cross-thin',
+                    color: expression.color,
+                    line: {
+                        color: expression.color,
+                        width: 1
+                    }
+                }
+                let marker = data.isSwissCheese ? crossMarker : regularMarker
                 datasets.push({
                     name: expression.name,
                     // type: 'scattergl',
-                    mode: 'lines',
+                    mode: mode,
                     x: data.x,
                     y: data.y,
                     yaxis: 'y' + (expression.axis + 1),
@@ -658,10 +681,7 @@ export default {
                         color: expression.color,
                         width: 1.5
                     },
-                    marker: {
-                        size: 4,
-                        color: expression.color
-                    }
+                    marker: marker
                 })
                 let axisname = expression.axis > 0 ? ('yaxis' + (expression.axis + 1)) : 'yaxis'
 
