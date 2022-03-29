@@ -672,7 +672,7 @@ export class DataflashParser {
         }
         self.postMessage({metadata: metadata})
 
-        // self.postMessage({done: true})
+        self.postMessage({messagesDoneLoading: true})
         return {types: this.messageTypes, messages: this.messages}
     }
 

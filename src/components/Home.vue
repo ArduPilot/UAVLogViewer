@@ -59,7 +59,7 @@ import {MavlinkDataExtractor} from '../tools/mavlinkDataExtractor'
 export default {
     name: 'Home',
     created () {
-        this.$eventHub.$on('messages', this.extractFlightData)
+        this.$eventHub.$on('messagesDoneLoading', this.extractFlightData)
         this.state.messages = {}
         this.state.timeAttitude = []
         this.state.timeAttitudeQ = []
