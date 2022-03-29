@@ -225,6 +225,7 @@ export class MavlinkParser {
 
         self.postMessage({metadata: metadata})
         self.postMessage({availableMessages: messageTypes})
+        self.postMessage({messagesDoneLoading: true})
         // self.postMessage({done: true})
         return {types: messageTypes, messages: instance.messages}
     }

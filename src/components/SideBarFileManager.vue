@@ -219,6 +219,8 @@ export default {
             } else if (event.data.hasOwnProperty('messages')) {
                 this.state.messages = event.data.messages
                 this.$eventHub.$emit('messages')
+            } else if (event.data.hasOwnProperty('messagesDoneLoading')) {
+                this.$eventHub.$emit('messagesDoneLoading')
             } else if (event.data.hasOwnProperty('messageType')) {
                 this.state.messages[event.data.messageType] = event.data.messageList
                 this.$eventHub.$emit('messages')
