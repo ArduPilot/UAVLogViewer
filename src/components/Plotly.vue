@@ -476,7 +476,7 @@ export default {
             return names.join(', ')
         },
         findMessagesInExpression (expression) {
-            let RE = /(?<message>[A-Z][A-Z0-9_]+(\[[0-9]\])?)(\.(?<field>[A-Za-z-0-9_]+))?/g
+            let RE = /(?<message>[A-Z][A-Z0-9_]+(\[[0-9]\])?)(\.(?<field>[A-Za-z0-9_]+))?/g
             let match = []
             for (let m of expression.matchAll(RE)) {
                 match.push([m.groups.message, m.groups.field])
