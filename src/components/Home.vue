@@ -55,6 +55,7 @@ import {Color} from 'cesium/Cesium'
 import colormap from 'colormap'
 import {DataflashDataExtractor} from '../tools/dataflashDataExtractor'
 import {MavlinkDataExtractor} from '../tools/mavlinkDataExtractor'
+import Vue from 'vue'
 
 export default {
     name: 'Home',
@@ -87,34 +88,24 @@ export default {
             if ('FMTU' in this.state.messages && this.state.messages['FMTU'].length === 0) {
                 this.state.processStatus = 'ERROR PARSING?'
             }
-            if (Object.keys(this.state.timeAttitude).length === 0) {
-                this.state.timeAttitude = this.dataExtractor.extractAttitudes(this.state.messages)
-            }
-            let list = Object.keys(this.state.timeAttitude)
-            this.state.lastTime = parseInt(list[list.length - 1])
-
-            if (Object.keys(this.state.timeAttitudeQ).length === 0) {
-                this.state.timeAttitudeQ = this.dataExtractor.extractAttitudesQ(this.state.messages)
-            }
-
-            let trajectories = this.dataExtractor.extractTrajectory(this.state.messages)
-            if (Object.keys(trajectories).length > 0) {
-                let first = Object.keys(trajectories)[0]
-                this.state.trajectorySource = first
-                this.state.currentTrajectory = trajectories[first].trajectory
-                this.state.timeTrajectory = trajectories[first].timeTrajectory
-            }
-            this.state.trajectories = trajectories
 
             if (this.state.flightModeChanges.length === 0) {
                 this.state.flightModeChanges = this.dataExtractor.extractFlightModes(this.state.messages)
             }
+            Vue.delete(this.state.messages, 'MODE')
+
             if (this.state.events.length === 0) {
                 this.state.events = this.dataExtractor.extractEvents(this.state.messages)
             }
+            Vue.delete(this.state.messages, 'STAT')
+            Vue.delete(this.state.messages, 'EV')
+
             if (this.state.mission.length === 0) {
                 this.state.mission = this.dataExtractor.extractMission(this.state.messages)
             }
+
+            Vue.delete(this.state.messages, 'CMD')
+
             this.state.vehicle = this.dataExtractor.extractVehicleType(this.state.messages)
             if (this.state.params === undefined) {
                 this.state.params = this.dataExtractor.extractParams(this.state.messages)
@@ -134,9 +125,40 @@ export default {
             if (this.state.textMessages.length === 0) {
                 this.state.textMessages = this.dataExtractor.extractTextMessages(this.state.messages)
             }
+            Vue.delete(this.state.messages, 'MSG')
+
             if (this.state.colors.length === 0) {
                 this.generateColorMMap()
             }
+
+            if (Object.keys(this.state.timeAttitudeQ).length === 0) {
+                this.state.timeAttitudeQ = this.dataExtractor.extractAttitudesQ(this.state.messages)
+                Vue.delete(this.state.messages, 'XKQ1')
+                Vue.delete(this.state.messages, 'NKQ1')
+                Vue.delete(this.state.messages, 'XKQ')
+            }
+
+            if (Object.keys(this.state.timeAttitude).length === 0 &&
+                Object.keys(this.state.timeAttitudeQ).length === 0) {
+                this.state.timeAttitude = this.dataExtractor.extractAttitudes(this.state.messages)
+                Vue.delete(this.state.messages, 'ATT')
+            }
+            let list = Object.keys(this.state.timeAttitude)
+            this.state.lastTime = parseInt(list[list.length - 1])
+
+            let trajectories = this.dataExtractor.extractTrajectory(this.state.messages)
+            if (Object.keys(trajectories).length > 0) {
+                let first = Object.keys(trajectories)[0]
+                this.state.trajectorySource = first
+                this.state.currentTrajectory = trajectories[first].trajectory
+                this.state.timeTrajectory = trajectories[first].timeTrajectory
+            }
+            this.state.trajectories = trajectories
+
+            Vue.delete(this.state.messages, 'AHR2')
+            Vue.delete(this.state.messages, 'POS')
+            Vue.delete(this.state.messages, 'GPS')
+
             this.state.processStatus = 'Processed!'
             this.state.processDone = true
             // Change to plot view after 2 seconds so the Processed status is readable
