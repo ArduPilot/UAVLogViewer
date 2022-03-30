@@ -112,7 +112,13 @@ export class DataflashDataExtractor {
         } else if ('NKQ1' in messages && Object.keys(messages['NKQ1']).length > 0) {
             console.log('QUATERNIOS2')
             let attitudeMsgs = messages['NKQ1']
+            let start = 0
             for (let i in attitudeMsgs.time_boot_ms) {
+                const delta = attitudeMsgs.time_boot_ms[i] - start
+                if (delta < 200) {
+                    continue
+                }
+                start = attitudeMsgs.time_boot_ms[i]
                 attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
                     [
                         attitudeMsgs.Q1[i],
@@ -276,7 +282,13 @@ export class DataflashDataExtractor {
             let timeTrajectory = {}
             let startAltitude = null
             let gpsData = messages['POS']
+            let start = 0
             for (let i in gpsData.time_boot_ms) {
+                const delta = gpsData.time_boot_ms[i] - start
+                if (delta < 200) {
+                    continue
+                }
+                start = gpsData.time_boot_ms[i]
                 if (gpsData.Lat[i] !== 0) {
                     if (startAltitude === null) {
                         startAltitude = gpsData.Alt[i]
@@ -309,7 +321,12 @@ export class DataflashDataExtractor {
             let timeTrajectory = {}
             let startAltitude = null
             let gpsData = messages['AHR2']
+            let start = 0
             for (let i in gpsData.time_boot_ms) {
+                const delta = gpsData.time_boot_ms[i] - start
+                if (delta < 200) {
+                    continue
+                }
                 if (gpsData.Lat[i] !== 0) {
                     if (startAltitude === null) {
                         startAltitude = gpsData.Alt[i]
@@ -342,7 +359,12 @@ export class DataflashDataExtractor {
             let timeTrajectory = {}
             let startAltitude = null
             let gpsData = messages['GPS']
+            let start = 0
             for (let i in gpsData.time_boot_ms) {
+                const delta = gpsData.time_boot_ms[i] - start
+                if (delta < 200) {
+                    continue
+                }
                 if (gpsData.Lat[i] !== 0) {
                     if (startAltitude === null) {
                         startAltitude = gpsData.Alt[i]
