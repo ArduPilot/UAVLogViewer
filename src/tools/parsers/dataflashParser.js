@@ -302,10 +302,6 @@ export class DataflashParser {
     }
 
     parseAtOffset (name) {
-        if (this.alreadyParsed.includes(name)) {
-            console.log('refusing request to re-parse ' + name)
-            return
-        }
         let type = this.getMsgType(name)
         var parsed = []
         for (var i = 0; i < this.msgType.length; i++) {

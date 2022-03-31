@@ -36,6 +36,7 @@ export var store = {
     heightOffset: 0.0,
     showClickableTrajectory: false,
     showTrajectory: true,
+    trajectorySources: [],
     showWaypoints: true,
     cameraType: 'follow',
     expressions: [], // holds message name

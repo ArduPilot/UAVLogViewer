@@ -274,10 +274,23 @@ export class DataflashDataExtractor {
         return texts
     }
 
-    static extractTrajectory (messages) {
+    static extractTrajectorySources (messages) {
+        const candidates = []
+        if ('POS' in messages) {
+            candidates.push('POS')
+        }
+        if ('AHR2' in messages) {
+            candidates.push('AHR2')
+        }
+        if ('GPS' in messages) {
+            candidates.push('GPS')
+        }
+        return candidates
+    }
+    static extractTrajectory (messages, source) {
         // returns a dict with the trajectories found
         let ret = {}
-        if ('POS' in messages) {
+        if ('POS' in messages && source === 'POS') {
             let trajectory = []
             let timeTrajectory = {}
             let startAltitude = null
@@ -316,7 +329,7 @@ export class DataflashDataExtractor {
                 }
             }
         }
-        if ('AHR2' in messages) {
+        if ('AHR2' in messages && source === 'AHR2') {
             let trajectory = []
             let timeTrajectory = {}
             let startAltitude = null
@@ -354,7 +367,7 @@ export class DataflashDataExtractor {
                 }
             }
         }
-        if ('GPS' in messages) {
+        if ('GPS' in messages && source === 'GPS') {
             let trajectory = []
             let timeTrajectory = {}
             let startAltitude = null
