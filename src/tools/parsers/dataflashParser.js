@@ -351,7 +351,7 @@ export class DataflashParser {
                 self.postMessage({messageType: newName,
                     messageList: this.messages[newName]})
             }
-        } else {
+        } else if (parsed.length) {
             this.fixDataOnce(name)
             this.simplifyData(name)
             self.postMessage({messageType: name, messageList: this.messages[name]})
