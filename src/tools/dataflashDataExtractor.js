@@ -340,6 +340,7 @@ export class DataflashDataExtractor {
                 if (delta < 200) {
                     continue
                 }
+                start = gpsData.time_boot_ms[i]
                 if (gpsData.Lat[i] !== 0) {
                     if (startAltitude === null) {
                         startAltitude = gpsData.Alt[i]
@@ -378,6 +379,7 @@ export class DataflashDataExtractor {
                 if (delta < 200) {
                     continue
                 }
+                start = gpsData.time_boot_ms[i]
                 if (gpsData.Lat[i] !== 0) {
                     if (startAltitude === null) {
                         startAltitude = gpsData.Alt[i]
