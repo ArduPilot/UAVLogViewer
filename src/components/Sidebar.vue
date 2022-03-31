@@ -88,8 +88,8 @@
                         <label><i class="fas fa-map"></i> Trajectory Source</label>
                         <select class="cesium-button" v-model="state.trajectorySource">
                             <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
-                            <option v-for="(item, key) in state.trajectories" :key="key">
-                                {{key}}
+                            <option v-for="item in state.trajectorySources" :key="item">
+                                {{item}}
                             </option>
                         </select>
                     </div>

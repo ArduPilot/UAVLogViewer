@@ -108,9 +108,26 @@ export class MavlinkDataExtractor {
         }
     }
 
-    static extractTrajectory (messages) {
-        let ret = {}
+    static extractTrajectorySources (messages) {
+        const sources = []
         if ('GLOBAL_POSITION_INT' in messages) {
+            sources.push('GLOBAL_POSITION_INT')
+        }
+        if ('GPS_RAW_INT' in messages) {
+            sources.push('GPS_RAW_INT')
+        }
+        if ('AHRS2' in messages) {
+            sources.push('AHRS2')
+        }
+        if ('AHRS3' in messages) {
+            sources.push('AHRS3')
+        }
+        return sources
+    }
+
+    static extractTrajectory (messages, source) {
+        let ret = {}
+        if (('GLOBAL_POSITION_INT' in messages) && source === 'GLOBAL_POSITION_INT') {
             let trajectory = []
             let timeTrajectory = {}
             let startAltitude = null
@@ -143,7 +160,7 @@ export class MavlinkDataExtractor {
                 }
             }
         }
-        if ('GPS_RAW_INT' in messages) {
+        if ('GPS_RAW_INT' in messages && source === 'GPS_RAW_INT') {
             let trajectory = []
             let timeTrajectory = {}
             let startAltitude = null
@@ -176,30 +193,28 @@ export class MavlinkDataExtractor {
                 }
             }
         }
-        if ('AHRS2' in messages) {
+        if ('AHRS2' in messages && source === 'AHRS2') {
             let trajectory = []
             let timeTrajectory = {}
             let startAltitude = null
             let gpsData = messages['AHRS2']
             for (let i in gpsData.time_boot_ms) {
-                if (gpsData.lat[i] !== 0) {
-                    if (startAltitude === null) {
-                        startAltitude = gpsData.altitude[0]
-                    }
-                    trajectory.push(
-                        [
-                            gpsData.lng[i] * 1e-7,
-                            gpsData.lat[i] * 1e-7,
-                            gpsData.altitude[i] - startAltitude,
-                            gpsData.time_boot_ms[i]
-                        ]
-                    )
-                    timeTrajectory[gpsData.time_boot_ms[i]] = [
+                if (startAltitude === null) {
+                    startAltitude = gpsData.altitude[0]
+                }
+                trajectory.push(
+                    [
                         gpsData.lng[i] * 1e-7,
                         gpsData.lat[i] * 1e-7,
-                        gpsData.altitude[i],
-                        gpsData.time_boot_ms[i]]
-                }
+                        gpsData.altitude[i] - startAltitude,
+                        gpsData.time_boot_ms[i]
+                    ]
+                )
+                timeTrajectory[gpsData.time_boot_ms[i]] = [
+                    gpsData.lng[i] * 1e-7,
+                    gpsData.lat[i] * 1e-7,
+                    gpsData.altitude[i],
+                    gpsData.time_boot_ms[i]]
             }
             if (trajectory.length) {
                 ret['AHRS2'] = {
@@ -209,7 +224,7 @@ export class MavlinkDataExtractor {
                 }
             }
         }
-        if ('AHRS3' in messages) {
+        if ('AHRS3' in messages && source === 'AHRS3') {
             let trajectory = []
             let timeTrajectory = {}
             let startAltitude = null

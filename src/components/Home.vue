@@ -146,15 +146,17 @@ export default {
             let list = Object.keys(this.state.timeAttitude)
             this.state.lastTime = parseInt(list[list.length - 1])
 
-            let trajectories = this.dataExtractor.extractTrajectory(this.state.messages)
-            if (Object.keys(trajectories).length > 0) {
-                let first = Object.keys(trajectories)[0]
+            this.state.trajectorySources = this.dataExtractor.extractTrajectorySources(this.state.messages)
+            if (this.state.trajectorySources.length > 0) {
+                const first = this.state.trajectorySources[0]
                 this.state.trajectorySource = first
-                this.state.currentTrajectory = trajectories[first].trajectory
-                this.state.timeTrajectory = trajectories[first].timeTrajectory
+                this.state.trajectories = this.dataExtractor.extractTrajectory(
+                    this.state.messages,
+                    first
+                )
+                this.state.currentTrajectory = this.state.trajectories[first].trajectory
+                this.state.timeTrajectory = this.state.trajectories[first].timeTrajectory
             }
-            this.state.trajectories = trajectories
-
             Vue.delete(this.state.messages, 'AHR2')
             Vue.delete(this.state.messages, 'POS')
             Vue.delete(this.state.messages, 'GPS')

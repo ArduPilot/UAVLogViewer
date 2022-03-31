@@ -49,6 +49,8 @@ import {
 
 import 'cesium/Widgets/widgets.css'
 import {store} from './Globals.js'
+import {DataflashDataExtractor} from '../tools/dataflashDataExtractor'
+import {MavlinkDataExtractor} from '../tools/mavlinkDataExtractor'
 
 Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmNTJjOWYzZS1hMDA5LTRjNDQtYTBh' +
         'Yi1iZWQ2NTc5YzliNWIiLCJpZCI6MjczNywiaWF0IjoxNTM0Mzg3NzM3fQ.Qe6EcCmGUfM_FRKYuJEORsT4tQAvRkdmFyNk9bkARqM'
@@ -274,6 +276,8 @@ export default {
                     /*
                     * Second step of setup, happens after the height of the starting point has been returned by Cesium
                     * */
+                    this.state.trajectorySource = this.state.trajectorySources[0]
+                    this.loadTrajectory(this.state.trajectorySource)
                     this.state.heightOffset = 0
                     this.state.heightOffset = updatedPositions[0].height
                     this.processTrajectory(this.state.currentTrajectory)
@@ -313,6 +317,31 @@ export default {
                     this.changeCamera()
                     setTimeout(this.updateTimelineColors, 500)
                     setInterval(this.updateGlobeOpacity, 1000)
+                },
+                waitForMessages (messages) {
+                    for (let message of messages) {
+                        this.$eventHub.$emit('loadType', message)
+                    }
+                    let interval
+                    let _this = this
+                    let counter = 0
+                    return new Promise((resolve, reject) => {
+                        interval = setInterval(function () {
+                            for (let message of messages) {
+                                if (!_this.state.messages.hasOwnProperty(message)) {
+                                    counter += 1
+                                    if (counter > 30) { // 30 * 300ms = 9 s timeout
+                                        console.log('not resolving')
+                                        clearInterval(interval)
+                                        reject(new Error(`Could not load messageType ${message}`))
+                                    }
+                                    return
+                                }
+                            }
+                            clearInterval(interval)
+                            resolve()
+                        }, 300)
+                    })
                 },
                 updateGlobeOpacity () {
                     /*
@@ -613,6 +642,9 @@ export default {
                         //     color: this.getModeColor(pos[3]),
                         //     id: {time: pos[3]}
                         // })
+                        if (this.model !== null) {
+                            this.model.position = this.sampledPos
+                        }
                     }
                     console.log('finished')
                 },
@@ -815,9 +847,20 @@ export default {
                         return require('../assets/boat.glb')
                     }
                     return require('../assets/plane.glb')
+                },
+                loadTrajectory (source) {
+                    this.waitForMessages([source]).then(() => {
+                        let dataExtractor = null
+                        if (this.state.logType === 'tlog') {
+                            dataExtractor = MavlinkDataExtractor
+                        } else {
+                            dataExtractor = DataflashDataExtractor
+                        }
+                        this.state.trajectories = dataExtractor.extractTrajectory(this.state.messages, source)
+                        this.processTrajectory()
+                    })
                 }
             },
-
     computed: {
         setOfModes () {
             let set = []
@@ -906,10 +949,7 @@ export default {
             this.updateVisibility()
         },
         trajectorySource () {
-            this.processTrajectory(this.state.trajectories[this.state.trajectorySource].trajectory)
-            this.addModel()
-            this.updateAndPlotTrajectory()
-            this.changeCamera()
+            this.loadTrajectory(this.state.trajectorySource)
         }
     }
 }
