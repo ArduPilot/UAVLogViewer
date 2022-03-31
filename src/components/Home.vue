@@ -154,8 +154,12 @@ export default {
                     this.state.messages,
                     first
                 )
-                this.state.currentTrajectory = this.state.trajectories[first].trajectory
-                this.state.timeTrajectory = this.state.trajectories[first].timeTrajectory
+                try {
+                    this.state.currentTrajectory = this.state.trajectories[first].trajectory
+                    this.state.timeTrajectory = this.state.trajectories[first].timeTrajectory
+                } catch {
+                    console.log('unable to load trajectory')
+                }
             }
             Vue.delete(this.state.messages, 'AHR2')
             Vue.delete(this.state.messages, 'POS')
