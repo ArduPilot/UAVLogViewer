@@ -148,6 +148,20 @@
                             <a class="check-font">  Sensors </a>
                         </label>
                     </div>
+                    <div v-if="state.files" class="show-hide">
+                        <ul class="files-list">
+                        <span class="files-header">Files:</span>
+                        <li
+                            v-for="filename in Object.keys(state.files)"
+                            :key="filename"
+                            href="#"
+                            @click="downloadFile(filename)"
+                        >
+                                <i class="fa fa-file-download"></i>
+                            {{ filename }}
+                        </li>
+                        </ul>
+                    </div>
                 </div>
             </b-collapse>
         </div>
@@ -218,6 +232,29 @@ export default {
         },
         downloadTrimmed () {
             this.$eventHub.$emit('trimFile')
+        },
+
+        createDownloadURL (data, fileName) {
+            const a = document.createElement('a')
+            a.href = data
+            a.download = fileName
+            document.body.appendChild(a)
+            a.style.display = 'none'
+            a.click()
+            a.remove()
+        },
+
+        downloadBlob (data, fileName, mimeType) {
+            const blob = new Blob([data], {
+                type: mimeType
+            })
+            const url = window.URL.createObjectURL(blob)
+            this.createDownloadURL(url, fileName)
+            setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+        },
+
+        downloadFile (filename) {
+            this.downloadBlob(this.state.files[filename], filename, 'application/octet-stream')
         }
     },
     created () {
@@ -575,5 +612,22 @@ a.centered-section {
     .download-text:hover {
         text-decoration: none;
         color: #fff;
+    }
+    ul.files-list {
+        margin: 40px;
+        border: solid 1px gray;
+        border-radius: 15px;
+        text-align: left;
+        padding-left: 10px;
+        cursor: default;
+    }
+
+    .files-list li {
+        border-left: none;
+    }
+    .files-header {
+        border-left: none;
+        margin-left: 40%;
+
     }
 </style>

@@ -224,6 +224,9 @@ export default {
             } else if (event.data.hasOwnProperty('messageType')) {
                 this.state.messages[event.data.messageType] = event.data.messageList
                 this.$eventHub.$emit('messages')
+            } else if (event.data.hasOwnProperty('files')) {
+                this.state.files = event.data.files
+                this.$eventHub.$emit('messages')
             } else if (event.data.hasOwnProperty('url')) {
                 this.downloadFileFromURL(event.data.url)
             }

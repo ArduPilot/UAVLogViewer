@@ -521,9 +521,41 @@ export class DataflashParser {
         }
     }
 
+    concatTypedArrays (a, b) { // a, b TypedArray of same type
+        var c = new (a.constructor)(a.length + b.length)
+        c.set(a, 0)
+        c.set(b, a.length)
+        return c
+    }
+
+    createUint8ArrayFromString (str) {
+        const array = new Uint8Array(str.length)
+        for (let i = 0, strLen = str.length; i < strLen; i++) {
+            array[i] = str.charCodeAt(i)
+        }
+        return array
+    }
+
+    processFiles () {
+        this.files = {}
+        for (let msg of this.messages['FILE']) {
+            if (!this.files.hasOwnProperty(msg.FileName)) {
+                this.files[msg.FileName] = this.createUint8ArrayFromString(msg.Data)
+            } else {
+                this.files[msg.FileName] = this.concatTypedArrays(
+                    this.files[msg.FileName], this.createUint8ArrayFromString(msg.Data)
+                )
+            }
+        }
+        self.postMessage({files: this.files})
+    }
+
     simplifyData (name) {
         if (name === 'MODE') {
             this.messageTypes[name].expressions.push('asText')
+        }
+        if (name === 'FILE') {
+            return
         }
         if (['FMTU'].indexOf(name) === -1) {
             if (this.messageTypes.hasOwnProperty(name)) {
@@ -649,6 +681,8 @@ export class DataflashParser {
         this.messageTypes = messageTypes
         this.parseAtOffset('CMD')
         this.parseAtOffset('MSG')
+        this.parseAtOffset('FILE')
+        this.processFiles()
         this.parseAtOffset('MODE')
         this.parseAtOffset('AHR2')
         this.parseAtOffset('ATT')
