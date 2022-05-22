@@ -49,6 +49,7 @@ export var store = {
         '#d62728',
         '#9467BD',
         '#8C564B'],
+    radioMode: '2',
     /* global _COMMIT_ */
     commit: _COMMIT_.slice(0, 6),
     /* global _BUILDDATE_ */

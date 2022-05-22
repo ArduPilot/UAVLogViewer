@@ -901,6 +901,9 @@ export default {
         },
         trajectorySource () {
             return this.state.trajectorySource
+        },
+        radioMode () {
+            return this.state.radioMode
         }
     },
     watch: {

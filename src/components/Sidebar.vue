@@ -162,6 +162,13 @@
                         </li>
                         </ul>
                     </div>
+                    <div>
+                        <label><i class="fas fa-gamepad"></i> Radio Mode</label>
+                        <select class="cesium-button" v-model="state.radioMode">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
                 </div>
             </b-collapse>
         </div>
