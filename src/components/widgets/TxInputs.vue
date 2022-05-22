@@ -151,13 +151,19 @@ export default {
             return -29 + 0.01 * this.channels[this.yawMap] * this.width / 2
         },
         leftStickTop () {
-            return 0.02 * (100 - this.channels[this.throttleMap]) * this.circleHeight - 22
+            if (this.state.radioMode === '2') {
+                return 0.02 * (100 - this.channels[this.throttleMap]) * this.circleHeight - 22
+            }
+            return 0.02 * (100 - this.channels[this.pitchMap]) * this.circleHeight - 22
         },
         rightStickLeft () {
             return -29 + (0.01 * this.channels[this.rollMap]) * (this.width / 2)
         },
         rightStickTop () {
-            return 0.02 * (100 - this.channels[this.pitchMap]) * this.circleHeight - 22
+            if (this.state.radioMode === '2') {
+                return 0.02 * (100 - this.channels[this.pitchMap]) * this.circleHeight - 22
+            }
+            return 0.02 * (100 - this.channels[this.throttleMap]) * this.circleHeight - 22
         },
         circleHeight () {
             return this.height * (69 / 150)
