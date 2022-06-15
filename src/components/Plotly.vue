@@ -217,6 +217,62 @@ export default {
         }
     },
     methods: {
+        csvButton () {
+            return [
+                {
+                    name: 'downloadCsv',
+                    title: 'Download data as csv',
+                    icon: Plotly.Icons.disk,
+                    click: () => {
+                        console.log(this.gd.data)
+                        var data = this.gd.data
+                        let header = ['timestamp(ms)']
+                        for (let series of data) {
+                            header.push(series.name.split(' |')[0])
+                        }
+
+                        let indexes = []
+
+                        let interval = 100
+                        let lasttime = Infinity
+                        let finaltime = 0
+
+                        for (let series in data) {
+                            indexes.push(0)
+                            const x = data[series].x
+                            lasttime = Math.min(lasttime, x[0])
+                            finaltime = Math.max(finaltime, x[x.length - 1])
+                        }
+                        let csv = [header]
+                        while (lasttime < finaltime - interval) {
+                            const line = [lasttime]
+                            for (let series in data) {
+                                let index = indexes[series]
+                                let x = data[series].x[index]
+                                while (x < lasttime) {
+                                    indexes[series] += 1
+                                    index = indexes[series]
+                                    x = data[series].x[index]
+                                }
+                                line.push(data[series].y[index])
+                            }
+                            csv.push(line)
+                            lasttime = lasttime + interval
+                        }
+                        let csvContent = csv.map(e => e.join(',')).join('\n')
+                        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+                        var link = document.createElement('a')
+                        var url = URL.createObjectURL(blob)
+                        link.setAttribute('href', url)
+                        link.setAttribute('download', 'data.csv')
+                        link.style.visibility = 'hidden'
+                        document.body.appendChild(link)
+                        link.click()
+                        document.body.removeChild(link)
+                    }
+                }
+            ]
+        },
         resize () {
             Plotly.Plots.resize(this.gd)
         },
@@ -720,6 +776,7 @@ export default {
                     plotData,
                     plotOptions,
                     {
+                        modeBarButtonsToAdd: this.csvButton(),
                         scrollZoom: true,
                         editable: true,
                         responsive: true
