@@ -1,0 +1,51 @@
+diff --git a/node_modules/plotly.js/src/plots/plots.js b/node_modules/plotly.js/src/plots/plots.js
+index 508dec6..6b95ec5 100644
+--- a/node_modules/plotly.js/src/plots/plots.js
++++ b/node_modules/plotly.js/src/plots/plots.js
+@@ -708,6 +708,29 @@ function getFormatObj(gd, formatKeys) {
+     return formatObj;
+ }
+ 
++function relativeTimeFormatter(milliseconds) {
++    let outputString = ''
++    let seconds = (milliseconds / 1000);
++    let minutes = Math.floor(seconds / 60)
++    seconds %= 60
++    let hours = Math.floor(minutes / 60)
++    minutes %= 60
++    let days = Math.floor(hours / 24)
++    hours %= 24
++    outputString = ''+seconds.toFixed(3).padStart(6, '0')
++    if (minutes >= 1 || hours >= 1 || days >= 1) {
++        outputString = `${minutes}`.padStart(2, '0') + ':' + outputString
++    }
++    if (hours >= 1 || days >= 1) {
++        outputString = hours + ':' + outputString
++    }
++    if (days >= 1) {
++        outputString = days + ' days ' + outputString
++    }
++    return outputString
++}
++
++
+ /**
+  * getFormatter: combine the final separators with the locale formatting object
+  * we pulled earlier to generate number and time formatters
+@@ -724,10 +747,12 @@ function getFormatter(formatObj, separators) {
+     formatObj.decimal = separators.charAt(0);
+     formatObj.thousands = separators.charAt(1);
+ 
+-    return {
+-        numberFormat: d3.locale(formatObj).numberFormat,
+-        timeFormat: timeFormatLocale(formatObj).utcFormat
+-    };
++    let formatters = d3.locale(formatObj)
++    formatters.numberFormat = function(specifier) {
++        return relativeTimeFormatter
++    }
++    return formatters
++    //return function(a){return ''+a}
+ }
+ 
+ function fillMetaTextHelpers(newFullData, newFullLayout) {
