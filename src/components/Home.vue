@@ -298,3 +298,8 @@ export default {
     }
 
 </style>
+<style>
+a {
+    color: #ffffff !important;
+}
+</style>
