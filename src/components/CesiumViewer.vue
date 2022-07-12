@@ -41,7 +41,6 @@ import {
     HeadingPitchRoll,
     Ellipsoid,
     Quaternion,
-    when,
     defined,
     NearFarScalar,
     SingleTileImageryProvider,
@@ -161,7 +160,7 @@ export default {
 
         if (this.state.vehicle !== 'boat' && this.state.isOnline) {
             let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.correctedTrajectory)
-            when(promise, this.setup2)
+            promise.then((result) => { this.setup2(result) })
         } else {
             this.setup2(this.correctedTrajectory)
         }
@@ -352,7 +351,7 @@ export default {
                     let height = position.height
                     let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider,
                         [position])
-                    when(promise, (updatedPositions) => {
+                    promise.then((updatedPositions) => {
                         let altitude = height - updatedPositions[0].height
                         const globe = this.viewer.scene.globe
                         if (altitude < 0) {
