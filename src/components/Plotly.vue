@@ -5,6 +5,8 @@
 <script>
 import Plotly from 'plotly.js'
 import {store} from './Globals.js'
+import * as d3 from 'd3'
+
 let Color = require('color')
 
 let timeformat = ':02,2f'
@@ -154,9 +156,8 @@ export default {
         this.cache = {}
     },
     mounted () {
-        let d3 = Plotly.d3
         const WIDTH_IN_PERCENT_OF_PARENT = 90
-        const gd3 = d3.select('#line')
+        d3.select('#line')
             .append('div')
             .style({
                 width: '100%',
@@ -164,7 +165,7 @@ export default {
                 height: '100%'
             })
 
-        this.gd = gd3.node()
+        this.gd = d3.select('#line').node()
         let _this = this
         this.$nextTick(function () {
             if (this.$route.query.hasOwnProperty('ranges')) {

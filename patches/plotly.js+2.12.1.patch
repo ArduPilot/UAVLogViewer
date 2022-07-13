@@ -1,11 +1,12 @@
 diff --git a/node_modules/plotly.js/src/plots/plots.js b/node_modules/plotly.js/src/plots/plots.js
-index 508dec6..6b95ec5 100644
+index cda76cf..a4051ef 100644
 --- a/node_modules/plotly.js/src/plots/plots.js
 +++ b/node_modules/plotly.js/src/plots/plots.js
-@@ -708,6 +708,29 @@ function getFormatObj(gd, formatKeys) {
+@@ -686,6 +686,30 @@ function getFormatObj(gd, formatKeys) {
      return formatObj;
  }
  
++
 +function relativeTimeFormatter(milliseconds) {
 +    let outputString = ''
 +    let seconds = (milliseconds / 1000);
@@ -32,20 +33,23 @@ index 508dec6..6b95ec5 100644
  /**
   * getFormatter: combine the final separators with the locale formatting object
   * we pulled earlier to generate number and time formatters
-@@ -724,10 +747,12 @@ function getFormatter(formatObj, separators) {
-     formatObj.decimal = separators.charAt(0);
+@@ -703,17 +727,8 @@ function getFormatter(formatObj, separators) {
      formatObj.thousands = separators.charAt(1);
  
--    return {
--        numberFormat: d3.locale(formatObj).numberFormat,
--        timeFormat: timeFormatLocale(formatObj).utcFormat
--    };
-+    let formatters = d3.locale(formatObj)
-+    formatters.numberFormat = function(specifier) {
-+        return relativeTimeFormatter
-+    }
-+    return formatters
-+    //return function(a){return ''+a}
- }
- 
- function fillMetaTextHelpers(newFullData, newFullLayout) {
+     return {
+-        numberFormat: function(formatStr) {
+-            try {
+-                formatStr = formatLocale(formatObj).format(
+-                    Lib.adjustFormat(formatStr)
+-                );
+-            } catch(e) {
+-                Lib.warnBadFormat(formatStr);
+-                return Lib.noFormat;
+-            }
+-
+-            return formatStr;
++        numberFormat: function(specifier) {
++            return relativeTimeFormatter
+         },
+         timeFormat: timeFormatLocale(formatObj).utcFormat
+     };
