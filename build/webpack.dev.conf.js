@@ -5,14 +5,14 @@ process.env.NODE_ENV = 'development'
 const utils = require('./utils')
 const webpack = require('webpack')
 const config = require('../config')
-const merge = require('webpack-merge')
+const { merge } = require('webpack-merge')
 const path = require('path')
 const baseWebpackConfig = require('./webpack.base.conf')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const portfinder = require('portfinder')
-const VueLoaderPlugin      = require('vue-loader/lib/plugin');
+const { VueLoaderPlugin }  = require('vue-loader')
 const cesiumSource =  'node_modules/cesium/Source'
 const cesiumWorkers = '../Build/Cesium/Workers'
 const GitRevisionPlugin = require('git-revision-webpack-plugin')
@@ -32,27 +32,26 @@ const devWebpackConfig = merge(baseWebpackConfig, {
 
   // these devServer options should be customized in /config/index.js
   devServer: {
-    clientLogLevel: 'warning',
+    client: {
+      overlay: config.dev.errorOverlay
+        ? { warnings: false, errors: true }
+        : false,
+        logging: 'warn',
+
+    },
     historyApiFallback: {
       rewrites: [
         { from: /.*/, to: path.posix.join(config.dev.assetsPublicPath, 'index.html') },
       ],
     },
     hot: true,
-    contentBase: false, // since we use CopyWebpackPlugin.
+    static: "./",
     compress: true,
     host: HOST || config.dev.host,
     port: PORT || config.dev.port,
     open: config.dev.autoOpenBrowser,
-    overlay: config.dev.errorOverlay
-      ? { warnings: false, errors: true }
-      : false,
-    publicPath: config.dev.assetsPublicPath,
+   // publicPath: config.dev.assetsPublicPath,
     proxy: config.dev.proxyTable,
-    quiet: false, // necessary for FriendlyErrorsPlugin
-    watchOptions: {
-      poll: config.dev.poll,
-    }
   },
   plugins: [
     new webpack.DefinePlugin({
