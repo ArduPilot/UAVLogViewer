@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 let mavlinkparser = require('../../../src/tools/parsers/mavlinkParser.js')
 import {MavlinkDataExtractor} from '../../../src/tools/mavlinkDataExtractor'
 var glob = require('glob')
