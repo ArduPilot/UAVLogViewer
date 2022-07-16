@@ -301,6 +301,29 @@ export class DataflashParser {
         return type.Columns.split(',')[type.units.indexOf('instance')]
     }
 
+    // Next three functions are used for transfering data on postmessage, instead of cloning
+    isTypedArray (arr) {
+        return ArrayBuffer.isView(arr) && !(arr instanceof DataView)
+    }
+
+    getType (arr) {
+        return this.isTypedArray(arr) && arr.constructor.name
+    }
+
+    postData (data) {
+        data['dataType'] = {}
+        const transferables = []
+        for (let field of Object.keys(data.messageList)) {
+            const arrayType = this.getType(data.messageList[field])
+            if (arrayType) {
+                transferables.push(data.messageList[field].buffer)
+            }
+            // Apparently it is magically decoded on the other end, no need for metadata
+            // data['dataType'][field] = arrayType
+        }
+        self.postMessage(data, transferables)
+    }
+
     parseAtOffset (name) {
         let type = this.getMsgType(name)
         var parsed = []
@@ -340,7 +363,7 @@ export class DataflashParser {
             if (Object.keys(instances).length === 1) {
                 this.fixDataOnce(name)
                 this.simplifyData(name)
-                self.postMessage({messageType: name, messageList: this.messages[name]})
+                this.postData({messageType: name, messageList: this.messages[name]})
                 return parsed
             }
             for (let [index, messages] of Object.entries(instances)) {
@@ -348,13 +371,13 @@ export class DataflashParser {
                 this.messages[newName] = messages
                 this.fixDataOnce(newName)
                 this.simplifyData(newName)
-                self.postMessage({messageType: newName,
+                this.postData({messageType: newName,
                     messageList: this.messages[newName]})
             }
         } else if (parsed.length) {
             this.fixDataOnce(name)
             this.simplifyData(name)
-            self.postMessage({messageType: name, messageList: this.messages[name]})
+            this.postData({messageType: name, messageList: this.messages[name]})
         }
         this.alreadyParsed.push(name)
         return parsed
@@ -575,6 +598,13 @@ export class DataflashParser {
                 }
                 delete this.messages[name]
                 this.messages[name] = mergedData
+                for (const field of this.messageTypes[name].expressions) {
+                    if (this.messages[name][field] && !isNaN(this.messages[name][field][0])) {
+                        const newData = new Float64Array(this.messages[name][field])
+                        delete this.messages[name][field]
+                        this.messages[name][field] = newData
+                    }
+                }
             }
         }
     }
