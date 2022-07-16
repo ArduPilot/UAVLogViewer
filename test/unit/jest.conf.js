@@ -19,7 +19,6 @@ module.exports = {
     ],
     snapshotSerializers: ['<rootDir>/node_modules/jest-serializer-vue'],
     setupFiles: ['<rootDir>/test/unit/setup'],
-    mapCoverage: true,
     coverageDirectory: '<rootDir>/test/unit/coverage',
     collectCoverageFrom: [
         'src/**/*.{js,vue}',
@@ -27,5 +26,5 @@ module.exports = {
         '!src/router/index.js',
         '!**/node_modules/**'
     ],
-    setupTestFrameworkScriptFile: '<rootDir>/test/unit/jest.setup.js'
+    setupFilesAfterEnv: ['<rootDir>/test/unit/jest.setup.js']
 }

@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import {DataflashDataExtractor} from '../../../src/tools/dataflashDataExtractor'
 
 let dfparser = require('../../../src/tools/parsers/dataflashParser.js')
