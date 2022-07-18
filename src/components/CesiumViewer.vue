@@ -849,6 +849,24 @@ export default {
                         this.state.trajectories = dataExtractor.extractTrajectory(this.state.messages, source)
                         this.processTrajectory()
                     })
+                },
+                loadAttitude (source) {
+                    this.waitForMessages([source]).then(() => {
+                        let dataExtractor = null
+                        if (this.state.logType === 'tlog') {
+                            dataExtractor = MavlinkDataExtractor
+                        } else {
+                            dataExtractor = DataflashDataExtractor
+                        }
+                        try {
+                            this.state.timeAttitudeQ = []
+                            this.state.timeAttitude = dataExtractor.extractAttitude(this.state.messages, source)
+                        } catch {
+                            this.state.timeAttitude = []
+                            this.state.timeAttitudeQ = dataExtractor.extractAttitudeQ(this.state.messages, source)
+                        }
+                        this.addModel()
+                    })
                 }
             },
     computed: {
@@ -891,6 +909,9 @@ export default {
         },
         trajectorySource () {
             return this.state.trajectorySource
+        },
+        attitudeSource () {
+            return this.state.attitudeSource
         },
         radioMode () {
             return this.state.radioMode
@@ -943,6 +964,9 @@ export default {
         },
         trajectorySource () {
             this.loadTrajectory(this.state.trajectorySource)
+        },
+        attitudeSource () {
+            this.loadAttitude(this.state.attitudeSource)
         }
     }
 }

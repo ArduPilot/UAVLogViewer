@@ -68,20 +68,10 @@ let events = {
     166: 'NOT_BOTTOMED'
 }
 export class DataflashDataExtractor {
-    static extractAttitudes (messages) {
+    static extractAttitude (messages, source) {
         let attitudes = {}
-        if ('AHR2' in messages) {
-            let attitudeMsgs = messages['AHR2']
-            for (let i in attitudeMsgs.time_boot_ms) {
-                attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
-                    [
-                        window.radians(attitudeMsgs.Roll[i]),
-                        window.radians(attitudeMsgs.Pitch[i]),
-                        window.radians(attitudeMsgs.Yaw[i])
-                    ]
-            }
-        } else if ('ATT' in messages) {
-            let attitudeMsgs = messages['ATT']
+        if (source in messages) {
+            let attitudeMsgs = messages[source]
             for (let i in attitudeMsgs.time_boot_ms) {
                 attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
                     [
@@ -94,43 +84,39 @@ export class DataflashDataExtractor {
         return attitudes
     }
 
-    static extractAttitudesQ (messages) {
+    static extractAttitudeSources (messages) {
+        const result = {
+            quaternions: [],
+            eulers: []
+        }
+        // Quaternions
+        const baseMsgTypes = ['XKF1', 'XKQ1', 'NKQ1', 'XKQ']
+        const expandedMsgTypes = []
+        for (const baseMsgType of baseMsgTypes) {
+            for (let i = 0; i < 10; i++) {
+                expandedMsgTypes.push(`${baseMsgType}[${i}]`)
+            }
+        }
+        for (const msgType of expandedMsgTypes) {
+            if (msgType in messages && Object.keys(messages[msgType]).length > 0) {
+                result.quaternions.push(msgType)
+            }
+        }
+        // Eulers
+        const attTypes = ['ATT', 'AHR2']
+        for (const msgType of attTypes) {
+            if (msgType in messages && Object.keys(messages[msgType]).length > 0) {
+                result.eulers.push(msgType)
+            }
+        }
+        return result
+    }
+
+    static extractAttitudeQ (messages, source) {
         let attitudes = {}
-        if ('XKQ1' in messages && Object.keys(messages['XKQ1']).length > 0) {
-            console.log('QUATERNIOS1')
-            let attitudeMsgs = messages['XKQ1']
-            for (let i in attitudeMsgs.time_boot_ms) {
-                attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
-                    [
-                        attitudeMsgs.Q1[i],
-                        attitudeMsgs.Q2[i],
-                        attitudeMsgs.Q3[i],
-                        attitudeMsgs.Q4[i]
-                    ]
-            }
-            return attitudes
-        } else if ('NKQ1' in messages && Object.keys(messages['NKQ1']).length > 0) {
-            console.log('QUATERNIOS2')
-            let attitudeMsgs = messages['NKQ1']
-            let start = 0
-            for (let i in attitudeMsgs.time_boot_ms) {
-                const delta = attitudeMsgs.time_boot_ms[i] - start
-                if (delta < 200) {
-                    continue
-                }
-                start = attitudeMsgs.time_boot_ms[i]
-                attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
-                    [
-                        attitudeMsgs.Q1[i],
-                        attitudeMsgs.Q2[i],
-                        attitudeMsgs.Q3[i],
-                        attitudeMsgs.Q4[i]
-                    ]
-            }
-            return attitudes
-        } else if ('XKQ' in messages && Object.keys(messages['XKQ']).length > 0) {
-            console.log('QUATERNIOS2')
-            let attitudeMsgs = messages['XKQ']
+        if (source in messages && Object.keys(messages[source]).length > 0) {
+            console.log(`QUATERNION1: ${source}`)
+            let attitudeMsgs = messages[source]
             for (let i in attitudeMsgs.time_boot_ms) {
                 attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
                     [
