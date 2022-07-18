@@ -348,9 +348,8 @@ export default {
                     let position = Cartographic.fromCartesian(this.model.position.getValue(
                         this.viewer.clock.currentTime))
                     let height = position.height
-                    let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider,
-                        [position])
-                    promise.then((updatedPositions) => {
+
+                    const update = function (updatedPositions) {
                         let altitude = height - updatedPositions[0].height
                         const globe = this.viewer.scene.globe
                         if (altitude < 0) {
@@ -359,7 +358,16 @@ export default {
                         } else {
                             globe.translucency.enabled = false
                         }
-                    })
+                    }.bind(this)
+
+                    if (this.state.vehicle === 'boat') {
+                        update([position])
+                        console.log('skipping sample')
+                    } else {
+                        let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider,
+                            [position])
+                        promise.then(update)
+                    }
                 },
                 addCloseButton () {
                     /* Creates the close button on the Cesium toolbar */
