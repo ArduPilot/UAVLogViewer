@@ -21,7 +21,7 @@ const validGCSs = [
 ]
 
 export class MavlinkDataExtractor {
-    static extractAttitudes (messages) {
+    static extractAttitude (messages, source) {
         let attitudes = {}
         if ('ATTITUDE' in messages) {
             let attitudeMsgs = messages['ATTITUDE']
@@ -37,7 +37,7 @@ export class MavlinkDataExtractor {
         return attitudes
     }
 
-    static extractAttitudesQ (messages) {
+    static extractAttitudeQ (messages, source) {
         return {}
     }
 
@@ -105,6 +105,13 @@ export class MavlinkDataExtractor {
                     return messages['HEARTBEAT'].craft[i]
                 }
             }
+        }
+    }
+
+    static extractAttitudeSources (messages) {
+        return {
+            quaternions: [],
+            eulers: ['ATTITUDE']
         }
     }
 
