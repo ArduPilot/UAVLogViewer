@@ -93,6 +93,16 @@
                             </option>
                         </select>
                     </div>
+                    <!-- Attitude Source -->
+                    <div>
+                        <label><i class="fas fa-map"></i> Attitude Source</label>
+                        <select class="cesium-button" v-model="state.attitudeSource">
+                            <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
+                            <option v-for="item in attitudeSources" :key="item">
+                                {{item}}
+                            </option>
+                        </select>
+                    </div>
                 </div>
                 <div v-if="selected==='other'">
                     <!-- PARAM/MESSAGES/RADIO -->
@@ -262,6 +272,11 @@ export default {
 
         downloadFile (filename) {
             this.downloadBlob(this.state.files[filename], filename, 'application/octet-stream')
+        }
+    },
+    computed: {
+        attitudeSources () {
+            return [...this.state.attitudeSources.quaternions, ...this.state.attitudeSources.eulers]
         }
     },
     created () {

@@ -130,19 +130,17 @@ export default {
             if (this.state.colors.length === 0) {
                 this.generateColorMMap()
             }
-
-            if (Object.keys(this.state.timeAttitudeQ).length === 0) {
-                this.state.timeAttitudeQ = this.dataExtractor.extractAttitudesQ(this.state.messages)
-                Vue.delete(this.state.messages, 'XKQ1')
-                Vue.delete(this.state.messages, 'NKQ1')
-                Vue.delete(this.state.messages, 'XKQ')
+            this.state.attitudeSources = this.dataExtractor.extractAttitudeSources(this.state.messages)
+            if (this.state.attitudeSources.quaternions.length > 0) {
+                const source = this.state.attitudeSources.quaternions[0]
+                this.state.attitudeSource = source
+                this.state.timeAttitudeQ = this.dataExtractor.extractAttitudeQ(this.state.messages, source)
+            } else if (this.state.attitudeSources.eulers.length > 0) {
+                const source = this.state.attitudeSources.eulers[0]
+                this.state.attitudeSource = source
+                this.state.timeAttitude = this.dataExtractor.extractAttitude(this.state.messages, source)
             }
 
-            if (Object.keys(this.state.timeAttitude).length === 0 &&
-                Object.keys(this.state.timeAttitudeQ).length === 0) {
-                this.state.timeAttitude = this.dataExtractor.extractAttitudes(this.state.messages)
-                Vue.delete(this.state.messages, 'ATT')
-            }
             let list = Object.keys(this.state.timeAttitude)
             this.state.lastTime = parseInt(list[list.length - 1])
 
