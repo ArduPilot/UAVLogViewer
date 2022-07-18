@@ -214,7 +214,6 @@ export default {
                     *  Creates and returns the providers for viewing the Eniro, Statkart, and OpenSeaMap map layers
                     * */
                     let imageryProviders = createDefaultImageryProviderViewModels()
-                    console.log(imageryProviders)
                     imageryProviders.push(new ProviderViewModel({
                         name: 'StatKart',
                         iconUrl: require('../assets/statkart.jpg'),
@@ -383,7 +382,6 @@ export default {
                         '</button>'.trim()
                     toolbar.append(closeButton)
                     closeButton = document.getElementById('cesium-close-button')
-                    console.log(closeButton)
                     closeButton.addEventListener('click', () => {
                         this.state.showMap = false
                         this.$nextTick(function () {
@@ -392,7 +390,6 @@ export default {
                     })
                 },
                 onCameraUpdate () {
-                    console.log(this.viewer.camera)
                     let query = Object.create(this.$route.query) // clone it
                     let cam = this.viewer.camera
                     query['cam'] = [
@@ -556,7 +553,6 @@ export default {
                         return
                     }
                     this.lastEmitted = newFrameTime
-                    console.log('new frame')
                     this.$eventHub.$emit(
                         'cesium-time-changed',
                         newFrameTime
@@ -614,7 +610,6 @@ export default {
                     if (this.clickableTrajectory !== null) {
                         this.clickableTrajectory.removeAll()
                     }
-                    console.log('3')
                     // Create sampled position
                     let isBoat = this.state.vehicle === 'boat'
                     for (let posIndex in this.points) {
@@ -645,10 +640,8 @@ export default {
                             this.model.position = this.sampledPos
                         }
                     }
-                    console.log('finished')
                 },
                 addModel () {
-                    console.log('model')
                     if (this.model !== null) {
                         this.viewer.entities.remove(this.model)
                     }
@@ -658,7 +651,6 @@ export default {
                     let fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'west')
                     let sampledOrientation = new SampledProperty(Quaternion)
                     if (Object.keys(this.state.timeAttitudeQ).length > 0) {
-                        console.log('plotting with QUATERNIOS')
                         fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'east')
                         for (let atti in this.state.timeAttitudeQ) {
                             if (this.state.timeAttitudeQ.hasOwnProperty(atti)) {
@@ -691,7 +683,6 @@ export default {
                             }
                         }
                     } else {
-                        console.log('plotting with attitude')
                         for (let atti in this.state.timeAttitude) {
                             if (this.state.timeAttitude.hasOwnProperty(atti)) {
                                 let att = this.state.timeAttitude[atti]
