@@ -259,7 +259,7 @@ export default {
             let msgRe = /[A-Z][A-Z0-9_]+(\[[0-9]\])?(\.[a-zA-Z0-9_]+)?/g
             let match = msg[0].match(msgRe)
             if (!match) {
-                return false
+                return true
             }
             let msgName = match[0].split('.')[0]
             if (!this.messageTypes.hasOwnProperty(msgName)) {
