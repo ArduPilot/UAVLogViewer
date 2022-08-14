@@ -490,21 +490,20 @@ export class DataflashParser {
     getModeString (cmode) {
         let mavtype
         let msgs = this.messages['MSG']
-        for (let i in msgs.time_boot_ms) {
-            // console.log(msg)
-            if (msgs.Message[i].indexOf('ArduPlane') > -1) {
+        for (let i in msgs.Message) {
+            if (msgs.Message[i].toLowerCase().includes('arduplane')) {
                 mavtype = mavlink.MAV_TYPE_FIXED_WING
                 return getModeMap(mavtype)[cmode]
-            } else if (msgs.Message[i].indexOf('ArduCopter') > -1) {
+            } else if (msgs.Message[i].toLowerCase().includes('arducopter')) {
                 mavtype = mavlink.MAV_TYPE_QUADROTOR
                 return getModeMap(mavtype)[cmode]
-            } else if (msgs.Message[i].indexOf('ArduSub') > -1) {
+            } else if (msgs.Message[i].toLowerCase().includes('ardusub')) {
                 mavtype = mavlink.MAV_TYPE_SUBMARINE
                 return getModeMap(mavtype)[cmode]
-            } else if (msgs.Message[i].indexOf('Rover') > -1) {
+            } else if (msgs.Message[i].toLowerCase().includes('rover')) {
                 mavtype = mavlink.MAV_TYPE_GROUND_ROVER
                 return getModeMap(mavtype)[cmode]
-            } else if (msgs.Message[i].indexOf('Tracker') > -1) {
+            } else if (msgs.Message[i].toLowerCase().includes('tracker')) {
                 mavtype = mavlink.MAV_TYPE_ANTENNA_TRACKER
                 return getModeMap(mavtype)[cmode]
             }
