@@ -61,6 +61,10 @@ export default {
     },
     methods: {
         deletePreset (preset) {
+            const text = `Are you sure you want to delete the preset "${preset}"?`
+            if (confirm(text) === false) {
+                return
+            }
             let myStorage = window.localStorage
             let saved = myStorage.getItem('savedFields')
             if (saved === null) {
