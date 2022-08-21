@@ -41,6 +41,15 @@
             <i class="fa fa-plus" aria-hidden="true"></i>Add Expression</button>
             <button class="save-preset" v-if="state.expressions.length > 0" v-b-modal.modal-prevent-closing>
             <i class="fa fa-check-circle" aria-hidden="true"></i>Save Preset</button>
+                <button
+                    class="save-preset"
+                    v-if="state.expressions.length > 0"
+                    v-b-modal.modal-prevent-closing
+                    @click="$eventHub.$emit('clearPlot')"
+                >
+                    <i class="fa fa-ban" aria-hidden="true"></i>
+                    clear
+                </button>
             </div>
         </b-collapse>
         <!-- MODAL -->
