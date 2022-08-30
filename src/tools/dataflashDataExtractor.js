@@ -189,6 +189,36 @@ export class DataflashDataExtractor {
         return wps
     }
 
+    static extractFences (messages) {
+        let fences = []
+        let tempFences = []
+        let lastCount = -1
+        if ('FNCE' in messages) {
+            console.log(messages['FNCE'])
+            let cmdMsgs = messages['FNCE']
+            for (let i in cmdMsgs.time_boot_ms) {
+                if (cmdMsgs.Lat[i] !== 0) {
+                    let lat = cmdMsgs.Lat[i]
+                    let lon = cmdMsgs.Lng[i]
+                    if (lastCount !== cmdMsgs.Count[i] || cmdMsgs.Radius[i] > 0) {
+                        if (tempFences.length > 0) {
+                            fences.push(tempFences)
+                        }
+                        tempFences = []
+                        lastCount = cmdMsgs.Count[i]
+                    }
+                    if (Math.abs(lat) > 180) {
+                        lat = lat / 10e6
+                        lon = lon / 10e6
+                    }
+                    tempFences.push([lon, lat, cmdMsgs.Radius[i]])
+                }
+            }
+            fences.push(tempFences)
+        }
+        return fences
+    }
+
     static extractVehicleType (messages) {
         if ('MSG' in messages) {
             let msgs = messages['MSG']

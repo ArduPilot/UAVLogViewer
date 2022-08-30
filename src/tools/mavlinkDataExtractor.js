@@ -98,6 +98,10 @@ export class MavlinkDataExtractor {
         return wps
     }
 
+    static extractFences (messages) {
+        return []
+    }
+
     static extractVehicleType (messages) {
         if ('HEARTBEAT' in messages) {
             for (let i in messages['HEARTBEAT'].craft) {

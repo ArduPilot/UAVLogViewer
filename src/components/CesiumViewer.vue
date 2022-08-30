@@ -282,6 +282,7 @@ export default {
                     this.addModel()
                     this.updateAndPlotTrajectory()
                     this.plotMission(this.state.mission)
+                    this.plotFences(this.state.fences)
                     this.viewer.zoomTo(this.viewer.entities)
                     document.addEventListener('setzoom', this.onTimelineZoom)
                     this.$eventHub.$on('rangeChanged', this.onRangeChanged)
@@ -806,6 +807,41 @@ export default {
                     })
                 },
 
+                plotFences (fencesList) {
+                    this.fences = []
+                    for (const fence of fencesList) {
+                        let cesiumPoints = []
+                        if (fence.length === 1) {
+                            const pos = fence[0]
+                            this.fences.push(this.viewer.entities.add({
+                                position: Cartesian3.fromDegrees(pos[0], pos[1]),
+                                ellipse: {
+                                    semiMinorAxis: pos[2] * 2,
+                                    semiMajorAxis: pos[2] * 2,
+                                    material: Color.ORANGE.withAlpha(0.5)
+                                }
+                            }))
+                            continue
+                        }
+                        for (let pos of fence) {
+                            let position = Cartesian3.fromDegrees(pos[0], pos[1])
+                            cesiumPoints.push(position)
+                        }
+                        // Add polyline representing the path under the points
+                        this.fences.push(this.viewer.entities.add({
+                            polyline: {
+                                positions: cesiumPoints,
+                                width: 1,
+                                clampToGround: true,
+                                material: new PolylineDashMaterialProperty({
+                                    color: Color.ORANGE,
+                                    dashLength: 8.0
+                                })
+                            }
+                        }))
+                    }
+                },
+
                 getModeColor (time) {
                     return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
                 },
@@ -823,6 +859,7 @@ export default {
                 updateVisibility () {
                     this.waypoints.show = this.showWaypoints
                     this.trajectory.show = this.showTrajectory
+                    this.fences.show = this.showFences
 
                     let len = this.clickableTrajectory.length
                     for (let i = 0; i < len; ++i) {
@@ -914,6 +951,9 @@ export default {
         },
         showWaypoints () {
             return this.state.showWaypoints
+        },
+        showFences () {
+            return this.state.showFences
         },
         trajectorySource () {
             return this.state.trajectorySource

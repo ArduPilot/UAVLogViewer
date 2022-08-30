@@ -163,6 +163,8 @@ export default {
             Vue.delete(this.state.messages, 'POS')
             Vue.delete(this.state.messages, 'GPS')
 
+            this.state.fences = this.dataExtractor.extractFences(this.state.messages)
+
             this.state.processStatus = 'Processed!'
             this.state.processDone = true
             // Change to plot view after 2 seconds so the Processed status is readable

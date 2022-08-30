@@ -20,6 +20,8 @@ export var store = {
     colors: [],
     mapAvailable: false,
     mission: [],
+    fences: [],
+    showFences: true,
     showMap: false,
     currentTime: false,
     processDone: false,
