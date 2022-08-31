@@ -816,8 +816,8 @@ export default {
                             this.fences.push(this.viewer.entities.add({
                                 position: Cartesian3.fromDegrees(pos[0], pos[1]),
                                 ellipse: {
-                                    semiMinorAxis: pos[2] * 2,
-                                    semiMajorAxis: pos[2] * 2,
+                                    semiMinorAxis: pos[2],
+                                    semiMajorAxis: pos[2],
                                     material: Color.ORANGE.withAlpha(0.5)
                                 }
                             }))
