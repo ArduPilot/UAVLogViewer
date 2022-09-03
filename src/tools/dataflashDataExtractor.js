@@ -324,15 +324,15 @@ export class DataflashDataExtractor {
                     }
                     trajectory.push(
                         [
-                            gpsData.Lng[i] / 1e7,
-                            gpsData.Lat[i] / 1e7,
+                            gpsData.Lng[i],
+                            gpsData.Lat[i],
                             gpsData.Alt[i] - startAltitude,
                             gpsData.time_boot_ms[i]
                         ]
                     )
                     timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.Lng[i] / 1e7,
-                        gpsData.Lat[i] / 1e7,
+                        gpsData.Lng[i],
+                        gpsData.Lat[i],
                         (gpsData.Alt[i] - startAltitude) / 1000,
                         gpsData.time_boot_ms[i]]
                 }
@@ -363,15 +363,15 @@ export class DataflashDataExtractor {
                     }
                     trajectory.push(
                         [
-                            gpsData.Lng[i] * 1e-7,
-                            gpsData.Lat[i] * 1e-7,
+                            gpsData.Lng[i],
+                            gpsData.Lat[i],
                             gpsData.Alt[i] - startAltitude,
                             gpsData.time_boot_ms[i]
                         ]
                     )
                     timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.Lng[i] * 1e-7,
-                        gpsData.Lat[i] * 1e-7,
+                        gpsData.Lng[i],
+                        gpsData.Lat[i],
                         (gpsData.Alt[i] - startAltitude) / 1000,
                         gpsData.time_boot_ms[i]]
                 }
@@ -402,15 +402,15 @@ export class DataflashDataExtractor {
                     }
                     trajectory.push(
                         [
-                            gpsData.Lng[i] / 1e7,
-                            gpsData.Lat[i] / 1e7,
+                            gpsData.Lng[i],
+                            gpsData.Lat[i],
                             gpsData.Alt[i] - startAltitude,
                             gpsData.time_boot_ms[i]
                         ]
                     )
                     timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.Lng[i] / 1e7,
-                        gpsData.Lat[i] / 1e7,
+                        gpsData.Lng[i],
+                        gpsData.Lat[i],
                         gpsData.Alt[i] - startAltitude,
                         gpsData.time_boot_ms[i]]
                 }
