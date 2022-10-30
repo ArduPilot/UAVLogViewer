@@ -812,6 +812,9 @@ export default {
                     for (const fence of fencesList) {
                         let cesiumPoints = []
                         if (fence.length === 1) {
+                            if (fence[0][2] === 0) {
+                                continue
+                            }
                             const pos = fence[0]
                             this.fences.push(this.viewer.entities.add({
                                 position: Cartesian3.fromDegrees(pos[0], pos[1]),
