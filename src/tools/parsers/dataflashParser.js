@@ -324,6 +324,13 @@ export class DataflashParser {
         self.postMessage(data, transferables)
     }
 
+    extractTimeMetadataFromGPS () {
+        let metadata = {
+            startTime: this.extractStartTime()
+        }
+        self.postMessage({metadata: metadata})
+    }
+
     parseAtOffset (name) {
         let type = this.getMsgType(name)
         var parsed = []
@@ -363,6 +370,10 @@ export class DataflashParser {
             if (Object.keys(instances).length === 1) {
                 this.fixDataOnce(name)
                 this.simplifyData(name)
+
+                if (name === 'GPS') {
+                    this.extractTimeMetadataFromGPS()
+                }
                 this.postData({messageType: name, messageList: this.messages[name]})
                 return parsed
             }
@@ -377,6 +388,9 @@ export class DataflashParser {
         } else if (parsed.length) {
             this.fixDataOnce(name)
             this.simplifyData(name)
+            if (name === 'GPS') {
+                this.extractTimeMetadataFromGPS()
+            }
             this.postData({messageType: name, messageList: this.messages[name]})
         }
         this.alreadyParsed.push(name)
@@ -727,10 +741,6 @@ export class DataflashParser {
         this.parseAtOffset('STAT')
         this.parseAtOffset('EV')
         this.parseAtOffset('FNCE')
-        let metadata = {
-            startTime: this.extractStartTime()
-        }
-        self.postMessage({metadata: metadata})
 
         self.postMessage({messagesDoneLoading: true})
         return {types: this.messageTypes, messages: this.messages}
