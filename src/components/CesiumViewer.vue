@@ -185,7 +185,8 @@ export default {
                                 shadows: true,
                                 selectedImageryProviderViewModel: this.sentinelProvider,
                                 imageryProviderViewModels: imageryProviders,
-                                orderIndependentTranslucency: false
+                                orderIndependentTranslucency: false,
+                                useBrowserRecommendedResolution: false
                             }
                         )
                     }
@@ -204,7 +205,8 @@ export default {
                             orderIndependentTranslucency: false,
                             baseLayerPicker: false,
                             imageryProvider: false,
-                            geocoder: false
+                            geocoder: false,
+                            useBrowserRecommendedResolution: false
                         }
                     )
                 },
