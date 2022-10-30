@@ -830,6 +830,10 @@ export default {
                             let position = Cartesian3.fromDegrees(pos[0], pos[1])
                             cesiumPoints.push(position)
                         }
+                        // we need to close the polygon
+                        const lastPos = fence[0]
+                        cesiumPoints.push(Cartesian3.fromDegrees(lastPos[0], lastPos[1]))
+
                         // Add polyline representing the path under the points
                         this.fences.push(this.viewer.entities.add({
                             polyline: {
