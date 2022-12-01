@@ -15,9 +15,9 @@
 </template>
 
 <script>
-import {store} from '../Globals.js'
-import {baseWidget} from './baseWidget'
-import {Attitude} from 'vue-flight-indicators'
+import { store } from '../Globals.js'
+import { baseWidget } from './baseWidget'
+import { Attitude } from 'vue-flight-indicators'
 
 class Interpolator {
     // This class holds all joystick positions and returns the interpolated position at an arbitraty time.
@@ -45,9 +45,9 @@ export default {
     name: 'AttitudeViewer',
     mixins: [baseWidget],
     props: {
-        'snappable': {type: Boolean, default: false},
-        'fixedAspectRatio': {type: Boolean, default: false},
-        'aspectRatio': {type: Number, default: 2}
+        snappable: { type: Boolean, default: false },
+        fixedAspectRatio: { type: Boolean, default: false },
+        aspectRatio: { type: Number, default: 2 }
     },
     data () {
         return {
@@ -69,17 +69,17 @@ export default {
     mounted () {
         let x, y, msg
         if ('ATTITUDE' in this.state.messages) {
-            x = this.state.messages['ATTITUDE'].time_boot_ms
+            x = this.state.messages.ATTITUDE.time_boot_ms
             y = []
-            msg = this.state.messages['ATTITUDE']
-            for (let i in msg.time_boot_ms) {
+            msg = this.state.messages.ATTITUDE
+            for (const i in msg.time_boot_ms) {
                 y.push([msg.roll[i] * -180 / Math.PI, msg.pitch[i] * 180 / Math.PI])
             }
         } else if ('ATT' in this.state.messages) {
-            x = this.state.messages['ATT'].time_boot_ms
+            x = this.state.messages.ATT.time_boot_ms
             y = []
-            msg = this.state.messages['ATT']
-            for (let i in msg.time_boot_ms) {
+            msg = this.state.messages.ATT
+            for (const i in msg.time_boot_ms) {
                 y.push([-msg.Roll[i], msg.Pitch[i]])
             }
         }

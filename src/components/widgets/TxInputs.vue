@@ -3,19 +3,19 @@
          v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
         <div class="circle">
             <div class="stick" id="left"
-                 v-bind:style="{'margin-left': leftStickLeft -3 + 'px', 'margin-top': leftStickTop -3 + 'px' }"></div>
+                 v-bind:style="{ 'margin-left': leftStickLeft -3 + 'px', 'margin-top': leftStickTop -3 + 'px' }"></div>
         </div>
         <div class="circle">
             <div class="stick" id="right"
-                 v-bind:style="{'margin-left': rightStickLeft -3 + 'px', 'margin-top': rightStickTop -3 + 'px' }">
+                 v-bind:style="{ 'margin-left': rightStickLeft -3 + 'px', 'margin-top': rightStickTop -3 + 'px' }">
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import {store} from '../Globals.js'
-import {baseWidget} from './baseWidget'
+import { store } from '../Globals.js'
+import { baseWidget } from './baseWidget'
 
 class Interpolator {
     // This class holds all joystick positions and returns the interpolated position at an arbitraty time.
@@ -63,11 +63,11 @@ export default {
         waitForMessage (fieldname) {
             this.$eventHub.$emit('loadType', fieldname.split('.')[0])
             let interval
-            let _this = this
+            const _this = this
             let counter = 0
             return new Promise((resolve, reject) => {
                 interval = setInterval(function () {
-                    if (_this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
+                    if (_this.state.messages[fieldname.split('.')[0]]) {
                         clearInterval(interval)
                         counter += 1
                         resolve()
@@ -83,7 +83,7 @@ export default {
         },
         setTime (time) {
             try {
-                let sticks = this.interpolated.at(time)
+                const sticks = this.interpolated.at(time)
                 let reverses = [1, 1, 1, 1]
                 if (this.state.params.get('RC1_REV') !== undefined) {
                     reverses = [
@@ -123,21 +123,21 @@ export default {
         setup () {
             const _this = this
             this.waitForMessage('RC_CHANNELS.*').then(function () {
-                let x = _this.state.messages['RC_CHANNELS'].time_boot_ms
-                let y = []
-                let msg = _this.state.messages['RC_CHANNELS']
-                for (let i in msg.time_boot_ms) {
+                const x = _this.state.messages.RC_CHANNELS.time_boot_ms
+                const y = []
+                const msg = _this.state.messages.RC_CHANNELS
+                for (const i in msg.time_boot_ms) {
                     y.push([msg.chan1_raw[i], msg.chan2_raw[i], msg.chan3_raw[i], msg.chan4_raw[i]])
                 }
                 _this.interpolated = new Interpolator(x, y)
                 _this.$eventHub.$on('cesium-time-changed', _this.setTime)
             })
             this.waitForMessage('RCIN.*').then(function () {
-                let x = _this.state.messages['RCIN'].time_boot_ms
-                let y = []
+                const x = _this.state.messages.RCIN.time_boot_ms
+                const y = []
 
-                let msg = _this.state.messages['RCIN']
-                for (let i in msg.time_boot_ms) {
+                const msg = _this.state.messages.RCIN
+                for (const i in msg.time_boot_ms) {
                     y.push([msg.C1[i], msg.C2[i], msg.C3[i], msg.C4[i]])
                 }
                 _this.interpolated = new Interpolator(x, y)
@@ -172,9 +172,9 @@ export default {
     name: 'TxInputs',
     mixins: [baseWidget],
     props: {
-        'snappable': {type: Boolean, default: false},
-        'fixedAspectRatio': {type: Boolean, default: false},
-        'aspectRatio': {type: Number, default: 2}
+        snappable: { type: Boolean, default: false },
+        fixedAspectRatio: { type: Boolean, default: false },
+        aspectRatio: { type: Number, default: 2 }
     }
 }
 </script>

@@ -7,10 +7,6 @@ const vueLoaderConfig = require('./vue-loader.conf')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 // The path to the Cesium source code
 
-const cesiumSource =  '../node_modules/cesium/Source'
-const cesiumWorkers = '../../Build/Cesium/Workers'
-
-
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
 }
@@ -41,20 +37,16 @@ module.exports = {
       ? config.build.assetsPublicPath
       : config.dev.assetsPublicPath,
     sourcePrefix: ' ',
-    globalObject: 'this'
+    globalObject: 'self'
   },
-  amd: {
-    // Enable webpack-friendly use of require in Cesium
-    toUrlUndefined: true
-  },
+
   resolve: {
     extensions: ['.js', '.vue', '.json'],
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
       '@': resolve('src'),
-      'cesium': path.resolve(__dirname, cesiumSource)
     },
-
+    mainFiles: ['main', 'Cesium']
   },
 
   module: {
@@ -105,17 +97,20 @@ module.exports = {
       }
     ],
   },
+  resolve: {
+    fallback: {
+      // make sure you `npm install path-browserify` to use this
+      crypto: require.resolve("crypto-browserify"),
+      buffer: require.resolve('buffer/'),
+      assert: require.resolve("assert/"),
+      stream: require.resolve("stream-browserify"),
+      url: require.resolve("url/"),
+      https: require.resolve("https-browserify"),
+      http: require.resolve("stream-http"),
+      zlib: require.resolve("browserify-zlib"),
+    }
+  },
   node: {
-    // prevent webpack from injecting useless setImmediate polyfill because Vue
-    // source contains it (although only uses it if it's native).
-    setImmediate: false,
-    // prevent webpack from injecting mocks to Node native modules
-    // that does not make sense for the client
-    dgram: 'empty',
-    fs: 'empty',
-    net: 'empty',
-    tls: 'empty',
-    child_process: 'empty'
   },
     optimization: {
         splitChunks: {
@@ -137,6 +132,17 @@ module.exports = {
                     reuseExistingChunk: true
                 }
             }
-        }
+        },
+        moduleIds: 'deterministic', //Added this to retain hash of vendor chunks. 
+    runtimeChunk: 'single',
+    splitChunks: {
+        cacheGroups: {
+            vendor: {
+                test: /[\\/]node_modules[\\/]/,
+                name: 'vendors',
+                chunks: 'all',
+            },
+        },
+    },
     }
 }

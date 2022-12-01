@@ -1,8 +1,10 @@
 /* eslint-disable no-undef */
-import {mavlink20 as mavlink, MAVLink20Processor as MAVLink} from '../../libs/mavlink'
-import {modeMappingAcm, modeMappingApm, modeMappingRover, modeMappingSub, modeMappingTracker} from './modeMaps'
+import { mavlink20 as mavlink, MAVLink20Processor as MAVLink } from '../../libs/mavlink'
+import { modeMappingAcm, modeMappingApm, modeMappingRover, modeMappingSub, modeMappingTracker } from './modeMaps'
 
-let vehicles = {
+const Buffer = require('buffer/').Buffer
+
+const vehicles = {
     1: 'airplane', // Fixed wing aircraft.
     2: 'quadcopter', // Quadrotor
     3: 'quadcopter', // Coaxial helicopter
@@ -117,8 +119,8 @@ export class MavlinkParser {
     }
 
     onMessage (messages) {
-        let name = messages[0]._name
-        for (let message of messages) {
+        const name = messages[0]._name
+        for (const message of messages) {
             if (instance.totalSize == null) { // for percentage calculation
                 instance.totalSize = this.buf.byteLength
             }
@@ -153,7 +155,7 @@ export class MavlinkParser {
             }
         }
 
-        let fields = messages[0].fieldnames
+        const fields = messages[0].fieldnames
         if (fields.indexOf('time_boot_ms') === -1) {
             fields.push('time_boot_ms')
         }
@@ -163,18 +165,18 @@ export class MavlinkParser {
         } else if (messages[0]._name === 'SYSTEM_TIME') {
             fields.push('time_unix_usec')
         }
-        let mergedData = {}
-        for (let field of fields) {
+        const mergedData = {}
+        for (const field of fields) {
             mergedData[field] = []
         }
-        for (let message of messages) {
+        for (const message of messages) {
             for (let i = 0; i < fields.length; i++) {
-                let fieldname = fields[i]
+                const fieldname = fields[i]
                 mergedData[fieldname].push(message[fieldname])
             }
         }
         instance.messages[name] = mergedData
-        self.postMessage({messages: instance.messages})
+        self.postMessage({ messages: instance.messages })
     }
 
     extractStartTime () {
@@ -183,8 +185,8 @@ export class MavlinkParser {
 
     processData (data) {
         this.mavlinkParser.pushBuffer(Buffer.from(data))
-        let availableMessages = this.mavlinkParser.preParse()
-        let preparseList = [
+        const availableMessages = this.mavlinkParser.preParse()
+        const preparseList = [
             'SYSTEM_TIME',
             'GLOBAL_POSITION_INT',
             'GPS_RAW_INT',
@@ -195,17 +197,17 @@ export class MavlinkParser {
             'STATUSTEXT',
             'AHRS2',
             'AHRS3']
-        for (let i in preparseList) {
+        for (const i in preparseList) {
             this.mavlinkParser.parseType(preparseList[i])
-            self.postMessage({percentage: (i / preparseList.length) * 100})
+            self.postMessage({ percentage: (i / preparseList.length) * 100 })
         }
-        self.postMessage({percentage: 100})
-        let messageTypes = {}
-        for (let msg of availableMessages) {
+        self.postMessage({ percentage: 100 })
+        const messageTypes = {}
+        for (const msg of availableMessages) {
             let fields = mavlink.messageFields[msg]
             fields = fields.filter(e => e !== 'time_boot_ms' && e !== 'time_usec')
-            let complexFields = {}
-            for (let field in fields) {
+            const complexFields = {}
+            for (const field in fields) {
                 complexFields[fields[field]] = {
                     name: fields[field],
                     units: '?',
@@ -219,23 +221,24 @@ export class MavlinkParser {
                 complexFields: complexFields
             }
         }
-        let metadata = {
+        const metadata = {
             startTime: this.extractStartTime()
         }
 
-        self.postMessage({metadata: metadata})
-        self.postMessage({availableMessages: messageTypes})
-        self.postMessage({messagesDoneLoading: true})
+        self.postMessage({ metadata: metadata })
+        self.postMessage({ availableMessages: messageTypes })
+        self.postMessage({ messagesDoneLoading: true })
         // self.postMessage({done: true})
-        return {types: messageTypes, messages: instance.messages}
+        return { types: messageTypes, messages: instance.messages }
     }
 
     trimFile (time) {
         const start = time[0]
         const end = time[1]
         console.log('triming', start, end)
-        self.postMessage({url: this.mavlinkParser.trimFile(start, end)})
+        self.postMessage({ url: this.mavlinkParser.trimFile(start, end) })
     }
+
     loadType (type) {
         this.mavlinkParser.parseType(type)
         console.log('done')

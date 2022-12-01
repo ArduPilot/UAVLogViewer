@@ -8,7 +8,7 @@ export class ParamSeeker {
         this.changeArray = changeArray
         this.currentIndex = changeArray.length - 1
         this.values = {}
-        for (let change of changeArray) {
+        for (const change of changeArray) {
             this.values[change[1]] = change[2]
         }
         this.seek(0)
@@ -17,7 +17,7 @@ export class ParamSeeker {
     }
 
     seek (time) {
-        let indexBefore = this.currentIndex
+        const indexBefore = this.currentIndex
         while (this.changeArray[this.currentIndex][0] < time && this.currentIndex < this.changeArray.length - 2) {
             this.values[this.changeArray[this.currentIndex][1]] = this.changeArray[this.currentIndex][2]
             this.currentIndex += 1

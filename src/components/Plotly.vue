@@ -4,14 +4,14 @@
 
 <script>
 import Plotly from 'plotly.js'
-import {store} from './Globals.js'
+import { store } from './Globals.js'
 import * as d3 from 'd3'
 
-let Color = require('color')
+const Color = require('color')
 
-let timeformat = ':02,2f'
+const timeformat = ':02,2f'
 let annotationsEvents = []
-let annotationsModes = []
+const annotationsModes = []
 let annotationsParams = []
 
 const updatemenus = [
@@ -35,7 +35,7 @@ const updatemenus = [
             }
         ],
         direction: 'left',
-        pad: {'r': 10, 't': 10},
+        pad: { r: 10, t: 10 },
         showactive: true,
         type: 'buttons',
         x: 0.1,
@@ -45,7 +45,7 @@ const updatemenus = [
     }
 ]
 
-let plotOptions = {
+const plotOptions = {
     legend: {
         x: 0.1,
         y: 1,
@@ -58,7 +58,7 @@ let plotOptions = {
     // eslint-disable-next-line
     paper_bgcolor: 'white',
     // autosize: true,
-    margin: {t: 20, l: 0, b: 30, r: 10},
+    margin: { t: 20, l: 0, b: 30, r: 10 },
     xaxis: {
         title: 'Time since boot',
         domain: [0.15, 0.85],
@@ -82,8 +82,8 @@ let plotOptions = {
     },
     yaxis2: {
         // title: 'yaxis2 title',
-        titlefont: {color: '#ff7f0e'},
-        tickfont: {color: '#ff7f0e', size: 12},
+        titlefont: { color: '#ff7f0e' },
+        tickfont: { color: '#ff7f0e', size: 12 },
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
@@ -95,8 +95,8 @@ let plotOptions = {
     },
     yaxis3: {
         // title: 'yaxis4 title',
-        titlefont: {color: '#2ca02c'},
-        tickfont: {color: '#2ca02c'},
+        titlefont: { color: '#2ca02c' },
+        tickfont: { color: '#2ca02c' },
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
@@ -108,8 +108,8 @@ let plotOptions = {
     },
     yaxis4: {
         // title: 'yaxis5 title',
-        titlefont: {color: '#d62728'},
-        tickfont: {color: '#d62728'},
+        titlefont: { color: '#d62728' },
+        tickfont: { color: '#d62728' },
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
@@ -121,8 +121,8 @@ let plotOptions = {
     },
     yaxis5: {
         // title: 'yaxis5 title',
-        titlefont: {color: '#9467BD'},
-        tickfont: {color: '#9467BD'},
+        titlefont: { color: '#9467BD' },
+        tickfont: { color: '#9467BD' },
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
@@ -134,8 +134,8 @@ let plotOptions = {
     },
     yaxis6: {
         // title: 'yaxis5 title',
-        titlefont: {color: '#8C564B'},
-        tickfont: {color: '#8C564B'},
+        titlefont: { color: '#8C564B' },
+        tickfont: { color: '#8C564B' },
         anchor: 'free',
         overlaying: 'y',
         side: 'left',
@@ -166,11 +166,11 @@ export default {
             })
 
         this.gd = d3.select('#line').node()
-        let _this = this
+        const _this = this
         this.$nextTick(function () {
-            if (this.$route.query.hasOwnProperty('ranges')) {
-                let ranges = []
-                for (let field of this.$route.query.ranges.split(',')) {
+            if (this.$route.query.ranges) {
+                const ranges = []
+                for (const field of this.$route.query.ranges.split(',')) {
                     ranges.push(parseFloat(field))
                 }
                 if (ranges.length > 0) {
@@ -189,8 +189,8 @@ export default {
                     plotOptions.yaxis4.range = [ranges[8], ranges[9]]
                 }
             }
-            if (this.$route.query.hasOwnProperty('plots')) {
-                for (let field of this.$route.query.plots.split(',')) {
+            if (this.$route.query.plots) {
+                for (const field of this.$route.query.plots.split(',')) {
                     _this.addPlots([field])
                 }
             }
@@ -225,28 +225,28 @@ export default {
                     icon: Plotly.Icons.disk,
                     click: () => {
                         console.log(this.gd.data)
-                        var data = this.gd.data
-                        let header = ['timestamp(ms)']
-                        for (let series of data) {
+                        const data = this.gd.data
+                        const header = ['timestamp(ms)']
+                        for (const series of data) {
                             header.push(series.name.split(' |')[0])
                         }
 
-                        let indexes = []
+                        const indexes = []
 
-                        let interval = 100
+                        const interval = 100
                         let lasttime = Infinity
                         let finaltime = 0
 
-                        for (let series in data) {
+                        for (const series in data) {
                             indexes.push(0)
                             const x = data[series].x
                             lasttime = Math.min(lasttime, x[0])
                             finaltime = Math.max(finaltime, x[x.length - 1])
                         }
-                        let csv = [header]
+                        const csv = [header]
                         while (lasttime < finaltime - interval) {
                             const line = [lasttime]
-                            for (let series in data) {
+                            for (const series in data) {
                                 let index = indexes[series]
                                 let x = data[series].x[index]
                                 while (x < lasttime) {
@@ -259,10 +259,10 @@ export default {
                             csv.push(line)
                             lasttime = lasttime + interval
                         }
-                        let csvContent = csv.map(e => e.join(',')).join('\n')
-                        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-                        var link = document.createElement('a')
-                        var url = URL.createObjectURL(blob)
+                        const csvContent = csv.map(e => e.join(',')).join('\n')
+                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+                        const link = document.createElement('a')
+                        const url = URL.createObjectURL(blob)
                         link.setAttribute('href', url)
                         link.setAttribute('download', 'data.csv')
                         link.style.visibility = 'hidden'
@@ -277,16 +277,16 @@ export default {
             Plotly.Plots.resize(this.gd)
         },
         waitForMessages (messages) {
-            for (let message of messages) {
+            for (const message of messages) {
                 this.$eventHub.$emit('loadType', message)
             }
             let interval
-            let _this = this
+            const _this = this
             let counter = 0
             return new Promise((resolve, reject) => {
                 interval = setInterval(function () {
-                    for (let message of messages) {
-                        if (!_this.state.messages.hasOwnProperty(message)) {
+                    for (const message of messages) {
+                        if (!_this.state.messages[message]) {
                             counter += 1
                             if (counter > 30) { // 30 * 300ms = 9 s timeout
                                 console.log('not resolving')
@@ -305,32 +305,32 @@ export default {
             this.addMaxMinMeanToTitles()
             if (event !== undefined) {
                 // this.$router.push({query: query})
-                if (event.hasOwnProperty('xaxis.range')) {
+                if (event['xaxis.range']) {
                     this.state.timeRange = event['xaxis.range']
                 }
-                if (event.hasOwnProperty('xaxis.range[0]')) {
+                if (event['xaxis.range[0]']) {
                     this.state.timeRange = [event['xaxis.range[0]'], event['xaxis.range[1]']]
                 }
-                if (event.hasOwnProperty('xaxis.autorange')) {
+                if (event['xaxis.autorange']) {
                     this.state.timeRange = [this.gd.layout.xaxis.range[0], this.gd.layout.xaxis.range[1]]
                 }
             }
         },
         addMaxMinMeanToTitles   () {
-            let average = arr => arr.reduce((p, c) => p + c, 0) / arr.length
-            var gd = this.gd
-            var xRange = gd.layout.xaxis.range
+            const average = arr => arr.reduce((p, c) => p + c, 0) / arr.length
+            const gd = this.gd
+            const xRange = gd.layout.xaxis.range
 
-            var needsRelayout = false
+            let needsRelayout = false
 
             gd.data.forEach(trace => {
-                var len = Math.min(trace.x.length, trace.y.length)
-                var xInside = []
-                var yInside = []
+                const len = Math.min(trace.x.length, trace.y.length)
+                const xInside = []
+                const yInside = []
 
-                for (var i = 0; i < len; i++) {
-                    var x = trace.x[i]
-                    var y = trace.y[i]
+                for (let i = 0; i < len; i++) {
+                    const x = trace.x[i]
+                    const y = trace.y[i]
 
                     if (x > xRange[0] && x < xRange[1]) {
                         xInside.push(x)
@@ -351,7 +351,7 @@ export default {
             }
         },
         isPlotted (fieldname) {
-            for (let field of this.state.expressions) {
+            for (const field of this.state.expressions) {
                 if (field.name === fieldname) {
                     return true
                 }
@@ -360,9 +360,9 @@ export default {
         },
         getFirstFreeAxis () {
             // get free axis number
-            for (let i of this.state.allAxis) {
+            for (const i of this.state.allAxis) {
                 let taken = false
-                for (let field of this.state.expressions) {
+                for (const field of this.state.expressions) {
                     // eslint-disable-next-line
                     if (field.axis == i) {
                         taken = true
@@ -376,9 +376,9 @@ export default {
         },
         getFirstFreeColor () {
             // get free color
-            for (let i of this.state.allColors) {
+            for (const i of this.state.allColors) {
                 let taken = false
-                for (let field of this.state.expressions) {
+                for (const field of this.state.expressions) {
                     // eslint-disable-next-line
                     if (field.color == i) {
                         taken = true
@@ -408,11 +408,11 @@ export default {
 
         addPlots (plots) {
             this.state.plotLoading = true
-            let requested = new Set()
+            const requested = new Set()
             const RE = /[A-Z][A-Z0-9_]+(\[[0-9]\])?\.[a-zA-Z0-9]+/g
-            let RE2 = /[A-Z][A-Z0-9_]+(\[[0-9]\])/g
-            for (let plot of plots) {
-                let expression = plot[0]
+            const RE2 = /[A-Z][A-Z0-9_]+(\[[0-9]\])/g
+            for (const plot of plots) {
+                const expression = plot[0]
                 // ensure we have the data
                 let messages = expression.match(RE)
                 // not match ATT, GPS
@@ -440,11 +440,11 @@ export default {
                     })
                 return
             }
-            let newplots = []
-            for (let plot of plots) {
-                let expression = plot[0]
-                let axis = plot[1]
-                let color = plot[2]
+            const newplots = []
+            for (const plot of plots) {
+                const expression = plot[0]
+                const axis = plot[1]
+                const color = plot[2]
                 if (!this.isPlotted(expression)) {
                     newplots.push(this.createNewField(expression, axis, color))
                 }
@@ -452,7 +452,7 @@ export default {
             this.state.expressions.push(...newplots)
         },
         removePlot (fieldname) {
-            var index = this.state.expressions.indexOf(fieldname) // <-- Not supported in <IE9
+            const index = this.state.expressions.indexOf(fieldname) // <-- Not supported in <IE9
             if (index !== -1) {
                 this.state.expressions = this.state.expressions.splice(index, 1)
             }
@@ -473,8 +473,8 @@ export default {
             // unfortunately the axis are named yaxis, yaxis2, yaxis3... and so on
             let suffix = ''
             suffix = index === 0 ? suffix : parseInt(index) + 1
-            let key = 'yaxis' + suffix
-            let obj = {}
+            const key = 'yaxis' + suffix
+            const obj = {}
             // Use older dict and set autorange to true
             obj[key] = plotOptions[key]
             obj[key].autorange = true
@@ -483,7 +483,7 @@ export default {
         togglePlot (fieldname, axis, color, silent) {
             if (this.isPlotted((fieldname))) {
                 let index
-                for (let i in this.state.expressions) {
+                for (const i in this.state.expressions) {
                     if (this.state.expressions[i].name === fieldname) {
                         index = i
                     }
@@ -506,7 +506,7 @@ export default {
         calculateXAxisDomain () {
             let start = 0.02
             let end = 0.98
-            for (let field of this.state.expressions) {
+            for (const field of this.state.expressions) {
                 if (field.axis === 0) {
                     start = Math.max(start, 0.03)
                 } else if (field.axis === 1) {
@@ -524,8 +524,8 @@ export default {
             return [start, end]
         },
         getAxisTitle (fieldAxis) {
-            let names = []
-            for (let field of this.state.expressions) {
+            const names = []
+            for (const field of this.state.expressions) {
                 if (field.axis === fieldAxis) {
                     names.push(field.name)
                 }
@@ -533,9 +533,9 @@ export default {
             return names.join(', ')
         },
         findMessagesInExpression (expression) {
-            let RE = /(?<message>[A-Z][A-Z0-9_]+(\[[0-9]\])?)(\.(?<field>[A-Za-z0-9_]+))?/g
-            let match = []
-            for (let m of expression.matchAll(RE)) {
+            const RE = /(?<message>[A-Z][A-Z0-9_]+(\[[0-9]\])?)(\.(?<field>[A-Za-z0-9_]+))?/g
+            const match = []
+            for (const m of expression.matchAll(RE)) {
                 match.push([m.groups.message, m.groups.field])
             }
             return match
@@ -544,12 +544,12 @@ export default {
             // TODO: USE this regex with lookahead once firefox supports it
             // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
             // let fields = expression.name.match(RE)
-            let messages = this.findMessagesInExpression(expression.name)
+            const messages = this.findMessagesInExpression(expression.name)
 
             if (messages === null) {
                 return [true, '']
             }
-            for (let [message, field] of messages) {
+            for (const [message, field] of messages) {
                 if ((!(message in this.state.messageTypes) && !((message + '[0]') in this.state.messageTypes))) {
                     console.log('ERROR: attempted to plot unavailable message: ' + message)
                     this.state.plotLoading = false
@@ -572,7 +572,7 @@ export default {
             // TODO: USE this regex with lookahead once firefox supports it
             // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
             // let fields = expression.name.match(RE)
-            for (let message of messages) {
+            for (const message of messages) {
                 if (!(message in this.state.messages) || this.state.messages[message].lenght === 0) {
                     if (!((message + '[0]') in this.state.messages) ||
                         this.state.messages[message + '[0]'].lenght === 0) {
@@ -583,7 +583,7 @@ export default {
             return true
         },
         evaluateExpression (expression1) {
-            let start = new Date()
+            const start = new Date()
             if (expression1 in this.cache) {
                 console.log('HIT: ' + expression1)
                 return this.cache[expression1]
@@ -593,21 +593,21 @@ export default {
             // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
             let fields = this.findMessagesInExpression(expression1).map(field => field[0])
             fields = fields === null ? [] : fields
-            let messages = fields.length !== 0 ? (fields) : []
+            const messages = fields.length !== 0 ? (fields) : []
             // use time of first message for now
             let x
             if (messages.length > 0) {
                 x = this.state.messages[messages[0]].time_boot_ms
             } else {
                 try {
-                    x = this.state.messages['ATT'].time_boot_ms
+                    x = this.state.messages.ATT.time_boot_ms
                 } catch {
-                    x = this.state.messages['ATTITUDE'].time_boot_ms
+                    x = this.state.messages.ATTITUDE.time_boot_ms
                 }
             }
             // used to find the corresponding time indexes between messages
-            let timeIndexes = new Array(fields.length).fill(0)
-            let y = []
+            const timeIndexes = new Array(fields.length).fill(0)
+            const y = []
             let expression = expression1
             // eslint-disable-next-line
             for (let field in fields) {
@@ -621,16 +621,16 @@ export default {
                 // eslint-disable-next-line
                 f = new Function('a', 'return ' + expression)
             } catch (e) {
-                return {'error': e}
+                return { error: e }
             }
-            for (let time of x) {
-                let vals = []
-                for (let fieldIndex in timeIndexes) { // array of indexes, one for each field
+            for (const time of x) {
+                const vals = []
+                for (const fieldIndex in timeIndexes) { // array of indexes, one for each field
                     while (this.state.messages[messages[fieldIndex]].time_boot_ms[timeIndexes[fieldIndex]] < time) {
                         timeIndexes[fieldIndex] += 1
                     }
                     const newobj = {}
-                    for (let key of Object.keys(this.state.messages[messages[fieldIndex]])) {
+                    for (const key of Object.keys(this.state.messages[messages[fieldIndex]])) {
                         newobj[key] = this.state.messages[messages[fieldIndex]][key][timeIndexes[fieldIndex]]
                     }
                     vals.push(newobj)
@@ -638,11 +638,11 @@ export default {
                 try {
                     y.push(f(vals))
                 } catch (e) {
-                    return {'error': e}
+                    return { error: e }
                 }
             }
             console.log('evaluated ' + expression)
-            let data = this.addGaps({
+            const data = this.addGaps({
                 x: x,
                 y: y
             })
@@ -652,9 +652,9 @@ export default {
         },
         addGaps (data) {
             // Creates artifical gaps in order to break lines in plot when messages are not being received
-            let newData = {x: [], y: [], isSwissCheese: false}
+            const newData = { x: [], y: [], isSwissCheese: false }
             let lastx = data.x[0]
-            let totalPoints = data.x.length
+            const totalPoints = data.x.length
             let totalGaps = 0
             for (let i = 0; i < data.x.length; i++) {
                 if ((data.x[i] - lastx) > 3000) {
@@ -674,13 +674,13 @@ export default {
         plot () {
             console.log('plot()')
             plotOptions.title = this.state.file
-            let _this = this
-            let datasets = []
+            const _this = this
+            const datasets = []
             this.state.expressionErrors = []
-            let errors = []
+            const errors = []
 
-            for (let expression of this.state.expressions) {
-                let [canplot, error] = this.expressionCanBePlotted(expression, false)
+            for (const expression of this.state.expressions) {
+                const [canplot, error] = this.expressionCanBePlotted(expression, false)
                 if (!canplot) {
                     errors.push(error)
                     this.state.expressionErrors = errors
@@ -690,7 +690,7 @@ export default {
             }
 
             let messages = []
-            for (let expression of this.state.expressions) {
+            for (const expression of this.state.expressions) {
                 messages = [...messages, ...(this.findMessagesInExpression(expression.name).map(message => message[0]))]
             }
             if (!this.messagesAreAvailable(messages)) {
@@ -701,23 +701,23 @@ export default {
                     })
             }
 
-            for (let expression of this.state.expressions) {
+            for (const expression of this.state.expressions) {
                 let data = this.evaluateExpression(expression.name)
                 if ('error' in data) {
-                    this.state.expressionErrors.push(data['error'])
-                    data = {x: 0, y: 0}
+                    this.state.expressionErrors.push(data.error)
+                    data = { x: 0, y: 0 }
                 } else {
                     this.state.expressionErrors.push(null)
                 }
                 console.log(data)
-                let mode = data.isSwissCheese ? 'lines+markers' : 'lines'
+                const mode = data.isSwissCheese ? 'lines+markers' : 'lines'
 
-                let regularMarker = {
+                const regularMarker = {
                     size: 4,
                     color: expression.color
                 }
 
-                let crossMarker = {
+                const crossMarker = {
                     size: 5,
                     symbol: 'cross-thin',
                     color: expression.color,
@@ -726,7 +726,7 @@ export default {
                         width: 1
                     }
                 }
-                let marker = data.isSwissCheese ? crossMarker : regularMarker
+                const marker = data.isSwissCheese ? crossMarker : regularMarker
                 datasets.push({
                     name: expression.name,
                     // type: 'scattergl',
@@ -740,7 +740,7 @@ export default {
                     },
                     marker: marker
                 })
-                let axisname = expression.axis > 0 ? ('yaxis' + (expression.axis + 1)) : 'yaxis'
+                const axisname = expression.axis > 0 ? ('yaxis' + (expression.axis + 1)) : 'yaxis'
 
                 if (expression.axis <= 6) {
                     plotOptions[axisname].title = {
@@ -759,7 +759,7 @@ export default {
             let start = new Date()
             console.log('starting plotting itself...')
 
-            let plotData = datasets
+            const plotData = datasets
 
             plotOptions.xaxis = {
                 rangeslider: {},
@@ -769,7 +769,7 @@ export default {
             }
             if (this.plotInstance !== null) {
                 plotOptions.xaxis.range = this.gd._fullLayout.xaxis.range
-                Plotly.newPlot(this.gd, plotData, plotOptions, {scrollZoom: true, responsive: true})
+                Plotly.newPlot(this.gd, plotData, plotOptions, { scrollZoom: true, responsive: true })
             } else {
                 this.plotInstance = Plotly.newPlot(
                     this.gd,
@@ -787,7 +787,7 @@ export default {
             start = new Date()
             this.gd.on('plotly_relayout', this.onRangeChanged)
             this.gd.on('plotly_hover', function (data) {
-                let infotext = data.points.map(function (d) {
+                const infotext = data.points.map(function (d) {
                     return d.x
                 })
                 _this.$eventHub.$emit('hoveredTime', infotext[0])
@@ -799,12 +799,12 @@ export default {
 
             this.state.plotLoading = false
 
-            let bglayer = document.getElementsByClassName('bglayer')[0]
-            let rect = bglayer.childNodes[0]
+            const bglayer = document.getElementsByClassName('bglayer')[0]
+            const rect = bglayer.childNodes[0]
             this.cursor = document.createElementNS('http://www.w3.org/2000/svg', 'line')
-            let x = rect.getAttribute('x')
-            let y = rect.getAttribute('y')
-            let y2 = parseInt(y) + parseInt(rect.getAttribute('height'))
+            const x = rect.getAttribute('x')
+            const y = rect.getAttribute('y')
+            const y2 = parseInt(y) + parseInt(rect.getAttribute('height'))
             this.cursor.setAttribute('id', 'batata')
             this.cursor.setAttribute('x1', x)
             this.cursor.setAttribute('y1', y)
@@ -817,13 +817,13 @@ export default {
         },
         setCursorTime (time) {
             try {
-                let bglayer = document.getElementsByClassName('bglayer')[0]
-                let rect = bglayer.childNodes[0]
-                let x = parseInt(rect.getAttribute('x'))
-                let width = parseInt(rect.getAttribute('width'))
-                let percTime = (time - this.gd.layout.xaxis.range[0]) /
+                const bglayer = document.getElementsByClassName('bglayer')[0]
+                const rect = bglayer.childNodes[0]
+                const x = parseInt(rect.getAttribute('x'))
+                const width = parseInt(rect.getAttribute('width'))
+                const percTime = (time - this.gd.layout.xaxis.range[0]) /
                     (this.gd.layout.xaxis.range[1] - this.gd.layout.xaxis.range[0])
-                let newx = x + width * percTime
+                const newx = x + width * percTime
                 this.cursor.setAttribute('x1', newx)
                 this.cursor.setAttribute('x2', newx)
             } catch (err) {
@@ -831,7 +831,7 @@ export default {
             }
         },
         getMode (time) {
-            for (let mode in this.state.flightModeChanges) {
+            for (const mode in this.state.flightModeChanges) {
                 if (this.state.flightModeChanges[mode][0] > time) {
                     if (mode - 1 < 0) {
                         return this.state.flightModeChanges[0][1]
@@ -848,8 +848,8 @@ export default {
             return Color(color).darken(0.2).string()
         },
         addModeShapes () {
-            let shapes = []
-            let modeChanges = [...this.state.flightModeChanges]
+            const shapes = []
+            const modeChanges = [...this.state.flightModeChanges]
             modeChanges.push([this.gd.layout.xaxis.range[1], null])
 
             for (let i = 0; i < modeChanges.length - 1; i++) {
@@ -879,7 +879,7 @@ export default {
         addEvents () {
             annotationsEvents = []
             let i = -300
-            for (let event of this.state.events) {
+            for (const event of this.state.events) {
                 annotationsEvents.push(
                     {
                         xref: 'x',
@@ -900,7 +900,7 @@ export default {
                     i = -300
                 }
             }
-            let modeChanges = [...this.state.flightModeChanges]
+            const modeChanges = [...this.state.flightModeChanges]
             modeChanges.push([this.gd.layout.xaxis.range[1], null])
             for (let i = 0; i < modeChanges.length - 1; i++) {
                 annotationsModes.push(
@@ -933,9 +933,9 @@ export default {
         addParamChanges () {
             let i = -300
             annotationsParams = []
-            let firstFetch = new Set()
+            const firstFetch = new Set()
             let startAt = null
-            for (let change of this.state.params.changeArray) {
+            for (const change of this.state.params.changeArray) {
                 if (!firstFetch.has(change[1])) {
                     firstFetch.add(change[1])
                 } else {
@@ -944,7 +944,7 @@ export default {
                 }
             }
             let last = [0, 0]
-            for (let change of this.state.params.changeArray) {
+            for (const change of this.state.params.changeArray) {
                 if (change[0] < startAt) {
                     continue
                 }
@@ -998,8 +998,8 @@ export default {
     },
     computed: {
         setOfModes () {
-            let set = []
-            for (let mode of this.state.flightModeChanges) {
+            const set = []
+            for (const mode of this.state.flightModeChanges) {
                 if (!set.includes(mode[1])) {
                     set.push(mode[1])
                 }

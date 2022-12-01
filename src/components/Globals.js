@@ -1,6 +1,6 @@
 import '../mavextra/mavextra'
 
-export var store = {
+export const store = {
     // currentTrajectory: [],
     trajectorySource: '',
     trajectories: {},

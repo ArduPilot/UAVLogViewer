@@ -34,6 +34,8 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     "indent": ["error", 4],
     "camelcase": [2, {"properties": "always"}],
+    "vue/multi-word-component-names": `off`,
+    "vue/no-reserved-component-names": `off`,
     'vue/no-parsing-error': [2, {
           "invalid-first-character-of-tag-name": false
       }]

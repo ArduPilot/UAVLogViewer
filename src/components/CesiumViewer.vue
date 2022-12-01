@@ -44,12 +44,13 @@ import {
     defined,
     NearFarScalar,
     SingleTileImageryProvider,
-    Rectangle} from 'cesium/Cesium'
+    Rectangle
+} from 'cesium'
 
-import 'cesium/Widgets/widgets.css'
-import {store} from './Globals.js'
-import {DataflashDataExtractor} from '../tools/dataflashDataExtractor'
-import {MavlinkDataExtractor} from '../tools/mavlinkDataExtractor'
+import { store } from './Globals.js'
+import { DataflashDataExtractor } from '../tools/dataflashDataExtractor'
+import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
+import 'cesium/Build/Cesium/Widgets/widgets.css'
 
 Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2MmM0MDgzZC00OGVkLTRjZ' +
     'TItOWI2MS1jMGVhYTM2MmMzODYiLCJpZCI6MjczNywiaWF0IjoxNjYyMTI4MjkxfQ.fPqhawtYLhwyZirKCi8fEjPEIn1CjYqETvA0bYYhWRA'
@@ -60,7 +61,7 @@ function getMinTime (data) {
 }
 
 function getMaxTime (data) {
-    // returns the maximum time in the array. Used to define the time range
+    // returns the maximum time in   the array. Used to define the time range
     return data.reduce((max, p) => p[3] > max ? p[3] : max, data[0][3])
 }
 
@@ -122,7 +123,7 @@ export default {
             this.viewer.shadowMap.size = 4096
 
             // Attach hover handler
-            let handler = new ScreenSpaceEventHandler(this.viewer.scene.canvas)
+            const handler = new ScreenSpaceEventHandler(this.viewer.scene.canvas)
             handler.setInputAction(this.onMove, ScreenSpaceEventType.MOUSE_MOVE)
             handler.setInputAction(this.onLeftDown, ScreenSpaceEventType.LEFT_DOWN)
             handler.setInputAction(this.onClick, ScreenSpaceEventType.LEFT_CLICK)
@@ -131,10 +132,10 @@ export default {
             // this.viewer.camera.moveEnd.addEventListener(this.onCameraUpdate)
 
             knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
-            let layers = this.viewer.scene.imageryLayers
-            let xofs = 0.00001
+            const layers = this.viewer.scene.imageryLayers
+            const xofs = 0.00001
             layers.addImageryProvider(new SingleTileImageryProvider({
-                url: require('../assets/home2.png'),
+                url: require('../assets/home2.png').default,
                 rectangle: Rectangle.fromDegrees(-48.530077110530044 + xofs, -27.490619277419633,
                     -48.52971476731231 + xofs, -27.49044182943895)
             }))
@@ -154,12 +155,12 @@ export default {
         }
 
         this.addCloseButton()
-        for (let pos of this.state.currentTrajectory) {
+        for (const pos of this.state.currentTrajectory) {
             this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
         }
 
         if (this.state.vehicle !== 'boat' && this.state.isOnline) {
-            let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.correctedTrajectory)
+            const promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.correctedTrajectory)
             promise.then((result) => { this.setup2(result) })
         } else {
             this.setup2(this.correctedTrajectory)
@@ -171,7 +172,7 @@ export default {
                 createViewer (online) {
                     if (online) {
                         console.log('creating online viewer')
-                        let imageryProviders = this.createAdditionalProviders()
+                        const imageryProviders = this.createAdditionalProviders()
                         return new Viewer(
                             'cesiumContainer',
                             {
@@ -215,10 +216,10 @@ export default {
                     /*
                     *  Creates and returns the providers for viewing the Eniro, Statkart, and OpenSeaMap map layers
                     * */
-                    let imageryProviders = createDefaultImageryProviderViewModels()
+                    const imageryProviders = createDefaultImageryProviderViewModels()
                     imageryProviders.push(new ProviderViewModel({
                         name: 'StatKart',
-                        iconUrl: require('../assets/statkart.jpg'),
+                        iconUrl: require('../assets/statkart.jpg').default,
                         tooltip: 'Statkart aerial imagery \nhttp://statkart.no/',
                         creationFunction: function () {
                             return new UrlTemplateImageryProvider({
@@ -239,7 +240,7 @@ export default {
                     imageryProviders.push(this.sentinelProvider)
                     imageryProviders.push(new ProviderViewModel({
                         name: 'Eniro',
-                        iconUrl: require('../assets/eniro.png'),
+                        iconUrl: require('../assets/eniro.png').default,
                         tooltip: 'Eniro aerial imagery \nhttp://map.eniro.com/',
                         creationFunction: function () {
                             return new UrlTemplateImageryProvider({
@@ -251,7 +252,7 @@ export default {
                     }))
                     imageryProviders.push(new ProviderViewModel({
                         name: 'OpenSeaMap',
-                        iconUrl: require('../assets/openseamap.png'),
+                        iconUrl: require('../assets/openseamap.png').default,
                         tooltip: 'OpenSeaMap Nautical Maps \nhttp://openseamap.org/',
                         parameters: {
                             transparent: 'true',
@@ -320,16 +321,16 @@ export default {
                     setInterval(this.updateGlobeOpacity, 1000)
                 },
                 waitForMessages (messages) {
-                    for (let message of messages) {
+                    for (const message of messages) {
                         this.$eventHub.$emit('loadType', message)
                     }
                     let interval
-                    let _this = this
+                    const _this = this
                     let counter = 0
                     return new Promise((resolve, reject) => {
                         interval = setInterval(function () {
-                            for (let message of messages) {
-                                if (!_this.state.messages.hasOwnProperty(message)) {
+                            for (const message of messages) {
+                                if (!_this.state.messages[message]) {
                                     counter += 1
                                     if (counter > 30) { // 30 * 300ms = 9 s timeout
                                         console.log('not resolving')
@@ -348,12 +349,12 @@ export default {
                     /*
                     Makes the Globe transparent when the vehicle is underground/underwater. Called every 1 second
                     */
-                    let position = Cartographic.fromCartesian(this.model.position.getValue(
+                    const position = Cartographic.fromCartesian(this.model.position.getValue(
                         this.viewer.clock.currentTime))
-                    let height = position.height
+                    const height = position.height
 
                     const update = function (updatedPositions) {
-                        let altitude = height - updatedPositions[0].height
+                        const altitude = height - updatedPositions[0].height
                         const globe = this.viewer.scene.globe
                         if (altitude < 0) {
                             globe.showGroundAtmosphere = true
@@ -367,14 +368,14 @@ export default {
                         update([position])
                         console.log('skipping sample')
                     } else {
-                        let promise = sampleTerrainMostDetailed(this.viewer.terrainProvider,
+                        const promise = sampleTerrainMostDetailed(this.viewer.terrainProvider,
                             [position])
                         promise.then(update)
                     }
                 },
                 addCloseButton () {
                     /* Creates the close button on the Cesium toolbar */
-                    let toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
+                    const toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
 
                     let closeButton = document.createElement('span')
                     if (closeButton.classList) {
@@ -401,9 +402,9 @@ export default {
                     })
                 },
                 onCameraUpdate () {
-                    let query = Object.create(this.$route.query) // clone it
-                    let cam = this.viewer.camera
-                    query['cam'] = [
+                    const query = Object.create(this.$route.query) // clone it
+                    const cam = this.viewer.camera
+                    query.cam = [
                         cam.position.x.toFixed(2),
                         cam.position.y.toFixed(2),
                         cam.position.z.toFixed(2),
@@ -414,7 +415,7 @@ export default {
                         cam.up.y.toFixed(2),
                         cam.up.z.toFixed(2),
                         this.cameraType].join(',')
-                    this.$router.push({query: query})
+                    this.$router.push({ query: query })
                 },
 
                 getTimeStart () {
@@ -430,12 +431,12 @@ export default {
 
                 mouseIsOnPoint (point) {
                     // Checks if there is a trajectory point under the coordinate "point"
-                    let pickedObjects = this.viewer.scene.drillPick(point)
+                    const pickedObjects = this.viewer.scene.drillPick(point)
                     if (defined(pickedObjects)) {
                         // tries to read the time of each entioty under the mouse, returns once one is found.
-                        for (let entity of pickedObjects) {
+                        for (const entity of pickedObjects) {
                             try {
-                                let time = entity.id.time
+                                const time = entity.id.time
                                 if (time !== undefined) {
                                     this.lastHoveredTime = time
                                     return true
@@ -461,19 +462,19 @@ export default {
                 //     this.viewer.timeline.zoomTo(this.msToCesiumTime(event[0]), this.msToCesiumTime(event[1]))
                 // },
                 updateTimelineColors () {
-                    let start = this.cesiumTimeToMs(this.viewer.timeline._startJulian)
-                    let end = this.cesiumTimeToMs(this.viewer.timeline._endJulian)
+                    const start = this.cesiumTimeToMs(this.viewer.timeline._startJulian)
+                    const end = this.cesiumTimeToMs(this.viewer.timeline._endJulian)
 
-                    let timeline = document.getElementsByClassName('cesium-timeline-bar')[0]
+                    const timeline = document.getElementsByClassName('cesium-timeline-bar')[0]
                     let colors = []
                     let previousColor = null
-                    for (let change of this.state.flightModeChanges) {
+                    for (const change of this.state.flightModeChanges) {
                         if (change[0] < start || previousColor === null) {
                             previousColor = this.getModeColor(change[0])
                             colors = [[0, previousColor]]
                         }
                         if ((change[0] > start) && change[0] < end) {
-                            let percentage = (change[0] - start) * 100 / (end - start)
+                            const percentage = (change[0] - start) * 100 / (end - start)
                             colors.push([percentage - 0.001, previousColor])
                             colors.push([percentage, this.getModeColor(change[0])])
                             previousColor = this.getModeColor(change[0])
@@ -483,7 +484,7 @@ export default {
 
                     let string = 'linear-gradient(to right'
                     if (colors.length > 1) {
-                        for (let change of colors) {
+                        for (const change of colors) {
                             string = string + ', rgba(' + change[1].red * 150 + ',' + change[1].green * 150 + ',' +
                                 change[1].blue * 150 + ', 100) ' + change[0] + '%'
                         }
@@ -496,8 +497,8 @@ export default {
                     this.timelineStart = event.startJulian
                     this.timelineStop = event.endJulian
 
-                    let start = this.cesiumTimeToMs(event.startJulian)
-                    let end = this.cesiumTimeToMs(event.endJulian)
+                    const start = this.cesiumTimeToMs(event.startJulian)
+                    const end = this.cesiumTimeToMs(event.endJulian)
                     this.state.timeRange = [start, end]
                     this.updateTimelineColors()
 
@@ -594,14 +595,14 @@ export default {
                 processTrajectory () {
                     this.correctedTrajectory = []
                     this.points = this.state.trajectories[this.state.trajectorySource].trajectory
-                    for (let pos of this.points) {
+                    for (const pos of this.points) {
                         this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
                     }
                     // process time_boot_ms into cesium time
                     this.startTimeMs = getMinTime(this.points)
-                    let timespan = getMaxTime(this.points) - this.startTimeMs
+                    const timespan = getMaxTime(this.points) - this.startTimeMs
                     this.state.timeRange = [this.startTimeMs, this.startTimeMs + timespan]
-                    let viewer = this.viewer
+                    const viewer = this.viewer
                     this.start = this.getTimeStart()
                     this.stop = JulianDate.addSeconds(this.start, Math.round(timespan / 1000), new JulianDate())
                     // Make sure viewer is at the desired time.
@@ -622,9 +623,9 @@ export default {
                         this.clickableTrajectory.removeAll()
                     }
                     // Create sampled position
-                    let isBoat = this.state.vehicle === 'boat'
-                    for (let posIndex in this.points) {
-                        let pos = this.points[posIndex]
+                    const isBoat = this.state.vehicle === 'boat'
+                    for (const posIndex in this.points) {
+                        const pos = this.points[posIndex]
                         if (isBoat) {
                             position = Cartesian3.fromDegrees(pos[0], pos[1], 0)
                         } else {
@@ -635,7 +636,7 @@ export default {
                             )
                         }
                         this.positions.push(position)
-                        let time = JulianDate.addSeconds(
+                        const time = JulianDate.addSeconds(
                             this.start,
                             (pos[3] - this.startTimeMs) / 1000, new JulianDate())
 
@@ -656,37 +657,39 @@ export default {
                     if (this.model !== null) {
                         this.viewer.entities.remove(this.model)
                     }
-                    let points = this.points
+                    const points = this.points
                     // Create sampled aircraft orientation
-                    let position = Cartesian3.fromDegrees(points[0][0], points[0][1], points[0][2] + this.heightOffset)
+                    const position = Cartesian3.fromDegrees(
+                        points[0][0], points[0][1], points[0][2] + this.heightOffset
+                    )
                     let fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'west')
-                    let sampledOrientation = new SampledProperty(Quaternion)
+                    const sampledOrientation = new SampledProperty(Quaternion)
                     if (Object.keys(this.state.timeAttitudeQ).length > 0) {
                         fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'east')
-                        for (let atti in this.state.timeAttitudeQ) {
-                            if (this.state.timeAttitudeQ.hasOwnProperty(atti)) {
-                                let att = this.state.timeAttitudeQ[atti]
+                        for (const atti in this.state.timeAttitudeQ) {
+                            if (this.state.timeAttitudeQ.atti) {
+                                const att = this.state.timeAttitudeQ[atti]
 
-                                let q1 = att[0]
-                                let q2 = att[1]
-                                let q3 = att[2]
-                                let q4 = att[3]
+                                const q1 = att[0]
+                                const q2 = att[1]
+                                const q3 = att[2]
+                                const q4 = att[3]
 
-                                let roll = Math.atan2(2.0 * (q1 * q2 + q3 * q4), 1.0 - 2.0 * (q2 * q2 + q3 * q3))
+                                const roll = Math.atan2(2.0 * (q1 * q2 + q3 * q4), 1.0 - 2.0 * (q2 * q2 + q3 * q3))
                                 let pitch = Math.asin(2.0 * (q1 * q3 - q4 * q2))
                                 if (isNaN(pitch)) {
                                     pitch = 0
                                 }
-                                let yaw = Math.atan2(2.0 * (q1 * q4 + q2 * q3), 1.0 - 2.0 * (q3 * q3 + q4 * q4))
+                                const yaw = Math.atan2(2.0 * (q1 * q4 + q2 * q3), 1.0 - 2.0 * (q3 * q3 + q4 * q4))
                                 // TODO: fix this coordinate system!
-                                let hpRoll = Transforms.headingPitchRollQuaternion(
+                                const hpRoll = Transforms.headingPitchRollQuaternion(
                                     position,
                                     new HeadingPitchRoll(-yaw, -pitch, roll - 3.14),
                                     Ellipsoid.WGS84,
                                     fixedFrameTransform
                                 )
 
-                                let time = JulianDate.addSeconds(
+                                const time = JulianDate.addSeconds(
                                     this.start, (atti - this.startTimeMs) / 1000,
                                     new JulianDate())
 
@@ -694,17 +697,17 @@ export default {
                             }
                         }
                     } else {
-                        for (let atti in this.state.timeAttitude) {
-                            if (this.state.timeAttitude.hasOwnProperty(atti)) {
-                                let att = this.state.timeAttitude[atti]
-                                let hpRoll = Transforms.headingPitchRollQuaternion(
+                        for (const atti in this.state.timeAttitude) {
+                            if (this.state.timeAttitude[atti]) {
+                                const att = this.state.timeAttitude[atti]
+                                const hpRoll = Transforms.headingPitchRollQuaternion(
                                     position,
                                     new HeadingPitchRoll(att[2], att[1], att[0]),
                                     Ellipsoid.WGS84,
                                     fixedFrameTransform
                                 )
 
-                                let time = JulianDate.addSeconds(
+                                const time = JulianDate.addSeconds(
                                     this.start, (atti - this.startTimeMs) / 1000,
                                     new JulianDate()
                                 )
@@ -731,18 +734,18 @@ export default {
                     this.changeCamera()
                 },
                 updateAndPlotTrajectory () {
-                    let oldEntities = this.trajectory._children.slice()
+                    const oldEntities = this.trajectory._children.slice()
 
                     // Add polyline representing the path under the points
-                    let startTime = this.cesiumTimeToMs(this.timelineStart)
-                    let endTime = this.cesiumTimeToMs(this.timelineStop)
+                    const startTime = this.cesiumTimeToMs(this.timelineStart)
+                    const endTime = this.cesiumTimeToMs(this.timelineStop)
                     let oldColor = this.getModeColor(this.points[0][3])
                     let trajectory = []
 
                     let first = 0
                     let last = this.points.length
 
-                    for (let i in this.points) {
+                    for (const i in this.points) {
                         if (this.points[i][3] < startTime) {
                             first = i
                         } else if (this.points[i][3] < endTime) {
@@ -750,14 +753,14 @@ export default {
                         }
                     }
 
-                    for (let pos of this.points.slice(first, last)) {
+                    for (const pos of this.points.slice(first, last)) {
                         this.position = Cartesian3.fromDegrees(
                             pos[0],
                             pos[1],
                             pos[2] + this.heightOffset
                         )
                         trajectory.push(this.position)
-                        let color = this.getModeColor(pos[3])
+                        const color = this.getModeColor(pos[3])
 
                         if (color !== oldColor) {
                             this.viewer.entities.add({
@@ -785,15 +788,15 @@ export default {
 
                         }
                     })
-                    for (let entity of oldEntities) {
+                    for (const entity of oldEntities) {
                         this.viewer.entities.remove(entity)
                     }
                     this.viewer.scene.requestRender()
                 },
                 plotMission (points) {
-                    let cesiumPoints = []
-                    for (let pos of points) {
-                        let position = Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
+                    const cesiumPoints = []
+                    for (const pos of points) {
+                        const position = Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
                         cesiumPoints.push(position)
                     }
                     // Add polyline representing the path under the points
@@ -812,7 +815,7 @@ export default {
                 plotFences (fencesList) {
                     this.fences = []
                     for (const fence of fencesList) {
-                        let cesiumPoints = []
+                        const cesiumPoints = []
                         if (fence.length === 1) {
                             if (fence[0][2] === 0) {
                                 continue
@@ -828,8 +831,8 @@ export default {
                             }))
                             continue
                         }
-                        for (let pos of fence) {
-                            let position = Cartesian3.fromDegrees(pos[0], pos[1])
+                        for (const pos of fence) {
+                            const position = Cartesian3.fromDegrees(pos[0], pos[1])
                             cesiumPoints.push(position)
                         }
                         // we need to close the polygon
@@ -855,7 +858,7 @@ export default {
                     return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
                 },
                 getMode (time) {
-                    for (let mode in this.state.flightModeChanges) {
+                    for (const mode in this.state.flightModeChanges) {
                         if (this.state.flightModeChanges[mode][0] > time) {
                             if (mode - 1 < 0) {
                                 return this.state.flightModeChanges[0][1]
@@ -870,27 +873,27 @@ export default {
                     this.trajectory.show = this.showTrajectory
                     this.fences.show = this.showFences
 
-                    let len = this.clickableTrajectory.length
+                    const len = this.clickableTrajectory.length
                     for (let i = 0; i < len; ++i) {
                         this.clickableTrajectory.get(i).show = this.showClickableTrajectory
                     }
                     this.viewer.scene.requestRender()
                 },
                 getVehicleModel () {
-                    let type = this.state.vehicle
+                    const type = this.state.vehicle
                     if (type === 'submarine') {
-                        return require('../assets/bluerovsimple.glb')
+                        return require('../assets/bluerovsimple.glb').default
                     }
                     if (type === 'quadcopter+') {
-                        return require('../assets/quadp.glb')
+                        return require('../assets/quadp.glb').default
                     }
                     if (type === 'quadcopterx' || type === 'quadcopter') {
-                        return require('../assets/quadx.glb')
+                        return require('../assets/quadx.glb').default
                     }
                     if (type === 'boat') {
-                        return require('../assets/boat.glb')
+                        return require('../assets/boat.glb').default
                     }
-                    return require('../assets/plane.glb')
+                    return require('../assets/plane.glb').default
                 },
                 loadTrajectory (source) {
                     this.waitForMessages([source]).then(() => {
@@ -925,8 +928,8 @@ export default {
             },
     computed: {
         setOfModes () {
-            let set = []
-            for (let mode of this.state.flightModeChanges) {
+            const set = []
+            for (const mode of this.state.flightModeChanges) {
                 if (!set.includes(mode[1])) {
                     set.push(mode[1])
                 }
@@ -976,14 +979,14 @@ export default {
     },
     watch: {
         modelScale (scale) {
-            let value = parseFloat(scale)
+            const value = parseFloat(scale)
             if (!isNaN(value)) {
                 this.model.model.scale = value / 10
                 this.viewer.scene.requestRender()
             }
         },
         heightOffset (offset) {
-            let value = parseFloat(offset)
+            const value = parseFloat(offset)
             if (!isNaN(value)) {
                 this.updateAndPlotTrajectory()
                 this.processTrajectory()
@@ -994,10 +997,10 @@ export default {
         timeRange (range) {
             try {
                 if (range[1] > range[0]) {
-                    let cesiumStart = this.msToCesiumTime(range[0]).secondsOfDay
-                    let plotlyStart = this.viewer.timeline._startJulian.secondsOfDay
-                    let cesiumEnd = this.msToCesiumTime(range[1]).secondsOfDay
-                    let plotlyEnd = this.viewer.timeline._endJulian.secondsOfDay
+                    const cesiumStart = this.msToCesiumTime(range[0]).secondsOfDay
+                    const plotlyStart = this.viewer.timeline._startJulian.secondsOfDay
+                    const cesiumEnd = this.msToCesiumTime(range[1]).secondsOfDay
+                    const plotlyEnd = this.viewer.timeline._endJulian.secondsOfDay
                     // If range has changed more than 1 second
                     if (Math.abs(cesiumStart - plotlyStart) > 1 || Math.abs(cesiumEnd - plotlyEnd) > 1) {
                         this.viewer.timeline.zoomTo(this.msToCesiumTime(range[0]), this.msToCesiumTime(range[1]))

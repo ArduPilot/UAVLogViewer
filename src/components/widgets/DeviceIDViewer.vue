@@ -15,8 +15,8 @@
 </template>
 
 <script>
-import {store} from '../Globals.js'
-import {baseWidget} from './baseWidget'
+import { store } from '../Globals.js'
+import { baseWidget } from './baseWidget'
 
 const busTypes = {
     1: 'I2C',
