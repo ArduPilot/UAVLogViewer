@@ -9,12 +9,12 @@ class Matrix3 {
 
     fromEuler (roll, pitch, yaw) {
         this._elements = []
-        let cp = Math.cos(pitch)
-        let sp = Math.sin(pitch)
-        let sr = Math.sin(roll)
-        let cr = Math.cos(roll)
-        let sy = Math.sin(yaw)
-        let cy = Math.cos(yaw)
+        const cp = Math.cos(pitch)
+        const sp = Math.sin(pitch)
+        const sr = Math.sin(roll)
+        const cr = Math.cos(roll)
+        const sy = Math.sin(yaw)
+        const cy = Math.cos(yaw)
         this._elements.push(cp * cy)
         this._elements.push((sr * sp * cy) - (cr * sy))
         this._elements.push((cr * sp * cy) + (sr * sy))
@@ -49,4 +49,4 @@ class Matrix3 {
     }
 }
 
-export {Matrix3}
+export { Matrix3 }

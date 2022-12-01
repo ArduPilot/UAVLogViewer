@@ -55,13 +55,13 @@
     </div>
 </template>
 <script>
-import {store} from './Globals.js'
-import TreeMenu from './widgets/TreeMenu'
+import { store } from './Globals.js'
+import TreeMenu from './widgets/TreeMenu.vue'
 import fastXmlParser from 'fast-xml-parser'
 
 export default {
     name: 'message-menu',
-    components: {TreeMenu},
+    components: { TreeMenu },
     data () {
         return {
             filter: '',
@@ -108,24 +108,24 @@ export default {
     methods: {
         loadXmlPresets () {
             // eslint-disable-next-line
-            let graphs = {}
-            let files = [
+            const graphs = {}
+            const files = [
                 require('../assets/mavgraphs.xml'),
                 require('../assets/mavgraphs2.xml'),
                 require('../assets/ekfGraphs.xml'),
                 require('../assets/ekf3Graphs.xml')
             ]
-            for (let contents of files) {
-                let result = fastXmlParser.parse(contents.default, {ignoreAttributes: false})
-                let igraphs = result['graphs']
-                for (let graph of igraphs.graph) {
+            for (const contents of files) {
+                const result = fastXmlParser.parse(contents.default, { ignoreAttributes: false })
+                const igraphs = result.graphs
+                for (const graph of igraphs.graph) {
                     let i = ''
-                    let name = graph['@_name']
+                    const name = graph['@_name']
                     if (!Array.isArray(graph.expression)) {
                         graph.expression = [graph.expression]
                     }
                     for (const expression of graph.expression) {
-                        let fields = []
+                        const fields = []
                         for (let exp of expression.split(' ')) {
                             if (exp.indexOf(':') >= 0) {
                                 exp = exp.replace(':2', '')
@@ -144,11 +144,11 @@ export default {
             return graphs
         },
         loadLocalPresets () {
-            let saved = window.localStorage.getItem('savedFields')
+            const saved = window.localStorage.getItem('savedFields')
             if (saved !== null) {
                 this.userPresets = JSON.parse(saved)
-                for (let preset in this.userPresets) {
-                    for (let message in this.userPresets[preset]) {
+                for (const preset in this.userPresets) {
+                    for (const message in this.userPresets[preset]) {
                         // Field 3 means it is a user preset and can be deleted
                         this.userPresets[preset][message][3] = 1
                     }
@@ -156,40 +156,40 @@ export default {
             }
         },
         loadXmlDocs () {
-            let logDocs = {}
-            let files = [
+            const logDocs = {}
+            const files = [
                 require('../assets/logmetadata/plane.xml'),
                 require('../assets/logmetadata/copter.xml'),
                 require('../assets/logmetadata/tracker.xml'),
                 require('../assets/logmetadata/rover.xml')
             ]
-            for (let contents of files) {
-                let result = fastXmlParser.parse(contents.default, {ignoreAttributes: false})
-                let igraphs = result['loggermessagefile']
-                for (let graph of igraphs.logformat) {
-                    logDocs[graph['@_name']] = {'doc': graph['description']}
-                    for (let field of graph.fields.field) {
-                        logDocs[graph['@_name']][field['@_name']] = field['description']
+            for (const contents of files) {
+                const result = fastXmlParser.parse(contents.default, { ignoreAttributes: false })
+                const igraphs = result.loggermessagefile
+                for (const graph of igraphs.logformat) {
+                    logDocs[graph['@_name']] = { doc: graph.description }
+                    for (const field of graph.fields.field) {
+                        logDocs[graph['@_name']][field['@_name']] = field.description
                     }
                 }
             }
             return logDocs
         },
         handleMessageTypes (messageTypes) {
-            if (this.$route.query.hasOwnProperty('plots')) {
+            if (this.$route.query.plots) {
                 this.state.plotOn = true
             }
-            let newMessages = {}
+            const newMessages = {}
             // populate list of message types
-            for (let messageType of Object.keys(messageTypes)) {
+            for (const messageType of Object.keys(messageTypes)) {
                 this.$set(this.checkboxes, messageType, messageTypes[messageType].expressions.expressions)
                 newMessages[messageType] = messageTypes[messageType]
             }
             // populate checkbox status
-            for (let messageType of Object.keys(messageTypes)) {
-                this.checkboxes[messageType] = {expressions: {}}
+            for (const messageType of Object.keys(messageTypes)) {
+                this.checkboxes[messageType] = { expressions: {} }
                 // for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
-                for (let field of messageTypes[messageType].expressions) {
+                for (const field of messageTypes[messageType].expressions) {
                     if (this.state.plotOn) {
                         this.checkboxes[messageType].expressions[field] =
                             this.$route.query.plots.indexOf(messageType + '.' + field) !== -1
@@ -202,8 +202,8 @@ export default {
             this.state.messageTypes = newMessages
         },
         isPlotted (message, field) {
-            let fullname = message + '.' + field
-            for (let field of this.state.expressions) {
+            const fullname = message + '.' + field
+            for (const field of this.state.expressions) {
                 if (field.name === fullname) {
                     return true
                 }
@@ -211,9 +211,9 @@ export default {
             return false
         },
         getMessageNumericField (message) {
-            let numberFields = []
-            if (message && message.hasOwnProperty('fieldnames')) {
-                for (let field of message.fieldnames) {
+            const numberFields = []
+            if (message && message.fieldnames) {
+                for (const field of message.fieldnames) {
                     if (!isNaN(message[field])) {
                         numberFields.push(field)
                     }
@@ -246,30 +246,30 @@ export default {
         },
         findMessagesInExpression (expression) {
             // delete all expressions after dots (and dots)
-            let toDelete = /\.[A-Za-z-0-9_]+/g
-            let name = expression.replace(toDelete, '')
-            let RE = /[A-Z][A-Z0-9_]+(\[0-9\])?/g
-            let fields = name.match(RE)
+            const toDelete = /\.[A-Za-z-0-9_]+/g
+            const name = expression.replace(toDelete, '')
+            const RE = /[A-Z][A-Z0-9_]+(\[0-9\])?/g
+            const fields = name.match(RE)
             if (fields === null) {
                 return []
             }
             return fields
         },
         isAvailable (msg) {
-            let msgRe = /[A-Z][A-Z0-9_]+(\[[0-9]\])?(\.[a-zA-Z0-9_]+)?/g
-            let match = msg[0].match(msgRe)
+            const msgRe = /[A-Z][A-Z0-9_]+(\[[0-9]\])?(\.[a-zA-Z0-9_]+)?/g
+            const match = msg[0].match(msgRe)
             if (!match) {
                 return true
             }
-            let msgName = match[0].split('.')[0]
-            if (!this.messageTypes.hasOwnProperty(msgName)) {
+            const msgName = match[0].split('.')[0]
+            if (!this.messageTypes[msgName]) {
                 return false
             }
-            let fieldName = match[0].split('.')[1]
+            const fieldName = match[0].split('.')[1]
             if (fieldName === undefined) {
                 return true
             }
-            if (!this.messageTypes[msgName].complexFields.hasOwnProperty(fieldName)) {
+            if (!this.messageTypes[msgName].complexFields[fieldName]) {
                 console.log('missing field ' + msgName + '.' + fieldName)
                 return false
             }
@@ -281,8 +281,8 @@ export default {
             return Object.keys(this.messageTypes).length > 0
         },
         messageTypesFiltered () {
-            let filtered = {}
-            for (let key of Object.keys(this.messageTypes)) {
+            const filtered = {}
+            for (const key of Object.keys(this.messageTypes)) {
                 if (this.hiddenTypes.indexOf(key) === -1) {
                     if (this.filter === '') {
                         this.collapse('type' + key)
@@ -302,12 +302,12 @@ export default {
             return filtered
         },
         availableMessagePresets () {
-            let dict = {}
+            const dict = {}
             // do it for default messages
             for (const [key, value] of Object.entries(this.messagePresets)) {
                 let missing = false
                 let color = 0
-                for (let field of value) {
+                for (const field of value) {
                     // If all of the expressions match, add this and move on
                     if (field[0] === '') {
                         continue
@@ -315,7 +315,7 @@ export default {
                     missing = missing || !this.isAvailable(field)
                     if (!missing) {
                         if (!(key in dict)) {
-                            dict[key] = {messages: [[...field, color++]]}
+                            dict[key] = { messages: [[...field, color++]] }
                         } else {
                             dict[key].messages.push([...field, color++])
                         }
@@ -329,24 +329,24 @@ export default {
             for (const [key, value] of Object.entries(this.userPresets)) {
                 let missing = false
                 let color = 0
-                for (let field of value) {
+                for (const field of value) {
                     // If all of the expressions match, add this and move on
                     missing = missing || !this.isAvailable(field)
                     if (!missing) {
                         if (!(key in dict)) {
-                            dict[key] = {messages: [[...field, color++]]}
+                            dict[key] = { messages: [[...field, color++]] }
                         } else {
                             dict[key].messages.push([...field, color++])
                         }
                     }
                 }
             }
-            let newDict = {}
+            const newDict = {}
             for (const [key, value] of Object.entries(dict)) {
                 let current = newDict
-                let fields = key.trim().split('/')
-                let lastField = fields.pop()
-                for (let field of fields) {
+                const fields = key.trim().split('/')
+                const lastField = fields.pop()
+                for (const field of fields) {
                     if (!(field in current)) {
                         console.log('overwriting ' + field)
                         current[field] = {}

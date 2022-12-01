@@ -1,7 +1,7 @@
 // Worker.js
 // import MavlinkParser from 'mavlinkParser'
-let mavparser = require('./mavlinkParser')
-let dataflashparser = require('./dataflashParser')
+const mavparser = require('./mavlinkParser')
+const dataflashparser = require('./dataflashParser')
 
 let parser
 
@@ -14,7 +14,7 @@ self.addEventListener('message', function (event) {
         } else {
             parser = new dataflashparser.DataflashParser()
         }
-        let data = event.data.file
+        const data = event.data.file
         parser.processData(data)
     } else if (event.data.action === 'loadType') {
         parser.loadType(event.data.type.split('[')[0])

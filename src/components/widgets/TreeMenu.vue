@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import {store} from '../Globals.js'
+import { store } from '../Globals.js'
 
 export default {
     props: {
@@ -65,7 +65,7 @@ export default {
             if (confirm(text) === false) {
                 return
             }
-            let myStorage = window.localStorage
+            const myStorage = window.localStorage
             let saved = myStorage.getItem('savedFields')
             if (saved === null) {
                 return
@@ -80,8 +80,8 @@ export default {
             this.$eventHub.$emit('clearPlot')
             this.state.plotOn = true
             this.$nextTick(function () {
-                let msgs = []
-                for (let msg of preset) {
+                const msgs = []
+                for (const msg of preset) {
                     msgs.push([msg[0], msg[1], msg[2]])
                 }
                 this.$eventHub.$emit('addPlots', msgs)

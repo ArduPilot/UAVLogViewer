@@ -1,12 +1,12 @@
-import {store} from '../Globals.js'
+import { store } from '../Globals.js'
 
 export const baseWidget = {
     name: 'baseWidgetMixin',
     props: {
-        'snappable': {type: Boolean, default: false},
-        'fixedAspectRatio': {type: Boolean, default: false},
-        'aspectRatio': {type: Number, default: 2},
-        'resizeable': {type: Boolean, default: true}
+        snappable: { type: Boolean, default: false },
+        fixedAspectRatio: { type: Boolean, default: false },
+        aspectRatio: { type: Number, default: 2 },
+        resizeable: { type: Boolean, default: true }
     },
     data () {
         return {

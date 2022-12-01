@@ -13,8 +13,8 @@
 </template>
 
 <script>
-import {store} from '../Globals.js'
-import {baseWidget} from './baseWidget'
+import { store } from '../Globals.js'
+import { baseWidget } from './baseWidget'
 
 export default {
     name: 'ParamViewer',
@@ -39,11 +39,11 @@ export default {
         waitForMessage (fieldname) {
             this.$eventHub.$emit('loadType', fieldname.split('.')[0])
             let interval
-            let _this = this
+            const _this = this
             let counter = 0
             return new Promise((resolve, reject) => {
                 interval = setInterval(function () {
-                    if (_this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
+                    if (_this.state.messages[fieldname.split('.')[0]]) {
                         clearInterval(interval)
                         counter += 1
                         resolve()

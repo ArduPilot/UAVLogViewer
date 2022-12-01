@@ -1,5 +1,5 @@
-import {mavlink20 as mavlink} from '../libs/mavlink'
-import {ParamSeeker} from '../tools/paramseeker'
+import { mavlink20 as mavlink } from '../libs/mavlink'
+import { ParamSeeker } from '../tools/paramseeker'
 
 const validGCSs = [
     mavlink.MAV_TYPE_FIXED_WING,
@@ -22,10 +22,10 @@ const validGCSs = [
 
 export class MavlinkDataExtractor {
     static extractAttitude (messages, source) {
-        let attitudes = {}
+        const attitudes = {}
         if ('ATTITUDE' in messages) {
-            let attitudeMsgs = messages['ATTITUDE']
-            for (let i in attitudeMsgs.time_boot_ms) {
+            const attitudeMsgs = messages.ATTITUDE
+            for (const i in attitudeMsgs.time_boot_ms) {
                 attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
                     [
                         attitudeMsgs.roll[i],
@@ -44,9 +44,9 @@ export class MavlinkDataExtractor {
     static extractFlightModes (messages) {
         let modes = []
         if ('HEARTBEAT' in messages) {
-            let msgs = messages['HEARTBEAT']
+            const msgs = messages.HEARTBEAT
             modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
-            for (let i in msgs.time_boot_ms) {
+            for (const i in msgs.time_boot_ms) {
                 if (validGCSs.includes(msgs.type[i])) {
                     if (msgs.asText[i] === undefined) {
                         msgs.asText[i] = 'Unknown'
@@ -63,14 +63,14 @@ export class MavlinkDataExtractor {
     static extractEvents (messages) {
         let armedState = []
         if ('HEARTBEAT' in messages) {
-            let msgs = messages['HEARTBEAT']
-            let event = (msgs.base_mode[0] & 0b10000000) === 128 ? 'Armed' : 'Disarmed'
+            const msgs = messages.HEARTBEAT
+            const event = (msgs.base_mode[0] & 0b10000000) === 128 ? 'Armed' : 'Disarmed'
             armedState = [[msgs.time_boot_ms[0], event]]
-            for (let i in msgs.time_boot_ms) {
+            for (const i in msgs.time_boot_ms) {
                 if (msgs.type[i] !== mavlink.MAV_TYPE_GCS) {
-                    let newEvent = (msgs.base_mode[i] & 0b10000000) === 128 ? 'Armed' : 'Disarmed'
+                    const newEvent = (msgs.base_mode[i] & 0b10000000) === 128 ? 'Armed' : 'Disarmed'
                     if (newEvent !== armedState[armedState.length - 1][1]) {
-                        let event = (msgs.base_mode[i] & 0b10000000) === 128 ? 'Armed' : 'Disarmed'
+                        const event = (msgs.base_mode[i] & 0b10000000) === 128 ? 'Armed' : 'Disarmed'
                         armedState.push([msgs.time_boot_ms[i], event])
                     }
                 }
@@ -80,10 +80,10 @@ export class MavlinkDataExtractor {
     }
 
     static extractMission (messages) {
-        let wps = []
+        const wps = []
         if ('CMD' in messages) {
-            let cmdMsgs = messages['CMD']
-            for (let i in cmdMsgs.time_boot_ms) {
+            const cmdMsgs = messages.CMD
+            for (const i in cmdMsgs.time_boot_ms) {
                 if (cmdMsgs.Lat[i] !== 0) {
                     let lat = cmdMsgs.Lat[i]
                     let lon = cmdMsgs.Lng[[i]]
@@ -104,9 +104,9 @@ export class MavlinkDataExtractor {
 
     static extractVehicleType (messages) {
         if ('HEARTBEAT' in messages) {
-            for (let i in messages['HEARTBEAT'].craft) {
-                if (messages['HEARTBEAT'].craft[i] !== undefined) {
-                    return messages['HEARTBEAT'].craft[i]
+            for (const i in messages.HEARTBEAT.craft) {
+                if (messages.HEARTBEAT.craft[i] !== undefined) {
+                    return messages.HEARTBEAT.craft[i]
                 }
             }
         }
@@ -137,13 +137,13 @@ export class MavlinkDataExtractor {
     }
 
     static extractTrajectory (messages, source) {
-        let ret = {}
+        const ret = {}
         if (('GLOBAL_POSITION_INT' in messages) && source === 'GLOBAL_POSITION_INT') {
-            let trajectory = []
-            let timeTrajectory = {}
+            const trajectory = []
+            const timeTrajectory = {}
             let startAltitude = null
-            let gpsData = messages['GLOBAL_POSITION_INT']
-            for (let i in gpsData.time_boot_ms) {
+            const gpsData = messages.GLOBAL_POSITION_INT
+            for (const i in gpsData.time_boot_ms) {
                 if (gpsData.lat[i] !== 0) {
                     if (startAltitude === null) {
                         startAltitude = gpsData.relative_alt[i]
@@ -164,7 +164,7 @@ export class MavlinkDataExtractor {
                 }
             }
             if (trajectory.length) {
-                ret['GLOBAL_POSITION_INT'] = {
+                ret.GLOBAL_POSITION_INT = {
                     startAltitude: startAltitude,
                     trajectory: trajectory,
                     timeTrajectory: timeTrajectory
@@ -172,11 +172,11 @@ export class MavlinkDataExtractor {
             }
         }
         if ('GPS_RAW_INT' in messages && source === 'GPS_RAW_INT') {
-            let trajectory = []
-            let timeTrajectory = {}
+            const trajectory = []
+            const timeTrajectory = {}
             let startAltitude = null
-            let gpsData = messages['GPS_RAW_INT']
-            for (let i in gpsData.time_boot_ms) {
+            const gpsData = messages.GPS_RAW_INT
+            for (const i in gpsData.time_boot_ms) {
                 if (gpsData.lat[i] !== 0) {
                     if (startAltitude === null) {
                         startAltitude = gpsData.alt[0] / 1000
@@ -197,7 +197,7 @@ export class MavlinkDataExtractor {
                 }
             }
             if (trajectory.length) {
-                ret['GPS_RAW_INT'] = {
+                ret.GPS_RAW_INT = {
                     startAltitude: startAltitude,
                     trajectory: trajectory,
                     timeTrajectory: timeTrajectory
@@ -205,11 +205,11 @@ export class MavlinkDataExtractor {
             }
         }
         if ('AHRS2' in messages && source === 'AHRS2') {
-            let trajectory = []
-            let timeTrajectory = {}
+            const trajectory = []
+            const timeTrajectory = {}
             let startAltitude = null
-            let gpsData = messages['AHRS2']
-            for (let i in gpsData.time_boot_ms) {
+            const gpsData = messages.AHRS2
+            for (const i in gpsData.time_boot_ms) {
                 if (startAltitude === null) {
                     startAltitude = gpsData.altitude[0]
                 }
@@ -228,7 +228,7 @@ export class MavlinkDataExtractor {
                     gpsData.time_boot_ms[i]]
             }
             if (trajectory.length) {
-                ret['AHRS2'] = {
+                ret.AHRS2 = {
                     startAltitude: startAltitude,
                     trajectory: trajectory,
                     timeTrajectory: timeTrajectory
@@ -236,11 +236,11 @@ export class MavlinkDataExtractor {
             }
         }
         if ('AHRS3' in messages && source === 'AHRS3') {
-            let trajectory = []
-            let timeTrajectory = {}
+            const trajectory = []
+            const timeTrajectory = {}
             let startAltitude = null
-            let gpsData = messages['AHRS3']
-            for (let i in gpsData.time_boot_ms) {
+            const gpsData = messages.AHRS3
+            for (const i in gpsData.time_boot_ms) {
                 if (gpsData.lat[i] !== 0) {
                     if (startAltitude === null) {
                         startAltitude = gpsData.altitude[0]
@@ -261,7 +261,7 @@ export class MavlinkDataExtractor {
                 }
             }
             if (trajectory.length) {
-                ret['AHRS3'] = {
+                ret.AHRS3 = {
                     startAltitude: startAltitude,
                     trajectory: trajectory,
                     timeTrajectory: timeTrajectory
@@ -272,14 +272,14 @@ export class MavlinkDataExtractor {
     }
 
     static extractParams (messages) {
-        let params = []
-        let lastValue = {}
+        const params = []
+        const lastValue = {}
         if ('PARAM_VALUE' in messages) {
-            let paramData = messages['PARAM_VALUE']
-            for (let i in paramData.time_boot_ms) {
-                let paramName = paramData.param_id[i].replace(/[^a-z0-9A-Z_]/ig, '')
-                let paramValue = paramData.param_value[i]
-                if (lastValue.hasOwnProperty(paramName) && lastValue[paramName] === paramValue) {
+            const paramData = messages.PARAM_VALUE
+            for (const i in paramData.time_boot_ms) {
+                const paramName = paramData.param_id[i].replace(/[^a-z0-9A-Z_]/ig, '')
+                const paramValue = paramData.param_value[i]
+                if (lastValue.paramName && lastValue[paramName] === paramValue) {
                     continue
                 }
                 params.push(
@@ -300,10 +300,10 @@ export class MavlinkDataExtractor {
     }
 
     static extractTextMessages (messages) {
-        let texts = []
+        const texts = []
         if ('STATUSTEXT' in messages) {
-            let textMsgs = messages['STATUSTEXT']
-            for (let i in textMsgs.time_boot_ms) {
+            const textMsgs = messages.STATUSTEXT
+            for (const i in textMsgs.time_boot_ms) {
                 texts.push([textMsgs.time_boot_ms[i], textMsgs.severity[i], textMsgs.text[i]])
             }
         }

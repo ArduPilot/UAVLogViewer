@@ -28,11 +28,11 @@
     </div>
 </template>
 <script>
-import VProgress from './SideBarFileManagerProgressBar'
+import VProgress from './SideBarFileManagerProgressBar.vue'
 import Worker from '../tools/parsers/parser.worker.js'
-import {store} from './Globals'
+import { store } from './Globals'
 
-import {MAVLink20Processor as MAVLink} from '../libs/mavlink'
+import { MAVLink20Processor as MAVLink } from '../libs/mavlink'
 
 const worker = new Worker()
 
@@ -64,28 +64,28 @@ export default {
     },
     methods: {
         trimFile () {
-            worker.postMessage({action: 'trimFile', time: this.state.timeRange})
+            worker.postMessage({ action: 'trimFile', time: this.state.timeRange })
         },
         onLoadSample (file) {
             let url
             if (file === 'sample') {
                 this.state.file = 'sample'
-                url = require('../assets/vtol.tlog')
+                url = require('../assets/vtol.tlog').default
                 this.state.logType = 'tlog'
             } else {
                 url = file
             }
-            let oReq = new XMLHttpRequest()
+            const oReq = new XMLHttpRequest()
             this.state.logType = url.endsWith('.tlog') ? 'tlog' : 'bin'
             oReq.open('GET', url, true)
             oReq.responseType = 'arraybuffer'
 
             oReq.onload = function (oEvent) {
-                var arrayBuffer = oReq.response
+                const arrayBuffer = oReq.response
 
                 this.transferMessage = 'Download Done'
                 this.sampleLoaded = true
-                worker.postMessage({action: 'parse', file: arrayBuffer, isTlog: (url.endsWith('.tlog'))})
+                worker.postMessage({ action: 'parse', file: arrayBuffer, isTlog: (url.endsWith('.tlog')) })
             }
             oReq.addEventListener('progress', (e) => {
                 if (e.lengthComputable) {
@@ -101,7 +101,7 @@ export default {
             oReq.send()
         },
         onChange (ev) {
-            let fileinput = document.getElementById('choosefile')
+            const fileinput = document.getElementById('choosefile')
             this.process(fileinput.files[0])
         },
         onDrop (ev) {
@@ -112,7 +112,7 @@ export default {
                 for (let i = 0; i < ev.dataTransfer.items.length; i++) {
                     // If dropped items aren't files, reject them
                     if (ev.dataTransfer.items[i].kind === 'file') {
-                        let file = ev.dataTransfer.items[i].getAsFile()
+                        const file = ev.dataTransfer.items[i].getAsFile()
                         this.process(file)
                     }
                 }
@@ -135,9 +135,9 @@ export default {
             this.state.processStatus = 'Pre-processing...'
             this.state.processPercentage = 100
             this.file = file
-            let reader = new FileReader()
+            const reader = new FileReader()
             reader.onload = function (e) {
-                let data = reader.result
+                const data = reader.result
                 worker.postMessage({
                     action: 'parse',
                     file: data,
@@ -152,10 +152,10 @@ export default {
             this.uploadStarted = true
             this.transferMessage = 'Upload Done!'
             this.uploadpercentage = 0
-            let formData = new FormData()
+            const formData = new FormData()
             formData.append('file', this.file)
 
-            let request = new XMLHttpRequest()
+            const request = new XMLHttpRequest()
             request.onload = () => {
                 if (request.status >= 200 && request.status < 400) {
                     this.uploadpercentage = 100
@@ -198,7 +198,7 @@ export default {
             this.shared = true
         },
         downloadFileFromURL (url) {
-            var a = document.createElement('a')
+            const a = document.createElement('a')
             document.body.appendChild(a)
             a.style = 'display: none'
             a.href = url
@@ -210,28 +210,28 @@ export default {
     },
     mounted () {
         worker.onmessage = (event) => {
-            if (event.data.hasOwnProperty('percentage')) {
+            if (event.data.percentage) {
                 this.state.processPercentage = event.data.percentage
-            } else if (event.data.hasOwnProperty('availableMessages')) {
+            } else if (event.data.availableMessages) {
                 this.$eventHub.$emit('messageTypes', event.data.availableMessages)
-            } else if (event.data.hasOwnProperty('metadata')) {
+            } else if (event.data.metadata) {
                 this.state.metadata = event.data.metadata
-            } else if (event.data.hasOwnProperty('messages')) {
+            } else if (event.data.messages) {
                 this.state.messages = event.data.messages
                 this.$eventHub.$emit('messages')
-            } else if (event.data.hasOwnProperty('messagesDoneLoading')) {
+            } else if (event.data.messagesDoneLoading) {
                 this.$eventHub.$emit('messagesDoneLoading')
-            } else if (event.data.hasOwnProperty('messageType')) {
+            } else if (event.data.messageType) {
                 this.state.messages[event.data.messageType] = event.data.messageList
                 this.$eventHub.$emit('messages')
-            } else if (event.data.hasOwnProperty('files')) {
+            } else if (event.data.files) {
                 this.state.files = event.data.files
                 this.$eventHub.$emit('messages')
-            } else if (event.data.hasOwnProperty('url')) {
+            } else if (event.data.url) {
                 this.downloadFileFromURL(event.data.url)
             }
         }
-        if (this.$route.query.hasOwnProperty('file')) {
+        if (this.$route.query.file) {
             this.onLoadSample(this.$route.query.file)
         }
     },

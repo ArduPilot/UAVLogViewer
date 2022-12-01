@@ -1,21 +1,21 @@
 /* eslint-disable no-undef */
-import {mavlink20 as mavlink} from '../../libs/mavlink'
-import {modeMappingAcm, modeMappingApm, modeMappingRover, modeMappingSub, modeMappingTracker} from './modeMaps'
+import { mavlink20 as mavlink } from '../../libs/mavlink'
+import { modeMappingAcm, modeMappingApm, modeMappingRover, modeMappingSub, modeMappingTracker } from './modeMaps'
 
 const multipliers = {
     '-': 0, // no multiplier e.g. a string
     '?': 1, // multipliers which haven't been worked out yet....
     // <leave a gap here, just in case....>
-    '2': 1e2,
-    '1': 1e1,
-    '0': 1e0,
-    'A': 1e-1,
-    'B': 1e-2,
-    'C': 1e-3,
-    'D': 1e-4,
-    'E': 1e-5,
-    'F': 1e-6,
-    'G': 1e-7,
+    2: 1e2,
+    1: 1e1,
+    0: 1e0,
+    A: 1e-1,
+    B: 1e-2,
+    C: 1e-3,
+    D: 1e-4,
+    E: 1e-5,
+    F: 1e-6,
+    G: 1e-7,
     // <leave a gap here, just in case....>
     '!': 3.6, // (ampere*second => milliampere*hour) and (km/h => m/s)
     '/': 3600 // (ampere*second => ampere*hour)
@@ -33,36 +33,36 @@ const HEAD2 = 149
 const units = {
     '-': '', // no units e.g. Pi, or a string
     '?': 'UNKNOWN', // Units which haven't been worked out yet....
-    'A': 'A', // Ampere
-    'd': '°', // of the angular variety, -180 to 180
-    'b': 'B', // bytes
-    'k': '°/s', // degrees per second. Degrees are NOT SI, but is some situations more user-friendly than radians
-    'D': '°', // degrees of latitude
-    'e': '°/s/s', // degrees per second per second. Degrees are NOT SI, but is some situations more user-friendly
-    'E': 'rad/s', // radians per second
-    'G': 'Gauss', // Gauss is not an SI unit, but 1 tesla = 10000 gauss so a simple replacement is not possible here
-    'h': '°', // 0.? to 359.?
-    'i': 'A.s', // Ampere second
-    'J': 'W.s', // Joule (Watt second)
+    A: 'A', // Ampere
+    d: '°', // of the angular variety, -180 to 180
+    b: 'B', // bytes
+    k: '°/s', // degrees per second. Degrees are NOT SI, but is some situations more user-friendly than radians
+    D: '°', // degrees of latitude
+    e: '°/s/s', // degrees per second per second. Degrees are NOT SI, but is some situations more user-friendly
+    E: 'rad/s', // radians per second
+    G: 'Gauss', // Gauss is not an SI unit, but 1 tesla = 10000 gauss so a simple replacement is not possible here
+    h: '°', // 0.? to 359.?
+    i: 'A.s', // Ampere second
+    J: 'W.s', // Joule (Watt second)
     // { 'l', "l" },          // litres
-    'L': 'rad/s/s', // radians per second per second
-    'm': 'm', // metres
-    'n': 'm/s', // metres per second
+    L: 'rad/s/s', // radians per second per second
+    m: 'm', // metres
+    n: 'm/s', // metres per second
     // { 'N', "N" },          // Newton
-    'o': 'm/s/s', // metres per second per second
-    'O': '°C', // degrees Celsius. Not SI, but Kelvin is too cumbersome for most users
+    o: 'm/s/s', // metres per second per second
+    O: '°C', // degrees Celsius. Not SI, but Kelvin is too cumbersome for most users
     '%': '%', // percent
-    'S': 'satellites', // number of satellites
-    's': 's', // seconds
-    'q': 'rpm', // rounds per minute. Not SI, but sometimes more intuitive than Hertz
-    'r': 'rad', // radians
-    'U': '°', // degrees of longitude
-    'u': 'ppm', // pulses per minute
-    'v': 'V', // Volt
-    'P': 'Pa', // Pascal
-    'w': 'Ohm', // Ohm
-    'Y': 'us', // pulse width modulation in microseconds
-    'z': 'Hz', // Hertz
+    S: 'satellites', // number of satellites
+    s: 's', // seconds
+    q: 'rpm', // rounds per minute. Not SI, but sometimes more intuitive than Hertz
+    r: 'rad', // radians
+    U: '°', // degrees of longitude
+    u: 'ppm', // pulses per minute
+    v: 'V', // Volt
+    P: 'Pa', // Pascal
+    w: 'Ohm', // Ohm
+    Y: 'us', // pulse width modulation in microseconds
+    z: 'Hz', // Hertz
     '#': 'instance' // instance number for message
 }
 
@@ -95,7 +95,7 @@ function getModeMap (mavType) {
 }
 
 function assignColumn (obj) {
-    var ArrayOfString = obj.split(',')
+    const ArrayOfString = obj.split(',')
     return ArrayOfString
 }
 
@@ -117,11 +117,11 @@ export class DataflashParser {
         this.data = null
         this.FMT = []
         this.FMT[128] = {
-            'Type': '128',
-            'length': '89',
-            'Name': 'FMT',
-            'Format': 'BBnNZ',
-            'Columns': 'Type,Length,Name,Format,Columns'
+            Type: '128',
+            length: '89',
+            Name: 'FMT',
+            Format: 'BBnNZ',
+            Columns: 'Type,Length,Name,Format,Columns'
         }
         this.offset = 0
         this.msgType = []
@@ -136,13 +136,13 @@ export class DataflashParser {
     }
 
     FORMAT_TO_STRUCT (obj) {
-        var temp
-        var dict = {
+        let temp
+        const dict = {
             name: obj.Name,
             fieldnames: obj.Columns.split(',')
         }
 
-        let column = assignColumn(obj.Columns)
+        const column = assignColumn(obj.Columns)
         let low
         let n
         for (let i = 0; i < obj.Format.length; i++) {
@@ -248,7 +248,7 @@ export class DataflashParser {
     }
 
     gpstimetoTime (week, msec) {
-        let epoch = 86400 * (10 * 365 + (1980 - 1969) / 4 + 1 + 6 - 2)
+        const epoch = 86400 * (10 * 365 + (1980 - 1969) / 4 + 1 + 6 - 2)
         return epoch + 86400 * 7 * week + msec * 0.001 - 15
     }
 
@@ -257,8 +257,8 @@ export class DataflashParser {
     }
 
     findTimeBase (gps) {
-        const temp = this.gpstimetoTime(parseInt(gps['GWk']), parseInt(gps['GMS']))
-        this.setTimeBase(parseInt(temp - gps['TimeUS'] * 0.000001))
+        const temp = this.gpstimetoTime(parseInt(gps.GWk), parseInt(gps.GMS))
+        this.setTimeBase(parseInt(temp - gps.TimeUS * 0.000001))
     }
 
     getMsgType (element) {
@@ -281,20 +281,20 @@ export class DataflashParser {
         } else {
             this.messages[message.name] = [this.fixData(message)]
         }
-        let percentage = 100 * this.offset / this.totalSize
+        const percentage = 100 * this.offset / this.totalSize
         if ((percentage - this.lastPercentage) > this.maxPercentageInterval) {
-            self.postMessage({percentage: percentage})
+            self.postMessage({ percentage: percentage })
             this.lastPercentage = percentage
         }
     }
 
     messageHasInstances (name) {
-        let type = this.FMT.find(msg => msg !== undefined && msg.Name === name)
+        const type = this.FMT.find(msg => msg !== undefined && msg.Name === name)
         return type !== undefined && type.units !== undefined && type.units.indexOf('instance') !== -1
     }
 
     getInstancesFieldName (name) {
-        let type = this.FMT.find(msg => msg !== undefined && msg.Name === name)
+        const type = this.FMT.find(msg => msg !== undefined && msg.Name === name)
         if (type.units === undefined) {
             return null
         }
@@ -311,9 +311,9 @@ export class DataflashParser {
     }
 
     postData (data) {
-        data['dataType'] = {}
+        data.dataType = {}
         const transferables = []
-        for (let field of Object.keys(data.messageList)) {
+        for (const field of Object.keys(data.messageList)) {
             const arrayType = this.getType(data.messageList[field])
             if (arrayType) {
                 transferables.push(data.messageList[field].buffer)
@@ -325,21 +325,21 @@ export class DataflashParser {
     }
 
     extractTimeMetadataFromGPS () {
-        let metadata = {
+        const metadata = {
             startTime: this.extractStartTime()
         }
-        self.postMessage({metadata: metadata})
+        self.postMessage({ metadata: metadata })
     }
 
     parseAtOffset (name) {
-        let type = this.getMsgType(name)
-        var parsed = []
-        for (var i = 0; i < this.msgType.length; i++) {
+        const type = this.getMsgType(name)
+        const parsed = []
+        for (let i = 0; i < this.msgType.length; i++) {
             if (type === this.msgType[i]) {
                 this.offset = this.offsetArray[i]
                 try {
-                    let temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
-                    if (temp['name'] != null) {
+                    const temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
+                    if (temp.name != null) {
                         parsed.push(this.fixData(temp))
                     }
                 } catch (e) {
@@ -348,23 +348,23 @@ export class DataflashParser {
                 }
             }
             if (i % 100000 === 0) {
-                let perc = 100 * i / this.msgType.length
-                self.postMessage({percentage: perc})
+                const perc = 100 * i / this.msgType.length
+                self.postMessage({ percentage: perc })
             }
         }
         delete this.messages[name]
         this.messages[name] = parsed
 
-        self.postMessage({percentage: 100})
+        self.postMessage({ percentage: 100 })
         console.log(name, this.messageHasInstances(name) ? 'has instances' : 'has no instances')
         if (parsed.length && this.messageHasInstances(name)) {
-            let instanceField = this.getInstancesFieldName(name)
-            let instances = {}
-            for (let msg of parsed) {
+            const instanceField = this.getInstancesFieldName(name)
+            const instances = {}
+            for (const msg of parsed) {
                 try {
                     instances[msg[instanceField]].push(msg)
                 } catch (e) {
-                    instances[msg[instanceField]] = [ msg ]
+                    instances[msg[instanceField]] = [msg]
                 }
             }
             if (Object.keys(instances).length === 1) {
@@ -374,16 +374,18 @@ export class DataflashParser {
                 if (name === 'GPS') {
                     this.extractTimeMetadataFromGPS()
                 }
-                this.postData({messageType: name, messageList: this.messages[name]})
+                this.postData({ messageType: name, messageList: this.messages[name] })
                 return parsed
             }
-            for (let [index, messages] of Object.entries(instances)) {
-                let newName = name + '[' + index + ']'
+            for (const [index, messages] of Object.entries(instances)) {
+                const newName = name + '[' + index + ']'
                 this.messages[newName] = messages
                 this.fixDataOnce(newName)
                 this.simplifyData(newName)
-                this.postData({messageType: newName,
-                    messageList: this.messages[newName]})
+                this.postData({
+                    messageType: newName,
+                    messageList: this.messages[newName]
+                })
             }
         } else if (parsed.length) {
             this.fixDataOnce(name)
@@ -391,7 +393,7 @@ export class DataflashParser {
             if (name === 'GPS') {
                 this.extractTimeMetadataFromGPS()
             }
-            this.postData({messageType: name, messageList: this.messages[name]})
+            this.postData({ messageType: name, messageList: this.messages[name] })
         }
         this.alreadyParsed.push(name)
         return parsed
@@ -399,21 +401,21 @@ export class DataflashParser {
 
     checkNumberOfInstances (name) {
         // Similar to parseOffset, but finishes earlier and updates messageTypes
-        let type = this.getMsgType(name)
-        let availableInstances = []
-        let instanceField = this.getInstancesFieldName(name)
+        const type = this.getMsgType(name)
+        const availableInstances = []
+        const instanceField = this.getInstancesFieldName(name)
         if (instanceField === null) {
             return [1]
         }
         let repeats = 0
-        for (var i = 0; i < this.msgType.length; i++) {
+        for (let i = 0; i < this.msgType.length; i++) {
             if (type === this.msgType[i]) {
                 this.offset = this.offsetArray[i]
                 try {
-                    let temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
-                    if (temp['name'] != null) {
-                        let msg = temp
-                        if (!msg.hasOwnProperty(instanceField)) {
+                    const temp = this.FORMAT_TO_STRUCT(this.FMT[this.msgType[i]])
+                    if (temp.name != null) {
+                        const msg = temp
+                        if (msg[instanceField] === undefined) {
                             break
                         }
                         // we do an early return after we get 20 repeated instance numbers. should we?
@@ -436,17 +438,17 @@ export class DataflashParser {
     }
 
     timestamp (TimeUs) {
-        let temp = this.timebase + TimeUs * 0.000001
+        const temp = this.timebase + TimeUs * 0.000001
         if (temp > 0) {
             TimeUs = temp
         }
         let date = new Date(TimeUs * 1000)
-        let hours = date.getHours()
-        let minutes = '0' + date.getMinutes()
-        let seconds = '0' + date.getSeconds()
-        let formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2)
+        const hours = date.getHours()
+        const minutes = '0' + date.getMinutes()
+        const seconds = '0' + date.getSeconds()
+        const formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2)
         date = date.toString()
-        let time = date.split(' ')
+        const time = date.split(' ')
         if (time[0] !== 'Invalid') {
             this.time = time[0] + ' ' + time[1] + ' ' + time[2] + ' ' + time[3]
         }
@@ -462,13 +464,14 @@ export class DataflashParser {
             }
             this.offset += 2
 
-            let attribute = this.data.getUint8(this.offset)
+            const attribute = this.data.getUint8(this.offset)
             if (this.FMT[attribute] != null) {
                 this.offset += 1
                 this.offsetArray.push(this.offset)
                 this.msgType.push(attribute)
+                let value
                 try {
-                    var value = this.FORMAT_TO_STRUCT(this.FMT[attribute])
+                    value = this.FORMAT_TO_STRUCT(this.FMT[attribute])
                     if (this.FMT[attribute].Name === 'GPS') {
                         this.findTimeBase(value)
                     }
@@ -476,14 +479,15 @@ export class DataflashParser {
                     // console.log('reached log end?')
                     // console.log(e)
                     this.offset += 1
+                    continue
                 }
                 if (attribute === 128) {
-                    this.FMT[value['Type']] = {
-                        'Type': value['Type'],
-                        'length': value['Length'],
-                        'Name': value['Name'],
-                        'Format': value['Format'],
-                        'Columns': value['Columns']
+                    this.FMT[value.Type] = {
+                        Type: value.Type,
+                        length: value.Length,
+                        Name: value.Name,
+                        Format: value.Format,
+                        Columns: value.Columns
                     }
                 }
                 // this.onMessage(value)
@@ -491,20 +495,20 @@ export class DataflashParser {
                 this.offset += 1
             }
             if (this.offset - lastOffset > 50000) {
-                let perc = 100 * this.offset / this.buffer.byteLength
-                self.postMessage({percentage: perc})
+                const perc = 100 * this.offset / this.buffer.byteLength
+                self.postMessage({ percentage: perc })
                 lastOffset = this.offset
             }
         }
-        self.postMessage({percentage: 100})
-        self.postMessage({messages: this.messages})
+        self.postMessage({ percentage: 100 })
+        self.postMessage({ messages: this.messages })
         this.sent = true
     }
 
     getModeString (cmode) {
         let mavtype
-        let msgs = this.messages['MSG']
-        for (let i in msgs.Message) {
+        const msgs = this.messages.MSG
+        for (const i in msgs.Message) {
             if (msgs.Message[i].toLowerCase().includes('arduplane')) {
                 mavtype = mavlink.MAV_TYPE_FIXED_WING
                 return getModeMap(mavtype)[cmode]
@@ -528,7 +532,7 @@ export class DataflashParser {
 
     fixData (message) {
         if (message.name === 'MODE') {
-            message.asText = this.getModeString(message['Mode'])
+            message.asText = this.getModeString(message.Mode)
         }
         // eslint-disable-next-line
         message.time_boot_ms = message.TimeUS / 1000
@@ -539,12 +543,12 @@ export class DataflashParser {
 
     fixDataOnce (name) {
         if (['GPS', 'ATT', 'AHR2', 'MODE'].indexOf(name) === -1) {
-            if (this.messageTypes.hasOwnProperty(name)) {
-                let fields = this.messages[name][0].fieldnames
-                if (this.messageTypes[name].hasOwnProperty('multipliers')) {
-                    for (let message in this.messages[name]) {
+            if (this.messageTypes[name]) {
+                const fields = this.messages[name][0].fieldnames
+                if (this.messageTypes[name].multipliers) {
+                    for (const message in this.messages[name]) {
                         for (let i = 1; i < fields.length; i++) {
-                            let fieldname = fields[i]
+                            const fieldname = fields[i]
                             if (!isNaN(this.messageTypes[name].multipliers[i])) {
                                 this.messages[name][message][fieldname] *= this.messageTypes[name].multipliers[i]
                             }
@@ -558,7 +562,7 @@ export class DataflashParser {
     }
 
     concatTypedArrays (a, b) { // a, b TypedArray of same type
-        var c = new (a.constructor)(a.length + b.length)
+        const c = new (a.constructor)(a.length + b.length)
         c.set(a, 0)
         c.set(b, a.length)
         return c
@@ -574,8 +578,8 @@ export class DataflashParser {
 
     processFiles () {
         this.files = {}
-        for (let msg of this.messages['FILE']) {
-            if (!this.files.hasOwnProperty(msg.FileName)) {
+        for (const msg of this.messages.FILE) {
+            if (!this.files[msg.FileName]) {
                 this.files[msg.FileName] = this.createUint8ArrayFromString(msg.Data)
             } else {
                 this.files[msg.FileName] = this.concatTypedArrays(
@@ -583,7 +587,7 @@ export class DataflashParser {
                 )
             }
         }
-        self.postMessage({files: this.files})
+        self.postMessage({ files: this.files })
     }
 
     simplifyData (name) {
@@ -594,18 +598,18 @@ export class DataflashParser {
             return
         }
         if (['FMTU'].indexOf(name) === -1) {
-            if (this.messageTypes.hasOwnProperty(name)) {
-                let fields = this.messageTypes[name].expressions
+            if (this.messageTypes[name]) {
+                const fields = this.messageTypes[name].expressions
                 if (!fields.includes('time_boot_ms')) {
                     fields.push('time_boot_ms')
                 }
-                let mergedData = {}
-                for (let field of fields) {
+                const mergedData = {}
+                for (const field of fields) {
                     mergedData[field] = []
                 }
-                for (let message of this.messages[name]) {
+                for (const message of this.messages[name]) {
                     for (let i = 1; i < fields.length; i++) {
-                        let fieldname = fields[i]
+                        const fieldname = fields[i]
                         mergedData[fieldname].push(message[fieldname])
                     }
                 }
@@ -624,24 +628,24 @@ export class DataflashParser {
 
     populateUnits () {
         // console.log(this.messages['FMTU'])
-        for (let msg of this.messages['FMTU']) {
-            this.FMT[msg.FmtType]['units'] = []
-            for (let unit of msg.UnitIds) {
-                this.FMT[msg.FmtType]['units'].push(units[unit])
+        for (const msg of this.messages.FMTU) {
+            this.FMT[msg.FmtType].units = []
+            for (const unit of msg.UnitIds) {
+                this.FMT[msg.FmtType].units.push(units[unit])
             }
-            this.FMT[msg.FmtType]['multipliers'] = []
-            for (let mult of msg.MultIds) {
-                this.FMT[msg.FmtType]['multipliers'].push(multipliers[mult])
+            this.FMT[msg.FmtType].multipliers = []
+            for (const mult of msg.MultIds) {
+                this.FMT[msg.FmtType].multipliers.push(multipliers[mult])
             }
         }
     }
 
     extractStartTime () {
-        let msgs = this.messages['GPS']
-        for (let i in msgs.time_boot_ms) {
+        const msgs = this.messages.GPS
+        for (const i in msgs.time_boot_ms) {
             if (msgs.GWk[i] > 1000) { // lousy validation
-                let weeks = msgs.GWk[i]
-                let ms = msgs.GMS[i]
+                const weeks = msgs.GWk[i]
+                const ms = msgs.GMS[i]
                 let d = new Date((315964800.0 + ((60 * 60 * 24 * 7) * weeks) + ms / 1000.0) * 1000.0)
                 // adjusting for leap seconds
                 d = new Date(d.getTime() - this.leapSecondsGPS(d.getUTCFullYear(), d.getUTCMonth() + 1) * 1000)
@@ -672,18 +676,18 @@ export class DataflashParser {
         this.buffer = data
         this.data = new DataView(this.buffer)
         this.DfReader()
-        let messageTypes = {}
+        const messageTypes = {}
         this.parseAtOffset('FMTU')
         this.populateUnits()
-        let typeSet = new Set(this.msgType)
-        for (let msg of this.FMT) {
+        const typeSet = new Set(this.msgType)
+        for (const msg of this.FMT) {
             if (msg) {
                 if (typeSet.has(msg.Type)) {
-                    let fields = msg.Columns.split(',')
+                    const fields = msg.Columns.split(',')
                     // expressions = expressions.filter(e => e !== 'TimeUS')
-                    let complexFields = {}
-                    if (msg.hasOwnProperty('units')) {
-                        for (let field in fields) {
+                    const complexFields = {}
+                    if (msg.units) {
+                        for (const field in fields) {
                             complexFields[fields[field]] = {
                                 name: fields[field],
                                 units: (multipliersTable[msg.multipliers[field]] || '') + msg.units[field],
@@ -691,7 +695,7 @@ export class DataflashParser {
                             }
                         }
                     } else {
-                        for (let field in fields) {
+                        for (const field in fields) {
                             complexFields[fields[field]] = {
                                 name: fields[field],
                                 units: '?',
@@ -699,9 +703,9 @@ export class DataflashParser {
                             }
                         }
                     }
-                    let availableInstances = this.checkNumberOfInstances(msg.Name)
+                    const availableInstances = this.checkNumberOfInstances(msg.Name)
                     if (availableInstances.length > 1) {
-                        for (let instance of availableInstances) {
+                        for (const instance of availableInstances) {
                             messageTypes[msg.Name + '[' + instance + ']'] = {
                                 expressions: fields,
                                 units: msg.units,
@@ -720,7 +724,7 @@ export class DataflashParser {
                 }
             }
         }
-        self.postMessage({availableMessages: messageTypes})
+        self.postMessage({ availableMessages: messageTypes })
         this.messageTypes = messageTypes
         this.parseAtOffset('CMD')
         this.parseAtOffset('MSG')
@@ -742,8 +746,8 @@ export class DataflashParser {
         this.parseAtOffset('EV')
         this.parseAtOffset('FNCE')
 
-        self.postMessage({messagesDoneLoading: true})
-        return {types: this.messageTypes, messages: this.messages}
+        self.postMessage({ messagesDoneLoading: true })
+        return { types: this.messageTypes, messages: this.messages }
     }
 
     loadType (type) {

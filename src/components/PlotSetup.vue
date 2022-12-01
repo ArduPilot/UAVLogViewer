@@ -77,7 +77,7 @@
     </div>
 </template>
 <script>
-import {store} from './Globals.js'
+import { store } from './Globals.js'
 import debounce from 'v-debounce'
 
 export default {
@@ -102,9 +102,9 @@ export default {
         // TODO: this is duplicated in Plotly.vue, refactor it out!
         getFirstFreeAxis () {
             // get free axis number
-            for (let i of this.state.allAxis) {
+            for (const i of this.state.allAxis) {
                 let taken = false
-                for (let field of this.state.expressions) {
+                for (const field of this.state.expressions) {
                     // eslint-disable-next-line
                     if (field.axis == i) {
                         taken = true
@@ -118,9 +118,9 @@ export default {
         },
         getFirstFreeColor () {
             // get free color
-            for (let i of this.state.allColors) {
+            for (const i of this.state.allColors) {
                 let taken = false
-                for (let field of this.state.expressions) {
+                for (const field of this.state.expressions) {
                     // eslint-disable-next-line
                     if (field.color == i) {
                         taken = true
@@ -133,7 +133,7 @@ export default {
             return this.state.allColors[this.state.allColors.length - 1]
         },
         savePreset (name) {
-            let myStorage = window.localStorage
+            const myStorage = window.localStorage
             let saved = myStorage.getItem('savedFields')
             if (saved === null) {
                 saved = {}
@@ -141,7 +141,7 @@ export default {
                 saved = JSON.parse(saved)
             }
             saved[name] = []
-            for (let field of this.state.expressions) {
+            for (const field of this.state.expressions) {
                 saved[name].push([field.name, field.axis, field.color, field.function])
             }
             myStorage.setItem('savedFields', JSON.stringify(saved))

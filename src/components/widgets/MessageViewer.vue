@@ -12,8 +12,8 @@
 </template>
 
 <script>
-import {store} from '../Globals.js'
-import {baseWidget} from './baseWidget'
+import { store } from '../Globals.js'
+import { baseWidget } from './baseWidget'
 
 export default {
     name: 'MessageViewer',
@@ -38,9 +38,9 @@ export default {
     methods: {
         timeFormatter (milliseconds) {
             let outputString = ''
-            let seconds = (milliseconds / 1000) % 60
+            const seconds = (milliseconds / 1000) % 60
             let minutes = Math.floor((milliseconds / 1000) / 60)
-            let hours = Math.floor(minutes / 60)
+            const hours = Math.floor(minutes / 60)
             minutes = minutes % 60
             outputString = seconds.toFixed(1).padStart(4, '0')
             outputString = minutes.toFixed(0).padStart(2, '0') + ':' + outputString
@@ -53,11 +53,11 @@ export default {
         waitForMessage (fieldname) {
             this.$eventHub.$emit('loadType', fieldname.split('.')[0])
             let interval
-            let _this = this
+            const _this = this
             let counter = 0
             return new Promise((resolve, reject) => {
                 interval = setInterval(function () {
-                    if (_this.state.messages.hasOwnProperty(fieldname.split('.')[0])) {
+                    if (_this.state.messages[fieldname.split('.')[0]]) {
                         clearInterval(interval)
                         counter += 1
                         resolve()
@@ -84,7 +84,7 @@ export default {
     },
     watch: {
         filteredData: function (data) {
-            let container = this.$el.querySelector('#paneContent')
+            const container = this.$el.querySelector('#paneContent')
             container.scrollTop = container.scrollHeight
         }
     }

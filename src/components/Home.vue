@@ -41,20 +41,20 @@
 
 <script>
 import isOnline from 'is-online'
-import Plotly from './Plotly'
-import CesiumViewer from './CesiumViewer'
-import Sidebar from './Sidebar'
-import TxInputs from './widgets/TxInputs'
-import ParamViewer from './widgets/ParamViewer'
-import MessageViewer from './widgets/MessageViewer'
-import DeviceIDViewer from './widgets/DeviceIDViewer'
-import AttitudeViewer from './widgets/AttitudeWidget'
-import {store} from './Globals.js'
-import {AtomSpinner} from 'epic-spinners'
-import {Color} from 'cesium/Cesium'
+import Plotly from './Plotly.vue'
+import CesiumViewer from './CesiumViewer.vue'
+import Sidebar from './Sidebar.vue'
+import TxInputs from './widgets/TxInputs.vue'
+import ParamViewer from './widgets/ParamViewer.vue'
+import MessageViewer from './widgets/MessageViewer.vue'
+import DeviceIDViewer from './widgets/DeviceIDViewer.vue'
+import AttitudeViewer from './widgets/AttitudeWidget.vue'
+import { store } from './Globals.js'
+import { AtomSpinner } from 'epic-spinners'
+import { Color } from 'cesium'
 import colormap from 'colormap'
-import {DataflashDataExtractor} from '../tools/dataflashDataExtractor'
-import {MavlinkDataExtractor} from '../tools/mavlinkDataExtractor'
+import { DataflashDataExtractor } from '../tools/dataflashDataExtractor'
+import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
 import Vue from 'vue'
 
 export default {
@@ -85,7 +85,7 @@ export default {
                     this.dataExtractor = DataflashDataExtractor
                 }
             }
-            if ('FMTU' in this.state.messages && this.state.messages['FMTU'].length === 0) {
+            if ('FMTU' in this.state.messages && this.state.messages.FMTU.length === 0) {
                 this.state.processStatus = 'ERROR PARSING?'
             }
 
@@ -141,7 +141,7 @@ export default {
                 this.state.timeAttitude = this.dataExtractor.extractAttitude(this.state.messages, source)
             }
 
-            let list = Object.keys(this.state.timeAttitude)
+            const list = Object.keys(this.state.timeAttitude)
             this.state.lastTime = parseInt(list[list.length - 1])
 
             this.state.trajectorySources = this.dataExtractor.extractTrajectorySources(this.state.messages)
@@ -180,7 +180,7 @@ export default {
         },
 
         generateColorMMap () {
-            let colorMapOptions = {
+            const colorMapOptions = {
                 colormap: 'hsv',
                 nshades: Math.max(11, this.setOfModes.length),
                 format: 'rgbaString',
@@ -193,7 +193,7 @@ export default {
             colorMapOptions.format = 'float'
             this.state.colors = []
             // this.translucentColors = []
-            for (let rgba of colormap(colorMapOptions)) {
+            for (const rgba of colormap(colorMapOptions)) {
                 this.state.colors.push(new Color(rgba[0], rgba[1], rgba[2]))
                 // this.translucentColors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2], 0.1))
             }
@@ -220,11 +220,11 @@ export default {
                         Object.keys(this.state.timeAttitudeQ).length > 0))
         },
         setOfModes () {
-            let set = []
+            const set = []
             if (!this.state.flightModeChanges) {
                 return []
             }
-            for (let mode of this.state.flightModeChanges) {
+            for (const mode of this.state.flightModeChanges) {
                 if (!set.includes(mode[1])) {
                     set.push(mode[1])
                 }

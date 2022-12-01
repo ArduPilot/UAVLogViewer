@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable camelcase */
-import {Matrix3} from './matrix3'
-import {Vector3} from './vector3'
+import { Matrix3 } from './matrix3'
+import { Vector3 } from './vector3'
 
 // eslint-disable-next-line
 window.degrees = function (a) {
@@ -31,21 +31,21 @@ window.altitude = function (SCALED_PRESSURE, groundPressure, groundTemp) {
             return 0
         }
     }
-    groundPressure = window.params['GND_ABS_PRESS']
+    groundPressure = window.params.GND_ABS_PRESS
     if (groundTemp === undefined) {
         if ('GND_ABS_PRESS' in window.params) {
-            groundTemp = window.params['GND_TEMP']
+            groundTemp = window.params.GND_TEMP
         }
     }
-    let scaling = groundPressure / (SCALED_PRESSURE.press_abs * 100.0)
-    let temp = groundTemp + 273.15
+    const scaling = groundPressure / (SCALED_PRESSURE.press_abs * 100.0)
+    const temp = groundTemp + 273.15
     return Math.log(scaling) * temp * 29271.267 * 0.001
 }
 
 window.altitude2 = function (SCALED_PRESSURE, groundPressure, groundTemp) {
     // calculate barometric altitude'
     if (groundPressure == null) {
-        if (window.params['GND_ABS_PRESS'] === null) {
+        if (window.params.GND_ABS_PRESS === null) {
             return 0
         }
     }
@@ -53,15 +53,15 @@ window.altitude2 = function (SCALED_PRESSURE, groundPressure, groundTemp) {
     if (groundTemp === null) {
         groundTemp = window.getParam('GND_TEMP', 0)
     }
-    let scaling = SCALED_PRESSURE.press_abs * 100.0 / groundPressure
-    let temp = groundTemp + 273.15
+    const scaling = SCALED_PRESSURE.press_abs * 100.0 / groundPressure
+    const temp = groundTemp + 273.15
     return 153.8462 * temp * (1.0 - Math.exp(0.190259 * Math.log(scaling)))
 }
 
 window.mag_heading = function (RAW_IMU, ATTITUDE, declination, SENSOR_OFFSETS, ofs) {
     // calculate heading from raw magnetometer
     if (declination === undefined) {
-        declination = window.degrees(window.params['COMPASS_DEC'])
+        declination = window.degrees(window.params.COMPASS_DEC)
     }
     let magX = RAW_IMU.xmag
     let magY = RAW_IMU.ymag
@@ -73,10 +73,10 @@ window.mag_heading = function (RAW_IMU, ATTITUDE, declination, SENSOR_OFFSETS, o
     }
 
     // go via a DCM matrix to match the APM calculation
-    let dcmMatrix = (new Matrix3()).fromEuler(ATTITUDE.roll, ATTITUDE.pitch, ATTITUDE.yaw)
-    let cosPitchSqr = 1.0 - (dcmMatrix.e(6) * dcmMatrix.e(6))
-    let headY = magY * dcmMatrix.e(8) - magZ * dcmMatrix.e(7)
-    let headX = magX * cosPitchSqr - dcmMatrix.e(6) * (magY * dcmMatrix.e(7) + magZ * dcmMatrix.e(8))
+    const dcmMatrix = (new Matrix3()).fromEuler(ATTITUDE.roll, ATTITUDE.pitch, ATTITUDE.yaw)
+    const cosPitchSqr = 1.0 - (dcmMatrix.e(6) * dcmMatrix.e(6))
+    const headY = magY * dcmMatrix.e(8) - magZ * dcmMatrix.e(7)
+    const headX = magX * cosPitchSqr - dcmMatrix.e(6) * (magY * dcmMatrix.e(7) + magZ * dcmMatrix.e(8))
     let heading = window.degrees(Math.atan2(-headY, headX)) + declination
     if (heading < -180) {
         heading += 360
@@ -87,7 +87,7 @@ window.mag_heading = function (RAW_IMU, ATTITUDE, declination, SENSOR_OFFSETS, o
 window.mag_heading_df = function (MAG, ATT, declination, SENSOR_OFFSETS, ofs) {
     // calculate heading from raw magnetometer
     if (declination === undefined) {
-        declination = window.degrees(window.params['COMPASS_DEC'])
+        declination = window.degrees(window.params.COMPASS_DEC)
     }
     let magX = MAG.MagX
     let magY = MAG.MagY
@@ -99,14 +99,14 @@ window.mag_heading_df = function (MAG, ATT, declination, SENSOR_OFFSETS, ofs) {
     }
 
     // go via a DCM matrix to match the APM calculation
-    let dcmMatrix = (new Matrix3()).fromEuler(
+    const dcmMatrix = (new Matrix3()).fromEuler(
         window.radians(ATT.Roll),
         window.radians(ATT.Pitch),
         window.radians(ATT.Yaw)
     )
-    let cosPitchSqr = 1.0 - (dcmMatrix.e(6) * dcmMatrix.e(6))
-    let headY = magY * dcmMatrix.e(8) - magZ * dcmMatrix.e(7)
-    let headX = magX * cosPitchSqr - dcmMatrix.e(6) * (magY * dcmMatrix.e(7) + magZ * dcmMatrix.e(8))
+    const cosPitchSqr = 1.0 - (dcmMatrix.e(6) * dcmMatrix.e(6))
+    const headY = magY * dcmMatrix.e(8) - magZ * dcmMatrix.e(7)
+    const headX = magX * cosPitchSqr - dcmMatrix.e(6) * (magY * dcmMatrix.e(7) + magZ * dcmMatrix.e(8))
     let heading = window.degrees(Math.atan2(-headY, headX)) + declination
     if (heading < 0) {
         heading += 360
@@ -144,7 +144,7 @@ window.lowpass = function (variable, key, factor) {
     } else {
         window.lastLowpass = factor * window.lastLowpass + (1.0 - factor) * variable
     }
-    let ret = window.lastLowpass
+    const ret = window.lastLowpass
     return ret
 }
 
@@ -274,10 +274,9 @@ window.get_mag_field_ef = function (lat, lon) {
     if (lon >= window.SAMPLING_MAX_LON) {
         return null
     }
-    let intensityGauss, declinationDeg, inclinationDeg
-    intensityGauss = window.interpolate_table(window.intensity_table, lat, lon)
-    declinationDeg = window.interpolate_table(window.declination_table, lat, lon)
-    inclinationDeg = window.interpolate_table(window.inclination_table, lat, lon)
+    const intensityGauss = window.interpolate_table(window.intensity_table, lat, lon)
+    const declinationDeg = window.interpolate_table(window.declination_table, lat, lon)
+    const inclinationDeg = window.interpolate_table(window.inclination_table, lat, lon)
 
     return [declinationDeg, inclinationDeg, intensityGauss]
 }
@@ -289,7 +288,7 @@ window.expected_earth_field = function (GPS) {
     if (window.earth_field !== null) {
         return window.earth_field
     }
-    let gpsStatus, lat, lon, fieldVar, magEf, R
+    let gpsStatus, lat, lon, magEf
     if (GPS.fix_type !== undefined) {
         gpsStatus = GPS.fix_type
         lat = GPS.lat * 1.0e-7
@@ -302,9 +301,9 @@ window.expected_earth_field = function (GPS) {
     if (gpsStatus < 3) {
         return new Vector3(0, 0, 0)
     }
-    fieldVar = window.get_mag_field_ef(lat, lon)
+    const fieldVar = window.get_mag_field_ef(lat, lon)
     magEf = new Vector3(fieldVar[2] * 1000.0, 0.0, 0.0)
-    R = new Matrix3()
+    const R = new Matrix3()
     R.fromEuler(0.0, -window.radians(fieldVar[1]), window.radians(fieldVar[0]))
     magEf = R.times(magEf)
     window.earth_field = magEf
@@ -316,7 +315,7 @@ window.expected_mag = function (GPS, ATT, rollAdjust = 0, pitchAdjust = 0, yawAd
     if (window.earth_field === null) {
         return new Vector3(0, 0, 0)
     }
-    let roll, pitch, yaw, rot, field
+    let roll, pitch, yaw
     if (ATT.roll !== undefined) {
         roll = window.degrees(ATT.roll) + rollAdjust
         pitch = window.degrees(ATT.pitch) + pitchAdjust
@@ -326,7 +325,7 @@ window.expected_mag = function (GPS, ATT, rollAdjust = 0, pitchAdjust = 0, yawAd
         pitch = ATT.Pitch + pitchAdjust
         yaw = ATT.Yaw + yawAdjust
     }
-    rot = (new Matrix3()).fromEuler(window.radians(roll), window.radians(pitch), window.radians(yaw))
-    field = rot.transposed().times(window.earth_field)
+    const rot = (new Matrix3()).fromEuler(window.radians(roll), window.radians(pitch), window.radians(yaw))
+    const field = rot.transposed().times(window.earth_field)
     return field
 }
