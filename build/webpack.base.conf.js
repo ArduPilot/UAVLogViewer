@@ -110,6 +110,29 @@ module.exports = {
   node: {
   },
   optimization: {
+    concatenateModules: false,
+    splitChunks: {
+        chunks: 'all',
+        minSize: 30000,
+        maxSize: 0,
+        minChunks: 1,
+        maxAsyncRequests: 6,
+        maxInitialRequests: 4,
+        automaticNameDelimiter: '~',
+        cacheGroups: {
+            vendors: {
+                test: /[\\/]node_modules[\\/]/,
+                priority: -10
+            },
+            default: {
+                minChunks: 2,
+                priority: -20,
+                reuseExistingChunk: true
+            }
+        }
+    },
+    moduleIds: 'deterministic', //Added this to retain hash of vendor chunks.
+    runtimeChunk: 'single',
     minimizer: [
       // For webpack@5 you can use the `...` syntax to extend existing minimizers (i.e. `terser-webpack-plugin`), uncomment the next line
       // `...`,
