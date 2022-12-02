@@ -5,9 +5,11 @@ const config = require('../config')
 const webpack = require('webpack')
 const vueLoaderConfig = require('./vue-loader.conf')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+
 // The path to the Cesium source code
 
-function resolve (dir) {
+function resolve(dir) {
   return path.join(__dirname, '..', dir)
 }
 
@@ -40,15 +42,6 @@ module.exports = {
     globalObject: 'self'
   },
 
-  resolve: {
-    extensions: ['.js', '.vue', '.json'],
-    alias: {
-      'vue$': 'vue/dist/vue.esm.js',
-      '@': resolve('src'),
-    },
-    mainFiles: ['main', 'Cesium']
-  },
-
   module: {
     rules: [
       ...(config.dev.useEslint ? [createLintingRule()] : []),
@@ -69,7 +62,7 @@ module.exports = {
         test: /\.js$/,
         loader: 'babel-loader',
         include: [resolve('src'), resolve('test'), resolve('node_modules/webpack-dev-server/client'),
-          resolve('node_modules/mavlink_common_v1.0/parsers')]
+        resolve('node_modules/mavlink_common_v1.0/parsers')]
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
@@ -108,41 +101,19 @@ module.exports = {
       https: require.resolve("https-browserify"),
       http: require.resolve("stream-http"),
       zlib: require.resolve("browserify-zlib"),
-    }
+    },
+    alias: {
+      'vue$': 'vue/dist/vue.esm.js',
+      '@': resolve('src'),
+    },
   },
   node: {
   },
-    optimization: {
-        splitChunks: {
-            chunks: 'all',
-            minSize: 30000,
-            maxSize: 0,
-            minChunks: 1,
-            maxAsyncRequests: 6,
-            maxInitialRequests: 4,
-            automaticNameDelimiter: '~',
-            cacheGroups: {
-                vendors: {
-                    test: /[\\/]node_modules[\\/]/,
-                    priority: -10
-                },
-                default: {
-                    minChunks: 2,
-                    priority: -20,
-                    reuseExistingChunk: true
-                }
-            }
-        },
-        moduleIds: 'deterministic', //Added this to retain hash of vendor chunks. 
-    runtimeChunk: 'single',
-    splitChunks: {
-        cacheGroups: {
-            vendor: {
-                test: /[\\/]node_modules[\\/]/,
-                name: 'vendors',
-                chunks: 'all',
-            },
-        },
-    },
-    }
+  optimization: {
+    minimizer: [
+      // For webpack@5 you can use the `...` syntax to extend existing minimizers (i.e. `terser-webpack-plugin`), uncomment the next line
+      // `...`,
+      new CssMinimizerPlugin(),
+    ],
+  }
 }
