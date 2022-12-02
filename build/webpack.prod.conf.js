@@ -58,6 +58,9 @@ const webpackConfig = merge(baseWebpackConfig, {
     }),
       new VueLoaderPlugin(),
     // extract css into its own file
+      new MiniCssExtractPlugin({
+      filename: utils.assetsPath('css/[name].[contenthash].css'),
+    }),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
@@ -91,11 +94,11 @@ const webpackConfig = merge(baseWebpackConfig, {
     ]),
     new CopyWebpackPlugin([
       {from: path.join(cesiumSource, 'Assets'), to: 'Assets'},
-      {from: path.join(cesiumSource, 'ThirdParty'), to: 'ThirdParty'},
       {from: path.join(cesiumSource, 'Widgets'), to: 'Widgets'},
       {from: path.join(cesiumSource, 'Workers'), to: 'Workers'},
-      {from: path.join(cesiumSource, '../Build/Cesium/ThirdParty/Workers'), to: 'ThirdParty/Workers', force: true},
-      {from: path.join(cesiumSource, '../Build/Cesium/Workers'), to: 'Workers', force: true}
+      // {from: path.join(cesiumSource, 'ThirdParty'), to: 'ThirdParty'},
+      // {from: path.join(cesiumSource, '../Build/Cesium/ThirdParty/Workers'), to: 'ThirdParty/Workers', force: true},
+      // {from: path.join(cesiumSource, '../Build/Cesium/Workers'), to: 'Workers', force: true}
   ])
   ]
 })
