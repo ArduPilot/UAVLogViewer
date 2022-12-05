@@ -1,4 +1,5 @@
 import '../mavextra/mavextra'
+import '../mavextra/mymavextra'
 
 export const store = {
     // currentTrajectory: [],

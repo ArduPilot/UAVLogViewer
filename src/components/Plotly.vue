@@ -636,7 +636,10 @@ export default {
                     vals.push(newobj)
                 }
                 try {
-                    y.push(f(vals))
+                    const val = f(vals)
+                    if (val !== null) {
+                        y.push(f(vals))
+                    }
                 } catch (e) {
                     return { error: e }
                 }
