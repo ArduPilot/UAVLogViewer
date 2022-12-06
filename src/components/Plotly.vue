@@ -243,6 +243,9 @@ export default {
                             lasttime = Math.min(lasttime, x[0])
                             finaltime = Math.max(finaltime, x[x.length - 1])
                         }
+                        finaltime = Math.min(finaltime, this.state.timeRange[1])
+                        lasttime = Math.max(lasttime, this.state.timeRange[0])
+
                         const csv = [header]
                         while (lasttime < finaltime - interval) {
                             const line = [lasttime]
