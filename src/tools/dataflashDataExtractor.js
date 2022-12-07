@@ -301,6 +301,12 @@ export class DataflashDataExtractor {
         if ('GPS' in messages) {
             candidates.push('GPS')
         }
+        if ('GPS[0]' in messages) {
+            candidates.push('GPS[0]')
+        }
+        if ('GPS[1]' in messages) {
+            candidates.push('GPS[1]')
+        }
         return candidates
     }
 
@@ -385,42 +391,44 @@ export class DataflashDataExtractor {
                 }
             }
         }
-        if ('GPS' in messages && source === 'GPS') {
-            const trajectory = []
-            const timeTrajectory = {}
-            let startAltitude = null
-            const gpsData = messages.GPS
-            let start = 0
-            for (const i in gpsData.time_boot_ms) {
-                const delta = gpsData.time_boot_ms[i] - start
-                if (delta < 200) {
-                    continue
-                }
-                start = gpsData.time_boot_ms[i]
-                if (gpsData.Lat[i] !== 0) {
-                    if (startAltitude === null) {
-                        startAltitude = gpsData.Alt[i]
+        for (const gpsSource of ['GPS', 'GPS[0]', 'GPS[1]']) {
+            if (gpsSource in messages && source === gpsSource) {
+                const trajectory = []
+                const timeTrajectory = {}
+                let startAltitude = null
+                const gpsData = messages[gpsSource]
+                let start = 0
+                for (const i in gpsData.time_boot_ms) {
+                    const delta = gpsData.time_boot_ms[i] - start
+                    if (delta < 200) {
+                        continue
                     }
-                    trajectory.push(
-                        [
+                    start = gpsData.time_boot_ms[i]
+                    if (gpsData.Lat[i] !== 0) {
+                        if (startAltitude === null) {
+                            startAltitude = gpsData.Alt[i]
+                        }
+                        trajectory.push(
+                            [
+                                gpsData.Lng[i] / 1e7,
+                                gpsData.Lat[i] / 1e7,
+                                gpsData.Alt[i] - startAltitude,
+                                gpsData.time_boot_ms[i]
+                            ]
+                        )
+                        timeTrajectory[gpsData.time_boot_ms[i]] = [
                             gpsData.Lng[i] / 1e7,
                             gpsData.Lat[i] / 1e7,
                             gpsData.Alt[i] - startAltitude,
-                            gpsData.time_boot_ms[i]
-                        ]
-                    )
-                    timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.Lng[i] / 1e7,
-                        gpsData.Lat[i] / 1e7,
-                        gpsData.Alt[i] - startAltitude,
-                        gpsData.time_boot_ms[i]]
+                            gpsData.time_boot_ms[i]]
+                    }
                 }
-            }
-            if (trajectory.length) {
-                ret.GPS = {
-                    startAltitude: startAltitude,
-                    trajectory: trajectory,
-                    timeTrajectory: timeTrajectory
+                if (trajectory.length) {
+                    ret[gpsSource] = {
+                        startAltitude: startAltitude,
+                        trajectory: trajectory,
+                        timeTrajectory: timeTrajectory
+                    }
                 }
             }
         }
