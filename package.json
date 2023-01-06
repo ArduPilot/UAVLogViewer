@@ -108,7 +108,7 @@
     "shelljs": "^0.7.8",
     "style-loader": "^0.21.0",
     "url-loader": "^4.1.1",
-    "vue-jest": "^3.0.7",
+    "vue-jest": "^4.0.1",
     "vue-loader": "^15.10.1",
     "vue-style-loader": "~4.1",
     "vue-template-compiler": "^2.7.5",
