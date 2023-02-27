@@ -3,6 +3,7 @@
          v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
         <div id="paneContent">
             <input id="filterbox" placeholder="Filter" v-model="filter">
+            <button @click="saveParametersToFile">save</button>
             <ul id="params">
                 <li v-for="param in filteredData" v-bind:key="param">
                     {{ param }} : <span style="float: right;">{{state.params.values[param]}}</span>
@@ -15,6 +16,7 @@
 <script>
 import { store } from '../Globals.js'
 import { baseWidget } from './baseWidget'
+import { saveAs } from 'file-saver'
 
 export default {
     name: 'ParamViewer',
@@ -56,6 +58,40 @@ export default {
                     }
                 }, 2000)
             })
+        },
+        saveParametersToFile () {
+            let parameterNameMaxSize = 0
+
+            // Sort parameters alphabetically
+            // We take advantage of sort to also calculate the parameter name maximum size
+            const parameters = Object.entries(this.state.params.values).sort((first, second) => {
+                parameterNameMaxSize = Math.max(parameterNameMaxSize, first[0].length)
+                parameterNameMaxSize = Math.max(parameterNameMaxSize, second[0].length)
+
+                if (first[0] < second[0]) {
+                    return -1
+                }
+                if (first[0] > second[0]) {
+                    return 1
+                }
+                return 0
+            })
+
+            let content = ''
+
+            content += `# Parameters extracted from file ${this.state.file}\n`
+            content += `# Date: ${new Date()}\n`
+
+            const fileName = `${this.state.file}.params`
+
+            for (const param of parameters) {
+                // Calculate space between name and value to make it pretty
+                const space = Array(parameterNameMaxSize - param[0].length + 2).join(' ')
+                content += `${param[0]}${space}${param[1]}\n`
+            }
+
+            const file = new File([content], `${fileName}.txt`, { type: 'text/plain' })
+            saveAs(file)
         },
         setup () {
         }
@@ -128,7 +164,6 @@ export default {
     }
 
     input#filterbox {
-        width: 95%;
         margin: 23px 0px 0px 10px;
         padding: 4px;
         background-color: rgba(255, 255, 255, 0.836);
