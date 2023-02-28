@@ -34,7 +34,7 @@
     "html-minifier": "^4.0.0",
     "https-browserify": "^1.0.0",
     "int64-buffer": "^0.99.1007",
-    "is-online": "^9.0.1",
+    "is-online": "^10.0.0",
     "jquery": "^3.6.0",
     "jspack": "0.0.4",
     "long": "^4.0.0",
