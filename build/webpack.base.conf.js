@@ -125,7 +125,7 @@ module.exports = {
     splitChunks: {
         chunks: 'all',
         minSize: 30000,
-        maxSize: 0,
+        maxSize: 300000,
         minChunks: 1,
         maxAsyncRequests: 6,
         maxInitialRequests: 4,
@@ -146,7 +146,7 @@ module.exports = {
     runtimeChunk: 'single',
     minimizer: [
       // For webpack@5 you can use the `...` syntax to extend existing minimizers (i.e. `terser-webpack-plugin`), uncomment the next line
-      // `...`,
+      `...`,
       new CssMinimizerPlugin(),
     ],
   }
