@@ -83,23 +83,16 @@ const webpackConfig = merge(baseWebpackConfig, {
     }),
     // enable scope hoisting
     new webpack.optimize.ModuleConcatenationPlugin(),
-
-    // copy custom static assets
-    new CopyWebpackPlugin([
-      {
-        from: path.resolve(__dirname, '../static'),
-        to: config.build.assetsSubDirectory,
-        ignore: ['.*']
-      }
-    ]),
-    new CopyWebpackPlugin([
-      {from: path.join(cesiumSource, 'Assets'), to: 'Assets'},
-      {from: path.join(cesiumSource, 'Widgets'), to: 'Widgets'},
-      {from: cesiumWorkers, to: 'Workers'},
-      // {from: path.join(cesiumSource, 'ThirdParty'), to: 'ThirdParty'},
-      // {from: path.join(cesiumSource, '../Build/Cesium/ThirdParty/Workers'), to: 'ThirdParty/Workers', force: true},
-      // {from: path.join(cesiumSource, '../Build/Cesium/Workers'), to: 'Workers', force: true}
-  ])
+    new CopyWebpackPlugin({
+      patterns: [
+        {from: path.join(cesiumSource, 'Assets'), to: 'Assets'},
+        {from: path.join(cesiumSource, 'Widgets'), to: 'Widgets'},
+        {from: cesiumWorkers, to: 'Workers'},
+        // {from: path.join(cesiumSource, 'ThirdParty'), to: 'ThirdParty'},
+        // {from: path.join(cesiumSource, '../Build/Cesium/ThirdParty/Workers'), to: 'ThirdParty/Workers', force: true},
+        // {from: path.join(cesiumSource, '../Build/Cesium/Workers'), to: 'Workers', force: true}
+      ]
+    })
   ]
 })
 
