@@ -74,7 +74,7 @@
     "cesium": "^1.100.0",
     "chalk": "^5.0.1",
     "compression-webpack-plugin": "^10.0.0",
-    "copy-webpack-plugin": "^4.6.0",
+    "copy-webpack-plugin": "^11.0.0",
     "cross-env": "~5.2",
     "cross-spawn": "^5.1.0",
     "css-loader": "^6.7.2",
