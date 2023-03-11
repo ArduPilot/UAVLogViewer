@@ -1,12 +1,12 @@
 <template>
     <div>
-        <li v-b-toggle="label"  :style="{'margin-left': ''+level*15+'px'}">
+        <li v-b-toggle="cleanName"  :style="{'margin-left': ''+level*15+'px'}">
             <a class="section">
                 {{label}}
                 <i class="fas fa-caret-down"></i></a>
         </li>
         <template v-if="nodes.length === undefined">
-            <b-collapse :id="label">
+            <b-collapse :id="cleanName">
                 <template v-for="(newNode, nodeName) in nodes">
                     <tree-menu
                         v-if="newNode.length === undefined && newNode.messages === undefined"
@@ -14,12 +14,13 @@
                         :nodes="newNode"
                         :level="level+1"
                         :name="name+nodeName+ '/'"
-                        :key="newNode+nodeName">
+                        :clean-name="cleanNodeName(nodeName)"
+                        :key="cleanNodeName(nodeName)">
                     </tree-menu>
                     <li :style="{'margin-left': ''+(level+1)*15+'px'}"
                         v-if="newNode.messages !== undefined && newNode.messages.length !== undefined"
                         class="type"
-                        v-bind:key="nodeName">
+                        :key="cleanNodeName(nodeName)">
                         <a
                             @click="openPreset(newNode.messages)"
                             class="section"
@@ -51,6 +52,10 @@ export default {
         name: {
             type: String,
             default: ''
+        },
+        cleanName: {
+            type: String,
+            default: ''
         }
     },
     name: 'tree-menu',
@@ -60,6 +65,9 @@ export default {
         }
     },
     methods: {
+        cleanNodeName (name) {
+            return name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
+        },
         deletePreset (preset) {
             const text = `Are you sure you want to delete the preset "${preset}"?`
             if (confirm(text) === false) {
