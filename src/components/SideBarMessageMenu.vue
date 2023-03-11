@@ -9,6 +9,7 @@
             v-if="Object.keys(availableMessagePresets).length > 0"
             :nodes="availableMessagePresets"
             :label="'Presets'"
+            :clean-name="'Presets'"
             :level="0">
 
         </tree-menu>
