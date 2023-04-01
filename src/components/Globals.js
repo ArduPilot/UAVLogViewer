@@ -9,6 +9,7 @@ export const store = {
     timeAttitude: {},
     timeAttitudeQ: {},
     logType: '',
+    defaultParams: {},
     showParams: false,
     showRadio: false,
     showMessages: false,
