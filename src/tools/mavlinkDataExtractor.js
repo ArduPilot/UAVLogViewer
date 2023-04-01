@@ -271,6 +271,10 @@ export class MavlinkDataExtractor {
         return ret
     }
 
+    static extractDefaultParams (messages) {
+        return {}
+    }
+
     static extractParams (messages) {
         const params = []
         const lastValue = {}

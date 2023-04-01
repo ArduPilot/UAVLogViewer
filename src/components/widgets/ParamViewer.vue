@@ -4,11 +4,28 @@
         <div id="paneContent">
             <input id="filterbox" placeholder="Filter" v-model="filter">
             <button @click="saveParametersToFile">save</button>
-            <ul id="params">
-                <li v-for="param in filteredData" v-bind:key="param">
-                    {{ param }} : <span style="float: right;">{{state.params.values[param]}}</span>
-                </li>
-            </ul>
+            <b-form-checkbox
+              v-if="haveDefaults"
+              v-model="showdiff">
+                Show only changed
+            </b-form-checkbox>
+            <table id="params">
+                <tr>
+                    <th>Param</th>
+                    <th>Value</th>
+                    <th v-if="haveDefaults">Default</th>
+                </tr>
+                <tr v-for="param in filteredData" v-bind:key="param">
+                    <td>{{ param }}</td>
+                    <template v-if="haveDefaults">
+                      <td>{{ isDefaultParam(param) ? '→' : printParam(state.params.values[param])}}</td>
+                      <td>{{ printParam(state.defaultParams[param]) }}</td>
+                    </template>
+                    <template v-else>
+                      <td>{{printParam(state.params.values[param])}}</td>
+                    </template>
+                </tr>
+          </table>
         </div>
     </div>
 </template>
@@ -34,7 +51,8 @@ export default {
             height: 215,
             left: 540,
             top: 0,
-            forceRecompute: 0
+            forceRecompute: 0,
+            showdiff: false
         }
     },
     methods: {
@@ -94,13 +112,35 @@ export default {
             saveAs(file)
         },
         setup () {
+        },
+        printParam (param) {
+            // prints number with just enough decimal places, up to 3, ommiting trailing zeroes
+            return parseFloat(param).toFixed(Math.min(3, Math.max(0, 3 - Math.floor(param).toString().length)))
+        },
+        isDefaultParam (param) {
+            return this.state.params.values[param] === this.state.defaultParams[param]
         }
     },
     computed: {
+        haveDefaults () {
+            return Object.keys(this.state.defaultParams).length > 0
+        },
         filteredData () {
             // eslint-disable-next-line
             let potato = this.forceRecompute
-            return Object.keys(this.state.params.values).filter(key => key.indexOf(this.filter.toUpperCase()) !== -1)
+            return Object.keys(this.state.params.values)
+                .filter(
+                    key => key.indexOf(this.filter.toUpperCase()) !== -1
+                )
+                .filter(
+                    key => {
+                        if (this.showdiff) {
+                            return this.state.params.values[key] !== this.state.defaultParams[key]
+                        } else {
+                            return true
+                        }
+                    }
+                )
         }
     }
 }
@@ -115,7 +155,6 @@ export default {
         color: #141924;
         font-size: 11px;
         font-weight: 600;
-        text-transform: uppercase;
         z-index: 10000;
         box-shadow: 9px 9px 3px -6px rgba(26, 26, 26, 0.699);
         border-radius: 5px;

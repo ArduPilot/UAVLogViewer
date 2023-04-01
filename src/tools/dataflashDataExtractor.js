@@ -240,6 +240,18 @@ export class DataflashDataExtractor {
         }
     }
 
+    static extractDefaultParams (messages) {
+        const params = {}
+        if ('PARM' in messages) {
+            const paramData = messages.PARM
+            const range = [...Array(paramData.Name.length).keys()]
+            for (const i of range) {
+                params[paramData.Name[i]] = paramData.Default[i]
+            }
+        }
+        return params
+    }
+
     static extractParams (messages) {
         const params = []
         if ('PARM' in messages) {

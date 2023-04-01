@@ -109,6 +109,7 @@ export default {
             this.state.vehicle = this.dataExtractor.extractVehicleType(this.state.messages)
             if (this.state.params === undefined) {
                 this.state.params = this.dataExtractor.extractParams(this.state.messages)
+                this.state.defaultParams = this.dataExtractor.extractDefaultParams(this.state.messages)
                 if (this.state.params !== undefined) {
                     this.$eventHub.$on('cesium-time-changed', (time) => {
                         this.state.params.seek(time)
