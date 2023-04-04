@@ -245,6 +245,9 @@ export class DataflashDataExtractor {
         if ('PARM' in messages) {
             const paramData = messages.PARM
             const range = [...Array(paramData.Name.length).keys()]
+            if (paramData.Default === undefined) {
+                return {}
+            }
             for (const i of range) {
                 params[paramData.Name[i]] = paramData.Default[i]
             }
