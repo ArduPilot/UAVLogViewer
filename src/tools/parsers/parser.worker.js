@@ -1,10 +1,9 @@
 // Worker.js
 // import MavlinkParser from 'mavlinkParser'
 const mavparser = require('./mavlinkParser')
-const dataflashparser = require('./dataflashParser')
+const Dataflashparser = require('./JsDataflashParser/parser')
 
 let parser
-
 self.addEventListener('message', function (event) {
     if (event.data === null) {
         console.log('got bad file message!')
@@ -12,7 +11,7 @@ self.addEventListener('message', function (event) {
         if (event.data.isTlog) {
             parser = new mavparser.MavlinkParser()
         } else {
-            parser = new dataflashparser.DataflashParser()
+            parser = new Dataflashparser()
         }
         const data = event.data.file
         parser.processData(data)
