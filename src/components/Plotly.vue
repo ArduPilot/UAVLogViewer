@@ -289,7 +289,7 @@ export default {
             return new Promise((resolve, reject) => {
                 interval = setInterval(function () {
                     for (const message of messages) {
-                        if (!_this.state.messages[message]) {
+                        if (!_this.loadedMessages.includes(message.split('[')[0])) {
                             counter += 1
                             if (counter > 30) { // 30 * 300ms = 9 s timeout
                                 console.log('not resolving')
@@ -536,7 +536,7 @@ export default {
             return names.join(', ')
         },
         findMessagesInExpression (expression) {
-            const RE = /(?<message>[A-Z][A-Z0-9_]+(\[[0-9]\])?)(\.(?<field>[A-Za-z0-9_]+))?/g
+            const RE = /(?<message>[A-Z][A-Z0-9_]+(\[[A-Za-z0-9_.]+\])?)(\.(?<field>[A-Za-z0-9_]+))?/g
             const match = []
             for (const m of expression.matchAll(RE)) {
                 match.push([m.groups.message, m.groups.field])
@@ -553,7 +553,7 @@ export default {
                 return [true, '']
             }
             for (const [message, field] of messages) {
-                if ((!(message in this.state.messageTypes) && !((message + '[0]') in this.state.messageTypes))) {
+                if (!(this.messagesInLog.includes(message.split('[')[0]))) {
                     console.log('ERROR: attempted to plot unavailable message: ' + message)
                     this.state.plotLoading = false
                     if (reask) {
@@ -595,11 +595,16 @@ export default {
             // TODO: USE this regex with lookahead once firefox supports it
             // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
             let fields = this.findMessagesInExpression(expression1).map(field => field[0])
+            console.log(fields)
             fields = fields === null ? [] : fields
             const messages = fields.length !== 0 ? (fields) : []
             // use time of first message for now
             let x
             if (messages.length > 0) {
+                if (this.state.messages[messages[0]] === undefined) {
+                    console.log('ERROR: message ' + messages[0] + ' not found')
+                    return { error: 'message ' + messages[0] + ' not found' }
+                }
                 x = this.state.messages[messages[0]].time_boot_ms
             } else {
                 try {
@@ -1020,6 +1025,16 @@ export default {
         },
         expressions () {
             return this.state.expressions
+        },
+        loadedMessages () {
+            return Object.keys(this.state.messages).map(key => {
+                return key.split('[')[0]
+            })
+        },
+        messagesInLog () {
+            return Object.keys(this.state.messageTypes).map(key => {
+                return key.split('[')[0]
+            })
         }
     },
     watch: {
