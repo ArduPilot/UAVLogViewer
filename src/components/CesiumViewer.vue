@@ -228,6 +228,20 @@ export default {
                             })
                         }
                     }))
+                    imageryProviders.push(new ProviderViewModel({
+                        name: 'MapTiler',
+                        iconUrl: require('../assets/maptiler.png').default,
+                        tooltip: 'Maptiler satellite imagery http://maptiler.com/',
+                        creationFunction: function () {
+                            return new UrlTemplateImageryProvider({
+                                url: 'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=o3JREHNnXex8WSPPm2BU',
+                                minimumLevel: 0,
+                                maximumLevel: 20,
+                                credit: 'https://www.maptiler.com/copyright'
+                            })
+                        }
+                    })
+                    )
                     // save this one so it can be referenced when creating the cesium viewer
                     this.sentinelProvider = new ProviderViewModel({
                         name: 'Sentinel 2',
