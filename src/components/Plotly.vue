@@ -240,16 +240,21 @@ export default {
                         '/#/plot', '_blank',
                         'toolbar=no,scrollbars=yes,resizable=yes,top=500,left=500,width=800,height=400,allow-scripts'
                     )
-                    setTimeout(() => {
-                        console.log(newWindow)
-                        console.log(newWindow.setPlotData)
-                        newWindow.setPlotData(gd.data)
-                        newWindow.setPlotOptions(gd.layout)
-                        newWindow.setCssColors(this.state.cssColors)
-                        newWindow.setFlightModeChanges(this.state.flightModeChanges)
-                        console.log(this.$eventHub)
-                        newWindow.setEventHub(this.$eventHub)
-                        newWindow.plot()
+                    const externalPlotInterval = setInterval(() => {
+                        try {
+                            console.log(newWindow)
+                            console.log(newWindow.setPlotData)
+                            newWindow.setPlotData(gd.data)
+                            newWindow.setPlotOptions(gd.layout)
+                            newWindow.setCssColors(this.state.cssColors)
+                            newWindow.setFlightModeChanges(this.state.flightModeChanges)
+                            console.log(this.$eventHub)
+                            newWindow.setEventHub(this.$eventHub)
+                            newWindow.plot()
+                            clearInterval(externalPlotInterval)
+                        } catch (e) {
+                            console.log(e)
+                        }
                     }, 1000)
                     this.state.childPlots.push(newWindow)
                     console.log(newWindow)

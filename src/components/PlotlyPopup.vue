@@ -56,20 +56,18 @@ export default {
     mounted () {
         console.log('mounted')
         console.log(this.$route.path)
-        if (this.$route.path === '/plot') {
-            window.plot = () => { this.plot() }
-            window.setPlotData = (data) => { this.plotData = data }
-            window.setPlotOptions = (options) => { this.plotOptions = options }
-            window.setFlightModeChanges = (modes) => { this.flightModeChanges = modes }
-            window.setCssColors = (colors) => { this.cssColors = colors }
-            window.setTimeRange = (timeRange) => { this.setTimeRange(timeRange) }
-            window.setEventHub = (eventHub) => {
-                this.$eventHub = eventHub
-                this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
-                this.$eventHub.$on('hoveredTime', this.setCursorTime)
-                this.$eventHub.$on('child-zoomed', this.setTimeRange)
-                this.$eventHub.$on('force-resize-plotly', this.resize)
-            }
+        window.plot = () => { this.plot() }
+        window.setPlotData = (data) => { this.plotData = data }
+        window.setPlotOptions = (options) => { this.plotOptions = options }
+        window.setFlightModeChanges = (modes) => { this.flightModeChanges = modes }
+        window.setCssColors = (colors) => { this.cssColors = colors }
+        window.setTimeRange = (timeRange) => { this.setTimeRange(timeRange) }
+        window.setEventHub = (eventHub) => {
+            this.$eventHub = eventHub
+            this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
+            this.$eventHub.$on('hoveredTime', this.setCursorTime)
+            this.$eventHub.$on('child-zoomed', this.setTimeRange)
+            this.$eventHub.$on('force-resize-plotly', this.resize)
         }
         const WIDTH_IN_PERCENT_OF_PARENT = 90
         d3.select('#line')
