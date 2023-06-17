@@ -50,8 +50,6 @@ const updatemenus = [
 export default {
     name: 'PlotlyPopup',
     created () {
-        this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
-        this.$eventHub.$on('force-resize-plotly', this.resize)
         this.zoomInterval = null
         this.cache = {}
     },
@@ -62,8 +60,16 @@ export default {
             window.plot = () => { this.plot() }
             window.setPlotData = (data) => { this.plotData = data }
             window.setPlotOptions = (options) => { this.plotOptions = options }
-            window.setFlightModes = (modes) => { this.flightModes = modes }
+            window.setFlightModeChanges = (modes) => { this.flightModeChanges = modes }
             window.setCssColors = (colors) => { this.cssColors = colors }
+            window.setTimeRange = (timeRange) => { this.setTimeRange(timeRange) }
+            window.setEventHub = (eventHub) => {
+                this.$eventHub = eventHub
+                this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
+                this.$eventHub.$on('hoveredTime', this.setCursorTime)
+                this.$eventHub.$on('child-zoomed', this.setTimeRange)
+                this.$eventHub.$on('force-resize-plotly', this.resize)
+            }
         }
         const WIDTH_IN_PERCENT_OF_PARENT = 90
         d3.select('#line')
@@ -88,11 +94,16 @@ export default {
             state: store,
             plotData: [],
             plotOptions: {},
-            flightModeChanges: []
-
+            flightModeChanges: [],
+            externalTimeRange: null,
+            $eventHub: null,
+            cursor: null
         }
     },
     methods: {
+        setTimeRange (timeRange) {
+            this.externalTimeRange = timeRange
+        },
         csvButton () {
             return {
                 name: 'downloadCsv',
@@ -183,13 +194,16 @@ export default {
             if (event !== undefined) {
                 // this.$router.push({query: query})
                 if (event['xaxis.range']) {
-                    this.state.timeRange = event['xaxis.range']
+                    this.setTimeRange(event['xaxis.range'])
+                    this.$eventHub.$emit('child-zoomed', this.timeRange)
                 }
                 if (event['xaxis.range[0]']) {
-                    this.state.timeRange = [event['xaxis.range[0]'], event['xaxis.range[1]']]
+                    this.setTimeRange([event['xaxis.range[0]'], event['xaxis.range[1]']])
+                    this.$eventHub.$emit('child-zoomed', this.timeRange)
                 }
                 if (event['xaxis.autorange']) {
-                    this.state.timeRange = [this.gd.layout.xaxis.range[0], this.gd.layout.xaxis.range[1]]
+                    this.setTimeRange([this.gd.layout.xaxis.range[0], this.gd.layout.xaxis.range[1]])
+                    this.$eventHub.$emit('child-zoomed', this.timeRange)
                 }
             }
         },
@@ -231,6 +245,7 @@ export default {
         plot () {
             console.log('plot()')
             const start = new Date()
+            delete this.plotOptions.xaxis.rangeslider
             if (this.plotInstance !== null) {
                 this.plotOptions.xaxis.range = this.gd._fullLayout.xaxis.range
                 Plotly.newPlot(this.gd, this.plotData, this.plotOptions, { scrollZoom: true, responsive: true })
@@ -254,11 +269,12 @@ export default {
                     return d.x
                 })
                 this.$eventHub.$emit('hoveredTime', infotext[0])
+                this.setCursorTime(infotext[0])
             })
 
             this.addModeShapes()
             this.addEvents()
-            this.addParamChanges()
+            // this.addParamChanges()
 
             this.state.plotLoading = false
 
@@ -312,7 +328,7 @@ export default {
         },
         addModeShapes () {
             const shapes = []
-            const modeChanges = [...this.state.this.flightModeChanges]
+            const modeChanges = [...this.flightModeChanges]
             modeChanges.push([this.gd.layout.xaxis.range[1], null])
 
             for (let i = 0; i < modeChanges.length - 1; i++) {
@@ -339,6 +355,26 @@ export default {
                 shapes: shapes
             })
         },
+        calculateXAxisDomain () {
+            let start = 0.02
+            let end = 0.98
+            for (const field of this.state.expressions) {
+                if (field.axis === 0) {
+                    start = Math.max(start, 0.03)
+                } else if (field.axis === 1) {
+                    start = Math.max(start, 0.07)
+                } else if (field.axis === 2) {
+                    start = Math.max(start, 0.11)
+                } else if (field.axis === 5) {
+                    end = Math.min(end, 0.96)
+                } else if (field.axis === 4) {
+                    end = Math.min(end, 0.92)
+                } else if (field.axis === 3) {
+                    end = Math.min(end, 0.88)
+                }
+            }
+            return [start, end]
+        },
         addEvents () {
             annotationsEvents = []
             let i = -300
@@ -363,7 +399,7 @@ export default {
                     i = -300
                 }
             }
-            const modeChanges = [...this.state.this.flightModeChanges]
+            const modeChanges = [...this.flightModeChanges]
             modeChanges.push([this.gd.layout.xaxis.range[1], null])
             for (let i = 0; i < modeChanges.length - 1; i++) {
                 annotationsModes.push(
@@ -398,7 +434,7 @@ export default {
             annotationsParams = []
             const firstFetch = new Set()
             let startAt = null
-            for (const change of this.state.params.changeArray) {
+            for (const change of this.changeArray) {
                 if (!firstFetch.has(change[1])) {
                     firstFetch.add(change[1])
                 } else {
@@ -407,7 +443,7 @@ export default {
                 }
             }
             let last = [0, 0]
-            for (const change of this.state.params.changeArray) {
+            for (const change of this.changeArray) {
                 if (change[0] < startAt) {
                     continue
                 }
@@ -462,7 +498,7 @@ export default {
     computed: {
         setOfModes () {
             const set = []
-            for (const mode of this.state.this.flightModeChanges) {
+            for (const mode of this.flightModeChanges) {
                 if (!set.includes(mode[1])) {
                     set.push(mode[1])
                 }
@@ -470,8 +506,8 @@ export default {
             return set
         },
         timeRange () {
-            if (this.state.timeRange != null) {
-                return this.state.timeRange
+            if (this.externalTimeRange != null) {
+                return this.externalTimeRange
             }
             return undefined
         },
@@ -491,23 +527,21 @@ export default {
     },
     watch: {
         timeRange (range) {
-            if (Math.abs(this.gd.layout.xaxis.range[0] - range[0]) > 5 ||
-                    Math.abs(this.gd.layout.xaxis.range[1] - range[1]) > 5) {
-                if (this.zoomInterval !== null) {
-                    clearTimeout(this.zoomInterval)
-                }
-                this.zoomInterval = setTimeout(() => {
-                    Plotly.relayout(this.gd, {
-                        xaxis: {
-                            title: 'Time since boot',
-                            range: range,
-                            domain: this.calculateXAxisDomain(),
-                            rangeslider: {},
-                            tickformat: timeformat
-                        }
-                    })
-                }, 500)
+            console.log('timeRange', range)
+
+            if (this.zoomInterval !== null) {
+                clearTimeout(this.zoomInterval)
             }
+            this.zoomInterval = setTimeout(() => {
+                Plotly.relayout(this.gd, {
+                    xaxis: {
+                        title: 'Time since boot',
+                        range: range,
+                        domain: this.calculateXAxisDomain(),
+                        tickformat: timeformat
+                    }
+                })
+            }, 500)
             return range // make linter happy, it says this is a computed property(?)
         },
         expressions: {

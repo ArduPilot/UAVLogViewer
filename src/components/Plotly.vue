@@ -152,7 +152,9 @@ const plotOptions = {
 export default {
     created () {
         this.$eventHub.$on('cesium-time-changed', this.setCursorTime)
+        this.$eventHub.$on('hoveredTime', this.setCursorTime)
         this.$eventHub.$on('force-resize-plotly', this.resize)
+        this.$eventHub.$on('child-zoomed', this.onTimeRangeChanged)
         this.zoomInterval = null
         this.cache = {}
     },
@@ -244,8 +246,12 @@ export default {
                         newWindow.setPlotData(gd.data)
                         newWindow.setPlotOptions(gd.layout)
                         newWindow.setCssColors(this.state.cssColors)
+                        newWindow.setFlightModeChanges(this.state.flightModeChanges)
+                        console.log(this.$eventHub)
+                        newWindow.setEventHub(this.$eventHub)
                         newWindow.plot()
                     }, 1000)
+                    this.state.childPlots.push(newWindow)
                     console.log(newWindow)
                 }
             }
@@ -341,13 +347,28 @@ export default {
                 // this.$router.push({query: query})
                 if (event['xaxis.range']) {
                     this.state.timeRange = event['xaxis.range']
+                    this.updatChildrenTimeRange(this.state.timeRange)
                 }
                 if (event['xaxis.range[0]']) {
                     this.state.timeRange = [event['xaxis.range[0]'], event['xaxis.range[1]']]
+                    this.updatChildrenTimeRange(this.state.timeRange)
                 }
                 if (event['xaxis.autorange']) {
                     this.state.timeRange = [this.gd.layout.xaxis.range[0], this.gd.layout.xaxis.range[1]]
+                    this.updatChildrenTimeRange(this.state.timeRange)
                 }
+            }
+        },
+
+        onTimeRangeChanged (timeRange) {
+            // check if it actually changed, with a delta tolarance
+            this.state.timeRange = timeRange
+
+            this.updatChildrenTimeRange(this.state.timeRange)
+        },
+        updatChildrenTimeRange (timeRange) {
+            for (const child of this.state.childPlots) {
+                child.setTimeRange(timeRange)
             }
         },
         addMaxMinMeanToTitles   () {
@@ -858,6 +879,7 @@ export default {
             console.log('layout done in ' + (new Date() - start) + 'ms')
         },
         setCursorTime (time) {
+            console.log('master got hover event at ' + time + 'ms')
             try {
                 const bglayer = document.getElementsByClassName('bglayer')[0]
                 const rect = bglayer.childNodes[0]
@@ -1070,23 +1092,21 @@ export default {
     },
     watch: {
         timeRange (range) {
-            if (Math.abs(this.gd.layout.xaxis.range[0] - range[0]) > 5 ||
-                    Math.abs(this.gd.layout.xaxis.range[1] - range[1]) > 5) {
-                if (this.zoomInterval !== null) {
-                    clearTimeout(this.zoomInterval)
-                }
-                this.zoomInterval = setTimeout(() => {
-                    Plotly.relayout(this.gd, {
-                        xaxis: {
-                            title: 'Time since boot',
-                            range: range,
-                            domain: this.calculateXAxisDomain(),
-                            rangeslider: {},
-                            tickformat: timeformat
-                        }
-                    })
-                }, 500)
+            if (this.zoomInterval !== null) {
+                clearTimeout(this.zoomInterval)
             }
+            this.updatChildrenTimeRange(this.state.timeRange)
+            this.zoomInterval = setTimeout(() => {
+                Plotly.relayout(this.gd, {
+                    xaxis: {
+                        title: 'Time since boot',
+                        range: range,
+                        domain: this.calculateXAxisDomain(),
+                        rangeslider: {},
+                        tickformat: timeformat
+                    }
+                })
+            }, 500)
             return range // make linter happy, it says this is a computed property(?)
         },
         expressions: {

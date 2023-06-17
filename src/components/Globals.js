@@ -59,5 +59,6 @@ export const store = {
     /* global _COMMIT_ */
     commit: _COMMIT_.slice(0, 6),
     /* global _BUILDDATE_ */
-    buildDate: _BUILDDATE_
+    buildDate: _BUILDDATE_,
+    childPlots: []
 }
