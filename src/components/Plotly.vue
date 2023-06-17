@@ -326,7 +326,7 @@ export default {
             return new Promise((resolve, reject) => {
                 interval = setInterval(function () {
                     for (const message of messages) {
-                        if (!_this.loadedMessages.includes(message.split('[')[0])) {
+                        if (!_this.loadedMessages().includes(message.split('[')[0])) {
                             counter += 1
                             if (counter > 30) { // 30 * 300ms = 9 s timeout
                                 console.log('not resolving')
@@ -736,6 +736,10 @@ export default {
         },
         plot () {
             console.log('plot()')
+            if (this.state.expressions.length === 0) {
+                console.log('no expressions to plot')
+                return
+            }
             plotOptions.title = this.state.file
             const _this = this
             const datasets = []
@@ -1058,6 +1062,11 @@ export default {
                     ...annotationsParams
                 ]
             ]
+        },
+        loadedMessages () {
+            return Object.keys(this.state.messages).map(key => {
+                return key.split('[')[0]
+            })
         }
     },
     computed: {
@@ -1078,11 +1087,6 @@ export default {
         },
         expressions () {
             return this.state.expressions
-        },
-        loadedMessages () {
-            return Object.keys(this.state.messages).map(key => {
-                return key.split('[')[0]
-            })
         },
         messagesInLog () {
             return Object.keys(this.state.messageTypes).map(key => {
