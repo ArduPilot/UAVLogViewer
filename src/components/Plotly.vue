@@ -6,6 +6,7 @@
 import Plotly from 'plotly.js'
 import { store } from './Globals.js'
 import * as d3 from 'd3'
+import { faWindowRestore } from '@fortawesome/free-solid-svg-icons'
 
 const Color = require('color')
 
@@ -217,64 +218,94 @@ export default {
         }
     },
     methods: {
-        csvButton () {
-            return [
-                {
-                    name: 'downloadCsv',
-                    title: 'Download data as csv',
-                    icon: Plotly.Icons.disk,
-                    click: () => {
-                        console.log(this.gd.data)
-                        const data = this.gd.data
-                        const header = ['timestamp(ms)']
-                        for (const series of data) {
-                            header.push(series.name.split(' |')[0])
-                        }
+        popupButton () {
+            return {
+                name: 'Open in new window',
+                icon: {
+                    title: 'test',
+                    name: 'iconFS',
+                    width: 600,
+                    height: 600,
+                    path: faWindowRestore.icon[4]
+                }, // Use any icon available
+                click: (gd) => {
+                    // const plotData = JSON.parse(JSON.stringify(gd.data))
+                    // const plotLayout = JSON.parse(JSON.stringify(gd.layout))
+                    // const plotConfig = { showLink: false, displayModeBar: true }
 
-                        const indexes = []
-
-                        const interval = 100
-                        let lasttime = Infinity
-                        let finaltime = 0
-
-                        for (const series in data) {
-                            indexes.push(0)
-                            const x = data[series].x
-                            lasttime = Math.min(lasttime, x[0])
-                            finaltime = Math.max(finaltime, x[x.length - 1])
-                        }
-                        finaltime = Math.min(finaltime, this.state.timeRange[1])
-                        lasttime = Math.max(lasttime, this.state.timeRange[0])
-
-                        const csv = [header]
-                        while (lasttime < finaltime - interval) {
-                            const line = [lasttime]
-                            for (const series in data) {
-                                let index = indexes[series]
-                                let x = data[series].x[index]
-                                while (x < lasttime) {
-                                    indexes[series] += 1
-                                    index = indexes[series]
-                                    x = data[series].x[index]
-                                }
-                                line.push(data[series].y[index])
-                            }
-                            csv.push(line)
-                            lasttime = lasttime + interval
-                        }
-                        const csvContent = csv.map(e => e.join(',')).join('\n')
-                        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-                        const link = document.createElement('a')
-                        const url = URL.createObjectURL(blob)
-                        link.setAttribute('href', url)
-                        link.setAttribute('download', 'data.csv')
-                        link.style.visibility = 'hidden'
-                        document.body.appendChild(link)
-                        link.click()
-                        document.body.removeChild(link)
-                    }
+                    // Open a new window
+                    const newWindow = window.open(
+                        '/#/plot', '_blank',
+                        'toolbar=no,scrollbars=yes,resizable=yes,top=500,left=500,width=800,height=400,allow-scripts'
+                    )
+                    setTimeout(() => {
+                        console.log(newWindow)
+                        console.log(newWindow.setPlotData)
+                        newWindow.setPlotData(gd.data)
+                        newWindow.setPlotOptions(gd.layout)
+                        newWindow.setCssColors(this.state.cssColors)
+                        newWindow.plot()
+                    }, 1000)
+                    console.log(newWindow)
                 }
-            ]
+            }
+        },
+        csvButton () {
+            return {
+                name: 'downloadCsv',
+                title: 'Download data as csv',
+                icon: Plotly.Icons.disk,
+                click: () => {
+                    console.log(this.gd.data)
+                    const data = this.gd.data
+                    const header = ['timestamp(ms)']
+                    for (const series of data) {
+                        header.push(series.name.split(' |')[0])
+                    }
+
+                    const indexes = []
+
+                    const interval = 100
+                    let lasttime = Infinity
+                    let finaltime = 0
+
+                    for (const series in data) {
+                        indexes.push(0)
+                        const x = data[series].x
+                        lasttime = Math.min(lasttime, x[0])
+                        finaltime = Math.max(finaltime, x[x.length - 1])
+                    }
+                    finaltime = Math.min(finaltime, this.state.timeRange[1])
+                    lasttime = Math.max(lasttime, this.state.timeRange[0])
+
+                    const csv = [header]
+                    while (lasttime < finaltime - interval) {
+                        const line = [lasttime]
+                        for (const series in data) {
+                            let index = indexes[series]
+                            let x = data[series].x[index]
+                            while (x < lasttime) {
+                                indexes[series] += 1
+                                index = indexes[series]
+                                x = data[series].x[index]
+                            }
+                            line.push(data[series].y[index])
+                        }
+                        csv.push(line)
+                        lasttime = lasttime + interval
+                    }
+                    const csvContent = csv.map(e => e.join(',')).join('\n')
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+                    const link = document.createElement('a')
+                    const url = URL.createObjectURL(blob)
+                    link.setAttribute('href', url)
+                    link.setAttribute('download', 'data.csv')
+                    link.style.visibility = 'hidden'
+                    document.body.appendChild(link)
+                    link.click()
+                    document.body.removeChild(link)
+                }
+            }
         },
         resize () {
             Plotly.Plots.resize(this.gd)
@@ -787,7 +818,7 @@ export default {
                     plotData,
                     plotOptions,
                     {
-                        modeBarButtonsToAdd: this.csvButton(),
+                        modeBarButtonsToAdd: [this.csvButton(), this.popupButton()],
                         scrollZoom: true,
                         editable: true,
                         responsive: true

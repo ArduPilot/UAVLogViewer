@@ -290,8 +290,16 @@ export default {
     components: {PlotSetup, MessageMenu, Dropzone}
 }
 </script>
-<style>
+<style scoped>
 
+@media (min-width: 575px) and (max-width: 992px) {
+       a {
+        padding: 2px 60px 2px 55px !important;
+       }
+    }
+</style>
+
+<style>
 span.buildinfo {
     font-size: 70%;
     margin-left: 30px;
@@ -527,12 +535,6 @@ a.centered-section {
     }
 
     /* MEDIA QUERIES */
-
-    @media (min-width: 575px) and (max-width: 992px) {
-       a {
-        padding: 2px 60px 2px 55px !important;
-       }
-    }
 
     @media only screen and (max-width: 992px) {
         .nav-side-menu {

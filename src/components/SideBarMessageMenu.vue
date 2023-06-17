@@ -417,4 +417,10 @@ export default {
         float: right;
     }
 
+    @media (min-width: 575px) and (max-width: 992px) {
+       a {
+        padding: 2px 60px 2px 55px !important;
+       }
+    }
+
 </style>
