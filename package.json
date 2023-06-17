@@ -41,7 +41,7 @@
     "jspack": "0.0.4",
     "long": "^4.0.0",
     "patch-package": "^6.4.7",
-    "plotly.js": "^2.12.1",
+    "plotly.js": "^2.18.2",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
     "underscore": "^1.13.4",
