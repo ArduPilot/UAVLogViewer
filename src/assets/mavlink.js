@@ -23,10 +23,10 @@ mavlink = function () {
 // Implement the X25CRC function (present in the Python version through the mavutil.py package)
 mavlink.x25Crc = function (buffer, crc) {
 
-    var bytes = buffer
+    const bytes = buffer
     var crc = crc || 0xffff
     _.each(bytes, function (e) {
-        var tmp = e ^ (crc & 0xff)
+        let tmp = e ^ (crc & 0xff)
         tmp = (tmp ^ (tmp << 4)) & 0xff
         crc = (crc >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4)
         crc = crc & 0xffff
@@ -83,7 +83,7 @@ mavlink.message.prototype.pack = function (mav, crc_extra, payload) {
     this.payload = payload
     this.header = new mavlink.header(this.id, payload.length, mav.seq, mav.srcSystem, mav.srcComponent)
     this.msgbuf = this.header.pack().concat(payload)
-    var crc = mavlink.x25Crc(this.msgbuf.slice(1))
+    let crc = mavlink.x25Crc(this.msgbuf.slice(1))
 
     // For now, assume always using crc_extra = True.  TODO: check/fix this.
     crc = mavlink.x25Crc([crc_extra], crc)
@@ -6055,30 +6055,30 @@ mavlink.messages.debug.prototype.pack = function (mav) {
 }
 
 mavlink.map = {
-    0: {format: '<IBBBBB', type: mavlink.messages.heartbeat, order_map: [1, 2, 3, 0, 4, 5], crc_extra: 50},
+    0: { format: '<IBBBBB', type: mavlink.messages.heartbeat, order_map: [1, 2, 3, 0, 4, 5], crc_extra: 50 },
     1: {
         format: '<IIIHHhHHHHHHb',
         type: mavlink.messages.sys_status,
         order_map: [0, 1, 2, 3, 4, 5, 12, 6, 7, 8, 9, 10, 11],
         crc_extra: 124
     },
-    2: {format: '<QI', type: mavlink.messages.system_time, order_map: [0, 1], crc_extra: 137},
-    4: {format: '<QIBB', type: mavlink.messages.ping, order_map: [0, 1, 2, 3], crc_extra: 237},
-    5: {format: '<BBB25s', type: mavlink.messages.change_operator_control, order_map: [0, 1, 2, 3], crc_extra: 217},
-    6: {format: '<BBB', type: mavlink.messages.change_operator_control_ack, order_map: [0, 1, 2], crc_extra: 104},
-    7: {format: '<32s', type: mavlink.messages.auth_key, order_map: [0], crc_extra: 119},
-    11: {format: '<IBB', type: mavlink.messages.set_mode, order_map: [1, 2, 0], crc_extra: 89},
-    20: {format: '<hBB16s', type: mavlink.messages.param_request_read, order_map: [1, 2, 3, 0], crc_extra: 214},
-    21: {format: '<BB', type: mavlink.messages.param_request_list, order_map: [0, 1], crc_extra: 159},
-    22: {format: '<fHH16sB', type: mavlink.messages.param_value, order_map: [3, 0, 4, 1, 2], crc_extra: 220},
-    23: {format: '<fBB16sB', type: mavlink.messages.param_set, order_map: [1, 2, 3, 0, 4], crc_extra: 168},
+    2: { format: '<QI', type: mavlink.messages.system_time, order_map: [0, 1], crc_extra: 137 },
+    4: { format: '<QIBB', type: mavlink.messages.ping, order_map: [0, 1, 2, 3], crc_extra: 237 },
+    5: { format: '<BBB25s', type: mavlink.messages.change_operator_control, order_map: [0, 1, 2, 3], crc_extra: 217 },
+    6: { format: '<BBB', type: mavlink.messages.change_operator_control_ack, order_map: [0, 1, 2], crc_extra: 104 },
+    7: { format: '<32s', type: mavlink.messages.auth_key, order_map: [0], crc_extra: 119 },
+    11: { format: '<IBB', type: mavlink.messages.set_mode, order_map: [1, 2, 0], crc_extra: 89 },
+    20: { format: '<hBB16s', type: mavlink.messages.param_request_read, order_map: [1, 2, 3, 0], crc_extra: 214 },
+    21: { format: '<BB', type: mavlink.messages.param_request_list, order_map: [0, 1], crc_extra: 159 },
+    22: { format: '<fHH16sB', type: mavlink.messages.param_value, order_map: [3, 0, 4, 1, 2], crc_extra: 220 },
+    23: { format: '<fBB16sB', type: mavlink.messages.param_set, order_map: [1, 2, 3, 0, 4], crc_extra: 168 },
     24: {
         format: '<QiiiHHHHBB',
         type: mavlink.messages.gps_raw_int,
         order_map: [0, 8, 1, 2, 3, 4, 5, 6, 7, 9],
         crc_extra: 24
     },
-    25: {format: '<B20s20s20s20s20s', type: mavlink.messages.gps_status, order_map: [0, 1, 2, 3, 4, 5], crc_extra: 23},
+    25: { format: '<B20s20s20s20s20s', type: mavlink.messages.gps_status, order_map: [0, 1, 2, 3, 4, 5], crc_extra: 23 },
     26: {
         format: '<Ihhhhhhhhh',
         type: mavlink.messages.scaled_imu,
@@ -6091,9 +6091,9 @@ mavlink.map = {
         order_map: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         crc_extra: 144
     },
-    28: {format: '<Qhhhh', type: mavlink.messages.raw_pressure, order_map: [0, 1, 2, 3, 4], crc_extra: 67},
-    29: {format: '<Iffh', type: mavlink.messages.scaled_pressure, order_map: [0, 1, 2, 3], crc_extra: 115},
-    30: {format: '<Iffffff', type: mavlink.messages.attitude, order_map: [0, 1, 2, 3, 4, 5, 6], crc_extra: 39},
+    28: { format: '<Qhhhh', type: mavlink.messages.raw_pressure, order_map: [0, 1, 2, 3, 4], crc_extra: 67 },
+    29: { format: '<Iffh', type: mavlink.messages.scaled_pressure, order_map: [0, 1, 2, 3], crc_extra: 115 },
+    30: { format: '<Iffffff', type: mavlink.messages.attitude, order_map: [0, 1, 2, 3, 4, 5, 6], crc_extra: 39 },
     31: {
         format: '<Ifffffff',
         type: mavlink.messages.attitude_quaternion,
@@ -6130,31 +6130,31 @@ mavlink.map = {
         order_map: [0, 9, 1, 2, 3, 4, 5, 6, 7, 8],
         crc_extra: 222
     },
-    37: {format: '<hhBB', type: mavlink.messages.mission_request_partial_list, order_map: [2, 3, 0, 1], crc_extra: 212},
-    38: {format: '<hhBB', type: mavlink.messages.mission_write_partial_list, order_map: [2, 3, 0, 1], crc_extra: 9},
+    37: { format: '<hhBB', type: mavlink.messages.mission_request_partial_list, order_map: [2, 3, 0, 1], crc_extra: 212 },
+    38: { format: '<hhBB', type: mavlink.messages.mission_write_partial_list, order_map: [2, 3, 0, 1], crc_extra: 9 },
     39: {
         format: '<fffffffHHBBBBB',
         type: mavlink.messages.mission_item,
         order_map: [9, 10, 7, 11, 8, 12, 13, 0, 1, 2, 3, 4, 5, 6],
         crc_extra: 254
     },
-    40: {format: '<HBB', type: mavlink.messages.mission_request, order_map: [1, 2, 0], crc_extra: 230},
-    41: {format: '<HBB', type: mavlink.messages.mission_set_current, order_map: [1, 2, 0], crc_extra: 28},
-    42: {format: '<H', type: mavlink.messages.mission_current, order_map: [0], crc_extra: 28},
-    43: {format: '<BB', type: mavlink.messages.mission_request_list, order_map: [0, 1], crc_extra: 132},
-    44: {format: '<HBB', type: mavlink.messages.mission_count, order_map: [1, 2, 0], crc_extra: 221},
-    45: {format: '<BB', type: mavlink.messages.mission_clear_all, order_map: [0, 1], crc_extra: 232},
-    46: {format: '<H', type: mavlink.messages.mission_item_reached, order_map: [0], crc_extra: 11},
-    47: {format: '<BBB', type: mavlink.messages.mission_ack, order_map: [0, 1, 2], crc_extra: 153},
-    48: {format: '<iiiB', type: mavlink.messages.set_gps_global_origin, order_map: [3, 0, 1, 2], crc_extra: 41},
-    49: {format: '<iii', type: mavlink.messages.gps_global_origin, order_map: [0, 1, 2], crc_extra: 39},
+    40: { format: '<HBB', type: mavlink.messages.mission_request, order_map: [1, 2, 0], crc_extra: 230 },
+    41: { format: '<HBB', type: mavlink.messages.mission_set_current, order_map: [1, 2, 0], crc_extra: 28 },
+    42: { format: '<H', type: mavlink.messages.mission_current, order_map: [0], crc_extra: 28 },
+    43: { format: '<BB', type: mavlink.messages.mission_request_list, order_map: [0, 1], crc_extra: 132 },
+    44: { format: '<HBB', type: mavlink.messages.mission_count, order_map: [1, 2, 0], crc_extra: 221 },
+    45: { format: '<BB', type: mavlink.messages.mission_clear_all, order_map: [0, 1], crc_extra: 232 },
+    46: { format: '<H', type: mavlink.messages.mission_item_reached, order_map: [0], crc_extra: 11 },
+    47: { format: '<BBB', type: mavlink.messages.mission_ack, order_map: [0, 1, 2], crc_extra: 153 },
+    48: { format: '<iiiB', type: mavlink.messages.set_gps_global_origin, order_map: [3, 0, 1, 2], crc_extra: 41 },
+    49: { format: '<iii', type: mavlink.messages.gps_global_origin, order_map: [0, 1, 2], crc_extra: 39 },
     50: {
         format: '<ffffhBB16sB',
         type: mavlink.messages.param_map_rc,
         order_map: [5, 6, 7, 4, 8, 0, 1, 2, 3],
         crc_extra: 78
     },
-    51: {format: '<HBB', type: mavlink.messages.mission_request_int, order_map: [1, 2, 0], crc_extra: 196},
+    51: { format: '<HBB', type: mavlink.messages.mission_request_int, order_map: [1, 2, 0], crc_extra: 196 },
     54: {
         format: '<ffffffBBB',
         type: mavlink.messages.safety_set_allowed_area,
@@ -6197,9 +6197,9 @@ mavlink.map = {
         order_map: [0, 19, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20],
         crc_extra: 118
     },
-    66: {format: '<HBBBB', type: mavlink.messages.request_data_stream, order_map: [1, 2, 3, 0, 4], crc_extra: 148},
-    67: {format: '<HBB', type: mavlink.messages.data_stream, order_map: [1, 0, 2], crc_extra: 21},
-    69: {format: '<hhhhHB', type: mavlink.messages.manual_control, order_map: [5, 0, 1, 2, 3, 4], crc_extra: 243},
+    66: { format: '<HBBBB', type: mavlink.messages.request_data_stream, order_map: [1, 2, 3, 0, 4], crc_extra: 148 },
+    67: { format: '<HBB', type: mavlink.messages.data_stream, order_map: [1, 0, 2], crc_extra: 21 },
+    69: { format: '<hhhhHB', type: mavlink.messages.manual_control, order_map: [5, 0, 1, 2, 3, 4], crc_extra: 243 },
     70: {
         format: '<HHHHHHHHBB',
         type: mavlink.messages.rc_channels_override,
@@ -6212,7 +6212,7 @@ mavlink.map = {
         order_map: [9, 10, 7, 11, 8, 12, 13, 0, 1, 2, 3, 4, 5, 6],
         crc_extra: 38
     },
-    74: {format: '<ffffhH', type: mavlink.messages.vfr_hud, order_map: [0, 1, 4, 5, 2, 3], crc_extra: 20},
+    74: { format: '<ffffhH', type: mavlink.messages.vfr_hud, order_map: [0, 1, 4, 5, 2, 3], crc_extra: 20 },
     75: {
         format: '<ffffiifHBBBBB',
         type: mavlink.messages.command_int,
@@ -6225,15 +6225,15 @@ mavlink.map = {
         order_map: [8, 9, 7, 10, 0, 1, 2, 3, 4, 5, 6],
         crc_extra: 152
     },
-    77: {format: '<HB', type: mavlink.messages.command_ack, order_map: [0, 1], crc_extra: 143},
-    81: {format: '<IffffBB', type: mavlink.messages.manual_setpoint, order_map: [0, 1, 2, 3, 4, 5, 6], crc_extra: 106},
+    77: { format: '<HB', type: mavlink.messages.command_ack, order_map: [0, 1], crc_extra: 143 },
+    81: { format: '<IffffBB', type: mavlink.messages.manual_setpoint, order_map: [0, 1, 2, 3, 4, 5, 6], crc_extra: 106 },
     82: {
         format: '<I4fffffBBB',
         type: mavlink.messages.set_attitude_target,
         order_map: [0, 6, 7, 8, 1, 2, 3, 4, 5],
         crc_extra: 49
     },
-    83: {format: '<I4fffffB', type: mavlink.messages.attitude_target, order_map: [0, 6, 1, 2, 3, 4, 5], crc_extra: 22},
+    83: { format: '<I4fffffB', type: mavlink.messages.attitude_target, order_map: [0, 6, 1, 2, 3, 4, 5], crc_extra: 22 },
     84: {
         format: '<IfffffffffffHBBB',
         type: mavlink.messages.set_position_target_local_ned,
@@ -6282,7 +6282,7 @@ mavlink.map = {
         order_map: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
         crc_extra: 54
     },
-    93: {format: '<QQ16fB', type: mavlink.messages.hil_actuator_controls, order_map: [0, 2, 3, 1], crc_extra: 47},
+    93: { format: '<QQ16fB', type: mavlink.messages.hil_actuator_controls, order_map: [0, 2, 3, 1], crc_extra: 47 },
     100: {
         format: '<QfffhhBB',
         type: mavlink.messages.optical_flow,
@@ -6301,7 +6301,7 @@ mavlink.map = {
         order_map: [0, 1, 2, 3, 4, 5, 6],
         crc_extra: 158
     },
-    103: {format: '<Qfff', type: mavlink.messages.vision_speed_estimate, order_map: [0, 1, 2, 3], crc_extra: 208},
+    103: { format: '<Qfff', type: mavlink.messages.vision_speed_estimate, order_map: [0, 1, 2, 3], crc_extra: 208 },
     104: {
         format: '<Qffffff',
         type: mavlink.messages.vicon_position_estimate,
@@ -6332,10 +6332,10 @@ mavlink.map = {
         order_map: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
         crc_extra: 32
     },
-    109: {format: '<HHBBBBB', type: mavlink.messages.radio_status, order_map: [2, 3, 4, 5, 6, 0, 1], crc_extra: 185},
-    110: {format: '<BBB251s', type: mavlink.messages.file_transfer_protocol, order_map: [0, 1, 2, 3], crc_extra: 84},
-    111: {format: '<qq', type: mavlink.messages.timesync, order_map: [0, 1], crc_extra: 34},
-    112: {format: '<QI', type: mavlink.messages.camera_trigger, order_map: [0, 1], crc_extra: 174},
+    109: { format: '<HHBBBBB', type: mavlink.messages.radio_status, order_map: [2, 3, 4, 5, 6, 0, 1], crc_extra: 185 },
+    110: { format: '<BBB251s', type: mavlink.messages.file_transfer_protocol, order_map: [0, 1, 2, 3], crc_extra: 84 },
+    111: { format: '<qq', type: mavlink.messages.timesync, order_map: [0, 1], crc_extra: 34 },
+    112: { format: '<QI', type: mavlink.messages.camera_trigger, order_map: [0, 1], crc_extra: 174 },
     113: {
         format: '<QiiiHHHhhhHBB',
         type: mavlink.messages.hil_gps,
@@ -6360,21 +6360,21 @@ mavlink.map = {
         order_map: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         crc_extra: 76
     },
-    117: {format: '<HHBB', type: mavlink.messages.log_request_list, order_map: [2, 3, 0, 1], crc_extra: 128},
-    118: {format: '<IIHHH', type: mavlink.messages.log_entry, order_map: [2, 3, 4, 0, 1], crc_extra: 56},
-    119: {format: '<IIHBB', type: mavlink.messages.log_request_data, order_map: [3, 4, 2, 0, 1], crc_extra: 116},
-    120: {format: '<IHB90s', type: mavlink.messages.log_data, order_map: [1, 0, 2, 3], crc_extra: 134},
-    121: {format: '<BB', type: mavlink.messages.log_erase, order_map: [0, 1], crc_extra: 237},
-    122: {format: '<BB', type: mavlink.messages.log_request_end, order_map: [0, 1], crc_extra: 203},
-    123: {format: '<BBB110s', type: mavlink.messages.gps_inject_data, order_map: [0, 1, 2, 3], crc_extra: 250},
+    117: { format: '<HHBB', type: mavlink.messages.log_request_list, order_map: [2, 3, 0, 1], crc_extra: 128 },
+    118: { format: '<IIHHH', type: mavlink.messages.log_entry, order_map: [2, 3, 4, 0, 1], crc_extra: 56 },
+    119: { format: '<IIHBB', type: mavlink.messages.log_request_data, order_map: [3, 4, 2, 0, 1], crc_extra: 116 },
+    120: { format: '<IHB90s', type: mavlink.messages.log_data, order_map: [1, 0, 2, 3], crc_extra: 134 },
+    121: { format: '<BB', type: mavlink.messages.log_erase, order_map: [0, 1], crc_extra: 237 },
+    122: { format: '<BB', type: mavlink.messages.log_request_end, order_map: [0, 1], crc_extra: 203 },
+    123: { format: '<BBB110s', type: mavlink.messages.gps_inject_data, order_map: [0, 1, 2, 3], crc_extra: 250 },
     124: {
         format: '<QiiiIHHHHBBB',
         type: mavlink.messages.gps2_raw,
         order_map: [0, 9, 1, 2, 3, 5, 6, 7, 8, 10, 11, 4],
         crc_extra: 87
     },
-    125: {format: '<HHH', type: mavlink.messages.power_status, order_map: [0, 1, 2], crc_extra: 203},
-    126: {format: '<IHBBB70s', type: mavlink.messages.serial_control, order_map: [2, 3, 1, 0, 4, 5], crc_extra: 220},
+    125: { format: '<HHH', type: mavlink.messages.power_status, order_map: [0, 1, 2], crc_extra: 203 },
+    126: { format: '<IHBBB70s', type: mavlink.messages.serial_control, order_map: [2, 3, 1, 0, 4, 5], crc_extra: 220 },
     127: {
         format: '<IIiiiIiHBBBBB',
         type: mavlink.messages.gps_rtk,
@@ -6399,29 +6399,29 @@ mavlink.map = {
         order_map: [4, 0, 1, 2, 3, 5, 6],
         crc_extra: 29
     },
-    131: {format: '<H253s', type: mavlink.messages.encapsulated_data, order_map: [0, 1], crc_extra: 223},
+    131: { format: '<H253s', type: mavlink.messages.encapsulated_data, order_map: [0, 1], crc_extra: 223 },
     132: {
         format: '<IHHHBBBB',
         type: mavlink.messages.distance_sensor,
         order_map: [0, 1, 2, 3, 4, 5, 6, 7],
         crc_extra: 85
     },
-    133: {format: '<QiiH', type: mavlink.messages.terrain_request, order_map: [1, 2, 3, 0], crc_extra: 6},
-    134: {format: '<iiH16hB', type: mavlink.messages.terrain_data, order_map: [0, 1, 2, 4, 3], crc_extra: 229},
-    135: {format: '<ii', type: mavlink.messages.terrain_check, order_map: [0, 1], crc_extra: 203},
-    136: {format: '<iiffHHH', type: mavlink.messages.terrain_report, order_map: [0, 1, 4, 2, 3, 5, 6], crc_extra: 1},
-    137: {format: '<Iffh', type: mavlink.messages.scaled_pressure2, order_map: [0, 1, 2, 3], crc_extra: 195},
-    138: {format: '<Q4ffff', type: mavlink.messages.att_pos_mocap, order_map: [0, 1, 2, 3, 4], crc_extra: 109},
+    133: { format: '<QiiH', type: mavlink.messages.terrain_request, order_map: [1, 2, 3, 0], crc_extra: 6 },
+    134: { format: '<iiH16hB', type: mavlink.messages.terrain_data, order_map: [0, 1, 2, 4, 3], crc_extra: 229 },
+    135: { format: '<ii', type: mavlink.messages.terrain_check, order_map: [0, 1], crc_extra: 203 },
+    136: { format: '<iiffHHH', type: mavlink.messages.terrain_report, order_map: [0, 1, 4, 2, 3, 5, 6], crc_extra: 1 },
+    137: { format: '<Iffh', type: mavlink.messages.scaled_pressure2, order_map: [0, 1, 2, 3], crc_extra: 195 },
+    138: { format: '<Q4ffff', type: mavlink.messages.att_pos_mocap, order_map: [0, 1, 2, 3, 4], crc_extra: 109 },
     139: {
         format: '<Q8fBBB',
         type: mavlink.messages.set_actuator_control_target,
         order_map: [0, 2, 3, 4, 1],
         crc_extra: 168
     },
-    140: {format: '<Q8fB', type: mavlink.messages.actuator_control_target, order_map: [0, 2, 1], crc_extra: 181},
-    141: {format: '<Qffffff', type: mavlink.messages.altitude, order_map: [0, 1, 2, 3, 4, 5, 6], crc_extra: 47},
-    142: {format: '<BB120sB120s', type: mavlink.messages.resource_request, order_map: [0, 1, 2, 3, 4], crc_extra: 72},
-    143: {format: '<Iffh', type: mavlink.messages.scaled_pressure3, order_map: [0, 1, 2, 3], crc_extra: 131},
+    140: { format: '<Q8fB', type: mavlink.messages.actuator_control_target, order_map: [0, 2, 1], crc_extra: 181 },
+    141: { format: '<Qffffff', type: mavlink.messages.altitude, order_map: [0, 1, 2, 3, 4, 5, 6], crc_extra: 47 },
+    142: { format: '<BB120sB120s', type: mavlink.messages.resource_request, order_map: [0, 1, 2, 3, 4], crc_extra: 72 },
+    143: { format: '<Iffh', type: mavlink.messages.scaled_pressure3, order_map: [0, 1, 2, 3], crc_extra: 131 },
     144: {
         format: '<QQiif3f3f4f3f3fB',
         type: mavlink.messages.follow_target,
@@ -6470,7 +6470,7 @@ mavlink.map = {
         order_map: [0, 15, 13, 1, 14, 16, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17],
         crc_extra: 151
     },
-    233: {format: '<BB180s', type: mavlink.messages.gps_rtcm_data, order_map: [0, 1, 2], crc_extra: 35},
+    233: { format: '<BB180s', type: mavlink.messages.gps_rtcm_data, order_map: [0, 1, 2], crc_extra: 35 },
     234: {
         format: '<IiihhHhhhHBBbBBBbBBBbbBB',
         type: mavlink.messages.high_latency,
@@ -6483,7 +6483,7 @@ mavlink.map = {
         order_map: [0, 9, 10, 3, 1, 2, 4, 5, 11, 12, 6, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 7, 8, 24, 25, 26],
         crc_extra: 179
     },
-    241: {format: '<QfffIII', type: mavlink.messages.vibration, order_map: [0, 1, 2, 3, 4, 5, 6], crc_extra: 90},
+    241: { format: '<QfffIII', type: mavlink.messages.vibration, order_map: [0, 1, 2, 3, 4, 5, 6], crc_extra: 90 },
     242: {
         format: '<iiifff4ffff',
         type: mavlink.messages.home_position,
@@ -6496,22 +6496,22 @@ mavlink.map = {
         order_map: [10, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
         crc_extra: 85
     },
-    244: {format: '<iH', type: mavlink.messages.message_interval, order_map: [1, 0], crc_extra: 95},
-    245: {format: '<BB', type: mavlink.messages.extended_sys_state, order_map: [0, 1], crc_extra: 130},
+    244: { format: '<iH', type: mavlink.messages.message_interval, order_map: [1, 0], crc_extra: 95 },
+    245: { format: '<BB', type: mavlink.messages.extended_sys_state, order_map: [0, 1], crc_extra: 130 },
     246: {
         format: '<IiiiHHhHHB9sBB',
         type: mavlink.messages.adsb_vehicle,
         order_map: [0, 1, 2, 9, 3, 4, 5, 6, 10, 11, 12, 7, 8],
         crc_extra: 184
     },
-    247: {format: '<IfffBBB', type: mavlink.messages.collision, order_map: [4, 0, 5, 6, 1, 2, 3], crc_extra: 81},
-    248: {format: '<HBBB249s', type: mavlink.messages.v2_extension, order_map: [1, 2, 3, 0, 4], crc_extra: 8},
-    249: {format: '<HBB32s', type: mavlink.messages.memory_vect, order_map: [0, 1, 2, 3], crc_extra: 204},
-    250: {format: '<Qfff10s', type: mavlink.messages.debug_vect, order_map: [4, 0, 1, 2, 3], crc_extra: 49},
-    251: {format: '<If10s', type: mavlink.messages.named_value_float, order_map: [0, 2, 1], crc_extra: 170},
-    252: {format: '<Ii10s', type: mavlink.messages.named_value_int, order_map: [0, 2, 1], crc_extra: 44},
-    253: {format: '<B50s', type: mavlink.messages.statustext, order_map: [0, 1], crc_extra: 83},
-    254: {format: '<IfB', type: mavlink.messages.debug, order_map: [0, 2, 1], crc_extra: 46},
+    247: { format: '<IfffBBB', type: mavlink.messages.collision, order_map: [4, 0, 5, 6, 1, 2, 3], crc_extra: 81 },
+    248: { format: '<HBBB249s', type: mavlink.messages.v2_extension, order_map: [1, 2, 3, 0, 4], crc_extra: 8 },
+    249: { format: '<HBB32s', type: mavlink.messages.memory_vect, order_map: [0, 1, 2, 3], crc_extra: 204 },
+    250: { format: '<Qfff10s', type: mavlink.messages.debug_vect, order_map: [4, 0, 1, 2, 3], crc_extra: 49 },
+    251: { format: '<If10s', type: mavlink.messages.named_value_float, order_map: [0, 2, 1], crc_extra: 170 },
+    252: { format: '<Ii10s', type: mavlink.messages.named_value_int, order_map: [0, 2, 1], crc_extra: 44 },
+    253: { format: '<B50s', type: mavlink.messages.statustext, order_map: [0, 1], crc_extra: 83 },
+    254: { format: '<IfB', type: mavlink.messages.debug, order_map: [0, 2, 1], crc_extra: 46 },
 }
 
 // Special parsers message to capture malformed data packets for debugging
@@ -6599,7 +6599,7 @@ MAVLink.prototype.parsePrefix = function () {
     if (this.buf.length >= 1 && this.buf[0] != 254) {
 
         // Strip the offending initial byte and throw an error.
-        var badPrefix = this.buf[0]
+        const badPrefix = this.buf[0]
         this.bufInError = this.buf.slice(0, 1)
         this.buf = this.buf.slice(1)
         this.expected_length = 6
@@ -6621,7 +6621,7 @@ MAVLink.prototype.parsePrefix = function () {
 MAVLink.prototype.parseLength = function () {
 
     if (this.buf.length >= 2) {
-        var unpacked = jspack.Unpack('BB', this.buf.slice(0, 2))
+        const unpacked = jspack.Unpack('BB', this.buf.slice(0, 2))
         this.expected_length = unpacked[1] + 8 // length of message + header + CRC
     }
 
@@ -6630,7 +6630,7 @@ MAVLink.prototype.parseLength = function () {
 // input some data bytes, possibly returning a new message
 MAVLink.prototype.parseChar = function (c) {
 
-    var m = null
+    let m = null
 
     try {
 
@@ -6659,13 +6659,13 @@ MAVLink.prototype.parseChar = function (c) {
 
 MAVLink.prototype.parsePayload = function () {
 
-    var m = null
+    let m = null
 
     // If we have enough bytes to try and read it, read it.
     if (this.expected_length >= 8 && this.buf.length >= this.expected_length) {
 
         // Slice off the expected packet length, reset expectation to be to find a header.
-        var mbuf = this.buf.slice(0, this.expected_length)
+        const mbuf = this.buf.slice(0, this.expected_length)
         // TODO: slicing off the buffer should depend on the error produced by the decode() function
         // - if a message we find a well formed message, cut-off the expected_length
         // - if the message is not well formed (correct prefix by accident), cut-off 1 char only
@@ -6692,7 +6692,7 @@ MAVLink.prototype.parsePayload = function () {
 MAVLink.prototype.parseBuffer = function (s) {
 
     // Get a message, if one is available in the stream.
-    var m = this.parseChar(s)
+    let m = this.parseChar(s)
 
     // No messages available, bail.
     if (null === m) {
@@ -6701,7 +6701,7 @@ MAVLink.prototype.parseBuffer = function (s) {
 
     // While more valid messages can be read from the existing buffer, add
     // them to the array of new messages and return them.
-    var ret = [m]
+    const ret = [m]
     while (true) {
         m = this.parseChar()
         if (null === m) {
@@ -6717,7 +6717,7 @@ MAVLink.prototype.parseBuffer = function (s) {
 /* decode a buffer as a MAVLink message */
 MAVLink.prototype.decode = function (msgbuf) {
 
-    var magic, mlen, seq, srcSystem, srcComponent, unpacked, msgId
+    let magic, mlen, seq, srcSystem, srcComponent, unpacked, msgId
 
     // decode the header
     try {
@@ -6746,7 +6746,7 @@ MAVLink.prototype.decode = function (msgbuf) {
 
     // decode the payload
     // refs: (fmt, type, order_map, crc_extra) = parsers.map[msgId]
-    var decoder = mavlink.map[msgId]
+    const decoder = mavlink.map[msgId]
 
     // decode the checksum
     try {
@@ -6755,7 +6755,7 @@ MAVLink.prototype.decode = function (msgbuf) {
         throw new Error('Unable to unpack MAVLink CRC: ' + e.message)
     }
 
-    var messageChecksum = mavlink.x25Crc(msgbuf.slice(1, msgbuf.length - 2))
+    let messageChecksum = mavlink.x25Crc(msgbuf.slice(1, msgbuf.length - 2))
 
     // Assuming using crc_extra = True.  See the message.prototype.pack() function.
     messageChecksum = mavlink.x25Crc([decoder.crc_extra], messageChecksum)
@@ -6772,7 +6772,7 @@ MAVLink.prototype.decode = function (msgbuf) {
     }
 
     // Reorder the fields to match the order map
-    var args = []
+    const args = []
     _.each(t, function (e, i, l) {
         args[i] = t[decoder.order_map[i]]
     })

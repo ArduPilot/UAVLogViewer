@@ -1,7 +1,7 @@
-import {DataflashDataExtractor} from '../../../src/tools/dataflashDataExtractor'
+import { DataflashDataExtractor } from '../../../src/tools/dataflashDataExtractor'
 
-let dfparser = require('../../../src/tools/parsers/dataflashParser.js')
-var glob = require('glob')
+const dfparser = require('../../../src/tools/parsers/dataflashParser.js')
+const glob = require('glob')
 
 // options is optional
 let files = glob.sync('/tmp/testlogs/*.bin')
@@ -30,9 +30,9 @@ describe('parse binary logs', () => {
         expect(DataflashDataExtractor.extractParams(messages)).toBeDefined()
 
         expect(DataflashDataExtractor.extractTextMessages(messages).length).toBeGreaterThan(0)
-        let trajectory = DataflashDataExtractor.extractTrajectory(messages)
+        const trajectory = DataflashDataExtractor.extractTrajectory(messages)
         expect(Object.keys(trajectory).length).toBeGreaterThan(1)
-        let firstItem = Object.keys(trajectory)[0]
+        const firstItem = Object.keys(trajectory)[0]
         expect(trajectory[firstItem].trajectory.length).toBeGreaterThan(10)
     })
 })
