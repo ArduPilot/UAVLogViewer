@@ -63,9 +63,9 @@ window.mag_heading = function (RAW_IMU, ATTITUDE, declination, SENSOR_OFFSETS, o
     if (declination === undefined) {
         declination = window.degrees(window.params.COMPASS_DEC)
     }
-    let magX = RAW_IMU.xmag
-    let magY = RAW_IMU.ymag
-    let magZ = RAW_IMU.zmag
+    let magX = RAW_IMU.xmag || RAW_IMU.MagX
+    let magY = RAW_IMU.ymag || RAW_IMU.MagY
+    let magZ = RAW_IMU.zmag || RAW_IMU.MagZ
     if (SENSOR_OFFSETS !== undefined && ofs !== undefined) {
         magX += ofs[0] - SENSOR_OFFSETS.mag_ofs_x
         magY += ofs[1] - SENSOR_OFFSETS.mag_ofs_y

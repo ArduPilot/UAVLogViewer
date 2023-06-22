@@ -14,6 +14,7 @@
         <MessageViewer v-if="state.showMessages"></MessageViewer>
         <DeviceIDViewer v-if="state.showDeviceIDs"></DeviceIDViewer>
         <AttitudeViewer v-if="state.showAttitude"></AttitudeViewer>
+        <MagFitTool v-if="state.showMagfit"></MagFitTool>
         <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
             <sidebar/>
@@ -55,6 +56,7 @@ import { Color } from 'cesium'
 import colormap from 'colormap'
 import { DataflashDataExtractor } from '../tools/dataflashDataExtractor'
 import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
+import MagFitTool from '@/components/widgets/MagFitTool.vue'
 import Vue from 'vue'
 
 export default {
@@ -209,7 +211,8 @@ export default {
         ParamViewer,
         MessageViewer,
         DeviceIDViewer,
-        AttitudeViewer
+        AttitudeViewer,
+        MagFitTool
     },
     computed: {
         mapOk () {
