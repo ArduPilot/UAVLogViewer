@@ -193,14 +193,14 @@ export default {
                 for (const field of messageTypes[messageType].expressions) {
                     if (this.state.plotOn) {
                         this.checkboxes[messageType].expressions[field] =
-                            this.$route.query.plots.indexOf(messageType + '.' + field) !== -1
+                            this.$route.query?.plots?.indexOf(messageType + '.' + field) !== -1
                     } else {
                         this.checkboxes[messageType].expressions[field] = false
                     }
                 }
             }
             this.messageTypes = newMessages
-            this.state.messageTypes = newMessages
+            this.$set(this.state, 'messageTypes', newMessages)
         },
         isPlotted (message, field) {
             const fullname = message + '.' + field

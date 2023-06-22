@@ -119,6 +119,11 @@
                           <input type="checkbox" v-model="state.showRadio">
                           <a class="check-font"> Radio Sticks </a>
                         </label>
+                        <label>
+                          <i class="fa fa-compass circle"></i>
+                          <input type="checkbox" v-model="state.showMagfit">
+                          <a class="check-font"> Mag Fit Tool </a>
+                        </label>
                         <label v-if="state.textMessages">
                           <i class="fa fa-comment circle"></i>
                           <input type="checkbox" v-model="state.showMessages">
