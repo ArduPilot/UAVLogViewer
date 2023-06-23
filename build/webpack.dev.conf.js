@@ -72,23 +72,21 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       inject: true
     }),
     // copy custom static assets
-    new CopyWebpackPlugin([ { from: path.join(cesiumSource, cesiumWorkers), to: 'Workers' } ]),
-    new CopyWebpackPlugin([ { from: path.join(cesiumSource, 'Assets'), to: 'Assets' } ]),
-    new CopyWebpackPlugin([ { from: path.join(cesiumSource, 'Widgets'), to: 'Widgets' } ]),
-    new CopyWebpackPlugin([ { from: path.join(cesiumSource, 'ThirdParty/Workers'), to: 'ThirdParty/Workers' } ]),
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: path.resolve(cesiumSource, cesiumWorkers), to: 'Workers' },
+        { from: path.resolve(cesiumSource, 'Assets'), to: 'Assets' },
+        { from: path.resolve(cesiumSource, 'Widgets'), to: 'Widgets' },
+        { from: path.resolve(cesiumSource, 'ThirdParty/Workers'), to: 'ThirdParty/Workers' },
+      ],
+      options: {
+        concurrency: 100
+      }
+    }),
     new webpack.DefinePlugin({
       // Define relative base path in cesium for loading assets
       CESIUM_BASE_URL: JSON.stringify('')
     }),
-
-    new CopyWebpackPlugin([
-      {
-        from: path.resolve(__dirname, '../static'),
-        to: config.dev.assetsSubDirectory,
-        ignore: ['.*']
-      }
-
-    ]),
       new VueLoaderPlugin(),
   ]
 })
