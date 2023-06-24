@@ -496,9 +496,6 @@ export default {
             console.log(bounds)
 
             console.log('optimizing')
-            // const result = numeric.uncmin(this.wmmError, optimizationParams, { bounds: bounds })
-            if (bounds === 'potato') nelderMead(this.wmmError, optimizationParams, bounds)
-            if (bounds === 'potato') simulatedAnnealing(this.wmmError, optimizationParams, bounds)
             const result = await geneticOptimizer(this.wmmError, optimizationParams, bounds)
             console.log('Optimization result: ', result)
             console.log('error:', this.wmmError(result))
