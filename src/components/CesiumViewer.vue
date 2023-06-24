@@ -367,8 +367,13 @@ export default {
                         console.log('no time')
                         return
                     }
-                    const position = Cartographic.fromCartesian(this.model.position.getValue(
-                        this.viewer.clock.currentTime))
+                    const cartesian = this.model.position.getValue(
+                        this.viewer.clock.currentTime
+                    )
+                    if (!cartesian) {
+                        return
+                    }
+                    const position = Cartographic.fromCartesian(cartesian)
                     const height = position.height
 
                     const update = function (updatedPositions) {
