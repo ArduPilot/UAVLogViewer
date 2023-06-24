@@ -363,6 +363,10 @@ export default {
                     /*
                     Makes the Globe transparent when the vehicle is underground/underwater. Called every 1 second
                     */
+                    if (!this.viewer.clock.currentTime) {
+                        console.log('no time')
+                        return
+                    }
                     const position = Cartographic.fromCartesian(this.model.position.getValue(
                         this.viewer.clock.currentTime))
                     const height = position.height
