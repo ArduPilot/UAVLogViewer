@@ -19,7 +19,7 @@
             </div>
             <div class="section">
               <h6>Compasses</h6>
-              <table>
+              <table v-if="Object.keys(compassOffsets).length">
                   <tr>
                       <th>Compass</th>
                       <th>ofsx</th>
@@ -39,6 +39,8 @@
 
                   </tr>
               </table>
+              <i v-else class="fas fa-spinner fa-spin">
+              </i>
             </div>
             <div class="section" v-if="newCorrections.length > 0">
               <h6>New</h6>
