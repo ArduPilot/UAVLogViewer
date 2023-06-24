@@ -164,10 +164,9 @@ function simulatedAnnealing (f, xStart, bounds, { t = 100, tMin = 1e-6, alpha = 
 
     return xBest
 }
-
-// eslint-disable-next-line max-len
-function geneticOptimizer (f, xStart, bounds, { populationSize = 100, mutationRate = 0.01, maxGenerations = 100, mutationSize = 0.05 } = {}) {
-    // eslint-disable-next-line max-len
+// eslint-disable-next-line
+async function geneticOptimizer(f, xStart, bounds, { populationSize = 100, mutationRate = 0.01, maxGenerations = 100, mutationSize = 0.05 } = {}) {
+    // eslint-disable-next-line
     let population = Array(populationSize - 1).fill().map(() => bounds.map(bound => Math.random() * (bound[1] - bound[0]) + bound[0]))
     population.push(xStart)
 
@@ -181,13 +180,7 @@ function geneticOptimizer (f, xStart, bounds, { populationSize = 100, mutationRa
 
         const newPopulation = []
         for (let i = 0; i < populationSize; i++) {
-            // Selection
-            const parents = [0, 0].map(() => {
-                let r = Math.random()
-                let index = 0
-                while ((r -= probs[index]) > 0) index++
-                return population[index]
-            })
+            const parents = await selectParentsAsync(population, probs)
 
             // Crossover
             const point = Math.floor(Math.random() * bounds.length)
@@ -207,10 +200,35 @@ function geneticOptimizer (f, xStart, bounds, { populationSize = 100, mutationRa
         }
 
         population = newPopulation
+        if (generation < maxGenerations - 1) {
+            await sleep(10) // Introduce a delay between generations
+        }
     }
 
     const bestIndex = population.map(f).reduce((iMax, x, i, arr) => x < arr[iMax] ? i : iMax, 0)
     return population[bestIndex]
+}
+
+function sleep (ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function selectParentsAsync (population, probs) {
+    const parents = []
+    for (let j = 0; j < 2; j++) {
+        const parent = await selectParentAsync(population, probs)
+        parents.push(parent)
+    }
+    return parents
+}
+
+async function selectParentAsync (population, probs) {
+    return new Promise((resolve) => {
+        let r = Math.random()
+        let index = 0
+        while ((r -= probs[index]) > 0) index++
+        resolve(population[index])
+    })
 }
 
 export default {
@@ -546,7 +564,7 @@ export default {
             // console.log('corrected mag: ', mag)
             return mag
         },
-        fitWmm (instance) {
+        async fitWmm (instance) {
             const data = this.compassDataAugmentedWithATT[instance]
             this.optimizingData = data
             this.oldCorrections = this.compassOffsets[instance]
@@ -567,7 +585,7 @@ export default {
             // const result = numeric.uncmin(this.wmmError, optimizationParams, { bounds: bounds })
             if (bounds === 'potato') nelderMead(this.wmmError, optimizationParams, bounds)
             if (bounds === 'potato') simulatedAnnealing(this.wmmError, optimizationParams, bounds)
-            const result = geneticOptimizer(this.wmmError, optimizationParams, bounds)
+            const result = await geneticOptimizer(this.wmmError, optimizationParams, bounds)
             console.log('Optimization result: ', result)
             console.log('error:', this.wmmError(result))
 
