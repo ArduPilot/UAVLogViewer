@@ -42,7 +42,7 @@
               <i v-else class="fas fa-spinner fa-spin">
               </i>
             </div>
-            <div class="section" v-if="newCorrections.length > 0">
+            <div class="section" v-if="newCorrections.length > 0 || this.processing">
               <h6>New</h6>
               <table>
                   <tr>
@@ -62,7 +62,8 @@
                       <td><button v-if="value?.offsets" @click="plotNewHeading(index)">Plot Heading</button></td>
                   </tr>
               </table>
-              <button @click="downloadParams()"> Download Params file</button>
+              <i v-if="processing" class="fas fa-spinner fa-spin"></i>
+              <button v-if="!processing" @click="downloadParams()"> Download Params file</button>
           </div>
         </div>
     </div>
@@ -252,7 +253,8 @@ export default {
             optimizingData: null,
             compassData: [],
             oldCorrections: [],
-            newCorrections: []
+            newCorrections: [],
+            processing: false
         }
     },
     methods: {
@@ -565,6 +567,7 @@ export default {
             return mag
         },
         async fitWmm (instance) {
+            this.processing = true
             const data = this.compassDataAugmentedWithATT[instance]
             this.optimizingData = data
             this.oldCorrections = this.compassOffsets[instance]
@@ -649,7 +652,7 @@ export default {
             const availableMessages = this.state.messageTypes
             availableMessages['MAGFIT' + instance] = newtype
             this.$eventHub.$emit('messageTypes', availableMessages)
-
+            this.processing = false
             return c
         },
         getCompassData () {
