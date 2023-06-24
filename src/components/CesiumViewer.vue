@@ -29,6 +29,7 @@ import {
     knockout,
     Cartographic,
     sampleTerrainMostDetailed,
+    HeadingPitchRange,
     JulianDate,
     ClockRange,
     Cartesian3,
@@ -300,7 +301,6 @@ export default {
                     this.updateAndPlotTrajectory()
                     this.plotMission(this.state.mission)
                     this.plotFences(this.state.fences)
-                    this.viewer.zoomTo(this.viewer.entities)
                     document.addEventListener('setzoom', this.onTimelineZoom)
                     this.$eventHub.$on('rangeChanged', this.onRangeChanged)
                     /*            if (this.$route.query.hasOwnProperty('cam')) {
@@ -755,6 +755,11 @@ export default {
                         viewFrom: new Cartesian3(5, 0, 3)
                     })
                     this.changeCamera()
+                    if (this.state.vehicle === 'boat') {
+                        setTimeout(() => {
+                            this.viewer.flyTo(this.model, { offset: new HeadingPitchRange(0, -0.5, 100) })
+                        }, 3000)
+                    }
                 },
                 updateAndPlotTrajectory () {
                     const oldEntities = this.trajectory._children.slice()
