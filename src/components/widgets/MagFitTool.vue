@@ -26,6 +26,7 @@
                       <th>ofsy</th>
                       <th>ofsz</th>
                       <th>scale</th>
+                      <th>Fitness</th>
                   </tr>
                   <tr :key="'param' + index" v-for="(value, index) in compassOffsets">
                     <td> {{ index }} </td>
@@ -33,6 +34,7 @@
                       <td>{{ value.offsets.y.toFixed(2) }}</td>
                       <td>{{ value.offsets.z.toFixed(2) }}</td>
                       <td>{{ value.scaling.toFixed(2) }}</td>
+                      <td>{{ fitnessesPreCalibration[index].toFixed(0)}}</td>
                       <td><button v-on:click="fitWmm(index)"> Fit </button></td>
                       <td><button v-if="value?.offsets" @click="plotOldRaw(index)">Plot Raw</button></td>
                       <td><button v-if="value?.offsets" @click="plotOldHeading(index)">Plot Heading</button></td>
@@ -51,6 +53,7 @@
                       <th>ofsy</th>
                       <th>ofsz</th>
                       <th>scale</th>
+                      <th>fitness</th>
                   </tr>
                   <tr :key="'param' + index" v-for="(value, index) in newCorrections">
                     <td> {{ index }} </td>
@@ -58,6 +61,7 @@
                       <td>{{ value?.offsets?.y?.toFixed(2) }}</td>
                       <td>{{ value?.offsets?.z?.toFixed(2) }}</td>
                       <td>{{ value?.scaling?.toFixed(2) }}</td>
+                      <td>{{ fitnessesPostCalibration[index]?.toFixed(0) ?? '--'  }}</td>
                       <td><button v-if="value?.offsets" @click="plotRaw(index)">Plot Raw</button></td>
                       <td><button v-if="value?.offsets" @click="plotNewHeading(index)">Plot Heading</button></td>
                   </tr>
@@ -165,7 +169,8 @@ export default {
             compassData: [],
             oldCorrections: [],
             newCorrections: [],
-            processing: false
+            processing: false,
+            fitnesses: {}
         }
     },
     methods: {
@@ -416,6 +421,36 @@ export default {
 
             return field
         },
+        wmmErrorOnce (origdata, corrections) {
+            const data = Object.assign({}, origdata)
+            console.log(data, corrections)
+
+            let ret = 0
+            for (let i = 0; i < data.time.length; i++) {
+                const MAG = {
+                    x: data.magX[i],
+                    y: data.magY[i],
+                    z: data.magZ[i]
+                }
+                const ATT = {
+                    roll: data.roll[i],
+                    pitch: data.pitch[i],
+                    yaw: data.yaw[i]
+                }
+                const BAT = null
+                const yaw = this.getYaw(ATT, MAG, corrections) // matches
+                // console.log('yaw: ', yaw)
+                const expected = this.expectedField(ATT, yaw) // matches
+                // console.log('expected: ', expected)
+                const observed = this.correct(MAG, BAT, corrections) // matches
+                // console.log('observed: ', observed)
+                const error = expected.subtract(observed).length()
+                ret += error
+            }
+            ret /= data.magX.length
+            return ret
+        },
+
         wmmError (corrections) {
             // console.log(corrections)
             const data = Object.assign({}, this.optimizingData)
@@ -576,6 +611,18 @@ export default {
         }
     },
     computed: {
+        fitnessesPreCalibration () {
+            const ret = []
+            for (const instance in this.compassDataAugmentedWithATT) {
+                ret.push(this.wmmErrorOnce(this.compassDataAugmentedWithATT[instance], this.compassOffsets[instance]))
+            }
+            return ret
+        },
+        fitnessesPostCalibration () {
+            return this.newCorrections.map((c, i) => {
+                return this.wmmErrorOnce(this.compassDataAugmentedWithATT[i], c)
+            })
+        },
         position () {
             const pos = Object.values(this.state.trajectories)[0].trajectory[0]
             return {
