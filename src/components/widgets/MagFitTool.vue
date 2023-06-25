@@ -521,20 +521,17 @@ export default {
             const optimizationParams = [corr.offsets.x, corr.offsets.y, corr.offsets.z, corr.scaling]
 
             const ofs = this.maxOffset
-            const minScaleDelta = 0.00001
             const bounds = [
                 [-ofs, ofs],
                 [-ofs, ofs],
                 [-ofs, ofs],
-                [this.minScale, Math.max(this.minScale + minScaleDelta, this.maxScale)]
+                [this.minScale, this.maxScale]
             ]
             console.log(bounds)
 
             console.log('optimizing')
             const result = await geneticOptimizer(this.wmmError, optimizationParams, bounds)
             console.log('Optimization result: ', result)
-            console.log('error:', this.wmmError(result))
-
             const c = Object.assign({}, this.oldCorrections)
             c.offsets = new Vector3(result[0], result[1], result[2])
             c.scaling = result[3]
