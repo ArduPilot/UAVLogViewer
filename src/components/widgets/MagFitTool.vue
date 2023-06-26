@@ -597,7 +597,9 @@ export default {
         },
         getCompassData () {
             const data = []
-            for (const message of ['RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3', 'MAG[0]', 'MAG[1]', 'MAG[2]']) {
+            for (const message of [
+                'RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3', 'MAG[0]', 'MAG[1]', 'MAG[2]', 'MAG', 'MAG2'
+            ]) {
                 if (this.state.messages[message]) {
                     data.push(this.state.messages[message])
                 } else {
