@@ -164,8 +164,8 @@ export default {
         return {
             name: 'MagFitTool',
             state: store,
-            width: 463,
-            height: 439,
+            width: 471,
+            height: 563,
             left: 432,
             top: 12,
             forceRecompute: 0,
