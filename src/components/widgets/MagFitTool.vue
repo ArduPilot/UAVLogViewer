@@ -6,11 +6,21 @@
             <div class="section">
               <h6>Location</h6>
             <table>
-              <tr>
-                <td>Lat</td><td><input type="text" disabled readonly v-model="position.lat" size="10"/></td>
+              <tr v-if="GpsPosition" >
+                <td>Lat</td><td>
+                  <input type="text" disabled readonly v-model="GpsPosition.lat" size="10"/></td>
               </tr>
-              <tr>
-                <td>Lon</td><td><input type="text" disabled readonly v-model="position.lon" size="10"/></td>
+              <tr v-if="GpsPosition" >
+                <td>Lon</td><td>
+                  <input type="text" disabled readonly v-model="GpsPosition.lon" size="10"/></td>
+              </tr>
+              <tr v-if="!GpsPosition">
+                <td>Lat</td><td>
+                  <input type="text" v-model="userLat" size="10"/></td>
+              </tr>
+              <tr v-if="!GpsPosition">
+                <td>Lon</td><td>
+                  <input type="text" v-model="userLon" size="10"/></td>
               </tr>
               <tr>
                 <td>Earth Field</td><td>{{ printEarthField }}</td>
@@ -170,7 +180,9 @@ export default {
             oldCorrections: [],
             newCorrections: [],
             processing: false,
-            fitnesses: {}
+            fitnesses: {},
+            userLat: 0,
+            userLon: 0
         }
     },
     methods: {
@@ -622,11 +634,21 @@ export default {
                 return this.wmmErrorOnce(this.compassDataAugmentedWithATT[i], c)
             })
         },
-        position () {
-            const pos = Object.values(this.state.trajectories)[0].trajectory[0]
+        GpsPosition () {
+            const pos = Object.values(this.state.trajectories)[0]?.trajectory[0] ?? null
+            if (pos === null) return null
             return {
                 lon: pos[0],
                 lat: pos[1]
+            }
+        },
+        position () {
+            return this.GpsPosition || this.userPosition
+        },
+        userPosition () {
+            return {
+                lat: this.userLat,
+                lon: this.userLon
             }
         },
         // next three come from mavextra.js
