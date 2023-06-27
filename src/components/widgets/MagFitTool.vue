@@ -450,6 +450,10 @@ export default {
                     yaw: data.yaw[i]
                 }
                 const BAT = null
+                if (ATT.roll === undefined) {
+                    console.log('skipping bad data', ATT)
+                    continue
+                }
                 const yaw = this.getYaw(ATT, MAG, corrections) // matches
                 // console.log('yaw: ', yaw)
                 const expected = this.expectedField(ATT, yaw) // matches
@@ -484,6 +488,10 @@ export default {
                     roll: data.roll[i],
                     pitch: data.pitch[i],
                     yaw: data.yaw[i]
+                }
+                if (ATT.roll === undefined) {
+                    console.log('skipping bad data', ATT)
+                    continue
                 }
                 const BAT = null
                 const yaw = this.getYaw(ATT, MAG, corr) // matches

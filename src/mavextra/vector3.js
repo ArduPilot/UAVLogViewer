@@ -35,6 +35,10 @@ class Vector3 {
     equals (v) {
         return this.x === v.x && this.y === v.y && this.z === v.z
     }
+
+    isNaN () {
+        return isNaN(this.x) || isNaN(this.y) || isNaN(this.z)
+    }
 }
 
 export { Vector3 }
