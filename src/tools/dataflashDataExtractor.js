@@ -178,11 +178,14 @@ export class DataflashDataExtractor {
                 if (cmdMsgs.Lat[i] !== 0) {
                     let lat = cmdMsgs.Lat[i]
                     let lon = cmdMsgs.Lng[[i]]
+                    const tot = cmdMsgs.CTot[i]
+                    const id = cmdMsgs.CId[i]
+                    const num = cmdMsgs.CNum[i]
                     if (Math.abs(lat) > 180) {
                         lat = lat / 10e6
                         lon = lon / 10e6
                     }
-                    wps.push([lon, lat, cmdMsgs.Alt[i]])
+                    wps.push([lon, lat, cmdMsgs.Alt[i], tot, id, num])
                 }
             }
         }

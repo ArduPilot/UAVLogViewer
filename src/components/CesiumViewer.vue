@@ -34,6 +34,7 @@ import {
     ClockRange,
     Cartesian3,
     SampledProperty,
+    LabelStyle,
     SampledPositionProperty,
     Transforms,
     PolylineDashMaterialProperty,
@@ -838,6 +839,22 @@ export default {
                             })
                         }
                     })
+                    for (const pos of points) {
+                        const position = Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + 0.3 + this.heightOffset)
+                        this.viewer.entities.add({
+                            parent: this.waypoints,
+                            position: position,
+                            label: {
+                                text: `${pos[5]}`,
+                                font: '12px sans-serif',
+                                style: LabelStyle.FILL_AND_OUTLINE,
+                                fillColor: Color.WHITE,
+                                outlineColor: Color.BLACK,
+                                showBackground: false,
+                                outlineWidth: 3
+                            }
+                        })
+                    }
                 },
 
                 plotFences (fencesList) {
