@@ -9,6 +9,15 @@
                 </tbody>
             </table>
         </div>
+        <div id="toolbar">
+            <table class="infoPanel">
+                <tbody>
+                <tr v-bind:key="index" v-for="(mode, index) in setOfModes">
+                    <td class="mode" v-bind:style="{ color: state.cssColors[index] } ">{{ mode }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
         <div id="cesiumContainer"></div>
     </div>
 </template>
@@ -156,7 +165,10 @@ export default {
             this.viewer.scene.globe.undergroundColorAlphaByDistance.farValue = 1.0
         }
 
+        this.addCenterVehicleButton()
+        this.addFitContentsButton()
         this.addCloseButton()
+
         for (const pos of this.state.currentTrajectory) {
             this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
         }
@@ -422,6 +434,58 @@ export default {
                         this.state.showMap = false
                         this.$nextTick(function () {
                             this.$eventHub.$emit('force-resize-plotly')
+                        })
+                    })
+                },
+                addFitContentsButton () {
+                    /* Creates the close button on the Cesium toolbar */
+                    const toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
+
+                    let closeButton = document.createElement('span')
+                    if (closeButton.classList) {
+                        closeButton.classList.add('cesium-navigationHelpButton-wrapper')
+                    } else {
+                        closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
+                    }
+                    closeButton.innerHTML = '' +
+                        '<button type="button" ' +
+                        'id="cesium-fit-button" ' +
+                        'class="cesium-button cesium-toolbar-button"' +
+                        'title="Re-center view">' +
+                        '<i class="fas fa-solid fa-expand" style="font-style: unset;"></i>' +
+                        '</svg>' +
+                        '</button>'.trim()
+                    toolbar.append(closeButton)
+                    closeButton = document.getElementById('cesium-fit-button')
+                    closeButton.addEventListener('click', () => {
+                        this.$nextTick(() => {
+                            this.viewer.flyTo(this.viewer.entities)
+                        })
+                    })
+                },
+                addCenterVehicleButton () {
+                    /* Creates the close button on the Cesium toolbar */
+                    const toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
+
+                    let closeButton = document.createElement('span')
+                    if (closeButton.classList) {
+                        closeButton.classList.add('cesium-navigationHelpButton-wrapper')
+                    } else {
+                        closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
+                    }
+                    closeButton.innerHTML = '' +
+                        '<button type="button" ' +
+                        'id="cesium-center-vehicle-button" ' +
+                        'class="cesium-button cesium-toolbar-button"' +
+                        'title="Center vehicle">' +
+                        '<i class="fas fa-solid fa-car" style="font-style: unset;"></i>' +
+                        '</svg>' +
+                        '</button>'.trim()
+                    toolbar.append(closeButton)
+                    closeButton = document.getElementById('cesium-center-vehicle-button')
+                    closeButton.addEventListener('click', () => {
+                        this.$nextTick(() => {
+                            this.viewer.flyTo(this.model)
                         })
                     })
                 },
