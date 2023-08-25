@@ -178,709 +178,693 @@ export default {
             this.setup2(this.correctedTrajectory)
         }
     },
+    methods: {
+        modeColorCoderLegend () {
+            const legend = []
+            for (const mode of this.setOfModes) {
+                legend.push({
+                    name: mode,
+                    color: this.state.cssColors[this.setOfModes.indexOf(mode)]
+                })
+            }
+            return legend
+        },
+        modeColorCoder (time) {
+            return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
+        },
+        createViewer (online) {
+            if (online) {
+                console.log('creating online viewer')
+                const imageryProviders = this.createAdditionalProviders()
+                return new Viewer(
+                    'cesiumContainer',
+                    {
+                        homeButton: false,
+                        timeline: true,
+                        animation: true,
+                        requestRenderMode: true,
+                        shouldAnimate: false,
+                        scene3DOnly: false,
+                        selectionIndicator: false,
+                        shadows: true,
+                        selectedImageryProviderViewModel: this.sentinelProvider,
+                        imageryProviderViewModels: imageryProviders,
+                        orderIndependentTranslucency: false,
+                        useBrowserRecommendedResolution: false
+                    }
+                )
+            }
+            console.log('creating offline viewer')
+            return new Viewer(
+                'cesiumContainer',
+                {
+                    homeButton: false,
+                    timeline: true,
+                    animation: true,
+                    requestRenderMode: true,
+                    shouldAnimate: false,
+                    scene3DOnly: false,
+                    selectionIndicator: false,
+                    shadows: true,
+                    orderIndependentTranslucency: false,
+                    baseLayerPicker: false,
+                    imageryProvider: false,
+                    geocoder: false,
+                    useBrowserRecommendedResolution: false
+                }
+            )
+        },
 
-    methods:
-            {
-                modeColorCoderLegend () {
-                    const legend = []
-                    for (const mode of this.setOfModes) {
-                        legend.push({
-                            name: mode,
-                            color: this.state.cssColors[this.setOfModes.indexOf(mode)]
+        createAdditionalProviders () {
+            /*
+            *  Creates and returns the providers for viewing the Eniro, Statkart, and OpenSeaMap map layers
+            * */
+            const imageryProviders = createDefaultImageryProviderViewModels()
+            imageryProviders.push(new ProviderViewModel({
+                name: 'StatKart',
+                iconUrl: require('../assets/statkart.jpg').default,
+                tooltip: 'Statkart aerial imagery \nhttp://statkart.no/',
+                creationFunction: function () {
+                    return new UrlTemplateImageryProvider({
+                        url: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
+                        credit: 'Map tiles by Statkart.'
+                    })
+                }
+            }))
+            imageryProviders.push(new ProviderViewModel({
+                name: 'MapTiler',
+                iconUrl: require('../assets/maptiler.png').default,
+                tooltip: 'Maptiler satellite imagery http://maptiler.com/',
+                creationFunction: function () {
+                    return new UrlTemplateImageryProvider({
+                        url: 'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=o3JREHNnXex8WSPPm2BU',
+                        minimumLevel: 0,
+                        maximumLevel: 20,
+                        credit: 'https://www.maptiler.com/copyright'
+                    })
+                }
+            })
+            )
+            // save this one so it can be referenced when creating the cesium viewer
+            this.sentinelProvider = new ProviderViewModel({
+                name: 'Sentinel 2',
+                iconUrl: '/Widgets/Images/ImageryProviders/sentinel-2.png',
+                tooltip: 'Sentinel 2 Imagery',
+                creationFunction: function () {
+                    return new IonImageryProvider({ assetId: 3954 })
+                }
+            })
+            imageryProviders.push(this.sentinelProvider)
+            imageryProviders.push(new ProviderViewModel({
+                name: 'Eniro',
+                iconUrl: require('../assets/eniro.png').default,
+                tooltip: 'Eniro aerial imagery \nhttp://map.eniro.com/',
+                creationFunction: function () {
+                    return new UrlTemplateImageryProvider({
+                        // url: 'http://map.eniro.com/geowebcache/service/tms1.0.0/map/{z}/{x}/{reverseY}.png',
+                        url: '/eniro/{z}/{x}/{reverseY}.png',
+                        credit: 'Map tiles by Eniro.'
+                    })
+                }
+            }))
+            imageryProviders.push(new ProviderViewModel({
+                name: 'OpenSeaMap',
+                iconUrl: require('../assets/openseamap.png').default,
+                tooltip: 'OpenSeaMap Nautical Maps \nhttp://openseamap.org/',
+                parameters: {
+                    transparent: 'true',
+                    format: 'image/png'
+                },
+                creationFunction: function () {
+                    return [
+                        new UrlTemplateImageryProvider({
+                            url: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            credit: 'Map tiles by OpenStreetMap.'
+                        }),
+                        new UrlTemplateImageryProvider({
+                            url: 'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
+                            credit: 'Map tiles by OpenSeaMap.'
                         })
-                    }
-                    return legend
-                },
-                modeColorCoder (time) {
-                    return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
-                },
-                createViewer (online) {
-                    if (online) {
-                        console.log('creating online viewer')
-                        const imageryProviders = this.createAdditionalProviders()
-                        return new Viewer(
-                            'cesiumContainer',
-                            {
-                                homeButton: false,
-                                timeline: true,
-                                animation: true,
-                                requestRenderMode: true,
-                                shouldAnimate: false,
-                                scene3DOnly: false,
-                                selectionIndicator: false,
-                                shadows: true,
-                                selectedImageryProviderViewModel: this.sentinelProvider,
-                                imageryProviderViewModels: imageryProviders,
-                                orderIndependentTranslucency: false,
-                                useBrowserRecommendedResolution: false
-                            }
-                        )
-                    }
-                    console.log('creating offline viewer')
-                    return new Viewer(
-                        'cesiumContainer',
-                        {
-                            homeButton: false,
-                            timeline: true,
-                            animation: true,
-                            requestRenderMode: true,
-                            shouldAnimate: false,
-                            scene3DOnly: false,
-                            selectionIndicator: false,
-                            shadows: true,
-                            orderIndependentTranslucency: false,
-                            baseLayerPicker: false,
-                            imageryProvider: false,
-                            geocoder: false,
-                            useBrowserRecommendedResolution: false
-                        }
-                    )
-                },
-
-                createAdditionalProviders () {
-                    /*
-                    *  Creates and returns the providers for viewing the Eniro, Statkart, and OpenSeaMap map layers
-                    * */
-                    const imageryProviders = createDefaultImageryProviderViewModels()
-                    imageryProviders.push(new ProviderViewModel({
-                        name: 'StatKart',
-                        iconUrl: require('../assets/statkart.jpg').default,
-                        tooltip: 'Statkart aerial imagery \nhttp://statkart.no/',
-                        creationFunction: function () {
-                            return new UrlTemplateImageryProvider({
-                                url: 'http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}',
-                                credit: 'Map tiles by Statkart.'
-                            })
-                        }
-                    }))
-                    imageryProviders.push(new ProviderViewModel({
-                        name: 'MapTiler',
-                        iconUrl: require('../assets/maptiler.png').default,
-                        tooltip: 'Maptiler satellite imagery http://maptiler.com/',
-                        creationFunction: function () {
-                            return new UrlTemplateImageryProvider({
-                                url: 'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=o3JREHNnXex8WSPPm2BU',
-                                minimumLevel: 0,
-                                maximumLevel: 20,
-                                credit: 'https://www.maptiler.com/copyright'
-                            })
-                        }
-                    })
-                    )
-                    // save this one so it can be referenced when creating the cesium viewer
-                    this.sentinelProvider = new ProviderViewModel({
-                        name: 'Sentinel 2',
-                        iconUrl: '/Widgets/Images/ImageryProviders/sentinel-2.png',
-                        tooltip: 'Sentinel 2 Imagery',
-                        creationFunction: function () {
-                            return new IonImageryProvider({ assetId: 3954 })
-                        }
-                    })
-                    imageryProviders.push(this.sentinelProvider)
-                    imageryProviders.push(new ProviderViewModel({
-                        name: 'Eniro',
-                        iconUrl: require('../assets/eniro.png').default,
-                        tooltip: 'Eniro aerial imagery \nhttp://map.eniro.com/',
-                        creationFunction: function () {
-                            return new UrlTemplateImageryProvider({
-                                // url: 'http://map.eniro.com/geowebcache/service/tms1.0.0/map/{z}/{x}/{reverseY}.png',
-                                url: '/eniro/{z}/{x}/{reverseY}.png',
-                                credit: 'Map tiles by Eniro.'
-                            })
-                        }
-                    }))
-                    imageryProviders.push(new ProviderViewModel({
-                        name: 'OpenSeaMap',
-                        iconUrl: require('../assets/openseamap.png').default,
-                        tooltip: 'OpenSeaMap Nautical Maps \nhttp://openseamap.org/',
-                        parameters: {
-                            transparent: 'true',
-                            format: 'image/png'
-                        },
-                        creationFunction: function () {
-                            return [
-                                new UrlTemplateImageryProvider({
-                                    url: 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                    credit: 'Map tiles by OpenStreetMap.'
-                                }),
-                                new UrlTemplateImageryProvider({
-                                    url: 'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
-                                    credit: 'Map tiles by OpenSeaMap.'
-                                })
-                            ]
-                        }
-                    }))
-                    return imageryProviders
-                },
-                setup2 (updatedPositions) {
-                    /*
-                    * Second step of setup, happens after the height of the starting point has been returned by Cesium
-                    * */
-                    this.state.trajectorySource = this.state.trajectorySources[0]
-                    this.loadTrajectory(this.state.trajectorySource)
-                    this.state.heightOffset = 0
-                    this.state.heightOffset = updatedPositions[0].height
-                    this.processTrajectory(this.state.currentTrajectory)
-                    this.addModel()
-                    this.updateAndPlotTrajectory()
-                    this.plotMission(this.state.mission)
-                    this.plotFences(this.state.fences)
-                    document.addEventListener('setzoom', this.onTimelineZoom)
-                    this.$eventHub.$on('rangeChanged', this.onRangeChanged)
-                    /*            if (this.$route.query.hasOwnProperty('cam')) {
-                                    let data = this.$route.query.cam.split(',')
-                                    let position = new Cartesian3(
-                                        parseFloat(data[0]),
-                                        parseFloat(data[1]),
-                                        parseFloat(data[2])
-                                    )
-                                    let direction = new Cartesian3(
-                                        parseFloat(data[3]),
-                                        parseFloat(data[4]),
-                                        parseFloat(data[5])
-                                    )
-                                    let up = new Cartesian3(
-                                        parseFloat(data[6]),
-                                        parseFloat(data[7]),
-                                        parseFloat(data[8])
-                                    )
-                                    this.state.cameraType = data[9]
-                                    this.changeCamera()
-                                    console.log('setting camera to ' + position + ' ' + direction)
-                                    this.viewer.camera.up = up
-                                    this.viewer.camera.position = position
-                                    this.viewer.camera.direction = direction
-                                } */
-                    // TODO: Find a better way to know that cesium finished loading
-                    setTimeout(() => { this.state.mapLoading = false }, 2000)
-                    this.state.cameraType = 'follow'
-                    this.changeCamera()
-                    setTimeout(this.updateTimelineColors, 500)
-                    setInterval(this.updateGlobeOpacity, 1000)
-                },
-                waitForMessages (messages) {
+                    ]
+                }
+            }))
+            return imageryProviders
+        },
+        setup2 (updatedPositions) {
+            /*
+            * Second step of setup, happens after the height of the starting point has been returned by Cesium
+            * */
+            this.state.trajectorySource = this.state.trajectorySources[0]
+            this.loadTrajectory(this.state.trajectorySource)
+            this.state.heightOffset = 0
+            this.state.heightOffset = updatedPositions[0].height
+            this.processTrajectory(this.state.currentTrajectory)
+            this.addModel()
+            this.updateAndPlotTrajectory()
+            this.plotMission(this.state.mission)
+            this.plotFences(this.state.fences)
+            document.addEventListener('setzoom', this.onTimelineZoom)
+            this.$eventHub.$on('rangeChanged', this.onRangeChanged)
+            /*            if (this.$route.query.hasOwnProperty('cam')) {
+                            let data = this.$route.query.cam.split(',')
+                            let position = new Cartesian3(
+                                parseFloat(data[0]),
+                                parseFloat(data[1]),
+                                parseFloat(data[2])
+                            )
+                            let direction = new Cartesian3(
+                                parseFloat(data[3]),
+                                parseFloat(data[4]),
+                                parseFloat(data[5])
+                            )
+                            let up = new Cartesian3(
+                                parseFloat(data[6]),
+                                parseFloat(data[7]),
+                                parseFloat(data[8])
+                            )
+                            this.state.cameraType = data[9]
+                            this.changeCamera()
+                            console.log('setting camera to ' + position + ' ' + direction)
+                            this.viewer.camera.up = up
+                            this.viewer.camera.position = position
+                            this.viewer.camera.direction = direction
+                        } */
+            // TODO: Find a better way to know that cesium finished loading
+            setTimeout(() => { this.state.mapLoading = false }, 2000)
+            this.state.cameraType = 'follow'
+            this.changeCamera()
+            setTimeout(this.updateTimelineColors, 500)
+            setInterval(this.updateGlobeOpacity, 1000)
+        },
+        waitForMessages (messages) {
+            for (const message of messages) {
+                this.$eventHub.$emit('loadType', message)
+            }
+            let interval
+            const _this = this
+            let counter = 0
+            return new Promise((resolve, reject) => {
+                interval = setInterval(function () {
                     for (const message of messages) {
-                        this.$eventHub.$emit('loadType', message)
-                    }
-                    let interval
-                    const _this = this
-                    let counter = 0
-                    return new Promise((resolve, reject) => {
-                        interval = setInterval(function () {
-                            for (const message of messages) {
-                                if (!_this.state.messages[message]) {
-                                    counter += 1
-                                    if (counter > 30) { // 30 * 300ms = 9 s timeout
-                                        console.log('not resolving')
-                                        clearInterval(interval)
-                                        reject(new Error(`Could not load messageType ${message}`))
-                                    }
-                                    return
-                                }
+                        if (!_this.state.messages[message]) {
+                            counter += 1
+                            if (counter > 30) { // 30 * 300ms = 9 s timeout
+                                console.log('not resolving')
+                                clearInterval(interval)
+                                reject(new Error(`Could not load messageType ${message}`))
                             }
-                            clearInterval(interval)
-                            resolve()
-                        }, 300)
-                    })
-                },
-                updateGlobeOpacity () {
-                    /*
-                    Makes the Globe transparent when the vehicle is underground/underwater. Called every 1 second
-                    */
-                    if (!this.viewer.clock.currentTime) {
-                        console.log('no time')
-                        return
-                    }
-                    const cartesian = this.model.position.getValue(
-                        this.viewer.clock.currentTime
-                    )
-                    if (!cartesian) {
-                        return
-                    }
-                    const position = Cartographic.fromCartesian(cartesian)
-                    const height = position.height
-
-                    const update = function (updatedPositions) {
-                        const altitude = height - updatedPositions[0].height
-                        const globe = this.viewer.scene.globe
-                        if (altitude < 0) {
-                            globe.showGroundAtmosphere = true
-                            globe.translucency.enabled = true
-                        } else {
-                            globe.translucency.enabled = false
+                            return
                         }
-                    }.bind(this)
-
-                    if (this.state.vehicle === 'boat') {
-                        update([position])
-                        console.log('skipping sample')
-                    } else {
-                        const promise = sampleTerrainMostDetailed(this.viewer.terrainProvider,
-                            [position])
-                        promise.then(update)
                     }
-                },
-                addCloseButton () {
-                    /* Creates the close button on the Cesium toolbar */
-                    const toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
+                    clearInterval(interval)
+                    resolve()
+                }, 300)
+            })
+        },
+        updateGlobeOpacity () {
+            /*
+            Makes the Globe transparent when the vehicle is underground/underwater. Called every 1 second
+            */
+            if (!this.viewer.clock.currentTime) {
+                console.log('no time')
+                return
+            }
+            const cartesian = this.model.position.getValue(
+                this.viewer.clock.currentTime
+            )
+            if (!cartesian) {
+                return
+            }
+            const position = Cartographic.fromCartesian(cartesian)
+            const height = position.height
 
-                    let closeButton = document.createElement('span')
-                    if (closeButton.classList) {
-                        closeButton.classList.add('cesium-navigationHelpButton-wrapper')
-                    } else {
-                        closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
-                    }
-                    closeButton.innerHTML = '' +
-                        '<button type="button" ' +
-                        'id="cesium-close-button" ' +
-                        'class="cesium-button cesium-toolbar-button cesium-close-button" ' +
-                        'title="Close 3D view">' +
-                        '<svg viewbox="0 0 40 40">' +
-                        '<path class="close-x" d="M 10,10 L 30,30 M 30,10 L 10,30" />' +
-                        '</svg>' +
-                        '</button>'.trim()
-                    toolbar.append(closeButton)
-                    closeButton = document.getElementById('cesium-close-button')
-                    closeButton.addEventListener('click', () => {
-                        this.state.showMap = false
-                        this.$nextTick(function () {
-                            this.$eventHub.$emit('force-resize-plotly')
-                        })
-                    })
-                },
-                addFitContentsButton () {
-                    /* Creates the close button on the Cesium toolbar */
-                    const toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
+            const update = function (updatedPositions) {
+                const altitude = height - updatedPositions[0].height
+                const globe = this.viewer.scene.globe
+                if (altitude < 0) {
+                    globe.showGroundAtmosphere = true
+                    globe.translucency.enabled = true
+                } else {
+                    globe.translucency.enabled = false
+                }
+            }.bind(this)
 
-                    let closeButton = document.createElement('span')
-                    if (closeButton.classList) {
-                        closeButton.classList.add('cesium-navigationHelpButton-wrapper')
-                    } else {
-                        closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
-                    }
-                    closeButton.innerHTML = '' +
-                        '<button type="button" ' +
-                        'id="cesium-fit-button" ' +
-                        'class="cesium-button cesium-toolbar-button"' +
-                        'title="Re-center view">' +
-                        '<i class="fas fa-solid fa-expand" style="font-style: unset;"></i>' +
-                        '</svg>' +
-                        '</button>'.trim()
-                    toolbar.append(closeButton)
-                    closeButton = document.getElementById('cesium-fit-button')
-                    closeButton.addEventListener('click', () => {
-                        this.$nextTick(() => {
-                            this.viewer.flyTo(this.viewer.entities)
-                        })
-                    })
-                },
-                addCenterVehicleButton () {
-                    /* Creates the close button on the Cesium toolbar */
-                    const toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
+            if (this.state.vehicle === 'boat') {
+                update([position])
+                console.log('skipping sample')
+            } else {
+                const promise = sampleTerrainMostDetailed(this.viewer.terrainProvider,
+                    [position])
+                promise.then(update)
+            }
+        },
+        addCloseButton () {
+            /* Creates the close button on the Cesium toolbar */
+            const toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
 
-                    let closeButton = document.createElement('span')
-                    if (closeButton.classList) {
-                        closeButton.classList.add('cesium-navigationHelpButton-wrapper')
-                    } else {
-                        closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
-                    }
-                    closeButton.innerHTML = '' +
-                        '<button type="button" ' +
-                        'id="cesium-center-vehicle-button" ' +
-                        'class="cesium-button cesium-toolbar-button"' +
-                        'title="Center vehicle">' +
-                        '<i class="fas fa-solid fa-car" style="font-style: unset;"></i>' +
-                        '</svg>' +
-                        '</button>'.trim()
-                    toolbar.append(closeButton)
-                    closeButton = document.getElementById('cesium-center-vehicle-button')
-                    closeButton.addEventListener('click', () => {
-                        this.$nextTick(() => {
-                            this.viewer.flyTo(this.model)
-                        })
-                    })
-                },
-                onCameraUpdate () {
-                    const query = Object.create(this.$route.query) // clone it
-                    const cam = this.viewer.camera
-                    query.cam = [
-                        cam.position.x.toFixed(2),
-                        cam.position.y.toFixed(2),
-                        cam.position.z.toFixed(2),
-                        cam.direction.x.toFixed(2),
-                        cam.direction.y.toFixed(2),
-                        cam.direction.z.toFixed(2),
-                        cam.up.x.toFixed(2),
-                        cam.up.y.toFixed(2),
-                        cam.up.z.toFixed(2),
-                        this.cameraType].join(',')
-                    this.$router.push({ query: query })
-                },
+            let closeButton = document.createElement('span')
+            if (closeButton.classList) {
+                closeButton.classList.add('cesium-navigationHelpButton-wrapper')
+            } else {
+                closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
+            }
+            closeButton.innerHTML = '' +
+                '<button type="button" ' +
+                'id="cesium-close-button" ' +
+                'class="cesium-button cesium-toolbar-button cesium-close-button" ' +
+                'title="Close 3D view">' +
+                '<svg viewbox="0 0 40 40">' +
+                '<path class="close-x" d="M 10,10 L 30,30 M 30,10 L 10,30" />' +
+                '</svg>' +
+                '</button>'.trim()
+            toolbar.append(closeButton)
+            closeButton = document.getElementById('cesium-close-button')
+            closeButton.addEventListener('click', () => {
+                this.state.showMap = false
+                this.$nextTick(function () {
+                    this.$eventHub.$emit('force-resize-plotly')
+                })
+            })
+        },
+        addFitContentsButton () {
+            /* Creates the close button on the Cesium toolbar */
+            const toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
 
-                getTimeStart () {
-                    let date = null
+            let closeButton = document.createElement('span')
+            if (closeButton.classList) {
+                closeButton.classList.add('cesium-navigationHelpButton-wrapper')
+            } else {
+                closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
+            }
+            closeButton.innerHTML = '' +
+                '<button type="button" ' +
+                'id="cesium-fit-button" ' +
+                'class="cesium-button cesium-toolbar-button"' +
+                'title="Re-center view">' +
+                '<i class="fas fa-solid fa-expand" style="font-style: unset;"></i>' +
+                '</svg>' +
+                '</button>'.trim()
+            toolbar.append(closeButton)
+            closeButton = document.getElementById('cesium-fit-button')
+            closeButton.addEventListener('click', () => {
+                this.$nextTick(() => {
+                    this.viewer.flyTo(this.viewer.entities)
+                })
+            })
+        },
+        addCenterVehicleButton () {
+            /* Creates the close button on the Cesium toolbar */
+            const toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
+
+            let closeButton = document.createElement('span')
+            if (closeButton.classList) {
+                closeButton.classList.add('cesium-navigationHelpButton-wrapper')
+            } else {
+                closeButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
+            }
+            closeButton.innerHTML = '' +
+                '<button type="button" ' +
+                'id="cesium-center-vehicle-button" ' +
+                'class="cesium-button cesium-toolbar-button"' +
+                'title="Center vehicle">' +
+                '<i class="fas fa-solid fa-car" style="font-style: unset;"></i>' +
+                '</svg>' +
+                '</button>'.trim()
+            toolbar.append(closeButton)
+            closeButton = document.getElementById('cesium-center-vehicle-button')
+            closeButton.addEventListener('click', () => {
+                this.$nextTick(() => {
+                    this.viewer.flyTo(this.model)
+                })
+            })
+        },
+        onCameraUpdate () {
+            const query = Object.create(this.$route.query) // clone it
+            const cam = this.viewer.camera
+            query.cam = [
+                cam.position.x.toFixed(2),
+                cam.position.y.toFixed(2),
+                cam.position.z.toFixed(2),
+                cam.direction.x.toFixed(2),
+                cam.direction.y.toFixed(2),
+                cam.direction.z.toFixed(2),
+                cam.up.x.toFixed(2),
+                cam.up.y.toFixed(2),
+                cam.up.z.toFixed(2),
+                this.cameraType].join(',')
+            this.$router.push({ query: query })
+        },
+
+        getTimeStart () {
+            let date = null
+            try {
+                date = JulianDate.fromDate(this.state.metadata.startTime)
+            } catch (e) {
+                console.log(e)
+                date = JulianDate.fromDate(new Date(2015, 2, 25, 16))
+            }
+            return date
+        },
+
+        mouseIsOnPoint (point) {
+            // Checks if there is a trajectory point under the coordinate "point"
+            const pickedObjects = this.viewer.scene.drillPick(point)
+            if (defined(pickedObjects)) {
+                // tries to read the time of each entioty under the mouse, returns once one is found.
+                for (const entity of pickedObjects) {
                     try {
-                        date = JulianDate.fromDate(this.state.metadata.startTime)
+                        const time = entity.id.time
+                        if (time !== undefined) {
+                            this.lastHoveredTime = time
+                            return true
+                        }
+                        return
                     } catch (e) {
-                        console.log(e)
-                        date = JulianDate.fromDate(new Date(2015, 2, 25, 16))
                     }
-                    return date
-                },
+                }
+            }
+            return false
+        },
+        changeCamera () {
+            if (this.cameraType === 'follow' && this.viewer.trackedEntity !== this.model) {
+                this.viewer.trackedEntity = this.model
+            } else {
+                this.viewer.trackedEntity = undefined
+            }
+        },
+        onAnimationChange (isAnimating) {
+            this.$eventHub.$emit('animation-changed', isAnimating)
+        },
+        // onRangeChanged (event) {
+        //     this.viewer.timeline.zoomTo(this.msToCesiumTime(event[0]), this.msToCesiumTime(event[1]))
+        // },
+        updateTimelineColors () {
+            const start = this.cesiumTimeToMs(this.viewer.timeline._startJulian)
+            const end = this.cesiumTimeToMs(this.viewer.timeline._endJulian)
 
-                mouseIsOnPoint (point) {
-                    // Checks if there is a trajectory point under the coordinate "point"
-                    const pickedObjects = this.viewer.scene.drillPick(point)
-                    if (defined(pickedObjects)) {
-                        // tries to read the time of each entioty under the mouse, returns once one is found.
-                        for (const entity of pickedObjects) {
-                            try {
-                                const time = entity.id.time
-                                if (time !== undefined) {
-                                    this.lastHoveredTime = time
-                                    return true
-                                }
-                                return
-                            } catch (e) {
-                            }
-                        }
-                    }
-                    return false
-                },
-                changeCamera () {
-                    if (this.cameraType === 'follow' && this.viewer.trackedEntity !== this.model) {
-                        this.viewer.trackedEntity = this.model
-                    } else {
-                        this.viewer.trackedEntity = undefined
-                    }
-                },
-                onAnimationChange (isAnimating) {
-                    this.$eventHub.$emit('animation-changed', isAnimating)
-                },
-                // onRangeChanged (event) {
-                //     this.viewer.timeline.zoomTo(this.msToCesiumTime(event[0]), this.msToCesiumTime(event[1]))
-                // },
-                updateTimelineColors () {
-                    const start = this.cesiumTimeToMs(this.viewer.timeline._startJulian)
-                    const end = this.cesiumTimeToMs(this.viewer.timeline._endJulian)
+            const timeline = document.getElementsByClassName('cesium-timeline-bar')[0]
+            let colors = []
+            let previousColor = null
+            for (const change of this.state.flightModeChanges) {
+                if (change[0] < start || previousColor === null) {
+                    previousColor = this.getModeColor(change[0])
+                    colors = [[0, previousColor]]
+                }
+                if ((change[0] > start) && change[0] < end) {
+                    const percentage = (change[0] - start) * 100 / (end - start)
+                    colors.push([percentage - 0.001, previousColor])
+                    colors.push([percentage, this.getModeColor(change[0])])
+                    previousColor = this.getModeColor(change[0])
+                }
+            }
+            colors.push([100, previousColor])
 
-                    const timeline = document.getElementsByClassName('cesium-timeline-bar')[0]
-                    let colors = []
-                    let previousColor = null
-                    for (const change of this.state.flightModeChanges) {
-                        if (change[0] < start || previousColor === null) {
-                            previousColor = this.getModeColor(change[0])
-                            colors = [[0, previousColor]]
-                        }
-                        if ((change[0] > start) && change[0] < end) {
-                            const percentage = (change[0] - start) * 100 / (end - start)
-                            colors.push([percentage - 0.001, previousColor])
-                            colors.push([percentage, this.getModeColor(change[0])])
-                            previousColor = this.getModeColor(change[0])
-                        }
-                    }
-                    colors.push([100, previousColor])
+            let string = 'linear-gradient(to right'
+            if (colors.length > 1) {
+                for (const change of colors) {
+                    string = string + ', rgba(' + change[1].red * 150 + ',' + change[1].green * 150 + ',' +
+                        change[1].blue * 150 + ', 100) ' + change[0] + '%'
+                }
 
-                    let string = 'linear-gradient(to right'
-                    if (colors.length > 1) {
-                        for (const change of colors) {
-                            string = string + ', rgba(' + change[1].red * 150 + ',' + change[1].green * 150 + ',' +
-                                change[1].blue * 150 + ', 100) ' + change[0] + '%'
-                        }
+                string = string + ')'
+                timeline.style.background = string
+            }
+        },
+        onTimelineZoom (event) {
+            this.timelineStart = event.startJulian
+            this.timelineStop = event.endJulian
 
-                        string = string + ')'
-                        timeline.style.background = string
-                    }
-                },
-                onTimelineZoom (event) {
-                    this.timelineStart = event.startJulian
-                    this.timelineStop = event.endJulian
+            const start = this.cesiumTimeToMs(event.startJulian)
+            const end = this.cesiumTimeToMs(event.endJulian)
+            this.state.timeRange = [start, end]
+            this.updateTimelineColors()
 
-                    const start = this.cesiumTimeToMs(event.startJulian)
-                    const end = this.cesiumTimeToMs(event.endJulian)
-                    this.state.timeRange = [start, end]
-                    this.updateTimelineColors()
+            if (this.trajectoryUpdateTimeout !== null) {
+                clearTimeout(this.trajectoryUpdateTimeout)
+            }
+            setTimeout(this.updateAndPlotTrajectory, 500)
+        },
 
-                    if (this.trajectoryUpdateTimeout !== null) {
-                        clearTimeout(this.trajectoryUpdateTimeout)
-                    }
-                    setTimeout(this.updateAndPlotTrajectory, 500)
-                },
+        onLeftDown (movement) {
+            if (this.mouseIsOnPoint(movement.position)) {
+                this.isDragging = true
+                this.viewer.scene.screenSpaceCameraController.enableInputs = false
+            }
+        },
 
-                onLeftDown (movement) {
-                    if (this.mouseIsOnPoint(movement.position)) {
-                        this.isDragging = true
-                        this.viewer.scene.screenSpaceCameraController.enableInputs = false
-                    }
-                },
+        onLeftUp (movement) {
+            this.isDragging = false
+            this.viewer.container.style.cursor = 'default'
+            this.viewer.scene.screenSpaceCameraController.enableInputs = true
+        },
 
-                onLeftUp (movement) {
-                    this.isDragging = false
-                    this.viewer.container.style.cursor = 'default'
-                    this.viewer.scene.screenSpaceCameraController.enableInputs = true
-                },
+        onClick (movement) {
+            if (this.mouseIsOnPoint(movement.position)) {
+                this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
+                this.viewer.clock.currentTime =
+                    JulianDate.addSeconds(
+                        this.getTimeStart(),
+                        (this.lastHoveredTime - this.startTimeMs) / 1000,
+                        new JulianDate())
+            }
+            this.onLeftUp()
+        },
 
-                onClick (movement) {
-                    if (this.mouseIsOnPoint(movement.position)) {
+        onMove (movement) {
+            if (this.showClickableTrajectory) {
+                if (this.isDragging) {
+                    if (this.mouseIsOnPoint(movement.endPosition)) {
                         this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
                         this.viewer.clock.currentTime =
                             JulianDate.addSeconds(
                                 this.getTimeStart(),
                                 (this.lastHoveredTime - this.startTimeMs) / 1000,
-                                new JulianDate())
-                    }
-                    this.onLeftUp()
-                },
-
-                onMove (movement) {
-                    if (this.showClickableTrajectory) {
-                        if (this.isDragging) {
-                            if (this.mouseIsOnPoint(movement.endPosition)) {
-                                this.$eventHub.$emit('cesium-time-changed', this.lastHoveredTime)
-                                this.viewer.clock.currentTime =
-                                    JulianDate.addSeconds(
-                                        this.getTimeStart(),
-                                        (this.lastHoveredTime - this.startTimeMs) / 1000,
-                                        new JulianDate()
-                                    )
-                            }
-                        } else {
-                            if (this.mouseIsOnPoint(movement.endPosition)) {
-                                this.viewer.container.style.cursor = 'pointer'
-                            } else {
-                                this.viewer.container.style.cursor = 'default'
-                            }
-                        }
-                    }
-                },
-
-                onFrameUpdate () {
-                    // emits in "boot_time_ms" units.
-                    let current = (this.viewer.clock.currentTime.secondsOfDay)
-                    current = current > this.viewer.clock.startTime.secondsOfDay ? current : current + 86400
-                    const newFrameTime = (current - this.viewer.clock.startTime.secondsOfDay) * 1000 + this.startTimeMs
-                    if (newFrameTime === this.lastEmitted) {
-                        // False alarm.
-                        return
-                    }
-                    this.lastEmitted = newFrameTime
-                    this.$eventHub.$emit(
-                        'cesium-time-changed',
-                        newFrameTime
-                    )
-                    if (this.viewer.clock.currentTime < this.timelineStart ||
-                        this.viewer.clock.currentTime > this.timelineStop) {
-                        this.viewer.clock.currentTime = this.timelineStart.clone()
-                    }
-                },
-
-                cesiumTimeToMs (time) {
-                    let result = (time.secondsOfDay - this.start.secondsOfDay)
-                    if (result < 0) {
-                        result += 86400
-                    }
-                    return this.startTimeMs + result * 1000
-                },
-
-                msToCesiumTime (ms) {
-                    return JulianDate.addSeconds(this.start, (ms - this.startTimeMs) / 1000, new JulianDate())
-                },
-
-                showAttitude (time) {
-                    this.viewer.scene.requestRender()
-                    this.viewer.clock.currentTime = this.msToCesiumTime(time)
-                },
-
-                processTrajectory () {
-                    this.correctedTrajectory = []
-                    this.points = this.state.trajectories[this.state.trajectorySource].trajectory
-                    for (const pos of this.points) {
-                        this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
-                    }
-                    // process time_boot_ms into cesium time
-                    this.startTimeMs = getMinTime(this.points)
-                    const timespan = getMaxTime(this.points) - this.startTimeMs
-                    this.state.timeRange = [this.startTimeMs, this.startTimeMs + timespan]
-                    const viewer = this.viewer
-                    this.start = this.getTimeStart()
-                    this.stop = JulianDate.addSeconds(this.start, Math.round(timespan / 1000), new JulianDate())
-                    // Make sure viewer is at the desired time.
-                    viewer.clock.startTime = this.start.clone()
-                    this.timelineStart = this.start
-                    this.timelineStop = this.stop
-                    viewer.clock.stopTime = this.stop.clone()
-                    viewer.clock.clockRange = ClockRange.LOOP_STOP
-                    viewer.clock.multiplier = 1
-                    // Set timeline to simulation bounds
-                    viewer.timeline.zoomTo(this.start, this.stop)
-                    let position
-                    this.positions = []
-                    this.sampledPos = new SampledPositionProperty()
-
-                    // clean entities
-                    if (this.clickableTrajectory !== null) {
-                        this.clickableTrajectory.removeAll()
-                    }
-                    // Create sampled position
-                    const isBoat = this.state.vehicle === 'boat'
-                    for (const posIndex in this.points) {
-                        const pos = this.points[posIndex]
-                        if (isBoat) {
-                            position = Cartesian3.fromDegrees(pos[0], pos[1], 0)
-                        } else {
-                            position = Cartesian3.fromDegrees(
-                                pos[0],
-                                pos[1],
-                                pos[2] + this.heightOffset
+                                new JulianDate()
                             )
-                        }
-                        this.positions.push(position)
-                        const time = JulianDate.addSeconds(
-                            this.start,
-                            (pos[3] - this.startTimeMs) / 1000, new JulianDate())
-
-                        this.sampledPos.addSample(time, position)
-                        // this.clickableTrajectory.add({
-                        //     position: position,
-                        //     pixelSize: 10,
-                        //     show: false,
-                        //     color: this.getModeColor(pos[3]),
-                        //     id: {time: pos[3]}
-                        // })
-                        if (this.model !== null) {
-                            this.model.position = this.sampledPos
-                        }
                     }
-                },
-                addModel () {
-                    if (this.model !== null) {
-                        this.viewer.entities.remove(this.model)
-                    }
-                    const points = this.points
-                    // Create sampled aircraft orientation
-                    const position = Cartesian3.fromDegrees(
-                        points[0][0], points[0][1], points[0][2] + this.heightOffset
-                    )
-                    let fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'west')
-                    const sampledOrientation = new SampledProperty(Quaternion)
-                    if (Object.keys(this.state.timeAttitudeQ).length > 0) {
-                        fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'east')
-                        for (const atti in this.state.timeAttitudeQ) {
-                            if (this.state.timeAttitudeQ.atti) {
-                                const att = this.state.timeAttitudeQ[atti]
-
-                                const q1 = att[0]
-                                const q2 = att[1]
-                                const q3 = att[2]
-                                const q4 = att[3]
-
-                                const roll = Math.atan2(2.0 * (q1 * q2 + q3 * q4), 1.0 - 2.0 * (q2 * q2 + q3 * q3))
-                                let pitch = Math.asin(2.0 * (q1 * q3 - q4 * q2))
-                                if (isNaN(pitch)) {
-                                    pitch = 0
-                                }
-                                const yaw = Math.atan2(2.0 * (q1 * q4 + q2 * q3), 1.0 - 2.0 * (q3 * q3 + q4 * q4))
-                                // TODO: fix this coordinate system!
-                                const hpRoll = Transforms.headingPitchRollQuaternion(
-                                    position,
-                                    new HeadingPitchRoll(-yaw, -pitch, roll - 3.14),
-                                    Ellipsoid.WGS84,
-                                    fixedFrameTransform
-                                )
-
-                                const time = JulianDate.addSeconds(
-                                    this.start, (atti - this.startTimeMs) / 1000,
-                                    new JulianDate())
-
-                                sampledOrientation.addSample(time, hpRoll)
-                            }
-                        }
+                } else {
+                    if (this.mouseIsOnPoint(movement.endPosition)) {
+                        this.viewer.container.style.cursor = 'pointer'
                     } else {
-                        for (const atti in this.state.timeAttitude) {
-                            if (this.state.timeAttitude[atti]) {
-                                const att = this.state.timeAttitude[atti]
-                                const hpRoll = Transforms.headingPitchRollQuaternion(
-                                    position,
-                                    new HeadingPitchRoll(att[2], att[1], att[0]),
-                                    Ellipsoid.WGS84,
-                                    fixedFrameTransform
-                                )
+                        this.viewer.container.style.cursor = 'default'
+                    }
+                }
+            }
+        },
 
-                                const time = JulianDate.addSeconds(
-                                    this.start, (atti - this.startTimeMs) / 1000,
-                                    new JulianDate()
-                                )
-                                sampledOrientation.addSample(time, hpRoll)
-                            }
+        onFrameUpdate () {
+            // emits in "boot_time_ms" units.
+            let current = (this.viewer.clock.currentTime.secondsOfDay)
+            current = current > this.viewer.clock.startTime.secondsOfDay ? current : current + 86400
+            const newFrameTime = (current - this.viewer.clock.startTime.secondsOfDay) * 1000 + this.startTimeMs
+            if (newFrameTime === this.lastEmitted) {
+                // False alarm.
+                return
+            }
+            this.lastEmitted = newFrameTime
+            this.$eventHub.$emit(
+                'cesium-time-changed',
+                newFrameTime
+            )
+            if (this.viewer.clock.currentTime < this.timelineStart ||
+                this.viewer.clock.currentTime > this.timelineStop) {
+                this.viewer.clock.currentTime = this.timelineStart.clone()
+            }
+        },
+
+        cesiumTimeToMs (time) {
+            let result = (time.secondsOfDay - this.start.secondsOfDay)
+            if (result < 0) {
+                result += 86400
+            }
+            return this.startTimeMs + result * 1000
+        },
+
+        msToCesiumTime (ms) {
+            return JulianDate.addSeconds(this.start, (ms - this.startTimeMs) / 1000, new JulianDate())
+        },
+
+        showAttitude (time) {
+            this.viewer.scene.requestRender()
+            this.viewer.clock.currentTime = this.msToCesiumTime(time)
+        },
+
+        processTrajectory () {
+            this.correctedTrajectory = []
+            this.points = this.state.trajectories[this.state.trajectorySource].trajectory
+            for (const pos of this.points) {
+                this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
+            }
+            // process time_boot_ms into cesium time
+            this.startTimeMs = getMinTime(this.points)
+            const timespan = getMaxTime(this.points) - this.startTimeMs
+            this.state.timeRange = [this.startTimeMs, this.startTimeMs + timespan]
+            const viewer = this.viewer
+            this.start = this.getTimeStart()
+            this.stop = JulianDate.addSeconds(this.start, Math.round(timespan / 1000), new JulianDate())
+            // Make sure viewer is at the desired time.
+            viewer.clock.startTime = this.start.clone()
+            this.timelineStart = this.start
+            this.timelineStop = this.stop
+            viewer.clock.stopTime = this.stop.clone()
+            viewer.clock.clockRange = ClockRange.LOOP_STOP
+            viewer.clock.multiplier = 1
+            // Set timeline to simulation bounds
+            viewer.timeline.zoomTo(this.start, this.stop)
+            let position
+            this.positions = []
+            this.sampledPos = new SampledPositionProperty()
+
+            // clean entities
+            if (this.clickableTrajectory !== null) {
+                this.clickableTrajectory.removeAll()
+            }
+            // Create sampled position
+            const isBoat = this.state.vehicle === 'boat'
+            for (const posIndex in this.points) {
+                const pos = this.points[posIndex]
+                if (isBoat) {
+                    position = Cartesian3.fromDegrees(pos[0], pos[1], 0)
+                } else {
+                    position = Cartesian3.fromDegrees(
+                        pos[0],
+                        pos[1],
+                        pos[2] + this.heightOffset
+                    )
+                }
+                this.positions.push(position)
+                const time = JulianDate.addSeconds(
+                    this.start,
+                    (pos[3] - this.startTimeMs) / 1000, new JulianDate())
+
+                this.sampledPos.addSample(time, position)
+                // this.clickableTrajectory.add({
+                //     position: position,
+                //     pixelSize: 10,
+                //     show: false,
+                //     color: this.getModeColor(pos[3]),
+                //     id: {time: pos[3]}
+                // })
+                if (this.model !== null) {
+                    this.model.position = this.sampledPos
+                }
+            }
+        },
+        addModel () {
+            if (this.model !== null) {
+                this.viewer.entities.remove(this.model)
+            }
+            const points = this.points
+            // Create sampled aircraft orientation
+            const position = Cartesian3.fromDegrees(
+                points[0][0], points[0][1], points[0][2] + this.heightOffset
+            )
+            let fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'west')
+            const sampledOrientation = new SampledProperty(Quaternion)
+            if (Object.keys(this.state.timeAttitudeQ).length > 0) {
+                fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'east')
+                for (const atti in this.state.timeAttitudeQ) {
+                    if (this.state.timeAttitudeQ.atti) {
+                        const att = this.state.timeAttitudeQ[atti]
+
+                        const q1 = att[0]
+                        const q2 = att[1]
+                        const q3 = att[2]
+                        const q4 = att[3]
+
+                        const roll = Math.atan2(2.0 * (q1 * q2 + q3 * q4), 1.0 - 2.0 * (q2 * q2 + q3 * q3))
+                        let pitch = Math.asin(2.0 * (q1 * q3 - q4 * q2))
+                        if (isNaN(pitch)) {
+                            pitch = 0
                         }
-                    }
-
-                    // Add airplane model with interpolated position and orientation
-                    this.model = this.viewer.entities.add({
-                        availability: new TimeIntervalCollection([new TimeInterval({
-                            start: this.start,
-                            stop: this.stop
-                        })]),
-                        position: this.sampledPos,
-                        orientation: sampledOrientation,
-                        model: {
-                            uri: this.getVehicleModel(),
-                            minimumPixelSize: 15,
-                            scale: this.modelScale / 10
-                        },
-                        viewFrom: new Cartesian3(5, 0, 3)
-                    })
-                    this.changeCamera()
-                    if (this.state.vehicle === 'boat') {
-                        setTimeout(() => {
-                            this.viewer.flyTo(this.model, { offset: new HeadingPitchRange(0, -0.5, 100) })
-                        }, 3000)
-                    }
-                },
-                updateAndPlotTrajectory () {
-                    const oldEntities = this.trajectory._children.slice()
-
-                    // Add polyline representing the path under the points
-                    const startTime = this.cesiumTimeToMs(this.timelineStart)
-                    const endTime = this.cesiumTimeToMs(this.timelineStop)
-                    let oldColor = this.getModeColor(this.points[0][3])
-                    let trajectory = []
-
-                    let first = 0
-                    let last = this.points.length
-
-                    for (const i in this.points) {
-                        if (this.points[i][3] < startTime) {
-                            first = i
-                        } else if (this.points[i][3] < endTime) {
-                            last = i
-                        }
-                    }
-
-                    for (const pos of this.points.slice(first, last)) {
-                        this.position = Cartesian3.fromDegrees(
-                            pos[0],
-                            pos[1],
-                            pos[2] + this.heightOffset
+                        const yaw = Math.atan2(2.0 * (q1 * q4 + q2 * q3), 1.0 - 2.0 * (q3 * q3 + q4 * q4))
+                        // TODO: fix this coordinate system!
+                        const hpRoll = Transforms.headingPitchRollQuaternion(
+                            position,
+                            new HeadingPitchRoll(-yaw, -pitch, roll - 3.14),
+                            Ellipsoid.WGS84,
+                            fixedFrameTransform
                         )
-                        trajectory.push(this.position)
-                        const color = this.getModeColor(pos[3])
 
-                        if (color !== oldColor) {
-                            this.viewer.entities.add({
-                                parent: this.trajectory,
-                                polyline: {
-                                    positions: trajectory,
-                                    width: 1,
-                                    material: oldColor,
-                                    clampToGround: this.state.vehicle === 'boat',
-                                    zIndex: 2
-                                }
-                            })
-                            oldColor = color
-                            trajectory = [this.position]
-                        }
+                        const time = JulianDate.addSeconds(
+                            this.start, (atti - this.startTimeMs) / 1000,
+                            new JulianDate())
+
+                        sampledOrientation.addSample(time, hpRoll)
                     }
+                }
+            } else {
+                for (const atti in this.state.timeAttitude) {
+                    if (this.state.timeAttitude[atti]) {
+                        const att = this.state.timeAttitude[atti]
+                        const hpRoll = Transforms.headingPitchRollQuaternion(
+                            position,
+                            new HeadingPitchRoll(att[2], att[1], att[0]),
+                            Ellipsoid.WGS84,
+                            fixedFrameTransform
+                        )
+
+                        const time = JulianDate.addSeconds(
+                            this.start, (atti - this.startTimeMs) / 1000,
+                            new JulianDate()
+                        )
+                        sampledOrientation.addSample(time, hpRoll)
+                    }
+                }
+            }
+
+            // Add airplane model with interpolated position and orientation
+            this.model = this.viewer.entities.add({
+                availability: new TimeIntervalCollection([new TimeInterval({
+                    start: this.start,
+                    stop: this.stop
+                })]),
+                position: this.sampledPos,
+                orientation: sampledOrientation,
+                model: {
+                    uri: this.getVehicleModel(),
+                    minimumPixelSize: 15,
+                    scale: this.modelScale / 10
+                },
+                viewFrom: new Cartesian3(5, 0, 3)
+            })
+            this.changeCamera()
+            if (this.state.vehicle === 'boat') {
+                setTimeout(() => {
+                    this.viewer.flyTo(this.model, { offset: new HeadingPitchRange(0, -0.5, 100) })
+                }, 3000)
+            }
+        },
+        updateAndPlotTrajectory () {
+            const oldEntities = this.trajectory._children.slice()
+
+            // Add polyline representing the path under the points
+            const startTime = this.cesiumTimeToMs(this.timelineStart)
+            const endTime = this.cesiumTimeToMs(this.timelineStop)
+            let oldColor = this.getModeColor(this.points[0][3])
+            let trajectory = []
+
+            let first = 0
+            let last = this.points.length
+
+            for (const i in this.points) {
+                if (this.points[i][3] < startTime) {
+                    first = i
+                } else if (this.points[i][3] < endTime) {
+                    last = i
+                }
+            }
+
+            for (const pos of this.points.slice(first, last)) {
+                this.position = Cartesian3.fromDegrees(
+                    pos[0],
+                    pos[1],
+                    pos[2] + this.heightOffset
+                )
+                trajectory.push(this.position)
+                const color = this.getModeColor(pos[3])
+
+                if (color !== oldColor) {
                     this.viewer.entities.add({
                         parent: this.trajectory,
                         polyline: {
@@ -889,163 +873,177 @@ export default {
                             material: oldColor,
                             clampToGround: this.state.vehicle === 'boat',
                             zIndex: 2
-
                         }
                     })
-                    for (const entity of oldEntities) {
-                        this.viewer.entities.remove(entity)
-                    }
-                    this.viewer.scene.requestRender()
-                },
-                plotMission (points) {
-                    const cesiumPoints = []
-                    for (const pos of points) {
-                        const position = Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
-                        cesiumPoints.push(position)
-                    }
-                    // Add polyline representing the path under the points
-                    this.waypoints = this.viewer.entities.add({
-                        polyline: {
-                            positions: cesiumPoints,
-                            width: 1,
-                            material: new PolylineDashMaterialProperty({
-                                color: Color.WHITE,
-                                dashLength: 8.0
-                            })
-                        }
-                    })
-                    for (const pos of points) {
-                        const position = Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + 0.3 + this.heightOffset)
-                        this.viewer.entities.add({
-                            parent: this.waypoints,
-                            position: position,
-                            label: {
-                                text: `${pos[5]}`,
-                                font: '12px sans-serif',
-                                style: LabelStyle.FILL_AND_OUTLINE,
-                                fillColor: Color.WHITE,
-                                outlineColor: Color.BLACK,
-                                showBackground: false,
-                                outlineWidth: 3
-                            }
-                        })
-                    }
-                },
+                    oldColor = color
+                    trajectory = [this.position]
+                }
+            }
+            this.viewer.entities.add({
+                parent: this.trajectory,
+                polyline: {
+                    positions: trajectory,
+                    width: 1,
+                    material: oldColor,
+                    clampToGround: this.state.vehicle === 'boat',
+                    zIndex: 2
 
-                plotFences (fencesList) {
-                    this.fences = []
-                    for (const fence of fencesList) {
-                        const cesiumPoints = []
-                        if (fence.length === 1) {
-                            if (fence[0][2] === 0) {
-                                continue
-                            }
-                            const pos = fence[0]
-                            this.fences.push(this.viewer.entities.add({
-                                position: Cartesian3.fromDegrees(pos[0], pos[1]),
-                                ellipse: {
-                                    semiMinorAxis: pos[2],
-                                    semiMajorAxis: pos[2],
-                                    material: Color.ORANGE.withAlpha(0.5)
-                                }
-                            }))
-                            continue
-                        }
-                        for (const pos of fence) {
-                            const position = Cartesian3.fromDegrees(pos[0], pos[1])
-                            cesiumPoints.push(position)
-                        }
-                        // we need to close the polygon
-                        const lastPos = fence[0]
-                        cesiumPoints.push(Cartesian3.fromDegrees(lastPos[0], lastPos[1]))
-
-                        // Add polyline representing the path under the points
-                        this.fences.push(this.viewer.entities.add({
-                            polyline: {
-                                positions: cesiumPoints,
-                                width: 1,
-                                clampToGround: true,
-                                material: new PolylineDashMaterialProperty({
-                                    color: Color.ORANGE,
-                                    dashLength: 8.0
-                                })
-                            }
-                        }))
-                    }
-                },
-
-                getModeColor (time) {
-                    return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
-                },
-                getMode (time) {
-                    for (const mode in this.state.flightModeChanges) {
-                        if (this.state.flightModeChanges[mode][0] > time) {
-                            if (mode - 1 < 0) {
-                                return this.state.flightModeChanges[0][1]
-                            }
-                            return this.state.flightModeChanges[mode - 1][1]
-                        }
-                    }
-                    return this.state.flightModeChanges[this.state.flightModeChanges.length - 1][1]
-                },
-                updateVisibility () {
-                    this.waypoints.show = this.showWaypoints
-                    this.trajectory.show = this.showTrajectory
-                    this.fences.show = this.showFences
-
-                    const len = this.clickableTrajectory.length
-                    for (let i = 0; i < len; ++i) {
-                        this.clickableTrajectory.get(i).show = this.showClickableTrajectory
-                    }
-                    this.viewer.scene.requestRender()
-                },
-                getVehicleModel () {
-                    const type = this.state.vehicle
-                    if (type === 'submarine') {
-                        return require('../assets/bluerovsimple.glb').default
-                    }
-                    if (type === 'quadcopter+') {
-                        return require('../assets/quadp.glb').default
-                    }
-                    if (type === 'quadcopterx' || type === 'quadcopter') {
-                        return require('../assets/quadx.glb').default
-                    }
-                    if (type === 'boat') {
-                        return require('../assets/boat.glb').default
-                    }
-                    return require('../assets/plane.glb').default
-                },
-                loadTrajectory (source) {
-                    this.waitForMessages([source]).then(() => {
-                        let dataExtractor = null
-                        if (this.state.logType === 'tlog') {
-                            dataExtractor = MavlinkDataExtractor
-                        } else {
-                            dataExtractor = DataflashDataExtractor
-                        }
-                        this.state.trajectories = dataExtractor.extractTrajectory(this.state.messages, source)
-                        this.processTrajectory()
-                    })
-                },
-                loadAttitude (source) {
-                    this.waitForMessages([source]).then(() => {
-                        let dataExtractor = null
-                        if (this.state.logType === 'tlog') {
-                            dataExtractor = MavlinkDataExtractor
-                        } else {
-                            dataExtractor = DataflashDataExtractor
-                        }
-                        try {
-                            this.state.timeAttitudeQ = []
-                            this.state.timeAttitude = dataExtractor.extractAttitude(this.state.messages, source)
-                        } catch {
-                            this.state.timeAttitude = []
-                            this.state.timeAttitudeQ = dataExtractor.extractAttitudeQ(this.state.messages, source)
-                        }
-                        this.addModel()
+                }
+            })
+            for (const entity of oldEntities) {
+                this.viewer.entities.remove(entity)
+            }
+            this.viewer.scene.requestRender()
+        },
+        plotMission (points) {
+            const cesiumPoints = []
+            for (const pos of points) {
+                const position = Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
+                cesiumPoints.push(position)
+            }
+            // Add polyline representing the path under the points
+            this.waypoints = this.viewer.entities.add({
+                polyline: {
+                    positions: cesiumPoints,
+                    width: 1,
+                    material: new PolylineDashMaterialProperty({
+                        color: Color.WHITE,
+                        dashLength: 8.0
                     })
                 }
-            },
+            })
+            for (const pos of points) {
+                const position = Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + 0.3 + this.heightOffset)
+                this.viewer.entities.add({
+                    parent: this.waypoints,
+                    position: position,
+                    label: {
+                        text: `${pos[5]}`,
+                        font: '12px sans-serif',
+                        style: LabelStyle.FILL_AND_OUTLINE,
+                        fillColor: Color.WHITE,
+                        outlineColor: Color.BLACK,
+                        showBackground: false,
+                        outlineWidth: 3
+                    }
+                })
+            }
+        },
+
+        plotFences (fencesList) {
+            this.fences = []
+            for (const fence of fencesList) {
+                const cesiumPoints = []
+                if (fence.length === 1) {
+                    if (fence[0][2] === 0) {
+                        continue
+                    }
+                    const pos = fence[0]
+                    this.fences.push(this.viewer.entities.add({
+                        position: Cartesian3.fromDegrees(pos[0], pos[1]),
+                        ellipse: {
+                            semiMinorAxis: pos[2],
+                            semiMajorAxis: pos[2],
+                            material: Color.ORANGE.withAlpha(0.5)
+                        }
+                    }))
+                    continue
+                }
+                for (const pos of fence) {
+                    const position = Cartesian3.fromDegrees(pos[0], pos[1])
+                    cesiumPoints.push(position)
+                }
+                // we need to close the polygon
+                const lastPos = fence[0]
+                cesiumPoints.push(Cartesian3.fromDegrees(lastPos[0], lastPos[1]))
+
+                // Add polyline representing the path under the points
+                this.fences.push(this.viewer.entities.add({
+                    polyline: {
+                        positions: cesiumPoints,
+                        width: 1,
+                        clampToGround: true,
+                        material: new PolylineDashMaterialProperty({
+                            color: Color.ORANGE,
+                            dashLength: 8.0
+                        })
+                    }
+                }))
+            }
+        },
+
+        getModeColor (time) {
+            return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
+        },
+        getMode (time) {
+            for (const mode in this.state.flightModeChanges) {
+                if (this.state.flightModeChanges[mode][0] > time) {
+                    if (mode - 1 < 0) {
+                        return this.state.flightModeChanges[0][1]
+                    }
+                    return this.state.flightModeChanges[mode - 1][1]
+                }
+            }
+            return this.state.flightModeChanges[this.state.flightModeChanges.length - 1][1]
+        },
+        updateVisibility () {
+            this.waypoints.show = this.showWaypoints
+            this.trajectory.show = this.showTrajectory
+            this.fences.show = this.showFences
+
+            const len = this.clickableTrajectory.length
+            for (let i = 0; i < len; ++i) {
+                this.clickableTrajectory.get(i).show = this.showClickableTrajectory
+            }
+            this.viewer.scene.requestRender()
+        },
+        getVehicleModel () {
+            const type = this.state.vehicle
+            if (type === 'submarine') {
+                return require('../assets/bluerovsimple.glb').default
+            }
+            if (type === 'quadcopter+') {
+                return require('../assets/quadp.glb').default
+            }
+            if (type === 'quadcopterx' || type === 'quadcopter') {
+                return require('../assets/quadx.glb').default
+            }
+            if (type === 'boat') {
+                return require('../assets/boat.glb').default
+            }
+            return require('../assets/plane.glb').default
+        },
+        loadTrajectory (source) {
+            this.waitForMessages([source]).then(() => {
+                let dataExtractor = null
+                if (this.state.logType === 'tlog') {
+                    dataExtractor = MavlinkDataExtractor
+                } else {
+                    dataExtractor = DataflashDataExtractor
+                }
+                this.state.trajectories = dataExtractor.extractTrajectory(this.state.messages, source)
+                this.processTrajectory()
+            })
+        },
+        loadAttitude (source) {
+            this.waitForMessages([source]).then(() => {
+                let dataExtractor = null
+                if (this.state.logType === 'tlog') {
+                    dataExtractor = MavlinkDataExtractor
+                } else {
+                    dataExtractor = DataflashDataExtractor
+                }
+                try {
+                    this.state.timeAttitudeQ = []
+                    this.state.timeAttitude = dataExtractor.extractAttitude(this.state.messages, source)
+                } catch {
+                    this.state.timeAttitude = []
+                    this.state.timeAttitudeQ = dataExtractor.extractAttitudeQ(this.state.messages, source)
+                }
+                this.addModel()
+            })
+        }
+    },
     computed: {
         setOfModes () {
             const set = []
