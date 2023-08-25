@@ -3,17 +3,8 @@
         <div id="toolbar">
             <table class="infoPanel">
                 <tbody>
-                <tr v-bind:key="index" v-for="(mode, index) in setOfModes">
-                    <td class="mode" v-bind:style="{ color: state.cssColors[index] } ">{{ mode }}</td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-        <div id="toolbar">
-            <table class="infoPanel">
-                <tbody>
-                <tr v-bind:key="index" v-for="(mode, index) in setOfModes">
-                    <td class="mode" v-bind:style="{ color: state.cssColors[index] } ">{{ mode }}</td>
+                <tr v-bind:key="mode" v-for="mode in colorCoderLegend()">
+                    <td class="mode" v-bind:style="{ color: mode.color } ">{{ mode.name }}</td>
                 </tr>
                 </tbody>
             </table>
@@ -85,7 +76,9 @@ export default {
         return {
             state: store,
             startTimeMs: 0,
-            lastEmitted: 0
+            lastEmitted: 0,
+            colorCoder: this.modeColorCoder,
+            colorCoderLegend: this.modeColorCoderLegend
         }
     },
     components: {
@@ -188,6 +181,19 @@ export default {
 
     methods:
             {
+                modeColorCoderLegend () {
+                    const legend = []
+                    for (const mode of this.setOfModes) {
+                        legend.push({
+                            name: mode,
+                            color: this.state.cssColors[this.setOfModes.indexOf(mode)]
+                        })
+                    }
+                    return legend
+                },
+                modeColorCoder (time) {
+                    return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
+                },
                 createViewer (online) {
                     if (online) {
                         console.log('creating online viewer')
