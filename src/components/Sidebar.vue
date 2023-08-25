@@ -18,11 +18,6 @@
                 <!-- Plot -->
                 <a :class="selected === 'plot' ? 'selected' : ''" @click="selected='plot'"
                    v-if="state.processDone"> <i class="fas fa-chart-line"></i>Plot</a>
-                <!-- 3D -->
-                <a :class="selected ==='3d' ? 'selected' : ''" @click="selected='3d'"
-                   v-if="state.mapAvailable && state.showMap">  <i class="fas fa-cube"></i> 3D </a>
-                <a :class="selected ==='3d' ? 'selected' : ''" @click="state.showMap=trueselected='3d'"
-                   v-if="state.mapAvailable && !state.showMap">3D</a>
                 <!-- more -->
                 <a :class="selected ==='other' ? 'selected' : ''" @click="selected='other'" v-if="state.processDone">
                     <i class="fas fa-ellipsis-v"></i>
@@ -41,68 +36,6 @@
                     <Dropzone/>
                     <span class="buildinfo">Commit {{state.commit}}</span>
                     <span class="buildinfo">Built {{state.buildDate}}</span>
-                </div>
-                <div v-if="selected==='3d' && state.mapAvailable">
-                    <!--<li v-if="!state.mapAvailable" @click="state.mapAvailable=true">-->
-                    <!--<a class="section">-->
-                    <!--<i class="fas fa-eye fa-lg"></i> Show 3D View</a>-->
-                    <!--</li>-->
-                    <!--<li v-if="state.mapAvailable" @click="state.mapAvailable=false">-->
-                    <!--<a class="section">-->
-                    <!--<i class="fas fa-eye-slash fa-lg"></i> Hide 3D View</a>-->
-                    <!--</li>-->
-
-                    <!-- CAMERA -->
-                    <div>
-                        <label><i class="fas fa-camera"></i> Camera</label>
-                        <select class="cesium-button" v-model="state.cameraType">
-                            <option value="free">Free</option>
-                            <option value="follow">Follow</option>
-                        </select>
-                    </div>
-                    <!-- CHECKBOXES -->
-                    <div>
-                        <label><input type="checkbox" v-model="state.showWaypoints">
-                        Waypoints <i class="fa fa-map-marker"></i> </label>
-                        <label><input type="checkbox" v-model="state.showTrajectory">
-                        Trajectory <i class="fa fa-map" aria-hidden="true"></i> </label>
-                    </div>
-                    <!-- WINGSPAN -->
-                    <div>
-                        <label><i class="fa fa-fighter-jet" aria-hidden="true"></i> Wingspan (m)
-                            <input max="15" min="0.1" step="0.01" type="range"
-                            class="custom-range" v-model="state.modelScale">
-                            <input class="wingspan-text" size="5" type="text" v-model="state.modelScale">
-                        </label>
-                    </div>
-                    <!-- ALTITUDE OFFSET -->
-                    <div>
-                        <label><i class="fa fa-arrows-v" aria-hidden="true"></i> Altitude Offset (m)
-                            <input max="3000" min="-1000" step="0.01" type="range"
-                            class="custom-range" v-model="state.heightOffset">
-                            <input class="wingspan-text" size="5" type="number" v-model="state.heightOffset">
-                        </label>
-                    </div>
-                    <!-- Trajectory Source -->
-                    <div>
-                        <label><i class="fas fa-map"></i> Trajectory Source</label>
-                        <select class="cesium-button" v-model="state.trajectorySource">
-                            <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
-                            <option v-for="item in state.trajectorySources" :key="item">
-                                {{item}}
-                            </option>
-                        </select>
-                    </div>
-                    <!-- Attitude Source -->
-                    <div>
-                        <label><i class="fas fa-map"></i> Attitude Source</label>
-                        <select class="cesium-button" v-model="state.attitudeSource">
-                            <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
-                            <option v-for="item in attitudeSources" :key="item">
-                                {{item}}
-                            </option>
-                        </select>
-                    </div>
                 </div>
                 <div v-if="selected==='other'">
                     <!-- PARAM/MESSAGES/RADIO -->
@@ -277,11 +210,6 @@ export default {
 
         downloadFile (filename) {
             this.downloadBlob(this.state.files[filename], filename, 'application/octet-stream')
-        }
-    },
-    computed: {
-        attitudeSources () {
-            return [...this.state.attitudeSources.quaternions, ...this.state.attitudeSources.eulers]
         }
     },
     created () {

@@ -18,6 +18,7 @@
                 </tbody>
             </table>
         </div>
+        <CesiumSettingsWidget />
         <div id="cesiumContainer"></div>
     </div>
 </template>
@@ -62,6 +63,7 @@ import { store } from './Globals.js'
 import { DataflashDataExtractor } from '../tools/dataflashDataExtractor'
 import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
+import CesiumSettingsWidget from './widgets/CesiumSettingsWidget.vue'
 
 Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2MmM0MDgzZC00OGVkLTRjZ' +
     'TItOWI2MS1jMGVhYTM2MmMzODYiLCJpZCI6MjczNywiaWF0IjoxNjYyMTI4MjkxfQ.fPqhawtYLhwyZirKCi8fEjPEIn1CjYqETvA0bYYhWRA'
@@ -85,6 +87,9 @@ export default {
             startTimeMs: 0,
             lastEmitted: 0
         }
+    },
+    components: {
+        CesiumSettingsWidget
     },
     created () {
         // The objects declared here are not watched by Vue
@@ -1165,7 +1170,7 @@ export default {
 
     #toolbar {
         margin: 5px;
-        padding: 2px 5px;
+        padding: 5px 5px;
         position: absolute;
         top: 0;
         color: #eee;
@@ -1177,15 +1182,12 @@ export default {
     /* INFO PANEL */
 
     .infoPanel {
-        background: rgba(41, 41, 41, 0.678);
-        padding: 5px;
-        border-collapse: separate;
-        margin: 8px;
-        border-radius: 5px;
-        font-weight: bold;
-        float: left;
-        box-shadow: inset 0 0 10px rgb(0, 0, 0);
-        letter-spacing: 1px;
+      top: 10px;
+      background-color: rgba(40, 40, 40, 0.7);
+      padding: 10px;
+      padding-left: 25px;
+      border-radius: 5px;
+      border: 1px solid #444;
     }
 
     #wrapper {
