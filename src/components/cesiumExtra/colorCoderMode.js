@@ -1,5 +1,7 @@
 
 export default class ColorCoderMode {
+    requiredMessages = []
+
     constructor (state) {
         this.state = state
         this.setOfModes = this.calculateSetOfModes()

@@ -1,12 +1,17 @@
 <template>
     <div id="wrapper">
         <div id="toolbar">
-            <table class="infoPanel">
-                <tbody>
+          <table class="infoPanel">
+                <select class="color-coding-select" v-model="selectedColorCoder" v-on:change="updateColor">
+                    <option :key="key"  :value="key" v-for="(value, key) in useableColorCoders">
+                        {{ key }}
+                    </option>
+                </select>
+              <tbody>
                 <tr v-bind:key="mode[0]" v-for="mode in colorCodeLegend">
                     <td class="mode" v-bind:style="{ color: mode.color } ">{{ mode.name }}</td>
                 </tr>
-                </tbody>
+              </tbody>
             </table>
         </div>
         <CesiumSettingsWidget />
@@ -47,7 +52,12 @@ import {
     defined,
     NearFarScalar,
     SingleTileImageryProvider,
-    Rectangle
+    Rectangle,
+    GeometryInstance,
+    PolylineGeometry,
+    ColorGeometryInstanceAttribute,
+    PolylineColorAppearance,
+    Primitive
 } from 'cesium'
 
 import { store } from './Globals.js'
@@ -56,6 +66,7 @@ import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import CesiumSettingsWidget from './widgets/CesiumSettingsWidget.vue'
 import ColorCoderMode from './cesiumExtra/colorCoderMode.js'
+import ColorCoderRange from './cesiumExtra/colorCoderRange.js'
 
 Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2MmM0MDgzZC00OGVkLTRjZ' +
     'TItOWI2MS1jMGVhYTM2MmMzODYiLCJpZCI6MjczNywiaWF0IjoxNjYyMTI4MjkxfQ.fPqhawtYLhwyZirKCi8fEjPEIn1CjYqETvA0bYYhWRA'
@@ -78,7 +89,12 @@ export default {
             state: store,
             startTimeMs: 0,
             lastEmitted: 0,
-            colorCoder: null
+            colorCoder: null,
+            selectedColorCoder: 'Mode',
+            availableColorCoders: {
+                Mode: new ColorCoderMode(store),
+                Range: new ColorCoderRange(store)
+            }
         }
     },
     components: {
@@ -179,6 +195,11 @@ export default {
         }
     },
     methods: {
+        async updateColor () {
+            const newCoder = this.availableColorCoders[this.selectedColorCoder]
+            await this.waitForMessages(newCoder.requiredMessages)
+            this.colorCoder = newCoder
+        },
         createViewer (online) {
             if (online) {
                 console.log('creating online viewer')
@@ -343,7 +364,7 @@ export default {
             setTimeout(this.updateTimelineColors, 500)
             setInterval(this.updateGlobeOpacity, 1000)
         },
-        waitForMessages (messages) {
+        async waitForMessages (messages) {
             for (const message of messages) {
                 this.$eventHub.$emit('loadType', message)
             }
@@ -364,6 +385,7 @@ export default {
                         }
                     }
                     clearInterval(interval)
+                    console.log('resolved for ' + messages)
                     resolve()
                 }, 300)
             })
@@ -822,15 +844,16 @@ export default {
                 }, 3000)
             }
         },
-        updateAndPlotTrajectory () {
-            this.colorCoder = new ColorCoderMode(store)
-            const oldEntities = this.trajectory._children.slice()
-
-            // Add polyline representing the path under the points
+        async updateAndPlotTrajectory () {
+            if (!this.colorCoder) {
+                this.colorCoder = this.availableColorCoders[this.selectedColorCoder]
+            }
+            const isBoat = this.state.vehicle === 'boat'
             const startTime = this.cesiumTimeToMs(this.timelineStart)
             const endTime = this.cesiumTimeToMs(this.timelineStop)
-            let oldColor = this.getModeColor(this.points[0][3])
-            let trajectory = []
+            const geometryInstances = []
+            let currentSegment = []
+            let currentColor = this.getModeColor(this.points[0][3])
 
             let first = 0
             let last = this.points.length
@@ -847,42 +870,66 @@ export default {
                 this.position = Cartesian3.fromDegrees(
                     pos[0],
                     pos[1],
-                    pos[2] + this.heightOffset
+                    isBoat ? 0.1 : pos[2] + this.heightOffset
                 )
-                trajectory.push(this.position)
-                const color = this.getModeColor(pos[3])
 
-                if (color !== oldColor) {
-                    this.viewer.entities.add({
-                        parent: this.trajectory,
-                        polyline: {
-                            positions: trajectory,
-                            width: 1,
-                            material: oldColor,
-                            clampToGround: this.state.vehicle === 'boat',
-                            zIndex: 2
+                const newColor = this.getModeColor(pos[3])
+                if (!Color.equals(newColor, currentColor)) {
+                    if (currentSegment.length > 1) {
+                        geometryInstances.push(new GeometryInstance({
+                            geometry: new PolylineGeometry({
+                                positions: currentSegment,
+                                width: 3.0
+                            }),
+                            attributes: {
+                                color: ColorGeometryInstanceAttribute.fromColor(currentColor)
+                            }
+                        }))
+                    } else if (geometryInstances.length > 0) {
+                        const lastSegment = geometryInstances[geometryInstances.length - 1].geometry.positions
+                        if (lastSegment) {
+                            lastSegment.push(this.position)
+                            currentSegment.push(this.position)
                         }
-                    })
-                    oldColor = color
-                    trajectory = [this.position]
-                }
-            }
-            this.viewer.entities.add({
-                parent: this.trajectory,
-                polyline: {
-                    positions: trajectory,
-                    width: 1,
-                    material: oldColor,
-                    clampToGround: this.state.vehicle === 'boat',
-                    zIndex: 2
+                    }
 
+                    currentColor = newColor
+                    currentSegment = []
                 }
-            })
-            for (const entity of oldEntities) {
-                this.viewer.entities.remove(entity)
+                currentSegment.push(this.position)
             }
+
+            if (currentSegment.length > 1) {
+                geometryInstances.push(new GeometryInstance({
+                    geometry: new PolylineGeometry({
+                        positions: currentSegment,
+                        width: 3.0
+                    }),
+                    attributes: {
+                        color: ColorGeometryInstanceAttribute.fromColor(currentColor)
+                    }
+                }))
+            } else if (geometryInstances.length > 0) {
+                const lastSegment = geometryInstances[geometryInstances.length - 1].geometry.positions
+                if (lastSegment) {
+                    lastSegment.push(this.position)
+                }
+            }
+
+            // Remove old trajectory primitives
+            this.viewer.scene.primitives.remove(this.trajectoryPrimitive)
+
+            // Create a new primitive with the geometry instances
+            this.trajectoryPrimitive = new Primitive({
+                geometryInstances: geometryInstances,
+                appearance: new PolylineColorAppearance()
+            })
+
+            this.viewer.scene.primitives.add(this.trajectoryPrimitive)
+            this.viewer.scene.primitives.raiseToTop(this.trajectoryPrimitive)
             this.viewer.scene.requestRender()
         },
+
         plotMission (points) {
             const cesiumPoints = []
             for (const pos of points) {
@@ -1033,6 +1080,19 @@ export default {
         }
     },
     computed: {
+        useableColorCoders () {
+            // check if requiredMessages for each color coder are present
+            // iterates on key:value pais of this.availableColorCoders and filters them
+            // based on the requiredMessages property
+            const colorCoders = {}
+            for (const [key, value] of Object.entries(this.availableColorCoders)) {
+                if (value.requiredMessages.every(m => Object.keys(this.state.messageTypes).includes(m))) {
+                    colorCoders[key] = value
+                }
+            }
+            return colorCoders
+        },
+
         colorCodeLegend () {
             return this.colorCoder?.getLegend() ?? []
         },
@@ -1102,6 +1162,11 @@ export default {
                 this.addModel()
                 this.viewer.scene.requestRender()
             }
+        },
+        colorCoder () {
+            this.updateAndPlotTrajectory()
+            this.processTrajectory()
+            this.viewer.scene.requestRender()
         },
         timeRange (range) {
             try {
@@ -1325,5 +1390,9 @@ export default {
         stroke: white;
         stroke-width: 2px;
         width: 25px;
+    }
+
+    .color-coding-select {
+      margin: 4px;
     }
 </style>
