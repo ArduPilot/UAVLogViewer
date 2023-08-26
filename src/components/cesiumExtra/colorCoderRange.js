@@ -4,36 +4,57 @@ export default class ColorCoderRange {
   requiredMessages = ['RFND']
   lastindex = 0 // lets track this so we are more efficient
   maxDist = 3
+  stats = null
   constructor (state) {
       this.state = state
+  }
+
+  computeStats (arr) {
+      const n = arr.length
+      if (n === 0) return { min: null, max: null, avg: null, std: null }
+
+      let min = Infinity
+      let max = -Infinity
+      let sum = 0
+      let sumOfSquares = 0
+
+      for (let i = 0; i < n; i++) {
+          const value = arr[i]
+          if (value < min) min = value
+          if (value > max) max = value
+          sum += value
+          sumOfSquares += value * value
+      }
+
+      const avg = sum / n
+      // Calculate variance as: (sumOfSquares/n) - avg^2
+      // Then, standard deviation is the square root of variance
+      const std = Math.sqrt((sumOfSquares / n) - avg * avg)
+
+      return { min, max, avg, std }
   }
 
   getLegend () {
       const legend = [
           {
               name: 'shallow',
-              color: 'rgb(0, 0, 255)'
+              color: 'rgb(255, 0, 0)'
           },
           {
               name: 'deep',
-              color: 'rgb(255, 0, 0)'
+              color: 'rgb(0, 0, 255)'
           }
       ]
       return legend
   }
 
   getMax () {
-      this.maxDist = 0
-      for (const dist of this.state.messages.RFND.Dist) {
-          if (dist > this.maxDist) {
-              this.maxDist = dist
-          }
-      }
+      return this.stats.avg + this.stats.std * 2
   }
 
   getColor (time) {
-      if (this.maxDist === 0) {
-          this.getMax()
+      if (!this.stats) {
+          this.stats = this.computeStats(this.state.messages.RFND.Dist)
       }
       if (this.state.messages.RFND.time_boot_ms[this.lastindex] - time > 1000) {
           this.lastindex = 0

@@ -867,14 +867,16 @@ export default {
             }
 
             for (const pos of this.points.slice(first, last)) {
-                this.position = Cartesian3.fromDegrees(
+                const position = Cartesian3.fromDegrees(
                     pos[0],
                     pos[1],
                     isBoat ? 0.1 : pos[2] + this.heightOffset
                 )
 
                 const newColor = this.getModeColor(pos[3])
+
                 if (!Color.equals(newColor, currentColor)) {
+                    currentSegment.push(position)
                     if (currentSegment.length > 1) {
                         geometryInstances.push(new GeometryInstance({
                             geometry: new PolylineGeometry({
@@ -885,18 +887,13 @@ export default {
                                 color: ColorGeometryInstanceAttribute.fromColor(currentColor)
                             }
                         }))
-                    } else if (geometryInstances.length > 0) {
-                        const lastSegment = geometryInstances[geometryInstances.length - 1].geometry.positions
-                        if (lastSegment) {
-                            lastSegment.push(this.position)
-                            currentSegment.push(this.position)
-                        }
                     }
 
                     currentColor = newColor
-                    currentSegment = []
+                    currentSegment = [position]
+                } else {
+                    currentSegment.push(position)
                 }
-                currentSegment.push(this.position)
             }
 
             if (currentSegment.length > 1) {
@@ -909,11 +906,6 @@ export default {
                         color: ColorGeometryInstanceAttribute.fromColor(currentColor)
                     }
                 }))
-            } else if (geometryInstances.length > 0) {
-                const lastSegment = geometryInstances[geometryInstances.length - 1].geometry.positions
-                if (lastSegment) {
-                    lastSegment.push(this.position)
-                }
             }
 
             // Remove old trajectory primitives
