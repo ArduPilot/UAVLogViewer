@@ -3,7 +3,7 @@
         <div id="toolbar">
             <table class="infoPanel">
                 <tbody>
-                <tr v-bind:key="mode" v-for="mode in colorCoderLegend()">
+                <tr v-bind:key="mode[0]" v-for="mode in colorCodeLegend">
                     <td class="mode" v-bind:style="{ color: mode.color } ">{{ mode.name }}</td>
                 </tr>
                 </tbody>
@@ -55,6 +55,7 @@ import { DataflashDataExtractor } from '../tools/dataflashDataExtractor'
 import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import CesiumSettingsWidget from './widgets/CesiumSettingsWidget.vue'
+import ColorCoderMode from './cesiumExtra/colorCoderMode.js'
 
 Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2MmM0MDgzZC00OGVkLTRjZ' +
     'TItOWI2MS1jMGVhYTM2MmMzODYiLCJpZCI6MjczNywiaWF0IjoxNjYyMTI4MjkxfQ.fPqhawtYLhwyZirKCi8fEjPEIn1CjYqETvA0bYYhWRA'
@@ -77,8 +78,7 @@ export default {
             state: store,
             startTimeMs: 0,
             lastEmitted: 0,
-            colorCoder: this.modeColorCoder,
-            colorCoderLegend: this.modeColorCoderLegend
+            colorCoder: null
         }
     },
     components: {
@@ -179,19 +179,6 @@ export default {
         }
     },
     methods: {
-        modeColorCoderLegend () {
-            const legend = []
-            for (const mode of this.setOfModes) {
-                legend.push({
-                    name: mode,
-                    color: this.state.cssColors[this.setOfModes.indexOf(mode)]
-                })
-            }
-            return legend
-        },
-        modeColorCoder (time) {
-            return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
-        },
         createViewer (online) {
             if (online) {
                 console.log('creating online viewer')
@@ -836,6 +823,7 @@ export default {
             }
         },
         updateAndPlotTrajectory () {
+            this.colorCoder = new ColorCoderMode(store)
             const oldEntities = this.trajectory._children.slice()
 
             // Add polyline representing the path under the points
@@ -973,7 +961,7 @@ export default {
         },
 
         getModeColor (time) {
-            return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
+            return this.colorCoder.getColor(time)
         },
         getMode (time) {
             for (const mode in this.state.flightModeChanges) {
@@ -1045,6 +1033,9 @@ export default {
         }
     },
     computed: {
+        colorCodeLegend () {
+            return this.colorCoder?.getLegend() ?? []
+        },
         setOfModes () {
             const set = []
             for (const mode of this.state.flightModeChanges) {
