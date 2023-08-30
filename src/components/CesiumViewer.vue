@@ -363,6 +363,76 @@ export default {
             this.changeCamera()
             setTimeout(this.updateTimelineColors, 500)
             setInterval(this.updateGlobeOpacity, 1000)
+            this.loadAIS()
+        },
+        async loadAIS () {
+            await this.waitForMessages(['AIS1'])
+            // goes through all AIS1 messages, extracts mmsi, and make it a set
+            // these are the ships that we passed through
+            const AISMessages = this.state.messages.AIS1
+            console.log(AISMessages)
+            const aisData = {}
+            for (const index in AISMessages.mmsi) {
+                const lat = AISMessages.lat[index]
+                const lon = AISMessages.lon[index]
+                const hed = AISMessages.hed[index]
+                const cog = AISMessages.cog[index]
+                const time = AISMessages.time_boot_ms[index]
+                const data = {
+                    lat,
+                    lon,
+                    hed,
+                    cog,
+                    time
+                }
+                if (AISMessages.mmsi[index] in aisData) {
+                    aisData[AISMessages.mmsi[index]].push(data)
+                } else {
+                    aisData[AISMessages.mmsi[index]] = [data]
+                }
+            }
+            // iterate on aisData,
+            // for each mmsi, created a sampledPositionProperty and a sampledProperty for the heading
+            // return a new dictionary where mmsi is the key and the value is an object with the two properties
+            console.log(aisData)
+            const newData = {}
+            for (const mssi of Object.keys(aisData)) {
+                const positionProperty = new SampledPositionProperty()
+                const headingProperty = new SampledProperty(Quaternion)
+                for (const data of aisData[mssi]) {
+                    const time = this.msToCesiumTime(data.time)
+                    const position = Cartesian3.fromDegrees(data.lon * 1e-7, data.lat * 1e-7, 1)
+                    const head = data.hed === 51100 ? data.cog * 1e-3 : data.hed * 1e-3
+                    console.log(head)
+                    const heading = Transforms.headingPitchRollQuaternion(
+                        position,
+                        new HeadingPitchRoll(head * Math.PI / 180, 0, 0)
+                    )
+                    positionProperty.addSample(time, position)
+                    headingProperty.addSample(time, heading)
+                }
+                newData[mssi] = {
+                    positionProperty,
+                    headingProperty
+                }
+            }
+            console.log(newData)
+            this.aisEntities = this.viewer.entities.add(new Entity())
+            for (const mssi of Object.keys(newData)) {
+                this.viewer.entities.add(
+                    {
+                        parent: this.aisEntities,
+                        position: newData[mssi].positionProperty,
+                        orientation: newData[mssi].headingProperty,
+                        model: {
+                            uri: require('../assets/boat.glb').default,
+                            minimumPixelSize: 200,
+                            maximumScale: 20000
+                        }
+                    }
+                )
+            }
+            this.aisEntities.show = true
         },
         async waitForMessages (messages) {
             for (const message of messages) {
@@ -848,6 +918,7 @@ export default {
             if (!this.colorCoder) {
                 this.colorCoder = this.availableColorCoders[this.selectedColorCoder]
             }
+
             const isBoat = this.state.vehicle === 'boat'
             const startTime = this.cesiumTimeToMs(this.timelineStart)
             const endTime = this.cesiumTimeToMs(this.timelineStop)
@@ -908,10 +979,8 @@ export default {
                 }))
             }
 
-            // Remove old trajectory primitives
             this.viewer.scene.primitives.remove(this.trajectoryPrimitive)
 
-            // Create a new primitive with the geometry instances
             this.trajectoryPrimitive = new Primitive({
                 geometryInstances: geometryInstances,
                 appearance: new PolylineColorAppearance()

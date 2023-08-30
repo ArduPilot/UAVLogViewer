@@ -64,6 +64,6 @@ export default class ColorCoderRange {
           this.lastindex++
       }
       const color = this.state.messages.RFND.Dist[this.lastindex] / this.maxDist
-      return new Color(1 - color, 0, color)
+      return new Color(255 - color, 255 - color, color)
   }
 }
