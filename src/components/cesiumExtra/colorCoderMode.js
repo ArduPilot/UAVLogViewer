@@ -23,10 +23,12 @@ export default class ColorCoderMode {
     }
 
     getMode (time) {
+        let previousMode = this.state.flightModeChanges[0][1]
         for (const mode of this.state.flightModeChanges) {
             if (mode[0] > time) {
-                return mode[1]
+                return previousMode
             }
+            previousMode = mode[1]
         }
         return this.state.flightModeChanges[this.state.flightModeChanges.length - 1][1]
     }
