@@ -209,6 +209,15 @@ export default {
         }
     },
     mounted () {
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'arrayBuffer') {
+                worker.postMessage({
+                    action: 'parse',
+                    file: event.data.data,
+                    isTlog: false
+                })
+            }
+        })
         worker.onmessage = (event) => {
             if (event.data.percentage) {
                 this.state.processPercentage = event.data.percentage
