@@ -1,4 +1,5 @@
 import { ParamSeeker } from '../tools/paramseeker'
+import extractStartTime from './datetools'
 
 window.radians = function (a) {
     return 0.0174533 * a
@@ -451,5 +452,9 @@ export class DataflashDataExtractor {
             }
         }
         return ret
+    }
+
+    static extractStartTime (messages) {
+        return extractStartTime(messages)
     }
 }

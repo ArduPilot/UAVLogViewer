@@ -313,4 +313,8 @@ export class MavlinkDataExtractor {
         }
         return texts
     }
+
+    static extractStartTime (messages) {
+        return undefined
+    }
 }

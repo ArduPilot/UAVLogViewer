@@ -162,6 +162,7 @@ export default {
                     console.log('unable to load trajectory')
                 }
             }
+            this.state.metadata = { startTime: this.dataExtractor.extractStartTime(this.state.messages.GPS) }
             Vue.delete(this.state.messages, 'AHR2')
             Vue.delete(this.state.messages, 'POS')
             Vue.delete(this.state.messages, 'GPS')
