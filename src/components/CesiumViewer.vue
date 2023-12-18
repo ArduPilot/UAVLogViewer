@@ -57,7 +57,8 @@ import {
     PolylineGeometry,
     ColorGeometryInstanceAttribute,
     PolylineColorAppearance,
-    Primitive
+    Primitive,
+    ShaderSource
 } from 'cesium'
 
 import { store } from './Globals.js'
@@ -101,6 +102,7 @@ export default {
         CesiumSettingsWidget
     },
     created () {
+        this.updateShader()
         // The objects declared here are not watched by Vue
         this.viewer = null // Cesium viewer instance
         this.model = null // Vehicle model
@@ -195,6 +197,14 @@ export default {
         }
     },
     methods: {
+        updateShader () {
+            // eslint-disable-next-line camelcase
+            ShaderSource._czmBuiltinsAndUniforms.czm_translateRelativeToEye =
+            ShaderSource._czmBuiltinsAndUniforms.czm_translateRelativeToEye.replace(
+                'low - czm_encodedCameraPositionMCLow;',
+                '(low - czm_encodedCameraPositionMCLow) * (1.0 + czm_epsilon7);'
+            )
+        },
         async updateColor () {
             const newCoder = this.availableColorCoders[this.selectedColorCoder]
             await this.waitForMessages(newCoder.requiredMessages)
