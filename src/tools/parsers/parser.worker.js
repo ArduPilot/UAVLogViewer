@@ -11,7 +11,7 @@ self.addEventListener('message', function (event) {
         if (event.data.isTlog) {
             parser = new mavparser.MavlinkParser()
         } else {
-            parser = new DataflashParser()
+            parser = new DataflashParser(true)
         }
         const data = event.data.file
         parser.processData(data)
