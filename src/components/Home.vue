@@ -163,9 +163,16 @@ export default {
                 }
             }
             try {
-                this.state.metadata = { startTime: this.dataExtractor.extractStartTime(this.state.messages.GPS) }
-            } catch {
+                if (this.state.messages?.GPS?.time_boot_ms) {
+                    this.state.metadata = { startTime: this.dataExtractor.extractStartTime(this.state.messages.GPS) }
+                } else {
+                    this.state.metadata = {
+                        startTime: this.dataExtractor.extractStartTime(this.state.messages['GPS[0]'])
+                    }
+                }
+            } catch (error) {
                 console.log('unable to load metadata')
+                console.log(error)
             }
             Vue.delete(this.state.messages, 'AHR2')
             Vue.delete(this.state.messages, 'POS')

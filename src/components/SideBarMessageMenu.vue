@@ -183,11 +183,17 @@ export default {
             const newMessages = {}
             // populate list of message types
             for (const messageType of Object.keys(messageTypes)) {
+                if (messageTypes[messageType].instances !== undefined) {
+                    continue
+                }
                 this.$set(this.checkboxes, messageType, messageTypes[messageType].expressions.expressions)
                 newMessages[messageType] = messageTypes[messageType]
             }
             // populate checkbox status
             for (const messageType of Object.keys(messageTypes)) {
+                if (messageTypes[messageType].instances !== undefined) {
+                    continue
+                }
                 this.checkboxes[messageType] = { expressions: {} }
                 // for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
                 for (const field of messageTypes[messageType].expressions) {
