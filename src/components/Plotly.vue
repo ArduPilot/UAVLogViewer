@@ -331,7 +331,7 @@ export default {
             return new Promise((resolve, reject) => {
                 interval = setInterval(function () {
                     for (const message of messages) {
-                        if (!_this.loadedMessages().includes(message.split('[')[0])) {
+                        if (!_this.loadedMessages().includes(message)) {
                             counter += 1
                             if (counter > 30) { // 30 * 300ms = 9 s timeout
                                 console.log('not resolving')
@@ -610,7 +610,7 @@ export default {
                 return [true, '']
             }
             for (const [message, field] of messages) {
-                if (!(this.messagesInLog.includes(message.split('[')[0]))) {
+                if (!(this.messagesInLog.includes(message))) {
                     console.log('ERROR: attempted to plot unavailable message: ' + message)
                     this.state.plotLoading = false
                     if (reask) {
@@ -634,8 +634,8 @@ export default {
             // let fields = expression.name.match(RE)
             for (const message of messages) {
                 if (!(message in this.state.messages) || this.state.messages[message].lenght === 0) {
-                    if (!((message + '[0]') in this.state.messages) ||
-                        this.state.messages[message + '[0]'].lenght === 0) {
+                    if (!((message) in this.state.messages) ||
+                        this.state.messages[message].lenght === 0) {
                         return false
                     }
                 }
@@ -1069,9 +1069,7 @@ export default {
             ]
         },
         loadedMessages () {
-            return Object.keys(this.state.messages).map(key => {
-                return key.split('[')[0]
-            })
+            return Object.keys(this.state.messages)
         }
     },
     computed: {
@@ -1094,9 +1092,7 @@ export default {
             return this.state.expressions
         },
         messagesInLog () {
-            return Object.keys(this.state.messageTypes).map(key => {
-                return key.split('[')[0]
-            })
+            return Object.keys(this.state.messageTypes)
         }
     },
     watch: {

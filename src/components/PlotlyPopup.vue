@@ -172,7 +172,7 @@ export default {
             return new Promise((resolve, reject) => {
                 interval = setInterval(function () {
                     for (const message of messages) {
-                        if (!_this.loadedMessages.includes(message.split('[')[0])) {
+                        if (!_this.loadedMessages.includes(message)) {
                             counter += 1
                             if (counter > 30) { // 30 * 300ms = 9 s timeout
                                 console.log('not resolving')
@@ -513,14 +513,10 @@ export default {
             return this.state.expressions
         },
         loadedMessages () {
-            return Object.keys(this.state.messages).map(key => {
-                return key.split('[')[0]
-            })
+            return Object.keys(this.state.messages)
         },
         messagesInLog () {
-            return Object.keys(this.state.messageTypes).map(key => {
-                return key.split('[')[0]
-            })
+            return Object.keys(this.state.messageTypes)
         }
     },
     watch: {
