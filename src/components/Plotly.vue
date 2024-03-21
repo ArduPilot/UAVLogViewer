@@ -703,7 +703,7 @@ export default {
                 try {
                     const val = f(vals)
                     if (val !== null) {
-                        y.push(f(vals))
+                        y.push(val)
                     }
                 } catch (e) {
                     return { error: e }
