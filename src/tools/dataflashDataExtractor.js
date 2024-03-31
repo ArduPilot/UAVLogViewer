@@ -182,11 +182,12 @@ export class DataflashDataExtractor {
                     const tot = cmdMsgs.CTot[i]
                     const id = cmdMsgs.CId[i]
                     const num = cmdMsgs.CNum[i]
+                    const frame = cmdMsgs.Frame[i]
                     if (Math.abs(lat) > 180) {
                         lat = lat / 10e6
                         lon = lon / 10e6
                     }
-                    wps.push([lon, lat, cmdMsgs.Alt[i], tot, id, num])
+                    wps.push([lon, lat, cmdMsgs.Alt[i], tot, id, num, frame])
                 }
             }
         }

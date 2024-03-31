@@ -26,8 +26,9 @@ import {
     createDefaultImageryProviderViewModels,
     ProviderViewModel,
     UrlTemplateImageryProvider,
-    Viewer, createWorldTerrain,
+    Viewer, createWorldTerrainAsync,
     PointPrimitiveCollection,
+    ImageryLayer,
     IonImageryProvider,
     Entity,
     ScreenSpaceEventHandler,
@@ -120,83 +121,91 @@ export default {
     },
     mounted () {
         // create eniro, statkart, and openseamap providers
-        if (this.viewer == null) {
-            if (this.state.isOnline) {
-                this.viewer = this.createViewer(true)
-                if (this.state.vehicle !== 'boat') {
-                    this.viewer.terrainProvider = createWorldTerrain()
-                }
-            } else {
-                this.viewer = this.createViewer(false)
-            }
-            this.viewer.scene.debugShowFramesPerSecond = true
-
-            this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
-            this.viewer.scene.postProcessStages.bloom.enabled = false
-            this.clickableTrajectory = this.viewer.scene.primitives.add(new PointPrimitiveCollection())
-            this.trajectory = this.viewer.entities.add(new Entity())
-            this.trajectoryUpdateTimeout = null
-            this.viewer.scene.globe.enableLighting = true
-            this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
-            this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
-            this.viewer.scene.morphComplete.addEventListener(
-                () => {
-                    this.viewer.zoomTo(this.viewer.entities)
-                })
-            this.viewer.animation.viewModel.setShuttleRingTicks([0.1, 0.25, 0.5, 0.75, 1, 2, 5, 10, 15])
-            this.viewer.scene.globe.depthTestAgainstTerrain = true
-            this.viewer.shadowMap.maxmimumDistance = 10000.0
-            this.viewer.shadowMap.softShadows = true
-            this.viewer.shadowMap.size = 4096
-
-            // Attach hover handler
-            const handler = new ScreenSpaceEventHandler(this.viewer.scene.canvas)
-            handler.setInputAction(this.onMove, ScreenSpaceEventType.MOUSE_MOVE)
-            handler.setInputAction(this.onLeftDown, ScreenSpaceEventType.LEFT_DOWN)
-            handler.setInputAction(this.onClick, ScreenSpaceEventType.LEFT_CLICK)
-            handler.setInputAction(this.onLeftUp, ScreenSpaceEventType.LEFT_UP)
-            // TODO: fix saving and sharing state
-            // this.viewer.camera.moveEnd.addEventListener(this.onCameraUpdate)
-
-            knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
-            const layers = this.viewer.scene.imageryLayers
-            const xofs = 0.00001
-            layers.addImageryProvider(new SingleTileImageryProvider({
-                url: require('../assets/home2.png').default,
-                rectangle: Rectangle.fromDegrees(-48.530077110530044 + xofs, -27.490619277419633,
-                    -48.52971476731231 + xofs, -27.49044182943895)
-            }))
-            this.viewer.scene.globe.translucency.frontFaceAlphaByDistance = new NearFarScalar(
-                50.0,
-                0.4,
-                150.0,
-                1.0
-            )
-            this.viewer.scene.globe.translucency.enabled = true
-            this.viewer.scene.screenSpaceCameraController.enableCollisionDetection = false
-            this.viewer.scene.globe.undergroundColor = Color.MIDNIGHTBLUE
-            this.viewer.scene.globe.undergroundColorAlphaByDistance.near = 2
-            this.viewer.scene.globe.undergroundColorAlphaByDistance.far = 10
-            this.viewer.scene.globe.undergroundColorAlphaByDistance.nearValue = 0.2
-            this.viewer.scene.globe.undergroundColorAlphaByDistance.farValue = 1.0
-        }
-
-        this.addCenterVehicleButton()
-        this.addFitContentsButton()
-        this.addCloseButton()
-
-        for (const pos of this.state.currentTrajectory) {
-            this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
-        }
-
-        if (this.state.vehicle !== 'boat' && this.state.isOnline) {
-            const promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.correctedTrajectory)
-            promise.then((result) => { this.setup2(result) })
-        } else {
-            this.setup2(this.correctedTrajectory)
-        }
+        this.asyncSetup()
     },
     methods: {
+        async asyncSetup () {
+            if (this.viewer == null) {
+                if (this.state.isOnline) {
+                    this.viewer = this.createViewer(true)
+                    if (this.state.vehicle !== 'boat') {
+                        this.viewer.terrainProvider = await createWorldTerrainAsync()
+                    }
+                } else {
+                    this.viewer = this.createViewer(false)
+                }
+                this.viewer.scene.debugShowFramesPerSecond = true
+
+                this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false
+                this.viewer.scene.postProcessStages.bloom.enabled = false
+                this.clickableTrajectory = this.viewer.scene.primitives.add(new PointPrimitiveCollection())
+                this.trajectory = this.viewer.entities.add(new Entity())
+                this.trajectoryUpdateTimeout = null
+                this.viewer.scene.globe.enableLighting = true
+                this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
+                this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
+                this.viewer.scene.morphComplete.addEventListener(
+                    () => {
+                        this.viewer.zoomTo(this.viewer.entities)
+                    })
+                this.viewer.animation.viewModel.setShuttleRingTicks([0.1, 0.25, 0.5, 0.75, 1, 2, 5, 10, 15])
+                this.viewer.scene.globe.depthTestAgainstTerrain = true
+                this.viewer.shadowMap.maxmimumDistance = 10000.0
+                this.viewer.shadowMap.softShadows = true
+                this.viewer.shadowMap.size = 4096
+
+                // Attach hover handler
+                const handler = new ScreenSpaceEventHandler(this.viewer.scene.canvas)
+                handler.setInputAction(this.onMove, ScreenSpaceEventType.MOUSE_MOVE)
+                handler.setInputAction(this.onLeftDown, ScreenSpaceEventType.LEFT_DOWN)
+                handler.setInputAction(this.onClick, ScreenSpaceEventType.LEFT_CLICK)
+                handler.setInputAction(this.onLeftUp, ScreenSpaceEventType.LEFT_UP)
+                // TODO: fix saving and sharing state
+                // this.viewer.camera.moveEnd.addEventListener(this.onCameraUpdate)
+
+                knockout.getObservable(this.viewer.clockViewModel, 'shouldAnimate').subscribe(this.onAnimationChange)
+                const layers = this.viewer.scene.imageryLayers
+                const xofs = 0.00001
+                const options = {
+                    url: require('../assets/home2.png').default,
+                    tileWidth: 1920,
+                    tileHeight: 1080,
+                    rectangle: Rectangle.fromDegrees(-48.530077110530044 + xofs, -27.490619277419633,
+                        -48.52971476731231 + xofs, -27.49044182943895),
+                    credit: 'potato'
+                }
+                console.log(options)
+                layers.addImageryProvider(new SingleTileImageryProvider(options))
+                this.viewer.scene.globe.translucency.frontFaceAlphaByDistance = new NearFarScalar(
+                    50.0,
+                    0.4,
+                    150.0,
+                    1.0
+                )
+                this.viewer.scene.globe.translucency.enabled = true
+                this.viewer.scene.screenSpaceCameraController.enableCollisionDetection = false
+                this.viewer.scene.globe.undergroundColor = Color.MIDNIGHTBLUE
+                this.viewer.scene.globe.undergroundColorAlphaByDistance.near = 2
+                this.viewer.scene.globe.undergroundColorAlphaByDistance.far = 10
+                this.viewer.scene.globe.undergroundColorAlphaByDistance.nearValue = 0.2
+                this.viewer.scene.globe.undergroundColorAlphaByDistance.farValue = 1.0
+            }
+
+            this.addCenterVehicleButton()
+            this.addFitContentsButton()
+            this.addCloseButton()
+
+            for (const pos of this.state.currentTrajectory) {
+                this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
+            }
+
+            if (this.state.vehicle !== 'boat' && this.state.isOnline) {
+                const promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.correctedTrajectory)
+                promise.then(async (result) => { await this.setup2(result) })
+            } else {
+                this.setup2(this.correctedTrajectory)
+            }
+        },
         updateShader () {
             // eslint-disable-next-line camelcase
             ShaderSource._czmBuiltinsAndUniforms.czm_translateRelativeToEye =
@@ -225,7 +234,10 @@ export default {
                         scene3DOnly: false,
                         selectionIndicator: false,
                         shadows: true,
-                        selectedImageryProviderViewModel: this.sentinelProvider,
+                        // eslint-disable-next-line
+                        baseLayer: new ImageryLayer.fromProviderAsync(
+                            IonImageryProvider.fromAssetId(3954)
+                        ),
                         imageryProviderViewModels: imageryProviders,
                         orderIndependentTranslucency: false,
                         useBrowserRecommendedResolution: false
@@ -289,7 +301,7 @@ export default {
                 iconUrl: '/Widgets/Images/ImageryProviders/sentinel-2.png',
                 tooltip: 'Sentinel 2 Imagery',
                 creationFunction: function () {
-                    return new IonImageryProvider({ assetId: 3954 })
+                    return ImageryLayer.fromProviderAsync(IonImageryProvider.fromAssetId(3812))
                 }
             })
             imageryProviders.push(this.sentinelProvider)
@@ -328,7 +340,7 @@ export default {
             }))
             return imageryProviders
         },
-        setup2 (updatedPositions) {
+        async setup2 (updatedPositions) {
             /*
             * Second step of setup, happens after the height of the starting point has been returned by Cesium
             * */
@@ -339,7 +351,7 @@ export default {
             this.processTrajectory(this.state.currentTrajectory)
             this.addModel()
             this.updateAndPlotTrajectory()
-            this.plotMission(this.state.mission)
+            await this.plotMission(this.state.mission)
             this.plotFences(this.state.fences)
             document.addEventListener('setzoom', this.onTimelineZoom)
             this.$eventHub.$on('rangeChanged', this.onRangeChanged)
@@ -373,6 +385,9 @@ export default {
             this.changeCamera()
             setTimeout(this.updateTimelineColors, 500)
             setInterval(this.updateGlobeOpacity, 1000)
+            setTimeout(() => {
+                this.viewer.flyTo(this.viewer.entities)
+            }, 1000)
         },
         async waitForMessages (messages) {
             for (const message of messages) {
@@ -932,39 +947,60 @@ export default {
             this.viewer.scene.requestRender()
         },
 
-        plotMission (points) {
+        async plotMission (points) {
+            console.log(points)
             const cesiumPoints = []
+            const cesiumPointsOrig = []
+
             for (const pos of points) {
-                const position = Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + this.heightOffset)
+                const position = Cartographic.fromDegrees(pos[0], pos[1], pos[2])
+                if (isNaN(pos[0]) || isNaN(pos[1]) || isNaN(pos[2])) {
+                    continue
+                }
                 cesiumPoints.push(position)
+                cesiumPointsOrig.push(position)
             }
-            // Add polyline representing the path under the points
-            this.waypoints = this.viewer.entities.add({
-                polyline: {
-                    positions: cesiumPoints,
-                    width: 1,
-                    material: new PolylineDashMaterialProperty({
-                        color: Color.WHITE,
-                        dashLength: 8.0
+            sampleTerrainMostDetailed(this.viewer.terrainProvider, cesiumPoints, true).then((finalPoints) => {
+                // now check if we really want terrain height
+                for (let i = 0; i < cesiumPointsOrig.length; i++) {
+                    if (points[i][6] === 10) {
+                        finalPoints[i].height += points[i][2]
+                    } else {
+                        finalPoints[i].height = cesiumPointsOrig[i].height
+                    }
+                }
+
+                this.waypoints = this.viewer.entities.add({
+                    polyline: {
+                        positions: finalPoints.map(
+                            (pos) => Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height)
+                        ),
+                        width: 1,
+                        material: new PolylineDashMaterialProperty({
+                            color: Color.WHITE,
+                            dashLength: 8.0
+                        })
+                    }
+                })
+                const labelPoints = finalPoints.map(
+                    (pos) => Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height + 0.3)
+                )
+                for (const i in labelPoints) {
+                    this.viewer.entities.add({
+                        parent: this.waypoints,
+                        position: labelPoints[i],
+                        label: {
+                            text: `${points[i][5]}`,
+                            font: '12px sans-serif',
+                            style: LabelStyle.FILL_AND_OUTLINE,
+                            fillColor: Color.WHITE,
+                            outlineColor: Color.BLACK,
+                            showBackground: false,
+                            outlineWidth: 3
+                        }
                     })
                 }
             })
-            for (const pos of points) {
-                const position = Cartesian3.fromDegrees(pos[0], pos[1], pos[2] + 0.3 + this.heightOffset)
-                this.viewer.entities.add({
-                    parent: this.waypoints,
-                    position: position,
-                    label: {
-                        text: `${pos[5]}`,
-                        font: '12px sans-serif',
-                        style: LabelStyle.FILL_AND_OUTLINE,
-                        fillColor: Color.WHITE,
-                        outlineColor: Color.BLACK,
-                        showBackground: false,
-                        outlineWidth: 3
-                    }
-                })
-            }
         },
 
         plotFences (fencesList) {
