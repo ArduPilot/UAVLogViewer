@@ -2,6 +2,7 @@
     <div :id="getDivName()"
          v-bind:style="{width:  width + 'px', height: height + 'px', top: top + 'px', left: left + 'px' }">
         <div id="paneContent">
+          <span style="float: right; margin: 3px; cursor: pointer;" @click="close()"> X </span>
             <ul>
                 <li v-bind:key="msg[0]+msg[1]" v-for="msg in filteredData">
                     [{{timeFormatter(msg[0])}}]: {{ msg[2] }}

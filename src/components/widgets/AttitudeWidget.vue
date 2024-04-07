@@ -9,6 +9,7 @@
     }"
   >
     <div id="paneContent">
+      <span style="float: right; margin: 3px; cursor: pointer;" @click="close()"> X </span>
       <Attitude :roll="roll" :pitch="pitch" />
     </div>
   </div>

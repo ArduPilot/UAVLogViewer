@@ -2,6 +2,7 @@
     <div :id="getDivName()"
          v-bind:style='{width:  width + "px", height: height + "px", top: top + "px", left: left + "px" }'>
         <div id='paneContent'>
+            <span style="float: right; margin: 3px; cursor: pointer;" @click="close()"> X </span>
             <h5>Mag Fit Tool</h5>
             <div class="section">
               <h6>Location</h6>

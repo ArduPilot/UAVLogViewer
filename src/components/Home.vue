@@ -10,11 +10,11 @@
             </div>
         </template>
         <TxInputs fixed-aspect-ratio v-if="state.mapAvailable && state.showMap && state.showRadio"></TxInputs>
-        <ParamViewer v-if="state.showParams"></ParamViewer>
-        <MessageViewer v-if="state.showMessages"></MessageViewer>
-        <DeviceIDViewer v-if="state.showDeviceIDs"></DeviceIDViewer>
-        <AttitudeViewer v-if="state.showAttitude"></AttitudeViewer>
-        <MagFitTool v-if="state.showMagfit"></MagFitTool>
+        <ParamViewer    @close="state.showParams = false" v-if="state.showParams"></ParamViewer>
+        <MessageViewer  @close="state.showMessages = false" v-if="state.showMessages"></MessageViewer>
+        <DeviceIDViewer @close="state.showDeviceIDs = false" v-if="state.showDeviceIDs"></DeviceIDViewer>
+        <AttitudeViewer @close="state.showAttitude = false" v-if="state.showAttitude"></AttitudeViewer>
+        <MagFitTool     @close="state.showMagfit = false" v-if="state.showMagfit"></MagFitTool>
         <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
             <sidebar/>

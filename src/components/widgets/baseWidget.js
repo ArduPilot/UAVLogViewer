@@ -19,6 +19,9 @@ export const baseWidget = {
         }
     },
     methods: {
+        close () {
+            this.$emit('close')
+        },
         getDivName () {
             return 'pane' + this.name
         }
