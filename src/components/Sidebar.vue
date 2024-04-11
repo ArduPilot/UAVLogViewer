@@ -57,6 +57,11 @@
                           <input type="checkbox" v-model="state.showMagfit">
                           <a class="check-font"> Mag Fit Tool </a>
                         </label>
+                        <label>
+                          <i class="fa fa-compass circle"></i>
+                          <input type="checkbox" v-model="state.showEkfHelper">
+                          <a class="check-font"> EKF helper </a>
+                        </label>
                         <label v-if="state.textMessages">
                           <i class="fa fa-comment circle"></i>
                           <input type="checkbox" v-model="state.showMessages">
