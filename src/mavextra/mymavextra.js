@@ -7,3 +7,14 @@ window.named = (NAMED_VALUE_FLOAT, key) => {
     }
     return null
 }
+
+window.angle_diff = (angle1, angle2) => {
+    let ret = angle1 - angle2
+    if (ret > 180) {
+        ret -= 360
+    }
+    if (ret < -180) {
+        ret += 360
+    }
+    return ret
+}
