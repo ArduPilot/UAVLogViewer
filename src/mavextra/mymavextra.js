@@ -8,6 +8,7 @@ window.named = (NAMED_VALUE_FLOAT, key) => {
     return null
 }
 
+// eslint-disable-next-line camelcase
 window.angle_diff = (angle1, angle2) => {
     let ret = angle1 - angle2
     if (ret > 180) {
