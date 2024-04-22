@@ -76,7 +76,8 @@ export default {
                 url = file
             }
             const oReq = new XMLHttpRequest()
-            this.state.logType = url.endsWith('.tlog') ? 'tlog' : 'bin'
+            console.log(url)
+            this.state.logType = url.indexOf('.tlog') > 0 ? 'tlog' : 'bin'
             oReq.open('GET', url, true)
             oReq.responseType = 'arraybuffer'
 
