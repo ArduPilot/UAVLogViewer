@@ -300,7 +300,11 @@ export default {
                                 index = indexes[series]
                                 x = data[series].x[index]
                             }
-                            line.push(data[series].y[index])
+                            const y = data[series].y[index]
+                            const prevX = data[series].x[index - 1]
+                            const prevY = data[series].y[index - 1]
+                            const interpolatedY = this.interpolateY(prevY, y, prevX, x, currentTime)
+                            line.push(interpolatedY)
                         }
                         csv.push(line)
                         currentTime = currentTime + interval
@@ -317,6 +321,16 @@ export default {
                     document.body.removeChild(link)
                 }
             }
+        },
+        interpolateY (y1, y2, x1, x2, x) {
+            const dx = x2 - x1
+            if (dx <= 0) {
+                throw new Error('x2 must be greater than x1')
+            }
+            const dy = y2 - y1
+            const slope = dy / dx
+            const interpolatedY = y1 + slope * dx
+            return interpolatedY
         },
         resize () {
             Plotly.Plots.resize(this.gd)
