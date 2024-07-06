@@ -277,25 +277,25 @@ export default {
                     const indexes = []
 
                     const interval = 100
-                    let lasttime = Infinity
+                    let currentTime = Infinity
                     let finaltime = 0
 
                     for (const series in data) {
                         indexes.push(0)
                         const x = data[series].x
-                        lasttime = Math.min(lasttime, x[0])
+                        currentTime = Math.min(currentTime, x[0])
                         finaltime = Math.max(finaltime, x[x.length - 1])
                     }
                     finaltime = Math.min(finaltime, this.state.timeRange[1])
-                    lasttime = Math.max(lasttime, this.state.timeRange[0])
+                    currentTime = Math.max(currentTime, this.state.timeRange[0])
 
                     const csv = [header]
-                    while (lasttime < finaltime - interval) {
-                        const line = [lasttime]
+                    while (currentTime < finaltime - interval) {
+                        const line = [currentTime]
                         for (const series in data) {
                             let index = indexes[series]
                             let x = data[series].x[index]
-                            while (x < lasttime) {
+                            while (x < currentTime) {
                                 indexes[series] += 1
                                 index = indexes[series]
                                 x = data[series].x[index]
@@ -303,7 +303,7 @@ export default {
                             line.push(data[series].y[index])
                         }
                         csv.push(line)
-                        lasttime = lasttime + interval
+                        currentTime = currentTime + interval
                     }
                     const csvContent = csv.map(e => e.join(',')).join('\n')
                     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
