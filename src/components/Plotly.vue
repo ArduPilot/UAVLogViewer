@@ -679,7 +679,13 @@ export default {
                 if (isNaN(field)) {
                     break
                 }
-                expression = expression.replaceAll(fields[field], 'a[' + field + ']')
+                // first looks for fields in the expression
+                if (expression.includes(`${fields[field]}.`)) {
+                    expression = expression.replaceAll(`${fields[field]}.`, 'a[' + field + '].')
+                    continue
+                }
+                // fallback to replacing message name instead
+                expression = expression.replaceAll(`${fields[field]}`, 'a[' + field + ']')
             }
             let f
             try {
