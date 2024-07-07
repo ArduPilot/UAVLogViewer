@@ -2,45 +2,51 @@
     <div>
         <li class="type">
             <div v-b-toggle.plotsetupcontent>
-                <a class="section"> Plots Setup
-                    <i class="expand fas fa-caret-down"></i></a>
+        <a class="section">
+          Plots Setup
+          <i class="expand fas fa-caret-down"></i>
+        </a>
             </div>
         </li>
-        <b-collapse class="menu-content collapse out" id="plotsetupcontent" visible>
+    <b-collapse id="plotsetupcontent" class="menu-content collapse out" visible>
             <ul class="colorpicker plot-wrapper">
-                <template v-for="(field, index) in state.expressions">
-                    <li :key="'field'+index" class="field plotsetup">
-                        <input class="plotname" v-model.lazy="field.name" v-debounce="1000">
+        <template v-if="state.expressions.length">
+          <li v-for="(field, index) in state.expressions" :key="'field'+index" class="field plotsetup">
+              <input
+                v-model.lazy="field.name"
+                v-debounce="1000"
+                class="plotname"
+              >
                         <select v-model.number="field.axis">
-                            <option v-bind:key="'axisnumber'+axis" v-for="axis in state.allAxis">{{axis}}</option>
+              <option v-for="axis in state.allAxis" :key="'axisnumber'+axis" :value="axis">{{ axis }}</option>
                         </select>
-                        <select :style="{color: field.color}" v-model="field.color">
+            <select v-model="field.color" :style="{color: field.color}">
                             <option
-                                v-bind:key="'axisColor'+color"
+                v-for="color in state.allColors"
+                :key="'axisColor'+color"
+                :value="color"
                                 :style="{color: color}"
-                                v-bind:value="color"
-                                v-for="color in state.allColors">■
-                            </option>
+              >■</option>
                         </select>
                         <a class="remove-button" @click="$eventHub.$emit('togglePlot', field.name)">
                             <i class="expand fas fa-trash" title="Remove data"></i>
                         </a>
                     </li>
-                    <li :key="'field'+index+'err'" v-if="state.expressionErrors[index]" class="error">
-                        <i class="fas fa-exclamation-circle error"
-                           :title="state.expressionErrors[index]">
-                        </i>
-                        {{state.expressionErrors[index]}}
+          <li v-if="state.expressionErrors[index]" :key="'field'+index+'err'" class="error">
+            <i class="fas fa-exclamation-circle error" :title="state.expressionErrors[index]"></i>
+            {{ state.expressionErrors[index] }}
                     </li>
                 </template>
-                <li v-if="state.expressions.length === 0">  Please plot something first.</li>
+        <li v-else>Please plot something first.</li>
             </ul>
             <!-- BUTTONS -->
             <div class="btns-wrapper">
-            <button class="add-expression" @click="createNewExpression()">
-            <i class="fa fa-plus" aria-hidden="true"></i>Add Expression</button>
-            <button class="save-preset" v-if="state.expressions.length > 0" v-b-modal.modal-prevent-closing>
-            <i class="fa fa-check-circle" aria-hidden="true"></i>Save Preset</button>
+        <button class="add-expression" @click="createNewExpression">
+          <i class="fa fa-plus" aria-hidden="true"></i>Add Expression
+        </button>
+        <button v-if="state.expressions.length > 0" class="save-preset" v-b-modal.modal-prevent-closing>
+          <i class="fa fa-check-circle" aria-hidden="true"></i>Save Preset
+        </button>
                 <button
                     class="save-preset"
                     v-if="state.expressions.length > 0"
@@ -61,10 +67,7 @@
             @ok="handleOk"
         >
             <form ref="form" @submit.stop.prevent="handleOk">
-                <b-form-group
-                    label="New Preset Name"
-                    label-for="name-input"
-                >
+        <b-form-group label="New Preset Name" label-for="name-input">
                     <b-form-input
                         id="name-input"
                         v-model="name"
@@ -81,7 +84,10 @@ import { store } from './Globals.js'
 import debounce from 'v-debounce'
 
 export default {
-    name: 'plotSetup',
+    name: 'PlotSetup',
+    directives: {
+        debounce
+    },
     data () {
         return {
             state: store,
@@ -101,49 +107,21 @@ export default {
         },
         // TODO: this is duplicated in Plotly.vue, refactor it out!
         getFirstFreeAxis () {
-            // get free axis number
-            for (const i of this.state.allAxis) {
-                let taken = false
-                for (const field of this.state.expressions) {
-                    // eslint-disable-next-line
-                    if (field.axis == i) {
-                        taken = true
-                    }
-                }
-                if (!taken) {
-                    return i
-                }
-            }
-            return this.state.allAxis.length - 1
+            return this.state.allAxis.find(axis =>
+                !this.state.expressions.some(field => field.axis === axis)
+            ) || this.state.allAxis[this.state.allAxis.length - 1]
         },
         getFirstFreeColor () {
-            // get free color
-            for (const i of this.state.allColors) {
-                let taken = false
-                for (const field of this.state.expressions) {
-                    // eslint-disable-next-line
-                    if (field.color == i) {
-                        taken = true
-                    }
-                }
-                if (!taken) {
-                    return i
-                }
-            }
-            return this.state.allColors[this.state.allColors.length - 1]
+            return this.state.allColors.find(color =>
+                !this.state.expressions.some(field => field.color === color)
+            ) || this.state.allColors[this.state.allColors.length - 1]
         },
         savePreset (name) {
             const myStorage = window.localStorage
-            let saved = myStorage.getItem('savedFields')
-            if (saved === null) {
-                saved = {}
-            } else {
-                saved = JSON.parse(saved)
-            }
-            saved[name] = []
-            for (const field of this.state.expressions) {
-                saved[name].push([field.name, field.axis, field.color, field.function])
-            }
+            const saved = JSON.parse(myStorage.getItem('savedFields')) || {}
+            saved[name] = this.state.expressions.map(field =>
+                [field.name, field.axis, field.color, field.function]
+            )
             myStorage.setItem('savedFields', JSON.stringify(saved))
             this.$eventHub.$emit('presetsChanged')
         },
@@ -154,10 +132,7 @@ export default {
         handleOk (bvModalEvt) {
             // Prevent modal from closing
             bvModalEvt.preventDefault()
-
-            if (this.name.lenght > 0) {
-                return
-            }
+            if (this.name.length > 0) {
             this.savePreset(this.name)
 
             // Hide the modal manually
@@ -165,9 +140,7 @@ export default {
                 this.$refs.modal.hide()
             })
         }
-    },
-    directives: {
-        debounce
+        }
     }
 }
 </script>
