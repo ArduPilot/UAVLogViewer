@@ -85,9 +85,9 @@ import debounce from 'v-debounce'
 import ExpressionEditor from './ExpressionEditor.vue'
 
 const additionalCompletionItems = [
-    'mag_heading_df(',
-    'mag_heading(',
-    'named(NAMED_VALUE_FLOAT, name)'
+    'mag_heading_df(MAG[0],ATT)',
+    'mag_heading(RAW_IMU,ATTITUDE)',
+    'named(NAMED_VALUE_FLOAT,"InputHold")'
 ]
 
 export default {
