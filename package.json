@@ -11,6 +11,7 @@
     "e2e": "node test/e2e/runner.js",
     "test": "npm run unit && npm run e2e",
     "lint": "eslint --fix --ext .js,.vue src test/unit test/e2e/specs",
+    "lint:fix": "eslint --fix --ext .js,.vue src",
     "build": "node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js --config build/webpack.prod.conf.js",
     "postinstall": "patch-package"
   },
@@ -50,6 +51,7 @@
     "vue": "^2.7.5",
     "vue-flight-indicators": "^0.1.1",
     "vue-router": "^3.5.4",
+    "vue-simple-suggest": "^1.11.2",
     "webpack-eslint-plugin": "^1.2.0"
   },
   "devDependencies": {
