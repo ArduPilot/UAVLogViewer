@@ -3,14 +3,14 @@
 process.env.NODE_ENV = 'testing'
 
 const devConfigPromise = require('../../build/webpack.dev.conf')
-var exec = require('child_process').exec
+const exec = require('child_process').exec
 
 devConfigPromise.then(devConfig => {
-    exec('cd $(pwd)/dist && python3 -m http.server 8080', function callback(error, stdout, stderr){
+    exec('cd $(pwd)/dist && python3 -m http.server 8080', function callback (error, stdout, stderr) {
         console.log(error)
         console.log(stdout)
         console.log(stderr)
-    });
+    })
 })
     .then(() => {
         // 2. run the nightwatch test suite against it
