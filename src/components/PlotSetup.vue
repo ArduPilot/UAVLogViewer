@@ -12,11 +12,11 @@
             <ul class="colorpicker plot-wrapper">
         <template v-if="state.expressions.length">
           <li v-for="(field, index) in state.expressions" :key="'field'+index" class="field plotsetup">
-              <input
+              <expression-editor
                 v-model.lazy="field.name"
                 v-debounce="1000"
-                class="plotname"
-              >
+                :suggestions="completionOptions"
+              />
                         <select v-model.number="field.axis">
               <option v-for="axis in state.allAxis" :key="'axisnumber'+axis" :value="axis">{{ axis }}</option>
                         </select>
@@ -82,9 +82,19 @@
 <script>
 import { store } from './Globals.js'
 import debounce from 'v-debounce'
+import ExpressionEditor from './ExpressionEditor.vue'
+
+const additionalCompletionItems = [
+    'mag_heading_df(',
+    'mag_heading(',
+    'named(NAMED_VALUE_FLOAT, name)'
+]
 
 export default {
     name: 'PlotSetup',
+    components: {
+        ExpressionEditor
+    },
     directives: {
         debounce
     },
@@ -92,6 +102,15 @@ export default {
         return {
             state: store,
             name: ''
+        }
+    },
+    computed: {
+        completionOptions () {
+            const messageOptions = Object.keys(this.state.messageTypes).flatMap(key => {
+                const fields = this.state.messageTypes[key].expressions.map(field => `${key}.${field}`)
+                return [key, ...fields]
+            })
+            return [...additionalCompletionItems, ...messageOptions]
         }
     },
     methods: {
@@ -147,7 +166,7 @@ export default {
 <style>
 /* MAIN */
     .plot-wrapper {
-        max-height: 160px;
+        min-height: 160px;
         overflow: hidden;
         overflow-y: scroll;
     }
@@ -194,7 +213,7 @@ export default {
         line-height: 15px;
         margin-bottom: 0;
         font-size: 13px;
-        width: 59%;
+        width: 100%;
         border: 1px solid grey;
         padding: 4.5px;
         border-radius: 20px;
