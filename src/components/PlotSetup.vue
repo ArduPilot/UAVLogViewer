@@ -133,13 +133,13 @@ export default {
             // Prevent modal from closing
             bvModalEvt.preventDefault()
             if (this.name.length > 0) {
-            this.savePreset(this.name)
+                this.savePreset(this.name)
 
-            // Hide the modal manually
-            this.$nextTick(() => {
-                this.$refs.modal.hide()
-            })
-        }
+                // Hide the modal manually
+                this.$nextTick(() => {
+                    this.$refs.modal.hide()
+                })
+            }
         }
     }
 }
