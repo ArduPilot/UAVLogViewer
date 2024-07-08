@@ -84,12 +84,6 @@ import { store } from './Globals.js'
 import debounce from 'v-debounce'
 import ExpressionEditor from './ExpressionEditor.vue'
 
-const additionalCompletionItems = [
-    'mag_heading_df(MAG[0],ATT)',
-    'mag_heading(RAW_IMU,ATTITUDE)',
-    'named(NAMED_VALUE_FLOAT,"InputHold")'
-]
-
 export default {
     name: 'PlotSetup',
     components: {
@@ -105,12 +99,22 @@ export default {
         }
     },
     computed: {
+        additionalCompletionItems () {
+            const additionalCompletionItems = [
+                'mag_heading_df(MAG[0],ATT)',
+                'mag_heading(RAW_IMU,ATTITUDE)'
+            ]
+            for (const name of this.state.namedFloats) {
+                additionalCompletionItems.push(`named(NAMED_VALUE_FLOAT,"${name}")`)
+            }
+            return additionalCompletionItems
+        },
         completionOptions () {
             const messageOptions = Object.keys(this.state.messageTypes).flatMap(key => {
                 const fields = this.state.messageTypes[key].expressions.map(field => `${key}.${field}`)
                 return [key, ...fields]
             })
-            return [...additionalCompletionItems, ...messageOptions]
+            return [...this.additionalCompletionItems, ...messageOptions]
         }
     },
     methods: {

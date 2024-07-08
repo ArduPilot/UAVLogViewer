@@ -455,6 +455,11 @@ export class DataflashDataExtractor {
         return ret
     }
 
+    static extractNamedValueFloatNames (_messages) {
+        // this mechanism is not used for dataflash logs
+        return []
+    }
+
     static extractStartTime (messages) {
         return extractStartTime(messages)
     }

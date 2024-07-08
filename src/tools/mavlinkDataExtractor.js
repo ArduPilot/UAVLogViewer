@@ -314,6 +314,13 @@ export class MavlinkDataExtractor {
         return texts
     }
 
+    static extractNamedValueFloatNames (messages) {
+        if ('NAMED_VALUE_FLOAT' in messages) {
+            return Array.from(new Set(messages.NAMED_VALUE_FLOAT.name))
+        }
+        return []
+    }
+
     static extractStartTime (messages) {
         return undefined
     }

@@ -196,7 +196,8 @@ export class MavlinkParser {
             'PARAM_VALUE',
             'STATUSTEXT',
             'AHRS2',
-            'AHRS3']
+            'AHRS3',
+            'NAMED_VALUE_FLOAT',]
         for (const i in preparseList) {
             this.mavlinkParser.parseType(preparseList[i])
             self.postMessage({ percentage: (i / preparseList.length) * 100 })

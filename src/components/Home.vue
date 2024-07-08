@@ -176,6 +176,13 @@ export default {
                 console.log('unable to load metadata')
                 console.log(error)
             }
+            try {
+                this.state.namedFloats = this.dataExtractor.extractNamedValueFloatNames(this.state.messages)
+                console.log(this.state.namedFloats)
+            } catch (error) {
+                console.log('unable to load named floats')
+                console.log(error)
+            }
             Vue.delete(this.state.messages, 'AHR2')
             Vue.delete(this.state.messages, 'POS')
             Vue.delete(this.state.messages, 'GPS')

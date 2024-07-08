@@ -36,6 +36,7 @@ export const store = {
     plotLoading: false,
     timeRange: null,
     textMessages: [],
+    namedFloats: [],
     metadata: null,
     // cesium menu:
     modelScale: 1.0,

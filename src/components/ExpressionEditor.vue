@@ -4,7 +4,6 @@
                 :value="value"
                 @input="updateValue($event.target.value)"
                 @keydown="handleKeyDown"
-                @scroll="handleScroll"
                 ref="codeEditor"/>
       <div v-if="showSuggestions" class="suggestions-box" :style="suggestionsBoxStyle">
           <div v-for="(suggestion, index) in filteredSuggestions"
@@ -54,12 +53,11 @@ export default {
         handleInput () {
             const cursorPosition = this.$refs.codeEditor.selectionStart
             const textBeforeCursor = this.value.slice(0, cursorPosition)
-            const words = textBeforeCursor.split(/\s+/)
-            this.currentWord = words[words.length - 1]
 
-            if (this.currentWord.length > 0) {
+            if (this.shouldShowSuggestions(textBeforeCursor)) {
+                const currentWord = this.getCurrentWord(textBeforeCursor)
                 this.filteredSuggestions = this.suggestions.filter(s =>
-                    s.toLowerCase().startsWith(this.currentWord.toLowerCase())
+                    s.toLowerCase().startsWith(currentWord.toLowerCase())
                 )
                 this.showSuggestions = this.filteredSuggestions.length > 0
                 this.selectedIndex = 0
@@ -67,6 +65,15 @@ export default {
             } else {
                 this.showSuggestions = false
             }
+        },
+        shouldShowSuggestions (text) {
+            const lastChar = text.slice(-1)
+            const operators = ['+', '-', '*', '/', '=', '(', ',', ' ']
+            return operators.includes(lastChar) || /\w/.test(lastChar)
+        },
+        getCurrentWord (text) {
+            // eslint-disable-next-line no-useless-escape
+            return text.split(/[\s\(\)\+\-\*\/\=,]+/).pop() || ''
         },
         handleKeyDown (e) {
             if (this.showSuggestions) {
@@ -95,55 +102,41 @@ export default {
             const cursorPosition = this.$refs.codeEditor.selectionStart
             const textBeforeCursor = this.value.slice(0, cursorPosition)
             const textAfterCursor = this.value.slice(cursorPosition)
-            const lastSpaceIndex = textBeforeCursor.lastIndexOf(' ')
-            const newTextBeforeCursor = textBeforeCursor.slice(0, lastSpaceIndex + 1) + suggestion
+            const currentWord = this.getCurrentWord(textBeforeCursor)
+            const lastChar = textBeforeCursor.slice(-1)
+            const operators = ['+', '-', '*', '/', '=', '(', ',', ' ']
 
-            const newValue = newTextBeforeCursor + textAfterCursor
+            let newValue
+            if (operators.includes(lastChar)) {
+                // If the last character is an operator or opening parenthesis, add the suggestion
+                newValue = textBeforeCursor + suggestion + textAfterCursor
+            } else {
+                // Otherwise, replace the current word with the suggestion
+                const textBeforeCurrentWord = textBeforeCursor.slice(0, -currentWord.length)
+                newValue = textBeforeCurrentWord + suggestion + textAfterCursor
+            }
+
             this.updateValue(newValue)
 
             this.$nextTick(() => {
-                this.$refs.codeEditor.selectionStart = this.$refs.codeEditor.selectionEnd = newTextBeforeCursor.length
+                const newCursorPosition = cursorPosition + (suggestion.length - currentWord.length)
+                this.$refs.codeEditor.selectionStart = this.$refs.codeEditor.selectionEnd = newCursorPosition
                 this.$refs.codeEditor.focus()
             })
 
             this.showSuggestions = false
         },
         updateCursorPosition () {
-            const textarea = this.$refs.codeEditor
-            const cursorPosition = textarea.selectionStart
-            const textBeforeCursor = this.value.slice(0, cursorPosition)
-            // const lines = textBeforeCursor.split('\n')
-            // const currentLine = lines.length
-            // const currentLineText = lines[lines.length - 1]
+            const input = this.$refs.codeEditor
+            const inputRect = input.getBoundingClientRect()
 
-            const temp = document.createElement('div')
-            temp.style.position = 'absolute'
-            temp.style.top = '-9999px'
-            temp.style.left = '-9999px'
-            temp.style.width = textarea.clientWidth + 'px'
-            temp.style.height = 'auto'
-            temp.style.whiteSpace = 'pre-wrap'
-            temp.style.wordWrap = 'break-word'
-            temp.style.font = window.getComputedStyle(textarea).font
-            temp.textContent = textBeforeCursor + '\n'
-            document.body.appendChild(temp)
-
-            const { lineHeight } = window.getComputedStyle(textarea)
-            // const textareaRect = textarea.getBoundingClientRect()
             this.cursorPosition = {
-                top: temp.clientHeight - parseFloat(lineHeight) + textarea.offsetTop,
-                left: textarea.offsetLeft + 10
-            }
-
-            document.body.removeChild(temp)
-        },
-        handleScroll () {
-            this.scrollTop = this.$refs.codeEditor.scrollTop
-            if (this.showSuggestions) {
-                this.updateCursorPosition()
+                top: 10,
+                left: inputRect.left
             }
         }
     }
+
 }
 </script>
 
@@ -173,7 +166,6 @@ export default {
             max-height: 150px;
             overflow-y: auto;
             z-index: 1000;
-            width: 200px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .suggestion-item {
