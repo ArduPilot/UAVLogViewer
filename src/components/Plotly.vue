@@ -289,7 +289,7 @@ export default {
                     finaltime = Math.min(finaltime, this.state.timeRange[1])
                     currentTime = Math.max(currentTime, this.state.timeRange[0])
                     // replace commas with semicolons so csv headers dont break, check #412
-                    const csv = [header.replace(',', ';')]
+                    const csv = [header.map(e => e.replace(',', ';'))]
                     while (currentTime < finaltime - interval) {
                         const line = [currentTime]
                         for (const series in data) {
