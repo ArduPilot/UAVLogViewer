@@ -159,6 +159,7 @@ export default {
             border-radius: 20px;
         }
         .suggestions-box {
+            text-align: left;
             position: absolute;
             background: white;
             border: 1px solid #ccc;
