@@ -722,7 +722,9 @@ export default {
                 }
                 try {
                     const val = f(vals)
-                    if (val !== null) {
+                    if (isNaN(val)) {
+                        throw new Error('Expression does not result in a number')
+                    } else if (val !== null) {
                         y.push(val)
                     }
                 } catch (e) {
