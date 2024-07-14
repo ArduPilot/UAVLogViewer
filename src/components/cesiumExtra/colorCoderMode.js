@@ -4,7 +4,6 @@ export default class ColorCoderMode {
 
     constructor (state) {
         this.state = state
-        this.setOfModes = this.calculateSetOfModes()
     }
 
     getLegend () {
@@ -19,6 +18,9 @@ export default class ColorCoderMode {
     }
 
     getColor (time) {
+        if (this.setOfModes === undefined) {
+            this.setOfModes = this.calculateSetOfModes()
+        }
         return this.state.colors[this.setOfModes.indexOf(this.getMode(time))]
     }
 

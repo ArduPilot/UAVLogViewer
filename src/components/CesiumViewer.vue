@@ -69,9 +69,13 @@ import 'cesium/Build/Cesium/Widgets/widgets.css'
 import CesiumSettingsWidget from './widgets/CesiumSettingsWidget.vue'
 import ColorCoderMode from './cesiumExtra/colorCoderMode.js'
 import ColorCoderRange from './cesiumExtra/colorCoderRange.js'
+import ColorCoderPlot from './cesiumExtra/colorCoderPlot.js'
 
 Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2MmM0MDgzZC00OGVkLTRjZ' +
     'TItOWI2MS1jMGVhYTM2MmMzODYiLCJpZCI6MjczNywiaWF0IjoxNjYyMTI4MjkxfQ.fPqhawtYLhwyZirKCi8fEjPEIn1CjYqETvA0bYYhWRA'
+
+const colorCoderMode = new ColorCoderMode(store)
+const colorCoderRange = new ColorCoderRange(store)
 
 function getMinTime (data) {
     // returns the minimum time in the array. Used to define the time range
@@ -92,11 +96,7 @@ export default {
             startTimeMs: 0,
             lastEmitted: 0,
             colorCoder: null,
-            selectedColorCoder: 'Mode',
-            availableColorCoders: {
-                Mode: new ColorCoderMode(store),
-                Range: new ColorCoderRange(store)
-            }
+            selectedColorCoder: 'Mode'
         }
     },
     components: {
@@ -1046,6 +1046,9 @@ export default {
         },
 
         getModeColor (time) {
+            if (this.colorCoder === undefined) {
+                return new Color(1, 1, 1, 1)
+            }
             return this.colorCoder.getColor(time)
         },
         getMode (time) {
@@ -1118,6 +1121,16 @@ export default {
         }
     },
     computed: {
+        availableColorCoders () {
+            const coders = {
+                Mode: colorCoderMode,
+                range: colorCoderRange
+            }
+            for (const key in this.state.plotCache) {
+                coders[key] = new ColorCoderPlot(store, key)
+            }
+            return coders
+        },
         useableColorCoders () {
             // check if requiredMessages for each color coder are present
             // iterates on key:value pais of this.availableColorCoders and filters them

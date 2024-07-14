@@ -7,6 +7,7 @@ import Plotly from 'plotly.js'
 import { store } from './Globals.js'
 import * as d3 from 'd3'
 import { faWindowRestore } from '@fortawesome/free-solid-svg-icons'
+import Vue from 'vue'
 
 const Color = require('color')
 
@@ -156,7 +157,6 @@ export default {
         this.$eventHub.$on('force-resize-plotly', this.resize)
         this.$eventHub.$on('child-zoomed', this.onTimeRangeChanged)
         this.zoomInterval = null
-        this.cache = {}
     },
     mounted () {
         const WIDTH_IN_PERCENT_OF_PARENT = 90
@@ -658,9 +658,9 @@ export default {
         },
         evaluateExpression (expression1) {
             const start = new Date()
-            if (expression1 in this.cache) {
+            if (expression1 in this.state.plotCache) {
                 console.log('HIT: ' + expression1)
-                return this.cache[expression1]
+                return this.state.plotCache[expression1]
             }
             console.log('MISS! evaluating : ' + expression1)
             // TODO: USE this regex with lookahead once firefox supports it
@@ -734,7 +734,8 @@ export default {
                 x: x,
                 y: y
             })
-            this.cache[expression1] = data
+            Vue.set(this.state.plotCache, expression1, data)
+            // this.state.plotCache[expression1] = data
             console.log('Evaluation took ' + (new Date() - start) + 'ms')
             return data
         },

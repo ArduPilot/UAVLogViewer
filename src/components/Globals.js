@@ -50,6 +50,7 @@ export const store = {
     cameraType: 'follow',
     expressions: [], // holds message name
     expressionErrors: [],
+    plotCache: {},
     allAxis: [0, 1, 2, 3, 4, 5],
     allColors: [
         '#1f77b4',
