@@ -739,7 +739,16 @@ export default {
             Vue.set(this.state.plotCache, expression1, data)
             // this.state.plotCache[expression1] = data
             console.log('Evaluation took ' + (new Date() - start) + 'ms')
+            this.cleanupCache()
             return data
+        },
+        cleanupCache () {
+            const keys = Object.keys(this.state.plotCache)
+            for (const key of keys) {
+                if (this.state.expressions.map(e => e.name).indexOf(key) < 0) {
+                    delete this.state.plotCache[key]
+                }
+            }
         },
         addGaps (data) {
             // Creates artifical gaps in order to break lines in plot when messages are not being received
