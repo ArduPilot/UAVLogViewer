@@ -149,159 +149,159 @@ export default {
 </script>
 <style>
 /* MAIN */
-    .plot-wrapper {
-        min-height: 160px;
-        overflow: hidden;
-        overflow-y: scroll;
-    }
+.plot-wrapper {
+  min-height: 160px;
+  overflow: hidden;
+  overflow-y: scroll;
+}
 
 /* COLOR PICKER */
 
-    ul.colorpicker {
-        font-family: 'Montserrat', sans-serif;
-    }
+ul.colorpicker {
+  font-family: 'Montserrat', sans-serif;
+}
 
-    ul.colorpicker li {
-        text-align: center;
-        cursor: default;
-        font-size: 13px;
-        padding-top: 1px;
-    }
+ul.colorpicker li {
+  text-align: center;
+  cursor: default;
+  font-size: 13px;
+  padding-top: 1px;
+}
 
-    ul.colorpicker li:hover {
-        background-color: #1E2536;
-        border-left: 3px solid #1E2536;
-    }
+ul.colorpicker li:hover {
+  background-color: #1E2536;
+  border-left: 3px solid #1E2536;
+}
 
-    ul.colorpicker li a {
-        cursor: pointer;
-    }
+ul.colorpicker li a {
+  cursor: pointer;
+}
 
-    li.field {
-        line-height: 26px;
-        padding-left: 20px;
-        font-size: 90%;
-    }
+li.field {
+  line-height: 26px;
+  padding-left: 20px;
+  font-size: 90%;
+}
 
-    li.plotsetup {
-        display: block;
-    }
+li.plotsetup {
+  display: block;
+}
 
-    i {
-        margin: 5px;
-        padding: 0;
-    }
+i {
+  margin: 5px;
+  padding: 0;
+}
 
-    .plotname {
-        display: inline-block;
-        line-height: 15px;
-        margin-bottom: 0;
-        font-size: 13px;
-        width: 100%;
-        border: 1px solid grey;
-        padding: 4.5px;
-        border-radius: 20px;
-    }
+.plotname {
+  display: inline-block;
+  line-height: 15px;
+  margin-bottom: 0;
+  font-size: 13px;
+  width: 100%;
+  border: 1px solid grey;
+  padding: 4.5px;
+  border-radius: 20px;
+}
 
-    .plotname:focus {
-        background-color: rgba(241, 248, 255, 0.966);
-        outline: none;
-    }
+.plotname:focus {
+  background-color: rgba(241, 248, 255, 0.966);
+  outline: none;
+}
 
-    select {
-        display: inline;
-        border-radius: 5px;
-        border: 1px solid rgb(156, 156, 156);
-        background-color: rgb(255, 255, 255);
-        padding: 2px 2.5px;
-        color: #838282;
-    }
+select {
+  display: inline;
+  border-radius: 5px;
+  border: 1px solid rgb(156, 156, 156);
+  background-color: rgb(255, 255, 255);
+  padding: 2px 2.5px;
+  color: #838282;
+}
 
-    select:focus {
-        border: 1.5px solid #d47f00;
-        outline: none;
-    }
+select:focus {
+  border: 1.5px solid #d47f00;
+  outline: none;
+}
 
-    select option {
-        background-color: rgb(216, 215, 215);
-    }
+select option {
+  background-color: rgb(216, 215, 215);
+}
 
-    select option:hover {
-        background-color: #d47f00;
-    }
+select option:hover {
+  background-color: #d47f00;
+}
 
-    .fa-trash {
-        margin: 12px 5px 10px 1px !important;
-        font-size: 10px;
-        float: right;
-    }
+.fa-trash {
+  margin: 12px 5px 10px 1px !important;
+  font-size: 10px;
+  float: right;
+}
 
-    .error {
-        color: red;
-    }
+.error {
+  color: red;
+}
+
 /* BUTTONS */
 
 .btns-wrapper {
-    display: flex;
-    flex-flow: row wrap;
-    justify-content: space-evenly;
-    margin: 10px;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-evenly;
+  margin: 10px;
 }
 
 /* SAVE PRESET BUTTON */
 
-    .save-preset {
-        background-color:rgb(33, 41, 61);
-        color: #fff;
-        border-radius: 15px;
-        padding: 0px 10px 0px 0px;
-        border: 1px solid rgba(91, 100, 117, 0.76);
-        font-size: 13px;
-    }
+.save-preset {
+  background-color: rgb(33, 41, 61);
+  color: #fff;
+  border-radius: 15px;
+  padding: 0px 10px 0px 0px;
+  border: 1px solid rgba(91, 100, 117, 0.76);
+  font-size: 13px;
+}
 
-    .save-preset:hover {
-        background-color: rgb(47, 58, 87);
-        box-shadow: 0px 0px 12px 0px rgba(37, 78, 133, 0.55);
-        transition: all 0.5s ease;
-    }
+.save-preset:hover {
+  background-color: rgb(47, 58, 87);
+  box-shadow: 0px 0px 12px 0px rgba(37, 78, 133, 0.55);
+  transition: all 0.5s ease;
+}
 
-    .save-preset:focus {
-        outline: none;
-    }
+.save-preset:focus {
+  outline: none;
+}
 
 /* ADD EXPRESSION BUTTON */
 
-    .add-expression {
-        background-color:rgb(33, 41, 61);
-        color: #fff;
-        border-radius: 15px;
-        padding: 0px 10px 0px 0px;
-        border: 1px solid rgba(91, 100, 117, 0.76);
-        font-size: 13px;
-    }
+.add-expression {
+  background-color: rgb(33, 41, 61);
+  color: #fff;
+  border-radius: 15px;
+  padding: 0px 10px 0px 0px;
+  border: 1px solid rgba(91, 100, 117, 0.76);
+  font-size: 13px;
+}
 
-    .add-expression:hover {
-        background-color: rgb(47, 58, 87);
-        box-shadow: 0px 0px 12px 0px rgba(37, 78, 133, 0.55);
-        transition: all 0.5s ease;
-    }
+.add-expression:hover {
+  background-color: rgb(47, 58, 87);
+  box-shadow: 0px 0px 12px 0px rgba(37, 78, 133, 0.55);
+  transition: all 0.5s ease;
+}
 
-    .add-expression:focus {
-        outline: none;
-    }
+.add-expression:focus {
+  outline: none;
+}
 
 /* MEDIA QUERIES */
 
-   @media (min-width: 1000px) and (max-width: 1440px) {
-       p.plotname {
-           width: 55%;
-       }
-   }
+@media (min-width: 1000px) and (max-width: 1440px) {
+  p.plotname {
+    width: 55%;
+  }
+}
 
-   @media (min-width: 2000px) {
-       p.plotname {
-           width: 60%;
-       }
-   }
-
+@media (min-width: 2000px) {
+  p.plotname {
+    width: 60%;
+  }
+}
 </style>
