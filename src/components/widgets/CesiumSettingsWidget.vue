@@ -95,6 +95,7 @@ export default {
 
 .cesium-settings-defaultContainer {
     z-index: 1;
+    height: fit-content;
     position: relative;
     font-weight: 400;
     line-height: 1.5;
@@ -102,9 +103,6 @@ export default {
     font-family: sans-serif;
     font-size: 16px;
     box-sizing: border-box;
-    position: absolute;
-    top: 10px;
-    left: 120px;
     min-width: 30px; /* Width of gear icon + padding */
     min-height: 30px; /* Height of gear icon + padding */
     overflow: hidden;

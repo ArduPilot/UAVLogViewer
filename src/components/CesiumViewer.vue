@@ -13,8 +13,8 @@
                 </tr>
               </tbody>
             </table>
+            <CesiumSettingsWidget />
         </div>
-        <CesiumSettingsWidget />
         <div id="cesiumContainer"></div>
     </div>
 </template>
@@ -1288,6 +1288,8 @@ export default {
         font-family: 'Montserrat', sans-serif;
         font-size: 9pt;
         z-index: 1;
+        height: fit-content;
+        display: flex;
     }
 
     /* INFO PANEL */
