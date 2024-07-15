@@ -82,7 +82,9 @@ export default {
         additionalCompletionItems () {
             const additionalCompletionItems = [
                 'mag_heading_df(MAG[0],ATT)',
-                'mag_heading(RAW_IMU,ATTITUDE)'
+                'mag_heading(RAW_IMU,ATTITUDE)',
+                'max(x,y)',
+                'min(x,y)'
             ]
             for (const name of this.state.namedFloats) {
                 additionalCompletionItems.push(`named(NAMED_VALUE_FLOAT,"${name}")`)

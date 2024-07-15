@@ -19,3 +19,6 @@ window.angle_diff = (angle1, angle2) => {
     }
     return ret
 }
+
+window.min = Math.min
+window.max = Math.max
