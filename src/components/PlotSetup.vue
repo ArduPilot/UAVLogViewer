@@ -1,83 +1,63 @@
 <template>
-    <div>
-        <li class="type">
-            <div v-b-toggle.plotsetupcontent>
+  <div>
+    <li class="type">
+      <div v-b-toggle.plotsetupcontent>
         <a class="section">
           Plots Setup
           <i class="expand fas fa-caret-down"></i>
         </a>
-            </div>
-        </li>
+      </div>
+    </li>
     <b-collapse id="plotsetupcontent" class="menu-content collapse out" visible>
-            <ul class="colorpicker plot-wrapper">
+      <ul class="colorpicker plot-wrapper">
         <template v-if="state.expressions.length">
-          <li v-for="(field, index) in state.expressions" :key="'field'+index" class="field plotsetup">
-              <expression-editor
-                v-model.lazy="field.name"
-                v-debounce="1000"
-                :suggestions="completionOptions"
-              />
-                        <select v-model.number="field.axis">
-              <option v-for="axis in state.allAxis" :key="'axisnumber'+axis" :value="axis">{{ axis }}</option>
-                        </select>
-            <select v-model="field.color" :style="{color: field.color}">
-                            <option
-                v-for="color in state.allColors"
-                :key="'axisColor'+color"
-                :value="color"
-                                :style="{color: color}"
-              >■</option>
-                        </select>
-                        <a class="remove-button" @click="$eventHub.$emit('togglePlot', field.name)">
-                            <i class="expand fas fa-trash" title="Remove data"></i>
-                        </a>
-                    </li>
-          <li v-if="state.expressionErrors[index]" :key="'field'+index+'err'" class="error">
-            <i class="fas fa-exclamation-circle error" :title="state.expressionErrors[index]"></i>
-            {{ state.expressionErrors[index] }}
-                    </li>
-                </template>
+          <template v-for="(field, index) in state.expressions">
+            <li class="field plotsetup" :key="'field' + index">
+              <expression-editor v-model.lazy="field.name" v-debounce="1000" :suggestions="completionOptions" />
+              <select v-model.number="field.axis">
+                <option v-for="axis in state.allAxis" :key="'axisnumber' + axis" :value="axis">{{ axis }}</option>
+              </select>
+              <select v-model="field.color" :style="{ color: field.color }">
+                <option v-for="color in state.allColors" :key="'axisColor' + color" :value="color"
+                  :style="{ color: color }">■
+                </option>
+              </select>
+              <a class="remove-button" @click="$eventHub.$emit('togglePlot', field.name)">
+                <i class="expand fas fa-trash" title="Remove data"></i>
+              </a>
+            </li>
+            <li v-if="state.expressionErrors[index]" :key="'field' + index + 'err'" class="error">
+              <i class="fas fa-exclamation-circle error" :title="state.expressionErrors[index]"></i>
+              {{ state.expressionErrors[index] }}
+            </li>
+          </template>
+        </template>
         <li v-else>Please plot something first.</li>
-            </ul>
-            <!-- BUTTONS -->
-            <div class="btns-wrapper">
+      </ul>
+      <!-- BUTTONS -->
+      <div class="btns-wrapper">
         <button class="add-expression" @click="createNewExpression">
           <i class="fa fa-plus" aria-hidden="true"></i>Add Expression
         </button>
         <button v-if="state.expressions.length > 0" class="save-preset" v-b-modal.modal-prevent-closing>
           <i class="fa fa-check-circle" aria-hidden="true"></i>Save Preset
         </button>
-                <button
-                    class="save-preset"
-                    v-if="state.expressions.length > 0"
-                    v-b-modal.modal-prevent-closing
-                    @click="$eventHub.$emit('clearPlot')"
-                >
-                    <i class="fa fa-ban" aria-hidden="true"></i>
-                    clear
-                </button>
-            </div>
-        </b-collapse>
-        <!-- MODAL -->
-        <b-modal
-            id="modal-prevent-closing"
-            ref="modal"
-            @show="resetModal"
-            @hidden="resetModal"
-            @ok="handleOk"
-        >
-            <form ref="form" @submit.stop.prevent="handleOk">
+        <button class="save-preset" v-if="state.expressions.length > 0" v-b-modal.modal-prevent-closing
+          @click="$eventHub.$emit('clearPlot')">
+          <i class="fa fa-ban" aria-hidden="true"></i>
+          clear
+        </button>
+      </div>
+    </b-collapse>
+    <!-- MODAL -->
+    <b-modal id="modal-prevent-closing" ref="modal" @show="resetModal" @hidden="resetModal" @ok="handleOk">
+      <form ref="form" @submit.stop.prevent="handleOk">
         <b-form-group label="New Preset Name" label-for="name-input">
-                    <b-form-input
-                        id="name-input"
-                        v-model="name"
-                        placeholder="Attitude/OtherRoll"
-                        required
-                    ></b-form-input>
-                </b-form-group>
-            </form>
-        </b-modal>
-    </div>
+          <b-form-input id="name-input" v-model="name" placeholder="Attitude/OtherRoll" required></b-form-input>
+        </b-form-group>
+      </form>
+    </b-modal>
+  </div>
 </template>
 <script>
 import { store } from './Globals.js'
