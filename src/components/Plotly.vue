@@ -8,6 +8,7 @@ import { store } from './Globals.js'
 import * as d3 from 'd3'
 import { faWindowRestore } from '@fortawesome/free-solid-svg-icons'
 import Vue from 'vue'
+import { isNumber } from 'underscore'
 
 const Color = require('color')
 
@@ -722,7 +723,8 @@ export default {
                 }
                 try {
                     const val = f(vals)
-                    if (isNaN(val)) {
+                    if (!isNumber(val)) {
+                        console.log(val)
                         throw new Error('Expression does not result in a number')
                     } else if (val !== null) {
                         y.push(val)
