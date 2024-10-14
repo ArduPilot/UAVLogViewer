@@ -1038,6 +1038,9 @@ export default {
                 ...annotationsParams]]
         },
         addParamChanges () {
+            if (!this.state.params) {
+                return
+            }
             let i = -300
             annotationsParams = []
             const firstFetch = new Set()
