@@ -35,17 +35,22 @@ export default {
             showSuggestions: false,
             selectedIndex: 0,
             currentWord: '',
-            cursorPosition: { top: 0, left: 0 },
-            scrollTop: 0
+            cursorPosition: { top: 0, left: 0 }
         }
     },
     computed: {
         suggestionsBoxStyle () {
             return {
-                top: `${this.cursorPosition.top - this.scrollTop + 20}px`,
+                top: `${this.cursorPosition.top}px`,
                 left: `${this.cursorPosition.left}px`
             }
         }
+    },
+    mounted () {
+        window.addEventListener('scroll', this.updateCursorPosition, true)
+    },
+    beforeDestroy () {
+        window.removeEventListener('scroll', this.updateCursorPosition, true)
     },
     methods: {
         updateValue (value) {
@@ -136,14 +141,26 @@ export default {
         updateCursorPosition () {
             const input = this.$refs.codeEditor
             const inputRect = input.getBoundingClientRect()
+            const textBeforeCursor = this.value.slice(0, input.selectionStart)
+
+            // Create temporary element to measure text width
+            const span = document.createElement('span')
+            span.style.visibility = 'hidden'
+            span.style.whiteSpace = 'pre'
+            span.style.font = getComputedStyle(input).font
+            span.textContent = textBeforeCursor || ' '
+            document.body.appendChild(span)
+
+            const textWidth = span.offsetWidth
+            document.body.removeChild(span)
 
             this.cursorPosition = {
-                top: 10,
-                left: inputRect.left
+                top: inputRect.top + window.pageYOffset + inputRect.height,
+                left: inputRect.left + window.pageXOffset + textWidth +
+                    parseInt(getComputedStyle(input).paddingLeft)
             }
         }
     }
-
 }
 </script>
 
@@ -167,12 +184,11 @@ export default {
         }
         .suggestions-box {
             text-align: left;
-            position: absolute;
+            position: fixed;
             background: white;
             border: 1px solid #ccc;
             border-radius: 4px;
             max-height: 150px;
-            overflow-y: auto;
             z-index: 1000;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
