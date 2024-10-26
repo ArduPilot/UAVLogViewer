@@ -1027,6 +1027,9 @@ export default {
                     cesiumPoints.push(position)
                 }
                 // we need to close the polygon
+                if (cesiumPoints.length === 0) {
+                    continue
+                }
                 const lastPos = fence[0]
                 cesiumPoints.push(Cartesian3.fromDegrees(lastPos[0], lastPos[1]))
 
