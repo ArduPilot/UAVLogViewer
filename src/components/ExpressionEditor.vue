@@ -4,6 +4,8 @@
                 :value="value"
                 @input="updateValue($event.target.value)"
                 @keydown="handleKeyDown"
+                @blur="hideSuggestions"
+                @focus="handleInput"
                 ref="codeEditor"/>
       <div v-if="showSuggestions" class="suggestions-box" :style="suggestionsBoxStyle">
           <div v-for="(suggestion, index) in filteredSuggestions"
@@ -49,6 +51,11 @@ export default {
         updateValue (value) {
             this.$emit('input', value)
             this.handleInput()
+        },
+        hideSuggestions () {
+            setTimeout(() => {
+                this.showSuggestions = false
+            }, 100)
         },
         handleInput () {
             const cursorPosition = this.$refs.codeEditor.selectionStart
