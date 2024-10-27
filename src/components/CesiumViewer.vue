@@ -62,6 +62,9 @@ import {
     ShaderSource
 } from 'cesium'
 
+import { DateTime } from 'luxon'
+import tzlookup from 'tz-lookup'
+
 import { store } from './Globals.js'
 import { DataflashDataExtractor } from '../tools/dataflashDataExtractor'
 import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
@@ -153,7 +156,21 @@ export default {
                 this.viewer.shadowMap.maxmimumDistance = 10000.0
                 this.viewer.shadowMap.softShadows = true
                 this.viewer.shadowMap.size = 4096
+                this.viewer.animation.viewModel.timeFormatter = (date, _viewModel) => {
+                    const isoString = JulianDate.toIso8601(date)
+                    let dateTime = DateTime.fromISO(isoString)
+                    // get zone from current cesium location
+                    const cameraPosition = this.viewer.camera.positionCartographic
+                    const longitude = cameraPosition.longitude * 180 / Math.PI
+                    const latitude = cameraPosition.latitude * 180 / Math.PI
 
+                    const timezone = tzlookup(latitude, longitude)
+                    dateTime = dateTime.setZone(timezone)
+                    // If you want to set a specific timezone
+                    // dateTime = dateTime.setZone("America/Chicago");
+                    const offset = dateTime.offsetNameShort || dateTime.offsetNameLong
+                    return `${dateTime.toLocaleString(DateTime.TIME_SIMPLE)} (${offset})`
+                }
                 // Attach hover handler
                 const handler = new ScreenSpaceEventHandler(this.viewer.scene.canvas)
                 handler.setInputAction(this.onMove, ScreenSpaceEventType.MOUSE_MOVE)
