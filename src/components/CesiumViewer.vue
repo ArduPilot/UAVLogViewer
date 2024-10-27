@@ -882,7 +882,9 @@ export default {
             this.changeCamera()
             if (this.state.vehicle === 'boat') {
                 setTimeout(() => {
-                    this.viewer.flyTo(this.model, { offset: new HeadingPitchRange(0, -0.5, 100) })
+                    this.viewer.flyTo(this.model, { offset: new HeadingPitchRange(0, -0.5, 100) }).then(() => {
+                        this.changeCamera()
+                    })
                 }, 3000)
             }
         },
