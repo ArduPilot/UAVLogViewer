@@ -57,6 +57,7 @@ import { Color } from 'cesium'
 import colormap from 'colormap'
 import { DataflashDataExtractor } from '../tools/dataflashDataExtractor'
 import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
+import { DjiDataExtractor } from '../tools/djiDataExtractor'
 import MagFitTool from '@/components/widgets/MagFitTool.vue'
 import EkfHelperTool from '@/components/widgets/EkfHelperTool.vue'
 import Vue from 'vue'
@@ -85,6 +86,8 @@ export default {
             if (this.dataExtractor === null) {
                 if (this.state.logType === 'tlog') {
                     this.dataExtractor = MavlinkDataExtractor
+                } else if (this.state.logType === 'dji') {
+                    this.dataExtractor = DjiDataExtractor
                 } else {
                     this.dataExtractor = DataflashDataExtractor
                 }
@@ -113,17 +116,19 @@ export default {
             this.state.vehicle = this.dataExtractor.extractVehicleType(this.state.messages)
             if (this.state.params === undefined) {
                 this.state.params = this.dataExtractor.extractParams(this.state.messages)
-                this.state.defaultParams = this.dataExtractor.extractDefaultParams(this.state.messages)
                 if (this.state.params !== undefined) {
-                    this.$eventHub.$on('cesium-time-changed', (time) => {
-                        this.state.params.seek(time)
-                    })
+                    this.state.defaultParams = this.dataExtractor.extractDefaultParams(this.state.messages)
+                    if (this.state.params !== undefined) {
+                        this.$eventHub.$on('cesium-time-changed', (time) => {
+                            this.state.params.seek(time)
+                        })
+                    }
                 }
             }
             if (this.state.vehicle === 'quadcopter') {
-                if (this.state.params.get('FRAME_TYPE') === 0) {
+                if (this.state.params?.get('FRAME_TYPE') === 0) {
                     this.state.vehicle += '+'
-                } else if (this.state.params.get('FRAME_TYPE') === 1) {
+                } else {
                     this.state.vehicle += 'x'
                 }
             }

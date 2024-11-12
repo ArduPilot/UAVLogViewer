@@ -86,7 +86,12 @@ export default {
 
                 this.transferMessage = 'Download Done'
                 this.sampleLoaded = true
-                worker.postMessage({ action: 'parse', file: arrayBuffer, isTlog: (url.indexOf('.tlog') > 0) })
+                worker.postMessage({
+                    action: 'parse',
+                    file: arrayBuffer,
+                    isTlog: (url.indexOf('.tlog') > 0),
+                    isDji: (url.indexOf('.txt') > 0)
+                })
             }
             oReq.addEventListener('progress', (e) => {
                 if (e.lengthComputable) {
@@ -142,11 +147,14 @@ export default {
                 worker.postMessage({
                     action: 'parse',
                     file: data,
-                    isTlog: (file.name.endsWith('tlog'))
+                    isTlog: (file.name.endsWith('tlog')),
+                    isDji: (file.name.endsWith('txt'))
                 })
             }
             this.state.logType = file.name.endsWith('tlog') ? 'tlog' : 'bin'
-
+            if (file.name.endsWith('.txt')) {
+                this.state.logType = 'dji'
+            }
             reader.readAsArrayBuffer(file)
         },
         uploadFile () {
@@ -215,7 +223,8 @@ export default {
                 worker.postMessage({
                     action: 'parse',
                     file: event.data.data,
-                    isTlog: false
+                    isTlog: false,
+                    isDji: false
                 })
             }
         })

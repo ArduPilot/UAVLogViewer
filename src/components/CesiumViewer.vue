@@ -68,6 +68,7 @@ import tzlookup from 'tz-lookup'
 import { store } from './Globals.js'
 import { DataflashDataExtractor } from '../tools/dataflashDataExtractor'
 import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
+import { djiDataExtractor } from '../tools/djiDataExtractor'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import CesiumSettingsWidget from './widgets/CesiumSettingsWidget.vue'
 import ColorCoderMode from './cesiumExtra/colorCoderMode.js'
@@ -1116,6 +1117,9 @@ export default {
                 let dataExtractor = null
                 if (this.state.logType === 'tlog') {
                     dataExtractor = MavlinkDataExtractor
+                } else if (this.state.logType === 'dji') {
+                    console.log('Using DJI extractor')
+                    dataExtractor = djiDataExtractor
                 } else {
                     dataExtractor = DataflashDataExtractor
                 }

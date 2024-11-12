@@ -682,7 +682,11 @@ export default {
                 try {
                     x = this.state.messages.ATT.time_boot_ms
                 } catch {
-                    x = this.state.messages.ATTITUDE.time_boot_ms
+                    try {
+                        x = this.state.messages.ATTITUDE.time_boot_ms
+                    } catch {
+                        x = this.state.messages.osd.time_boot_ms
+                    }
                 }
             }
             // used to find the corresponding time indexes between messages
