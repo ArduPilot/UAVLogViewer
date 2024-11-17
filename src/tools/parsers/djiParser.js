@@ -222,7 +222,7 @@ class DjiParser {
       const parser = new DJILog(new Uint8Array(data));
       const keychains = await parser.fetchKeychains(
         "f05e96fa44f3f36eb9962948bac0f77",
-        "//new.galvanicloop.com:5000/https://dev.dji.com/openapi/v1/flight-records/keychains"
+        "//proxy.galvanicloop.com/https://dev.dji.com/openapi/v1/flight-records/keychains"
       );
       const frames = parser.frames(keychains)
       const startTime = new Date(frames[0].custom.dateTime).getTime()
