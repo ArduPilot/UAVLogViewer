@@ -40,6 +40,7 @@ import {
     JulianDate,
     ClockRange,
     Cartesian3,
+    Cartesian2,
     SampledProperty,
     LabelStyle,
     SampledPositionProperty,
@@ -59,7 +60,8 @@ import {
     ColorGeometryInstanceAttribute,
     PolylineColorAppearance,
     Primitive,
-    ShaderSource
+    ShaderSource,
+    ImageMaterialProperty
 } from 'cesium'
 
 import { DateTime } from 'luxon'
@@ -74,6 +76,14 @@ import CesiumSettingsWidget from './widgets/CesiumSettingsWidget.vue'
 import ColorCoderMode from './cesiumExtra/colorCoderMode.js'
 import ColorCoderRange from './cesiumExtra/colorCoderRange.js'
 import ColorCoderPlot from './cesiumExtra/colorCoderPlot.js'
+
+import {
+    generateHull,
+    smoothGrid,
+    interpolateToGrid,
+    expandPolygon,
+    isPointInPolygon
+} from './cesiumExtra/boundingPolygon.js'
 
 Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2MmM0MDgzZC00OGVkLTRjZ' +
     'TItOWI2MS1jMGVhYTM2MmMzODYiLCJpZCI6MjczNywiaWF0IjoxNjYyMTI4MjkxfQ.fPqhawtYLhwyZirKCi8fEjPEIn1CjYqETvA0bYYhWRA'
@@ -208,7 +218,7 @@ export default {
                 this.viewer.scene.globe.undergroundColorAlphaByDistance.nearValue = 0.2
                 this.viewer.scene.globe.undergroundColorAlphaByDistance.farValue = 1.0
             }
-
+            this.addBathymetryButton()
             this.addCenterVehicleButton()
             this.addFitContentsButton()
             this.addCloseButton()
@@ -496,6 +506,30 @@ export default {
                 this.$nextTick(function () {
                     this.$eventHub.$emit('force-resize-plotly')
                 })
+            })
+        },
+        addBathymetryButton () {
+            /* Creates the bathymetry button on the Cesium toolbar */
+            const toolbar = document.getElementsByClassName('cesium-viewer-toolbar')[0]
+
+            let bathymetryButton = document.createElement('span')
+            if (bathymetryButton.classList) {
+                bathymetryButton.classList.add('cesium-navigationHelpButton-wrapper')
+            } else {
+                bathymetryButton.className += ' ' + 'cesium-navigationHelpButton-wrapper'
+            }
+            bathymetryButton.innerHTML = '' +
+              '<button type="button" ' +
+              'id="cesium-bathymetry-button" ' +
+              'class="cesium-button cesium-toolbar-button"' +
+              'title="Toggle Bathymetry">' +
+              '<i class="fas fa-ship" style="font-style: unset;"></i>' +
+              '</button>'.trim()
+            toolbar.append(bathymetryButton)
+            bathymetryButton = document.getElementById('cesium-bathymetry-button')
+            bathymetryButton.addEventListener('click', () => {
+                this.plotBathymetry()
+                this.viewer.scene.requestRender()
             })
         },
         addFitContentsButton () {
@@ -802,6 +836,209 @@ export default {
                 }
             }
         },
+        aggregateDepth (bathymetry, positions) {
+            const positionsWithDepth = []
+            let lastIndex = 0
+
+            for (const index in positions.time_boot_ms) {
+                while (bathymetry.time_boot_ms[lastIndex] < positions.time_boot_ms[index] &&
+                    lastIndex < bathymetry.time_boot_ms.length - 1) {
+                    lastIndex++
+                }
+                if (bathymetry.time_boot_ms[lastIndex] >= positions.time_boot_ms[index]) {
+                    positionsWithDepth.push({
+                        latitude: positions.Lat[index] * 1e-7,
+                        longitude: positions.Lng[index] * 1e-7,
+                        depth: bathymetry.Dist[lastIndex]
+                    })
+                }
+            }
+            return positionsWithDepth
+        },
+        async plotBathymetry () {
+            const requiredMessages = ['RFND', 'POS']
+            for (const message of requiredMessages) {
+                this.$eventHub.$emit('loadType', message)
+            }
+            while (!(this.state.messages.RFND || this.state.messages['RFND[0]']) || !this.state.messages.POS) {
+                await new Promise(resolve => setTimeout(resolve, 100))
+            }
+            const bathymetry = this.state.messages.RFND || this.state.messages['RFND[0]']
+            let positionsWithDepth = this.aggregateDepth(bathymetry, this.state.messages.POS)
+
+            // Filter out outliers and invalid readings
+            const depths = positionsWithDepth.map(p => p.depth).filter(d => d > 0.1)
+            const mean = depths.reduce((a, b) => a + b, 0) / depths.length
+            const stdDev = Math.sqrt(depths.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / depths.length)
+
+            positionsWithDepth = positionsWithDepth.filter(p => {
+                return p.depth > 0.1 &&
+                      Math.abs(p.depth - mean) < 2.5 * stdDev &&
+                      p.latitude !== 0 && p.longitude !== 0
+            })
+
+            // Normalize coordinates to 1000x1000 space
+            const minLat = Math.min(...positionsWithDepth.map(p => p.latitude))
+            const maxLat = Math.max(...positionsWithDepth.map(p => p.latitude))
+            const minLng = Math.min(...positionsWithDepth.map(p => p.longitude))
+            const maxLng = Math.max(...positionsWithDepth.map(p => p.longitude))
+
+            const normalizedPoints = positionsWithDepth.map(p => ({
+                x: ((p.longitude - minLng) / (maxLng - minLng)) * 1000,
+                y: ((p.latitude - minLat) / (maxLat - minLat)) * 1000,
+                depth: p.depth
+            }))
+
+            // Generate and expand hull
+            const hull = generateHull(normalizedPoints)
+            const margin = 50 // Adjustable margin
+            const expandedHull = expandPolygon(hull, margin)
+
+            // Create canvas
+            const canvas = document.createElement('canvas')
+            const ctx = canvas.getContext('2d')
+            const width = 512
+            const height = 512
+            canvas.width = width
+            canvas.height = height
+
+            // Create grid with improved interpolation
+            const gridSize = 100
+            const grid = interpolateToGrid(normalizedPoints, gridSize)
+            const smoothedGrid = smoothGrid(grid, 1)
+
+            // Find depth range for color scaling
+            let minDepth = Infinity
+            let maxDepth = -Infinity
+            smoothedGrid.forEach(row => row.forEach(depth => {
+                if (depth !== null) {
+                    minDepth = Math.min(minDepth, depth)
+                    maxDepth = Math.max(maxDepth, depth)
+                }
+            }))
+
+            const cellWidth = width / gridSize
+            const cellHeight = height / gridSize
+
+            // Draw bathymetry
+            const imageData = new ImageData(width, height)
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const depth = smoothedGrid[i][j]
+                    if (depth === null) continue
+
+                    const normalizedDepth = (depth - minDepth) / (maxDepth - minDepth)
+                    const r = Math.floor(100 * (1 - normalizedDepth))
+                    const g = Math.floor(149 * (1 - normalizedDepth))
+                    const b = Math.floor(237 * (1 - normalizedDepth * 0.5))
+
+                    const x = Math.floor(i * cellWidth)
+                    const y = Math.floor(j * cellHeight)
+                    for (let dx = 0; dx < cellWidth + 1; dx++) {
+                        for (let dy = 0; dy < cellHeight + 1; dy++) {
+                            const pixelX = x + dx
+                            const pixelY = y + dy
+                            const idx = (pixelY * width + pixelX) * 4
+
+                            if (isPointInPolygon(pixelX / width * 1000, pixelY / height * 1000, expandedHull)) {
+                                imageData.data[idx] = r
+                                imageData.data[idx + 1] = g
+                                imageData.data[idx + 2] = b
+                                imageData.data[idx + 3] = 255 // Fully opaque inside hull
+                            } else {
+                                imageData.data[idx + 3] = 0 // Transparent outside hull
+                            }
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(imageData, 0, 0)
+
+            // Draw contour lines
+            ctx.save()
+            ctx.beginPath()
+            expandedHull.forEach((point, i) => {
+                const x = (point.x / 1000) * width
+                const y = (point.y / 1000) * height
+                if (i === 0) ctx.moveTo(x, y)
+                else ctx.lineTo(x, y)
+            })
+            ctx.closePath()
+            ctx.clip()
+
+            const contourLevels = 10
+            ctx.strokeStyle = 'rgba(0,0,0,0.2)'
+            ctx.lineWidth = 0.5
+
+            for (let level = 0; level < contourLevels; level++) {
+                const threshold = minDepth + (maxDepth - minDepth) * (level / contourLevels)
+                ctx.beginPath()
+
+                for (let i = 0; i < gridSize - 1; i++) {
+                    for (let j = 0; j < gridSize - 1; j++) {
+                        const x = i * cellWidth
+                        const y = j * cellHeight
+                        const cell = [
+                            smoothedGrid[i][j],
+                            smoothedGrid[i + 1][j],
+                            smoothedGrid[i + 1][j + 1],
+                            smoothedGrid[i][j + 1]
+                        ]
+
+                        if (cell.includes(null)) continue
+
+                        if ((cell[0] < threshold && cell[1] >= threshold) ||
+                            (cell[0] >= threshold && cell[1] < threshold)) {
+                            ctx.moveTo(x + cellWidth, y)
+                            ctx.lineTo(x + cellWidth, y + cellHeight)
+                        }
+
+                        if ((cell[0] < threshold && cell[3] >= threshold) ||
+                            (cell[0] >= threshold && cell[3] < threshold)) {
+                            ctx.moveTo(x, y + cellHeight)
+                            ctx.lineTo(x + cellWidth, y + cellHeight)
+                        }
+                    }
+                }
+                ctx.stroke()
+            }
+            ctx.restore()
+
+            // Draw hull outline
+            ctx.beginPath()
+            expandedHull.forEach((point, i) => {
+                const x = (point.x / 1000) * width
+                const y = (point.y / 1000) * height
+                if (i === 0) ctx.moveTo(x, y)
+                else ctx.lineTo(x, y)
+            })
+            ctx.closePath()
+            ctx.strokeStyle = 'rgba(0,0,0,0.5)'
+            ctx.lineWidth = 2
+            ctx.stroke()
+
+            // Create the rectangle with the canvas texture
+            const rectangle = Rectangle.fromCartographicArray(
+                positionsWithDepth.map(p => Cartographic.fromDegrees(p.longitude, p.latitude))
+            )
+
+            this.viewer.entities.add({
+                rectangle: {
+                    coordinates: rectangle,
+                    material: new ImageMaterialProperty({
+                        image: canvas,
+                        transparent: true,
+                        repeat: new Cartesian2(1, -1),
+                        offset: new Cartesian2(0, 1)
+                    }),
+                    outline: true,
+                    outlineColor: Color.BLACK
+                }
+            })
+            this.viewer.scene.requestRender()
+        },
+
+        // Hull generation helper function remains the same as before,
         addModel () {
             if (this.model !== null) {
                 this.viewer.entities.remove(this.model)
