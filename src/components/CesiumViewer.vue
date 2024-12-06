@@ -903,7 +903,7 @@ export default {
             canvas.height = height
 
             // Create grid with improved interpolation
-            const gridSize = 100
+            const gridSize = 200
             const grid = interpolateToGrid(normalizedPoints, gridSize)
             const smoothedGrid = smoothGrid(grid, 1)
 
