@@ -1193,6 +1193,10 @@ export default {
             // Remove old trajectory primitives
             this.viewer.scene.primitives.remove(this.trajectoryPrimitive)
 
+            if (!this.showTrajectory) {
+                this.viewer.scene.requestRender()
+                return
+            }
             // Create a new primitive with the geometry instances
             this.trajectoryPrimitive = new Primitive({
                 geometryInstances: geometryInstances,
@@ -1217,49 +1221,56 @@ export default {
                 cesiumPoints.push(position)
                 cesiumPointsOrig.push(position)
             }
-            sampleTerrainMostDetailed(this.viewer.terrainProvider, cesiumPoints, true).then((finalPoints) => {
-                // now check if we really want terrain height
-                for (let i = 0; i < cesiumPointsOrig.length; i++) {
-                    if (points[i][6] === 10) {
-                        finalPoints[i].height += points[i][2]
-                    } else {
-                        finalPoints[i].height = cesiumPointsOrig[i].height
-                    }
-                }
-
-                this.waypoints = this.viewer.entities.add({
-                    polyline: {
-                        positions: finalPoints.map(
-                            (pos) => Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height)
-                        ),
-                        width: 1,
-                        material: new PolylineDashMaterialProperty({
-                            color: Color.WHITE,
-                            dashLength: 8.0
-                        })
-                    }
+            if (this.state.vehicle !== 'boat') {
+                sampleTerrainMostDetailed(this.viewer.terrainProvider, cesiumPoints, true).then((finalPoints) => {
+                    this.plotMissionPoints(finalPoints, cesiumPointsOrig, points)
                 })
-                const labelPoints = finalPoints.map(
-                    (pos) => Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height + 0.3)
-                )
-                for (const i in labelPoints) {
-                    this.viewer.entities.add({
-                        parent: this.waypoints,
-                        position: labelPoints[i],
-                        label: {
-                            text: `${points[i][5]}`,
-                            font: '12px sans-serif',
-                            style: LabelStyle.FILL_AND_OUTLINE,
-                            fillColor: Color.WHITE,
-                            outlineColor: Color.BLACK,
-                            showBackground: false,
-                            outlineWidth: 3
-                        }
+            } else {
+                this.plotMissionPoints(cesiumPointsOrig, cesiumPointsOrig, points)
+            }
+        },
+
+        plotMissionPoints (finalPoints, cesiumPointsOrig, points) {
+            // now check if we really want terrain height
+            for (let i = 0; i < cesiumPointsOrig.length; i++) {
+                if (points[i][6] === 10) {
+                    finalPoints[i].height += points[i][2]
+                } else {
+                    finalPoints[i].height = cesiumPointsOrig[i].height
+                }
+            }
+
+            this.waypoints = this.viewer.entities.add({
+                polyline: {
+                    positions: finalPoints.map(
+                        (pos) => Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height)
+                    ),
+                    width: 1,
+                    material: new PolylineDashMaterialProperty({
+                        color: Color.WHITE,
+                        dashLength: 8.0
                     })
                 }
             })
+            const labelPoints = finalPoints.map(
+                (pos) => Cartesian3.fromRadians(pos.longitude, pos.latitude, pos.height + 0.3)
+            )
+            for (const i in labelPoints) {
+                this.viewer.entities.add({
+                    parent: this.waypoints,
+                    position: labelPoints[i],
+                    label: {
+                        text: `${points[i][5]}`,
+                        font: '12px sans-serif',
+                        style: LabelStyle.FILL_AND_OUTLINE,
+                        fillColor: Color.WHITE,
+                        outlineColor: Color.BLACK,
+                        showBackground: false,
+                        outlineWidth: 3
+                    }
+                })
+            }
         },
-
         plotFences (fencesList) {
             this.fences = []
             for (const fence of fencesList) {
@@ -1502,7 +1513,7 @@ export default {
             this.changeCamera()
         },
         showTrajectory () {
-            this.updateVisibility()
+            this.updateAndPlotTrajectory()
         },
         showClickableTrajectory () {
             this.updateVisibility()
