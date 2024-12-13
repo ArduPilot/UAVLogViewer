@@ -3999,6 +3999,16 @@ mavlink20.messageFields = {
         'z',
         'r',
         'buttons',
+        'buttons2',
+        'enabled_extensions',
+        's',
+        't',
+        'aux1',
+        'aux2',
+        'aux3',
+        'aux4',
+        'aux5',
+        'aux6',
     ],
     'RC_CHANNELS_OVERRIDE': [
         'target_system',
@@ -5330,6 +5340,7 @@ mavlink20.messageFields = {
         'custom_mode',
         'system_status',
         'mavlink_version',
+
     ],
 }
 mavlink20.messages = {};
@@ -9961,32 +9972,55 @@ as boolean values of their
                 buttons                   : A bitfield corresponding to the joystick buttons' current state, 1 for pressed, 0 for released. The lowest bit corresponds to Button 1. (uint16_t)
 
 */
-    mavlink20.messages.manual_control = function(target, x, y, z, r, buttons) {
+  /*
+This message provides an API for manually controlling the vehicle
+using standard joystick axes nomenclature, along with a joystick-like
+input device. Unused axes can be disabled an buttons are also transmit
+as boolean values of their
 
-    this._format = '<hhhhHB';
-    this._id = mavlink20.MAVLINK_MSG_ID_MANUAL_CONTROL;
-    this.order_map = [5, 0, 1, 2, 3, 4];
-    this.len_map = [1, 1, 1, 1, 1, 1];
-    this.array_len_map = [0, 0, 0, 0, 0, 0];
-    this.crc_extra = 243;
-    this._name = 'MANUAL_CONTROL';
+                target                    : The system to be controlled. (uint8_t)
+                x                         : X-axis, normalized to the range [-1000,1000]. A value of INT16_MAX indicates that this axis is invalid. Generally corresponds to forward(1000)-backward(-1000) movement on a joystick and the pitch of a vehicle. (int16_t)
+                y                         : Y-axis, normalized to the range [-1000,1000]. A value of INT16_MAX indicates that this axis is invalid. Generally corresponds to left(-1000)-right(1000) movement on a joystick and the roll of a vehicle. (int16_t)
+                z                         : Z-axis, normalized to the range [-1000,1000]. A value of INT16_MAX indicates that this axis is invalid. Generally corresponds to a separate slider movement with maximum being 1000 and minimum being -1000 on a joystick and the thrust of a vehicle. Positive values are positive thrust, negative values are negative thrust. (int16_t)
+                r                         : R-axis, normalized to the range [-1000,1000]. A value of INT16_MAX indicates that this axis is invalid. Generally corresponds to a twisting of the joystick, with counter-clockwise being 1000 and clockwise being -1000, and the yaw of a vehicle. (int16_t)
+                buttons                   : A bitfield corresponding to the joystick buttons' current state, 1 for pressed, 0 for released. The lowest bit corresponds to Button 1. (uint16_t)
+                buttons2                  : A bitfield corresponding to the joystick buttons' 16-31 current state, 1 for pressed, 0 for released. The lowest bit corresponds to Button 16. (uint16_t)
+                enabled_extensions        : Set bits to 1 to indicate which of the following extension fields contain valid data: bit 0: pitch, bit 1: roll, bit 2: aux1, bit 3: aux2, bit 4: aux3, bit 5: aux4, bit 6: aux5, bit 7: aux6 (uint8_t)
+                s                         : Pitch-only-axis, normalized to the range [-1000,1000]. Generally corresponds to pitch on vehicles with additional degrees of freedom. Valid if bit 0 of enabled_extensions field is set. Set to 0 if invalid. (int16_t)
+                t                         : Roll-only-axis, normalized to the range [-1000,1000]. Generally corresponds to roll on vehicles with additional degrees of freedom. Valid if bit 1 of enabled_extensions field is set. Set to 0 if invalid. (int16_t)
+                aux1                      : Aux continuous input field 1. Normalized in the range [-1000,1000]. Purpose defined by recipient. Valid data if bit 2 of enabled_extensions field is set. 0 if bit 2 is unset. (int16_t)
+                aux2                      : Aux continuous input field 2. Normalized in the range [-1000,1000]. Purpose defined by recipient. Valid data if bit 3 of enabled_extensions field is set. 0 if bit 3 is unset. (int16_t)
+                aux3                      : Aux continuous input field 3. Normalized in the range [-1000,1000]. Purpose defined by recipient. Valid data if bit 4 of enabled_extensions field is set. 0 if bit 4 is unset. (int16_t)
+                aux4                      : Aux continuous input field 4. Normalized in the range [-1000,1000]. Purpose defined by recipient. Valid data if bit 5 of enabled_extensions field is set. 0 if bit 5 is unset. (int16_t)
+                aux5                      : Aux continuous input field 5. Normalized in the range [-1000,1000]. Purpose defined by recipient. Valid data if bit 6 of enabled_extensions field is set. 0 if bit 6 is unset. (int16_t)
+                aux6                      : Aux continuous input field 6. Normalized in the range [-1000,1000]. Purpose defined by recipient. Valid data if bit 7 of enabled_extensions field is set. 0 if bit 7 is unset. (int16_t)
 
-    this._instance_field = undefined;
-    this._instance_offset = -1;
+*/
+mavlink20.messages.manual_control = function( ...moreargs ) {
+  [ this.target , this.x , this.y , this.z , this.r , this.buttons , this.buttons2 , this.enabled_extensions , this.s , this.t , this.aux1 , this.aux2 , this.aux3 , this.aux4 , this.aux5 , this.aux6 ] = moreargs;
 
-    this.fieldnames = ['target', 'x', 'y', 'z', 'r', 'buttons'];
+  this._format = '<hhhhHBHBhhhhhhhh';
+  this._id = mavlink20.MAVLINK_MSG_ID_MANUAL_CONTROL;
+  this.order_map = [5, 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  this.len_map = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+  this.array_len_map = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  this.crc_extra = 243;
+  this._name = 'MANUAL_CONTROL';
 
-
-    this.set(arguments,true);
+  this._instance_field = undefined;
+  this._instance_offset = -1;
+  this.fieldnames = ['target', 'x', 'y', 'z', 'r', 'buttons', 'buttons2', 'enabled_extensions', 's', 't', 'aux1', 'aux2', 'aux3', 'aux4', 'aux5', 'aux6'];
+  this.field_enums = [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
+  this.field_bitmasks = [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false];
 
 }
 
 mavlink20.messages.manual_control.prototype = new mavlink20.message;
 mavlink20.messages.manual_control.prototype.pack = function(mav) {
-    var orderedfields = [ this.x, this.y, this.z, this.r, this.buttons, this.target];
-    var j = jspack.Pack(this._format, orderedfields);
-    if (j === false ) throw new Error("jspack unable to handle this packet");
-    return mavlink20.message.prototype.pack.call(this, mav, this.crc_extra, j );
+  var orderedfields = [ this.x, this.y, this.z, this.r, this.buttons, this.target, this.buttons2, this.enabled_extensions, this.s, this.t, this.aux1, this.aux2, this.aux3, this.aux4, this.aux5, this.aux6];
+  var j = jspack.Pack(this._format, orderedfields);
+  if (j === false ) throw new Error("jspack unable to handle this packet");
+  return mavlink20.message.prototype.pack.call(this, mav, this.crc_extra, j );
 }
 
 
@@ -15595,7 +15629,7 @@ mavlink20.map = {
         65: { format: '<IHHHHHHHHHHHHHHHHHHBB', type: mavlink20.messages.rc_channels, order_map: [0, 19, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 20], crc_extra: 118 },
         66: { format: '<HBBBB', type: mavlink20.messages.request_data_stream, order_map: [1, 2, 3, 0, 4], crc_extra: 148 },
         67: { format: '<HBB', type: mavlink20.messages.data_stream, order_map: [1, 0, 2], crc_extra: 21 },
-        69: { format: '<hhhhHB', type: mavlink20.messages.manual_control, order_map: [5, 0, 1, 2, 3, 4], crc_extra: 243 },
+        69: { format: '<hhhhHBHBhhhhhhhh', type: mavlink20.messages.manual_control, order_map: [5, 0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], crc_extra: 243 },
         70: { format: '<HHHHHHHHBBHHHHHHHHHH', type: mavlink20.messages.rc_channels_override, order_map: [8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], crc_extra: 124 },
         73: { format: '<ffffiifHHBBBBBB', type: mavlink20.messages.mission_item_int, order_map: [9, 10, 7, 11, 8, 12, 13, 0, 1, 2, 3, 4, 5, 6, 14], crc_extra: 38 },
         74: { format: '<ffffhH', type: mavlink20.messages.vfr_hud, order_map: [0, 1, 4, 5, 2, 3], crc_extra: 20 },
