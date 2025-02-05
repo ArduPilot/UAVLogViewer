@@ -20223,6 +20223,8 @@ MAVLink20Processor.prototype.trimFile = function (start, end) {
         // The 8 bytes preceding the mavlink message are actually a very useful timestamp saved by the GCS!
         let slice = this.buf.slice(offsets[0]-8, offsets[0])
         let timestamp = new Uint64BE(slice)/1000 - this.startTime
+        // arbitrary huge number we'll cap our results at to cope with corrupt timestamps
+        if (timestamp > 21796250065390) continue
         if (timestamp > start && startOffset === null)
         {
             startOffset = offsets[0]
