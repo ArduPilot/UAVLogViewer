@@ -1053,7 +1053,7 @@ export default {
             if (Object.keys(this.state.timeAttitudeQ).length > 0) {
                 fixedFrameTransform = Transforms.localFrameToFixedFrameGenerator('north', 'east')
                 for (const atti in this.state.timeAttitudeQ) {
-                    if (this.state.timeAttitudeQ.atti) {
+                    if (this.state.timeAttitudeQ[atti]) {
                         const att = this.state.timeAttitudeQ[atti]
 
                         const q1 = att[0]
