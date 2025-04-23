@@ -1367,7 +1367,7 @@ export default {
                     dataExtractor = MavlinkDataExtractor
                 } else if (this.state.logType === 'dji') {
                     console.log('Using DJI extractor')
-                    dataExtractor = djiDataExtractor
+                    dataExtractor = DjiDataExtractor
                 } else {
                     dataExtractor = DataflashDataExtractor
                 }
