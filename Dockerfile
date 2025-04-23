@@ -17,7 +17,6 @@ COPY . .
 
 # Initialize and update git submodules
 RUN git init
-RUN git config --global url."https://github.com/".insteadOf git@github.com:
 RUN git submodule init
 RUN git submodule update
 
