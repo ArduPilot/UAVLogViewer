@@ -250,8 +250,9 @@ export default {
                 this.downloadFileFromURL(event.data.url)
             }
         }
-        if (this.$route.query.file) {
-            this.onLoadSample(this.$route.query.file)
+        const url = document.location.search.split('?file=')[1]
+        if (url) {
+            this.onLoadSample(url)
         }
     },
     components: {
