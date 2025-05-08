@@ -29,6 +29,15 @@ npm test
 
 # Docker
 
+run the prebuilt docker image:
+
+``` bash
+docker run -p 8080:8080 -d ghcr.io/ArduPilot/UAVLogViewer:latest
+
+```
+
+or build the docker file locally:
+
 ``` bash
 
 # Build Docker Image
