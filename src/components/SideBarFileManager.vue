@@ -74,14 +74,24 @@ export default {
                 this.state.logType = 'tlog'
             } else {
                 url = file
+                // Set the file name for display purposes
+                const urlParts = url.split('/')
+                this.state.file = urlParts[urlParts.length - 1]
             }
             const oReq = new XMLHttpRequest()
             console.log(`loading file from ${url}`)
+
+            // Set the log type based on file extension
             this.state.logType = url.indexOf('.tlog') > 0 ? 'tlog' : 'bin'
+            if (url.indexOf('.txt') > 0) {
+                this.state.logType = 'dji'
+            }
+
             oReq.open('GET', url, true)
             oReq.responseType = 'arraybuffer'
 
-            oReq.onload = function (oEvent) {
+            // Use arrow function to preserve 'this' context
+            oReq.onload = (oEvent) => {
                 const arrayBuffer = oReq.response
 
                 this.transferMessage = 'Download Done'
@@ -252,7 +262,7 @@ export default {
         }
         const url = document.location.search.split('?file=')[1]
         if (url) {
-            this.onLoadSample(url)
+            this.onLoadSample(decodeURIComponent(url))
         }
     },
     components: {
