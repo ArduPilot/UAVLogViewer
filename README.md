@@ -114,5 +114,6 @@ rm -rf chatbot/logs/*.md
 ```
 
 ---
+video link: https://youtu.be/0zR7l74glHQ
 
 Maintained by **Your Name** for the Arena Software Engineering Take-Home Challenge. For questions, contact [angeuswork@gmail.com](mailto:angeuswork@gmail.com).
