@@ -45,4 +45,4 @@ for batch_idx in range(0, len(logs), BATCH_SIZE):
                     out.write(ans.strip() + "\n\n")
                 except Exception as e:
                     out.write(f"**Error:** {e}\n\n")
-                time.sleep(2)
+                time.sleep(1)

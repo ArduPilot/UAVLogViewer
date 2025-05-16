@@ -53,13 +53,13 @@ This repository adds a Groq-powered, agentic chatbot backend to the UAVLogViewer
 4. **Install dependencies**
 
    ```bash
-   pip install fastapi uvicorn python-dotenv pymavlink requests
+   pip install fastapi uvicorn python-dotenv pyserial pymavlink requests
    ```
 
 5. **Configure environment variables**
 
    ```bash
-   cp .env.example .env
+   touch .env
    ```
 
    Edit `.env` and set:

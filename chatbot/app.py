@@ -30,8 +30,20 @@ class ChatRequest(BaseModel):
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
-    telemetry = parse_log(os.path.join(
-        os.path.dirname(__file__), "flight.tlog"))
+    log_dir = os.path.join(os.path.dirname(__file__), "logs")
+    log_files = [f for f in os.listdir(
+        log_dir) if f.endswith(".bin") or f.endswith(".tlog")]
+
+    if not log_files:
+        return {
+            "question": request.question,
+            "answer": "No .bin or .tlog file found in logs/ directory.",
+            "error": "Missing flight log"
+        }
+    
+    log_path = os.path.join(log_dir, log_files[0])
+
+    telemetry = parse_log(log_path)
     try:
         answer = ask_llm(request.question, request.history, telemetry)
         return {
@@ -41,7 +53,11 @@ async def chat(request: ChatRequest):
             "gps_preview": telemetry.get("gps_status", [])[:2],
         }
     except Exception as e:
-        return {"question": request.question, "answer": "Error", "error": str(e)}
+        return {
+            "question": request.question,
+            "answer": "Error",
+            "error": str(e)
+        }
 
 
 def ask_llm(question: str, history: list, telemetry: dict) -> str:
