@@ -23,7 +23,6 @@
 import {
     Ion,
     Color,
-    createDefaultImageryProviderViewModels,
     ProviderViewModel,
     UrlTemplateImageryProvider,
     Viewer, createWorldTerrainAsync,
@@ -297,7 +296,8 @@ export default {
             /*
             *  Creates and returns the providers for viewing the Eniro, Statkart, and OpenSeaMap map layers
             * */
-            const imageryProviders = createDefaultImageryProviderViewModels()
+            // const imageryProviders = createDefaultImageryProviderViewModels()
+            const imageryProviders = []
             imageryProviders.push(new ProviderViewModel({
                 name: 'StatKart',
                 iconUrl: require('../assets/statkart.jpg').default,
