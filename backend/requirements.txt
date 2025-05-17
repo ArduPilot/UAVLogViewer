@@ -1,34 +1,30 @@
-# Database
-psycopg2-binary==2.9.9
-SQLAlchemy==2.0.27
-
-# Vector Search
-opensearch-py==2.4.2
-
-# Analysis and ML
-numpy==1.26.4
-scipy==1.12.0
-scikit-learn==1.4.1.post1
-pandas==2.1.4
+# Core Dependencies
+numpy
+scipy
+pandas
+scikit-learn
 
 # NLP and Text Processing
-nltk==3.8.1
-spacy==3.7.2
+nltk
+spacy
 
 # LLM and Embeddings
-openai==1.10.0
-langchain==0.1.0
-langchain-openai==0.0.5
+openai
+langchain
+langchain-core
+langchain-community
+langchain-openai
+faiss-cpu
 
 # API and Web
-fastapi==0.109.2
-uvicorn==0.27.1
-python-dotenv==1.0.1
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.9
+fastapi
+uvicorn
+python-dotenv
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
 
 # Testing
-pytest==8.0.2
-pytest-asyncio==0.23.5
-httpx==0.27.0 
+pytest
+pytest-asyncio
+httpx 

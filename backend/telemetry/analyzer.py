@@ -38,52 +38,126 @@ class TelemetryAnalyzer:
         self._process_telemetry_data()
     
     def _process_telemetry_data(self):
-        """Process raw telemetry data into analyzable format."""
-        if not self.telemetry_data:
-            return
-        
-        # Extract time series data
+        """Process raw telemetry data (Dict[str, pd.DataFrame]) into analyzable time series."""
         self.time_series = {
-            "timestamp": [],
-            "altitude": [],
-            "velocity": [],
-            "battery": [],
-            "motor_temps": [],
-            "control_inputs": []
+            "timestamp": [], "altitude": [], "velocity": [], "battery": [],
+            "motor_temps": [], "control_inputs": []
         }
+
+        if not self.telemetry_data:
+            print("TelemetryAnalyzer: No telemetry data provided to process.")
+            return
+
+        combined_df_list = []
+
+        # Altitude
+        if 'GLOBAL_POSITION_INT' in self.telemetry_data:
+            gpi_df = self.telemetry_data['GLOBAL_POSITION_INT']
+            if not gpi_df.empty and 'relative_alt' in gpi_df.columns and 'timestamp' in gpi_df.columns:
+                df = gpi_df[['timestamp', 'relative_alt']].copy()
+                df.rename(columns={'relative_alt': 'altitude'}, inplace=True)
+                df['altitude'] = df['altitude'] / 1000.0 # mm to m
+                df.set_index('timestamp', inplace=True)
+                combined_df_list.append(df)
+
+        # Velocity
+        if 'VFR_HUD' in self.telemetry_data:
+            vfr_df = self.telemetry_data['VFR_HUD']
+            if not vfr_df.empty and 'groundspeed' in vfr_df.columns and 'timestamp' in vfr_df.columns:
+                df = vfr_df[['timestamp', 'groundspeed']].copy()
+                df.rename(columns={'groundspeed': 'velocity'}, inplace=True)
+                df.set_index('timestamp', inplace=True)
+                combined_df_list.append(df)
         
-        for entry in self.telemetry_data.get("entries", []):
-            self.time_series["timestamp"].append(entry.get("timestamp"))
-            self.time_series["altitude"].append(entry.get("altitude", 0))
-            self.time_series["velocity"].append(entry.get("velocity", 0))
-            self.time_series["battery"].append(entry.get("battery_level", 0))
-            self.time_series["motor_temps"].append(entry.get("motor_temperatures", [0]))
-            self.time_series["control_inputs"].append(entry.get("control_inputs", [0, 0, 0, 0]))
+        # Battery
+        if 'BATTERY_STATUS' in self.telemetry_data:
+            bat_df = self.telemetry_data['BATTERY_STATUS']
+            if not bat_df.empty and 'battery_remaining' in bat_df.columns and 'timestamp' in bat_df.columns:
+                df = bat_df[['timestamp', 'battery_remaining']].copy()
+                df.rename(columns={'battery_remaining': 'battery'}, inplace=True)
+                df.set_index('timestamp', inplace=True)
+                combined_df_list.append(df)
+        
+        # --- Placeholder for actual motor_temps and control_inputs parsing ---
+        # Example: if motor_temps were in a 'MOTOR_STATUS' message type
+        # if 'MOTOR_STATUS' in self.telemetry_data:
+        #     motor_df = self.telemetry_data['MOTOR_STATUS']
+        #     if not motor_df.empty and 'temp1' in motor_df.columns and 'timestamp' in motor_df.columns:
+        #         # Assuming 'temp1' is one of the motor temperatures
+        #         df = motor_df[['timestamp', 'temp1']].copy() 
+        #         df.rename(columns={'temp1': 'motor_temp_example'}, inplace=True)
+        #         df.set_index('timestamp', inplace=True)
+        #         combined_df_list.append(df)
+        # --- End Placeholder ---
+
+        if not combined_df_list:
+            print("TelemetryAnalyzer: No suitable DataFrames found to combine for time series processing.")
+            # Populate with empty lists of correct type to avoid downstream errors if some metrics can still be calculated
+            # Or handle more gracefully depending on requirements
+            for key in self.time_series: self.time_series[key] = []
+            return
+
+        final_df = pd.concat(combined_df_list, axis=1, join='outer').sort_index()
+        final_df.ffill(inplace=True)
+        final_df.bfill(inplace=True)
+        # Instead of global fillna(0), handle per expected column type or leave as NaN for stats
+        
+        num_timestamps = len(final_df.index)
+        self.time_series["timestamp"] = final_df.index.tolist()
+
+        for key in ["altitude", "velocity", "battery", "motor_temps", "control_inputs"]:
+            if key in final_df.columns:
+                # Ensure data is numeric, replace non-numeric with NaN then fill
+                self.time_series[key] = pd.to_numeric(final_df[key], errors='coerce').fillna(0).tolist()
+            else:
+                # If column doesn't exist after concat, fill with zeros of correct length
+                self.time_series[key] = [0.0] * num_timestamps 
+                print(f"TelemetryAnalyzer: Column '{key}' not found in combined DataFrame. Filled with zeros.")
+
+
+        if self.time_series["timestamp"]:
+            print(f"TelemetryAnalyzer: Processed {len(self.time_series['timestamp'])} time series entries.")
+            for key in ["altitude", "velocity", "battery"]: # Only print example for core data
+                if self.time_series[key] and len(self.time_series[key]) > 0: # Check if list is not empty
+                     print(f"TelemetryAnalyzer: {key} data example (first 5): {self.time_series[key][:5]}")
+        else:
+            print("TelemetryAnalyzer: Time series processing resulted in no timestamp data.")
     
     def analyze_for_query(self, query: str) -> Dict[str, Any]:
         """Analyze telemetry data specifically for a query."""
-        # Update cache if needed
-        current_time = datetime.now(timezone.utc)
-        if (not self.cache["last_update"] or 
-            (current_time - self.cache["last_update"]).seconds > 60):
-            self._update_analysis_cache()
-        
-        # Extract relevant metrics based on query
-        relevant_data = {
-            "metrics": self._filter_relevant_metrics(query),
-            "anomalies": self._filter_relevant_anomalies(query),
-            "kpis": self._filter_relevant_kpis(query)
-        }
-        
-        # Add query-specific analysis
-        if "altitude" in query.lower():
-            relevant_data["altitude_analysis"] = self._analyze_altitude()
-        if "battery" in query.lower():
-            relevant_data["battery_analysis"] = self._analyze_battery()
-        if "performance" in query.lower():
-            relevant_data["performance_analysis"] = self._analyze_performance()
-        
-        return relevant_data
+        try:
+            # Update cache if needed
+            current_time = datetime.now(timezone.utc)
+            if (not self.cache["last_update"] or 
+                (current_time - self.cache["last_update"]).seconds > 60):
+                self._update_analysis_cache()
+            
+            # Extract relevant metrics based on query
+            relevant_data = {
+                "metrics": self._filter_relevant_metrics(query),
+                "anomalies": self._filter_relevant_anomalies(query),
+                "kpis": self._filter_relevant_kpis(query)
+            }
+            
+            # Add query-specific analysis
+            if "altitude" in query.lower():
+                relevant_data["altitude_analysis"] = self._analyze_altitude()
+            if "battery" in query.lower():
+                relevant_data["battery_analysis"] = self._analyze_battery()
+            if "performance" in query.lower():
+                relevant_data["performance_analysis"] = self._analyze_performance()
+            
+            return relevant_data
+        except Exception as e:
+            print(f"Error in analyze_for_query: {str(e)}")
+            import traceback
+            print(f"TRACEBACK: {traceback.format_exc()}")
+            
+            # Return a minimal set of data to prevent further errors
+            return {
+                "metrics": {"info": "Error analyzing flight data"},
+                "error": str(e)
+            }
     
     def _update_analysis_cache(self):
         """Update cached analysis results."""
@@ -94,103 +168,173 @@ class TelemetryAnalyzer:
     
     def _calculate_flight_metrics(self) -> Dict[str, Any]:
         """Calculate comprehensive flight metrics."""
-        if not self.time_series["altitude"]:
-            return {}
-        
-        metrics = {
-            "altitude": {
-                "max": np.max(self.time_series["altitude"]),
-                "min": np.min(self.time_series["altitude"]),
-                "mean": np.mean(self.time_series["altitude"]),
-                "std": np.std(self.time_series["altitude"])
-            },
-            "velocity": {
-                "max": np.max(self.time_series["velocity"]),
-                "mean": np.mean(self.time_series["velocity"]),
-                "stability": np.std(self.time_series["velocity"]) / np.mean(self.time_series["velocity"])
-            },
-            "battery": {
-                "initial": self.time_series["battery"][0],
-                "final": self.time_series["battery"][-1],
-                "drain_rate": (self.time_series["battery"][0] - self.time_series["battery"][-1]) / len(self.time_series["battery"])
-            },
-            "motor_health": {
-                "max_temp": np.max(self.time_series["motor_temps"]),
-                "temp_stability": np.std(self.time_series["motor_temps"])
-            },
-            "control": {
-                "responsiveness": self._calculate_control_responsiveness(),
-                "smoothness": self._calculate_control_smoothness()
+        metrics = {}
+        ts = self.time_series
+
+        def get_stats(data_list, list_name="data"):
+            if not isinstance(data_list, list) or not data_list: # Check if it's a list and not empty
+                print(f"TelemetryAnalyzer: No data or invalid data type in {list_name} list for stats calculation.")
+                return None
+            valid_data = [x for x in data_list if pd.notnull(x) and isinstance(x, (int, float))]
+            if not valid_data:
+                print(f"TelemetryAnalyzer: No valid numeric data in {list_name} list after filtering.")
+                return None
+            return {
+                "max": float(np.max(valid_data)), "min": float(np.min(valid_data)),
+                "mean": float(np.mean(valid_data)), "std": float(np.std(valid_data))
             }
-        }
+
+        alt_stats = get_stats(ts.get("altitude"), "altitude")
+        if alt_stats: metrics["altitude"] = alt_stats
+
+        vel_list = ts.get("velocity")
+        if isinstance(vel_list, list) and vel_list:
+            valid_vel = [x for x in vel_list if pd.notnull(x) and isinstance(x, (int, float))]
+            if valid_vel:
+                mean_vel = float(np.mean(valid_vel))
+                metrics["velocity"] = {
+                    "max": float(np.max(valid_vel)), "mean": mean_vel,
+                    "stability": float(np.std(valid_vel)) / mean_vel if mean_vel != 0 else 0.0
+                }
+            else:
+                print("TelemetryAnalyzer: No valid numeric data in velocity list.")
+        else:
+            print("TelemetryAnalyzer: No velocity data list or invalid type.")
+
+        bat_list = ts.get("battery")
+        if isinstance(bat_list, list) and bat_list:
+            valid_bat = [x for x in bat_list if pd.notnull(x) and isinstance(x, (int, float))]
+            if len(valid_bat) > 1:
+                metrics["battery"] = {
+                    "initial": float(valid_bat[0]), "final": float(valid_bat[-1]),
+                    "drain_rate": (float(valid_bat[0]) - float(valid_bat[-1])) / len(valid_bat) if len(valid_bat) > 0 else 0.0
+                }
+            elif valid_bat: # Only one entry
+                 metrics["battery"] = {"initial": float(valid_bat[0]), "final": float(valid_bat[0]), "drain_rate": 0.0}
+            else:
+                print("TelemetryAnalyzer: No valid numeric data in battery list or not enough data points.")
+        else:
+            print("TelemetryAnalyzer: No battery data list or invalid type.")
         
+        # Example for motor_health, if motor_temps were processed
+        motor_temps_list = ts.get("motor_temps")
+        if isinstance(motor_temps_list, list) and motor_temps_list:
+             valid_motor_temps = [x for x in motor_temps_list if pd.notnull(x) and isinstance(x, (int, float))]
+             if valid_motor_temps:
+                  metrics["motor_health"] = {
+                       "max_temp": float(np.max(valid_motor_temps)),
+                       "temp_stability": float(np.std(valid_motor_temps))
+                  }
+             else:
+                  print("TelemetryAnalyzer: No valid numeric data in motor_temps list.")
+        else:
+            print("TelemetryAnalyzer: No motor_temps data list or invalid type.")
+
+        print(f"TelemetryAnalyzer: Calculated metrics: {metrics}")
         return metrics
     
     def _calculate_performance_indicators(self) -> Dict[str, Any]:
         """Calculate key performance indicators."""
-        if not self.cache["metrics"]:
-            return {}
-        
-        metrics = self.cache["metrics"]
+        # metrics = self.cache["metrics"] # This was the old way
+        # Get fresh metrics or ensure cache is up-to-date.
+        # For simplicity, let's assume _update_analysis_cache ensures metrics are fresh.
+        metrics = self.cache.get("metrics")
+        if not metrics: # Check if metrics is None or empty
+            print("TelemetryAnalyzer: KPIs calculation skipped, metrics not available in cache.")
+            return { # Return default structure for KPIs
+                "flight_efficiency": 0.0, "stability_score": 0.0,
+                "power_efficiency": 0.0, "control_quality": 0.0,
+                "overall_performance": 0.0
+            }
         
         kpis = {
             "flight_efficiency": self._calculate_efficiency_score(metrics),
             "stability_score": self._calculate_stability_score(metrics),
             "power_efficiency": self._calculate_power_efficiency(metrics),
-            "control_quality": self._calculate_control_quality(metrics),
-            "overall_performance": None  # Will be calculated below
+            "control_quality": self._calculate_control_quality(metrics), # control_quality depends on control metrics
+            "overall_performance": 0.0
         }
         
-        # Calculate overall performance score
         weights = {
-            "flight_efficiency": 0.3,
-            "stability_score": 0.3,
-            "power_efficiency": 0.2,
-            "control_quality": 0.2
+            "flight_efficiency": 0.3, "stability_score": 0.3,
+            "power_efficiency": 0.2, "control_quality": 0.2
         }
         
-        kpis["overall_performance"] = sum(
-            kpis[key] * weight 
-            for key, weight in weights.items()
-        )
+        # Calculate overall performance score carefully
+        overall_score = 0.0
+        active_kpis = 0
+        for key, weight in weights.items():
+            if kpis.get(key) is not None: # Check if KPI was successfully calculated
+                 # Ensure kpis[key] is float, if it's None or other, handle it
+                kpi_value = kpis[key]
+                if isinstance(kpi_value, (int, float)):
+                    overall_score += kpi_value * weight
+                    active_kpis +=1
+        kpis["overall_performance"] = overall_score if active_kpis > 0 else 0.0 # Avoid division by zero if no KPIs
         
+        print(f"TelemetryAnalyzer: Calculated KPIs: {kpis}")
         return kpis
     
     def _detect_anomalies(self) -> List[Dict[str, Any]]:
         """Detect anomalies in flight data."""
-        if not self.time_series["altitude"]:
+        ts = self.time_series
+        required_min_length = 2 # For IsolationForest or meaningful stats
+
+        # Ensure all feature lists are present and have sufficient, consistent length
+        feature_keys = ["altitude", "velocity", "battery", "motor_temps"] # "control_inputs"
+        
+        valid_features_data = []
+        base_length = 0
+
+        if ts.get("timestamp") and len(ts["timestamp"]) >= required_min_length:
+            base_length = len(ts["timestamp"])
+        else:
+            print("TelemetryAnalyzer: Not enough timestamp data for anomaly detection.")
             return []
+
+        for key in feature_keys:
+            data_list = ts.get(key)
+            if isinstance(data_list, list) and len(data_list) == base_length:
+                # Convert to numpy array of floats, coercing errors to NaN, then filling NaN
+                # This ensures all arrays are numeric and of the same type for stacking
+                processed_list = pd.to_numeric(pd.Series(data_list), errors='coerce').fillna(0).to_numpy()
+                valid_features_data.append(processed_list)
+            else:
+                print(f"TelemetryAnalyzer: Feature '{key}' is missing, not a list, or has inconsistent length ({len(data_list) if isinstance(data_list, list) else 'N/A'} vs base {base_length}) for anomaly detection. Using zeros.")
+                valid_features_data.append(np.zeros(base_length))
         
-        # Prepare data for anomaly detection
-        features = np.column_stack([
-            self.time_series["altitude"],
-            self.time_series["velocity"],
-            self.time_series["battery"],
-            self.time_series["motor_temps"]
-        ])
-        
+        if not valid_features_data or len(valid_features_data) != len(feature_keys):
+             print("TelemetryAnalyzer: Not enough valid feature sets to stack for anomaly detection.")
+             return []
+
+        try:
+            features_stacked = np.column_stack(valid_features_data)
+        except ValueError as e:
+            print(f"TelemetryAnalyzer: Error during np.column_stack for anomaly detection: {e}. Check feature dimensions.")
+            # print(f"Lengths: {[len(f) for f in valid_features_data]}")
+            return []
+
+
         # Scale features
-        scaled_features = self.scaler.fit_transform(features)
+        scaled_features = self.scaler.fit_transform(features_stacked)
         
         # Detect anomalies
         anomaly_labels = self.anomaly_detector.fit_predict(scaled_features)
         
-        # Collect anomalies
         anomalies = []
         for i, label in enumerate(anomaly_labels):
             if label == -1:  # Anomaly detected
+                anomaly_metrics = {}
+                for idx, key in enumerate(feature_keys):
+                    anomaly_metrics[key] = features_stacked[i, idx]
+                
                 anomalies.append({
-                    "timestamp": self.time_series["timestamp"][i],
-                    "type": self._classify_anomaly(features[i]),
-                    "severity": self._calculate_anomaly_severity(features[i]),
-                    "metrics": {
-                        "altitude": features[i][0],
-                        "velocity": features[i][1],
-                        "battery": features[i][2],
-                        "motor_temp": features[i][3]
-                    }
+                    "timestamp": ts["timestamp"][i], # Assuming timestamp is pd.Timestamp or similar
+                    "type": self._classify_anomaly(features_stacked[i], feature_keys), # Pass feature_keys for context
+                    "severity": self._calculate_anomaly_severity(features_stacked[i]),
+                    "metrics": anomaly_metrics
                 })
-        
+        print(f"TelemetryAnalyzer: Detected {len(anomalies)} anomalies.")
         return anomalies
     
     def _calculate_control_responsiveness(self) -> float:
@@ -213,62 +357,103 @@ class TelemetryAnalyzer:
     
     def _calculate_efficiency_score(self, metrics: Dict) -> float:
         """Calculate flight efficiency score."""
-        if not metrics:
-            return 0.0
+        if not metrics: return 0.0
         
-        # Consider multiple factors for efficiency
-        altitude_stability = 1.0 / (1.0 + metrics["altitude"]["std"])
-        velocity_efficiency = 1.0 / (1.0 + metrics["velocity"]["stability"])
-        battery_efficiency = 1.0 / (1.0 + abs(metrics["battery"]["drain_rate"]))
+        # Default values if specific metrics are missing
+        altitude_stability = 0.0
+        velocity_efficiency = 0.0
+        battery_efficiency = 0.0
         
-        return np.mean([altitude_stability, velocity_efficiency, battery_efficiency])
+        if "altitude" in metrics and isinstance(metrics["altitude"], dict) and "std" in metrics["altitude"] and metrics["altitude"]["std"] is not None:
+            altitude_stability = 1.0 / (1.0 + metrics["altitude"]["std"])
+        
+        if "velocity" in metrics and isinstance(metrics["velocity"], dict) and "stability" in metrics["velocity"] and metrics["velocity"]["stability"] is not None:
+            velocity_efficiency = 1.0 / (1.0 + metrics["velocity"]["stability"])
+            
+        if "battery" in metrics and isinstance(metrics["battery"], dict) and "drain_rate" in metrics["battery"] and metrics["battery"]["drain_rate"] is not None:
+            battery_efficiency = 1.0 / (1.0 + abs(metrics["battery"]["drain_rate"]))
+        
+        # If no factors were calculated, return 0. Otherwise, mean of calculated factors.
+        calculated_factors = [f for f in [altitude_stability, velocity_efficiency, battery_efficiency] if f is not None] # f might be 0.0
+        return np.mean(calculated_factors) if calculated_factors else 0.0
     
     def _calculate_stability_score(self, metrics: Dict) -> float:
         """Calculate overall flight stability score."""
-        if not metrics:
-            return 0.0
+        if not metrics: return 0.0
         
-        factors = [
-            1.0 / (1.0 + metrics["altitude"]["std"]),
-            1.0 / (1.0 + metrics["velocity"]["stability"]),
-            metrics["control"]["smoothness"]
-        ]
+        factors = []
+        if "altitude" in metrics and isinstance(metrics["altitude"], dict) and "std" in metrics["altitude"] and metrics["altitude"]["std"] is not None:
+            factors.append(1.0 / (1.0 + metrics["altitude"]["std"]))
         
-        return np.mean(factors)
+        if "velocity" in metrics and isinstance(metrics["velocity"], dict) and "stability" in metrics["velocity"] and metrics["velocity"]["stability"] is not None:
+            factors.append(1.0 / (1.0 + metrics["velocity"]["stability"]))
+            
+        # control_smoothness depends on control metrics which might be missing
+        if "control" in metrics and isinstance(metrics["control"], dict) and "smoothness" in metrics["control"] and metrics["control"]["smoothness"] is not None:
+            factors.append(metrics["control"]["smoothness"])
+        else: # Add a default if control smoothness is critical but missing
+            # factors.append(0.5) # Or handle as per requirement
+            pass
+
+        return np.mean(factors) if factors else 0.0
     
     def _calculate_power_efficiency(self, metrics: Dict) -> float:
         """Calculate power usage efficiency."""
-        if not metrics:
-            return 0.0
+        if not metrics: return 0.0
         
-        # Consider battery drain rate and motor temperatures
-        battery_factor = 1.0 / (1.0 + abs(metrics["battery"]["drain_rate"]))
-        temp_factor = 1.0 / (1.0 + metrics["motor_health"]["temp_stability"])
+        battery_factor = 0.0
+        temp_factor = 0.0 # Assuming motor_health might be missing
         
-        return np.mean([battery_factor, temp_factor])
-    
+        if "battery" in metrics and isinstance(metrics["battery"], dict) and "drain_rate" in metrics["battery"] and metrics["battery"]["drain_rate"] is not None:
+            battery_factor = 1.0 / (1.0 + abs(metrics["battery"]["drain_rate"]))
+            
+        if "motor_health" in metrics and isinstance(metrics["motor_health"], dict) and "temp_stability" in metrics["motor_health"] and metrics["motor_health"]["temp_stability"] is not None:
+            temp_factor = 1.0 / (1.0 + metrics["motor_health"]["temp_stability"])
+        
+        calculated_factors = [f for f in [battery_factor, temp_factor] if f is not None]
+        return np.mean(calculated_factors) if calculated_factors else 0.0
+
     def _calculate_control_quality(self, metrics: Dict) -> float:
         """Calculate overall control quality score."""
-        if not metrics:
+        if not metrics or "control" not in metrics or not isinstance(metrics["control"], dict):
             return 0.0
         
-        return np.mean([
-            metrics["control"]["responsiveness"],
-            metrics["control"]["smoothness"]
-        ])
+        control_metrics = metrics["control"]
+        responsiveness = control_metrics.get("responsiveness")
+        smoothness = control_metrics.get("smoothness")
+        
+        factors = []
+        if responsiveness is not None: factors.append(responsiveness)
+        if smoothness is not None: factors.append(smoothness)
+        
+        return np.mean(factors) if factors else 0.0
     
-    def _classify_anomaly(self, features: np.ndarray) -> str:
-        """Classify type of anomaly based on feature values."""
-        # Simplified classification logic
-        if features[0] > np.mean(self.time_series["altitude"]) * 1.5:
-            return "altitude_anomaly"
-        if features[1] > np.mean(self.time_series["velocity"]) * 1.5:
-            return "velocity_anomaly"
-        if features[2] < np.mean(self.time_series["battery"]) * 0.5:
-            return "battery_anomaly"
-        if features[3] > np.mean(self.time_series["motor_temps"]) * 1.2:
-            return "temperature_anomaly"
-        return "unknown_anomaly"
+    def _classify_anomaly(self, features_row: np.ndarray, feature_keys: List[str]) -> str:
+        """Classify type of anomaly based on feature values and their keys."""
+        # Example: Find which feature contributed most to the anomaly by deviation
+        # This is a placeholder; real classification would be more complex.
+        # For simplicity, let's check thresholds if we have specific knowledge.
+        
+        # Find indices for specific features if they exist
+        altitude_idx = feature_keys.index("altitude") if "altitude" in feature_keys else -1
+        velocity_idx = feature_keys.index("velocity") if "velocity" in feature_keys else -1
+        battery_idx = feature_keys.index("battery") if "battery" in feature_keys else -1
+        # motor_temps_idx = feature_keys.index("motor_temps") if "motor_temps" in feature_keys else -1
+
+        # Simplified classification logic based on which features are present and their values
+        if altitude_idx != -1 and features_row[altitude_idx] > np.mean(self.time_series["altitude"] or [0]) * 1.5: # Check if altitude has data
+            return "altitude_spike"
+        if velocity_idx != -1 and features_row[velocity_idx] > np.mean(self.time_series["velocity"] or [0]) * 1.5:
+            return "velocity_spike"
+        if battery_idx != -1 and features_row[battery_idx] < np.mean(self.time_series["battery"] or [100]) * 0.5: # Assuming battery is %
+            return "battery_low_anomaly"
+        # if motor_temps_idx != -1 and features_row[motor_temps_idx] > np.mean(self.time_series.get("motor_temps") or [0]) * 1.2 :
+        # return "temperature_anomaly" # If motor_temps data was reliable
+
+        # Fallback based on max deviation if specific rules don't apply
+        # This requires z-scores or similar normalized values to be meaningful
+        # For now, a generic fallback
+        return "general_flight_parameter_anomaly"
     
     def _calculate_anomaly_severity(self, features: np.ndarray) -> float:
         """Calculate severity score for an anomaly."""
