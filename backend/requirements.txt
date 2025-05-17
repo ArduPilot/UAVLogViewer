@@ -4,6 +4,11 @@ scipy
 pandas
 scikit-learn
 
+# UAV Telemetry Analysis
+pymavlink>=2.4.39
+pyulog>=1.0.0
+pyarrow  # For efficient parquet file handling
+
 # NLP and Text Processing
 nltk
 spacy

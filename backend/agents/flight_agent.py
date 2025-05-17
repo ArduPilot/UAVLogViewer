@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from langchain_openai import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from chat.memory_manager import EnhancedMemoryManager
@@ -7,6 +7,8 @@ import os
 from dotenv import load_dotenv
 import json
 import pandas as pd
+import asyncio
+import numpy as np
 
 # Load environment variables
 load_dotenv()
@@ -37,7 +39,9 @@ class FlightAgent:
         self.chat = ChatOpenAI(
             model=os.getenv("OPENAI_MODEL", "gpt-4o"),
             temperature=0,
-            openai_api_key=os.getenv("OPENAI_API_KEY")
+            openai_api_key=os.getenv("OPENAI_API_KEY"),
+            max_retries=2,
+            request_timeout=30  # 30 seconds timeout to avoid hanging
         )
         
         # Advanced ReAct system prompt with examples
@@ -225,6 +229,7 @@ ANSWER:
                 "- Time range: {time_range}\n"
                 "- Key metrics: {key_metrics}\n"
                 "- Anomalies: {anomalies}\n"
+                "IMPORTANT: Always include ALL available altitude metrics (max, min, mean) in your response.\n"
                 "Use this data in your analysis."
             ),
             MessagesPlaceholder(variable_name="chat_history"),
@@ -236,120 +241,100 @@ ANSWER:
         try:
             print(f"Starting to process message: {message}")
             
-            # Get comprehensive context using memory manager
-            print("Fetching context from memory manager...")
-            context = await self.memory_manager.get_context(message)
-            print("Context retrieved successfully")
-            
-            # Perform detailed flight data analysis based on query reasoning
-            query_reasoning = context.get("query_reasoning", "No specific reasoning available.")
-            print(f"Query reasoning: {query_reasoning[:100]}...")
-            
-            print("Performing flight analysis...")
-            flight_analysis = await self._perform_flight_analysis(message, query_reasoning)
-            print("Flight analysis completed")
-            
-            # Prepare analysis_data for the API JSON response
-            analysis_data_for_api = {
-                "type": "Flight Analysis", # Static type for now
-                "metrics": {},
-                "anomalies": "No anomaly data processed" # Default
-            }
-
-            # Populate metrics for API response
-            # If query was general, _filter_relevant_metrics returns an "overview"
-            # If specific, it returns specific metrics.
-            # For the API, if it was general, let's provide ALL metrics.
-            # Otherwise, provide the query-filtered metrics.
-            filtered_metrics = flight_analysis.get("metrics", {})
-            if "overview" in filtered_metrics: # Indicates a general query by current _filter_relevant_metrics logic
-                all_calculated_metrics = self.analyzer.cache.get("metrics")
-                analysis_data_for_api["metrics"] = all_calculated_metrics if all_calculated_metrics else {"info": "No metrics calculated or available in cache."}
-            else: # Specific query, so use the filtered metrics
-                analysis_data_for_api["metrics"] = filtered_metrics if filtered_metrics else {"info": "No specific metrics found for the query."}
-
-            # Populate anomalies for API response - always use the full detection list
-            all_detected_anomalies = self.analyzer.cache.get("anomalies")
-            if isinstance(all_detected_anomalies, list):
-                if all_detected_anomalies:
-                    analysis_data_for_api["anomalies"] = f"Detected {len(all_detected_anomalies)} anomalies."
-                    # Optionally, could include a few examples or a summary of types
-                    # For now, count is consistent with LLM prompt's anomaly info.
-                else:
-                    analysis_data_for_api["anomalies"] = "No anomalies detected in the flight log."
-            else:
-                analysis_data_for_api["anomalies"] = "Anomaly detection data not available or not processed."
-            
-            # Process memory recall from both entity memory and semantic context
-            print("Processing memory recall...")
-            memory_recall = self._process_memory_recall(context)
-            print("Memory recall processed")
-            
-            # Format chat history from the summary buffer memory
-            chat_history = context.get("chat_history", [])
-            print(f"Retrieved {len(chat_history)} chat history items")
-            
-            # Generate response using ReAct framework
-            print("Generating response using chat model...")
-            try:
-                # Build flight data summary for the prompt
-                flight_metrics = self.analyzer._calculate_flight_metrics()
-                flight_data_for_prompt = {
-                    "duration": "N/A",
-                    "time_range": "N/A",
-                    "key_metrics": "No specific metrics available from the log.",
-                    "anomalies": "Anomaly detection data not available or no anomalies found."
+            # Set a timeout for the whole process to prevent hanging
+            async def process_with_timeout():
+                # Get comprehensive context using memory manager
+                print("Fetching context from memory manager...")
+                try:
+                    context = await asyncio.wait_for(
+                        self.memory_manager.get_context(message),
+                        timeout=10.0  # 10 seconds timeout for context retrieval
+                    )
+                    print("Context retrieved successfully")
+                except asyncio.TimeoutError:
+                    print("ERROR: Context retrieval timed out")
+                    # If we can't get context, we should fail explicitly rather than continuing with a poor experience
+                    raise
+                except Exception as ctx_err:
+                    print(f"ERROR retrieving context: {str(ctx_err)}")
+                    import traceback
+                    print(f"CONTEXT ERROR TRACEBACK: {traceback.format_exc()}")
+                    # If context retrieval fails for any reason, we should propagate the error
+                    raise
+                
+                # Extract query reasoning
+                query_reasoning = context.get("query_reasoning", "No specific reasoning available.")
+                print(f"Query reasoning: {query_reasoning[:100]}...")
+                
+                # Perform flight analysis with timeout protection
+                print("Performing flight analysis...")
+                try:
+                    flight_analysis = await asyncio.wait_for(
+                        self._perform_flight_analysis(message, query_reasoning),
+                        timeout=15.0  # 15 seconds timeout for flight analysis
+                    )
+                    print("Flight analysis completed")
+                except asyncio.TimeoutError:
+                    print("ERROR: Flight analysis timed out")
+                    # If analysis times out, propagate the error
+                    raise
+                except Exception as analysis_err:
+                    print(f"ERROR in flight analysis: {str(analysis_err)}")
+                    import traceback
+                    print(f"FLIGHT ANALYSIS ERROR TRACEBACK: {traceback.format_exc()}")
+                    # If analysis fails for any reason, propagate the error
+                    raise
+                
+                # Prepare analysis_data for the API JSON response
+                analysis_data_for_api = {
+                    "type": "Flight Analysis",
+                    "metrics": {},
+                    "anomalies": "No anomaly data processed"
                 }
 
-                # Estimate duration and time_range from timestamps if available
-                if hasattr(self.analyzer, 'time_series') and self.analyzer.time_series.get("timestamp"):
-                    timestamps = self.analyzer.time_series["timestamp"]
-                    if len(timestamps) > 1:
-                        ts_start = pd.to_datetime(timestamps[0])
-                        ts_end = pd.to_datetime(timestamps[-1])
-                        duration_seconds = (ts_end - ts_start).total_seconds()
-                        flight_data_for_prompt["duration"] = f"{duration_seconds/60:.1f} minutes"
-                        flight_data_for_prompt["time_range"] = f"From {ts_start.strftime('%Y-%m-%d %H:%M:%S')} to {ts_end.strftime('%Y-%m-%d %H:%M:%S')}"
-                    elif len(timestamps) == 1:
-                        flight_data_for_prompt["duration"] = "Single data point, duration not applicable."
-                        flight_data_for_prompt["time_range"] = f"At {pd.to_datetime(timestamps[0]).strftime('%Y-%m-%d %H:%M:%S')}"
-
-                # Populate key_metrics for the prompt string
-                if flight_metrics:
-                    temp_metrics_parts = []
-                    if "altitude" in flight_metrics and isinstance(flight_metrics["altitude"], dict):
-                        max_alt = flight_metrics["altitude"].get('max')
-                        mean_alt = flight_metrics["altitude"].get('mean')
-                        if max_alt is not None: temp_metrics_parts.append(f"Max Altitude: {max_alt:.1f} m")
-                        if mean_alt is not None: temp_metrics_parts.append(f"Avg Altitude: {mean_alt:.1f} m")
-                    
-                    if "velocity" in flight_metrics and isinstance(flight_metrics["velocity"], dict):
-                        max_vel = flight_metrics["velocity"].get('max')
-                        mean_vel = flight_metrics["velocity"].get('mean')
-                        if max_vel is not None: temp_metrics_parts.append(f"Max Speed: {max_vel:.1f} m/s")
-                        if mean_vel is not None: temp_metrics_parts.append(f"Avg Speed: {mean_vel:.1f} m/s")
-
-                    if "battery" in flight_metrics and isinstance(flight_metrics["battery"], dict):
-                        initial_bat = flight_metrics["battery"].get('initial')
-                        final_bat = flight_metrics["battery"].get('final')
-                        drain_rate = flight_metrics["battery"].get('drain_rate')
-                        if initial_bat is not None: temp_metrics_parts.append(f"Initial Battery: {initial_bat:.0f}%")
-                        if final_bat is not None: temp_metrics_parts.append(f"Final Battery: {final_bat:.0f}%")
-                        # Drain rate might be too detailed for a summary, consider if needed for LLM
-
-                    if temp_metrics_parts:
-                        flight_data_for_prompt["key_metrics"] = "; ".join(temp_metrics_parts)
+                # Populate metrics and anomalies only if we have valid data
+                if flight_analysis and isinstance(flight_analysis, dict):
+                    filtered_metrics = flight_analysis.get("metrics", {})
+                    if "overview" in filtered_metrics:
+                        all_calculated_metrics = self.analyzer.cache.get("metrics")
+                        analysis_data_for_api["metrics"] = all_calculated_metrics if all_calculated_metrics else {"info": "No metrics calculated or available in cache."}
                     else:
-                        # This case means flight_metrics was not empty, but no relevant parts were extracted
-                        flight_data_for_prompt["key_metrics"] = "General metrics calculated but not itemized here."
-                
-                # Populate anomalies for the prompt string
-                anomalies_list = self.analyzer._detect_anomalies()
-                if anomalies_list:
-                    flight_data_for_prompt["anomalies"] = f"Detected {len(anomalies_list)} anomalies. Example: {anomalies_list[0]['type']} at {anomalies_list[0]['timestamp']}"
-                else:
-                    flight_data_for_prompt["anomalies"] = "No anomalies detected during the flight."
+                        analysis_data_for_api["metrics"] = filtered_metrics if filtered_metrics else {"info": "No specific metrics found for the query."}
 
+                    # Populate anomalies for API response
+                    all_detected_anomalies = self.analyzer.cache.get("anomalies")
+                    if isinstance(all_detected_anomalies, list):
+                        if all_detected_anomalies:
+                            analysis_data_for_api["anomalies"] = f"Detected {len(all_detected_anomalies)} anomalies."
+                        else:
+                            analysis_data_for_api["anomalies"] = "No anomalies detected in the flight log."
+                    else:
+                        analysis_data_for_api["anomalies"] = "Anomaly detection data not available or not processed."
+                
+                # Process memory recall with proper error handling
+                print("Processing memory recall...")
+                memory_recall = ""
+                try:
+                    memory_recall = self._process_memory_recall(context)
+                    print("Memory recall processed")
+                except Exception as mem_err:
+                    print(f"ERROR processing memory recall: {str(mem_err)}")
+                    import traceback
+                    print(f"MEMORY RECALL ERROR TRACEBACK: {traceback.format_exc()}")
+                    # If memory recall fails, continue with empty recall
+                    memory_recall = ""
+                
+                # Format chat history from the summary buffer memory
+                chat_history = context.get("chat_history", [])
+                print(f"Retrieved {len(chat_history)} chat history items")
+                
+                # Generate response using ChatOpenAI with timeout protection
+                print("Generating response using chat model...")
+                
+                # Build flight data summary for the prompt
+                flight_data_for_prompt = self._build_flight_data_summary()
+            
+                # Format messages for the model
                 messages = self.prompt.format_messages(
                     input=message,
                     flight_duration=flight_data_for_prompt["duration"],
@@ -358,86 +343,236 @@ ANSWER:
                     anomalies=flight_data_for_prompt["anomalies"],
                     chat_history=chat_history
                 )
+                
                 print(f"Formatted {len(messages)} messages for the prompt")
                 
+                # Call the model with timeout and error handling
                 print("Invoking chat model...")
-                response = self.chat.invoke(messages)
-                print("Response generated successfully")
-            except Exception as prompt_error:
-                print(f"Error formatting prompt or invoking chat model: {str(prompt_error)}")
-                import traceback
-                print(f"PROMPT ERROR TRACEBACK: {traceback.format_exc()}")
+                try:
+                    response = await asyncio.wait_for(
+                        self._async_chat_invoke(messages),
+                        timeout=30.0  # 30 seconds timeout
+                    )
+                    response_content = response.content
+                    print("Response generated successfully")
+                except (asyncio.TimeoutError, Exception) as model_err:
+                    print(f"ERROR in chat model: {str(model_err)}")
+                    import traceback
+                    print(f"CHAT MODEL ERROR TRACEBACK: {traceback.format_exc()}")
+                    # Attempt a simpler fallback only if the primary model call fails
+                    try:
+                        print("Attempting fallback with simpler prompt...")
+                        fallback_prompt = ChatPromptTemplate.from_messages([
+                            SystemMessagePromptTemplate.from_template("You are a UAV flight data analyst. Answer the query concisely based on available data."),
+                            HumanMessagePromptTemplate.from_template("{input}")
+                        ])
+                        
+                        fallback_messages = fallback_prompt.format_messages(input=message)
+                        fallback_response = await asyncio.wait_for(
+                            self._async_chat_invoke(fallback_messages),
+                            timeout=15.0
+                        )
+                        response_content = fallback_response.content
+                        print("Fallback prompt succeeded")
+                    except Exception as fallback_err:
+                        print(f"ERROR in fallback prompt: {str(fallback_err)}")
+                        import traceback
+                        print(f"FALLBACK ERROR TRACEBACK: {traceback.format_exc()}")
+                        # If even the fallback fails, propagate the error
+                        raise
                 
-                # Fallback to a simpler prompt if the rich prompt fails
-                fallback_prompt = ChatPromptTemplate.from_messages([
-                    SystemMessagePromptTemplate.from_template("You are a UAV flight data analyst. Provide a brief analysis based on the available information."),
-                    HumanMessagePromptTemplate.from_template("Analyze this flight data query: {input}")
-                ])
+                # Store messages in memory - this is optional so we can use fire-and-forget
+                metadata = self._extract_metadata_from_reasoning(query_reasoning)
                 
-                fallback_messages = fallback_prompt.format_messages(input=message)
-                response = self.chat.invoke(fallback_messages)
-                print("Used fallback prompt successfully")
-            
-            # Extract metadata from reasoning for storage
-            metadata = self._extract_metadata_from_reasoning(query_reasoning)
-            
-            # Save interaction to memory with enhanced metadata
-            print("Saving user message to memory...")
-            await self.memory_manager.add_message(
-                role="user",
-                content=message,
-                metadata=metadata
-            )
-            
-            print("Saving assistant response to memory...")
-            await self.memory_manager.add_message(
-                role="assistant",
-                content=response.content,
-                metadata={
-                    **metadata,
-                    "analysis_performed": True,
-                    "flight_data_analyzed": flight_analysis is not None
+                # Store user message asynchronously
+                try:
+                    asyncio.create_task(self.memory_manager.add_message(
+                        role="user",
+                        content=message,
+                        metadata=metadata
+                    ))
+                except Exception as msg_err:
+                    # Just log errors in message storage, don't fail the request
+                    print(f"ERROR storing user message: {str(msg_err)}")
+                
+                # Store assistant response asynchronously
+                try:
+                    asyncio.create_task(self.memory_manager.add_message(
+                        role="assistant",
+                        content=response_content,
+                        metadata={
+                            **metadata,
+                            "analysis_performed": True,
+                            "flight_data_analyzed": flight_analysis is not None
+                        }
+                    ))
+                except Exception as resp_err:
+                    # Just log errors in response storage, don't fail the request
+                    print(f"ERROR storing assistant response: {str(resp_err)}")
+                
+                return {
+                    "answer": response_content,
+                    "analysis": analysis_data_for_api,
+                    "reasoning": query_reasoning
                 }
-            )
             
+            # Execute the process with overall timeout
+            return await asyncio.wait_for(process_with_timeout(), timeout=60.0)  # 60 seconds total timeout
+            
+        except asyncio.TimeoutError:
+            error_msg = "The operation timed out. Please try again with a simpler query."
+            print(f"ERROR: Process message timed out after 60 seconds")
+            # Return a proper error response that will be handled by the API endpoint
             return {
-                "answer": response.content,
-                "analysis": analysis_data_for_api, # Use the new comprehensive dict
-                "reasoning": query_reasoning
+                "answer": "I apologize, but your query timed out. Please try again with a more specific question.",
+                "analysis": {"metrics": {"error": "Analysis timed out."}, "anomalies": "Analysis timed out."},
+                "error": error_msg
             }
-            
         except Exception as e:
-            # Enhanced error handling
+            # Enhanced error handling with detailed logs
             error_msg = f"Error processing message: {str(e)}"
             print(f"ERROR IN PROCESS_MESSAGE: {error_msg}")
             import traceback
-            print(f"TRACEBACK: {traceback.format_exc()}")
+            print(f"PROCESS MESSAGE ERROR TRACEBACK: {traceback.format_exc()}")
             
-            try:
-                await self.memory_manager.add_message(
-                    role="system",
-                    content=error_msg,
-                    metadata={
-                        "error": True,
-                        "error_type": type(e).__name__,
-                        "query": message
-                    }
-                )
-            except Exception as mem_error:
-                print(f"Additional error saving error to memory: {str(mem_error)}")
-            
-            # Always return a valid response even if an error occurs
+            # Return a proper error response that will be handled by the API endpoint
             return {
-                "answer": "I apologize, but I encountered an error while processing your request. Please try again with a different question about the flight data.",
-                "analysis": None,
-                "error": str(e)
+                "answer": "I encountered an error while analyzing the flight data. Please try again with a different question.",
+                "analysis": {"metrics": {"error": str(e)}, "anomalies": "Error during analysis."},
+                "error": error_msg
             }
+    
+    async def _async_chat_invoke(self, messages):
+        """Async wrapper for chat model invocation."""
+        return self.chat.invoke(messages)
+    
+    def _build_flight_data_summary(self) -> Dict[str, str]:
+        """Build a flight data summary for the prompt with error handling."""
+        flight_data_for_prompt = {
+            "duration": "N/A",
+            "time_range": "N/A",
+            "key_metrics": "No specific metrics available from the log.",
+            "anomalies": "Anomaly detection data not available or no anomalies found."
+        }
+
+        try:
+            # Estimate duration and time_range from timestamps if available
+            if hasattr(self.analyzer, 'time_series') and self.analyzer.time_series.get("timestamp"):
+                timestamps = self.analyzer.time_series["timestamp"]
+                if len(timestamps) > 1:
+                    ts_start = pd.to_datetime(timestamps[0])
+                    ts_end = pd.to_datetime(timestamps[-1])
+                    duration_seconds = (ts_end - ts_start).total_seconds()
+                    flight_data_for_prompt["duration"] = f"{duration_seconds/60:.1f} minutes"
+                    flight_data_for_prompt["time_range"] = f"From {ts_start.strftime('%Y-%m-%d %H:%M:%S')} to {ts_end.strftime('%Y-%m-%d %H:%M:%S')}"
+                elif len(timestamps) == 1:
+                    flight_data_for_prompt["duration"] = "Single data point, duration not applicable."
+                    flight_data_for_prompt["time_range"] = f"At {pd.to_datetime(timestamps[0]).strftime('%Y-%m-%d %H:%M:%S')}"
+
+            # Build metrics summary with accurate altitude data
+            try:
+                temp_metrics_parts = []
+                
+                # CRITICAL FIX: Get altitude data directly from reliable _analyze_altitude method
+                alt_analysis = self.analyzer._analyze_altitude()
+                if alt_analysis and "statistics" in alt_analysis:
+                    max_alt = alt_analysis["statistics"].get("max")
+                    min_alt = alt_analysis["statistics"].get("min")
+                    mean_alt = alt_analysis["statistics"].get("mean")
+                    field_used = alt_analysis.get("field_used", "unknown")
+                    
+                    # Ensure reasonable values only
+                    if max_alt is not None and isinstance(max_alt, (int, float)) and max_alt < 100000:
+                        # Convert to meters if in millimeters (common in some MAVLink messages)
+                        if max_alt > 10000 and "relative_alt" in field_used:
+                            max_alt = max_alt / 1000.0  # Convert mm to meters
+                        temp_metrics_parts.append(f"Max Altitude: {max_alt:.1f} m")
+                    
+                    if min_alt is not None and isinstance(min_alt, (int, float)) and abs(min_alt) < 100000:
+                        # Convert to meters if in millimeters
+                        if abs(min_alt) > 10000 and "relative_alt" in field_used:
+                            min_alt = min_alt / 1000.0  # Convert mm to meters
+                        temp_metrics_parts.append(f"Min Altitude: {min_alt:.1f} m")
+                    
+                    if mean_alt is not None and isinstance(mean_alt, (int, float)) and mean_alt < 100000:
+                        # Convert to meters if in millimeters
+                        if mean_alt > 10000 and "relative_alt" in field_used:
+                            mean_alt = mean_alt / 1000.0  # Convert mm to meters
+                        temp_metrics_parts.append(f"Avg Altitude: {mean_alt:.1f} m")
+                
+                # Process other important metrics
+                # Look for velocity-related fields
+                flight_metrics = self.analyzer.cache.get("metrics", {})
+                
+                # Find velocity data
+                vfr_hud_speed = None
+                for field_name in flight_metrics:
+                    if "groundspeed" in field_name.lower():
+                        if isinstance(flight_metrics[field_name], dict):
+                            speed_data = flight_metrics[field_name]
+                            max_vel = speed_data.get('max')
+                            mean_vel = speed_data.get('mean')
+                            if max_vel is not None: temp_metrics_parts.append(f"Max Speed: {max_vel:.1f} m/s")
+                            if mean_vel is not None: temp_metrics_parts.append(f"Avg Speed: {mean_vel:.1f} m/s")
+                            vfr_hud_speed = True
+                            break
+                
+                # Find battery-related fields if not already found
+                battery_field = None
+                for field_name in flight_metrics:
+                    if any(kw in field_name.lower() for kw in ["battery_remaining", "voltage_battery", "bat_volt"]):
+                        battery_field = field_name
+                        if isinstance(flight_metrics[battery_field], dict):
+                            bat_data = flight_metrics[battery_field]
+                            if 'max' in bat_data: temp_metrics_parts.append(f"Battery Level: {bat_data['max']:.0f}%")
+                            break
+                            
+                if temp_metrics_parts:
+                    flight_data_for_prompt["key_metrics"] = "; ".join(temp_metrics_parts)
+                else:
+                    flight_data_for_prompt["key_metrics"] = "General metrics calculated but not itemized here."
+                
+            except Exception as metrics_err:
+                print(f"Error getting metrics summary: {str(metrics_err)}")
+                import traceback
+                print(f"METRICS SUMMARY ERROR: {traceback.format_exc()}")
+                flight_data_for_prompt["key_metrics"] = "Error retrieving metrics."
+            
+            # Try to add anomaly info if available
+            try:
+                anomalies_list = self.analyzer.cache.get("anomalies")
+                if not anomalies_list:
+                    anomalies_list = self.analyzer._detect_anomalies()
+                    
+                if anomalies_list:
+                    flight_data_for_prompt["anomalies"] = f"Detected {len(anomalies_list)} anomalies. Example: {anomalies_list[0]['type']} at {anomalies_list[0]['timestamp']}"
+                else:
+                    flight_data_for_prompt["anomalies"] = "No anomalies detected during the flight."
+            except Exception as anomaly_err:
+                print(f"Error getting anomaly summary: {str(anomaly_err)}")
+                flight_data_for_prompt["anomalies"] = "Error retrieving anomalies."
+                
+        except Exception as e:
+            print(f"Error building flight data summary: {str(e)}")
+            import traceback
+            print(f"FLIGHT DATA SUMMARY ERROR: {traceback.format_exc()}")
+            # Return default values if error
+            
+        return flight_data_for_prompt
     
     async def _perform_flight_analysis(self, query: str, reasoning: str) -> Dict[str, Any]:
         """Perform targeted flight data analysis based on query and reasoning."""
         try:
-            # Use reasoning to determine what to analyze
-            analyzer_result = self.analyzer.analyze_for_query(query)
+            # Set up a task with timeout to prevent hanging
+            analyze_task = asyncio.create_task(self._async_analyze_for_query(query))
+            
+            try:
+                # Use a strict timeout to ensure we don't hang
+                analyzer_result = await asyncio.wait_for(analyze_task, timeout=10.0)
+            except asyncio.TimeoutError:
+                print("TelemetryAnalyzer: Analysis for query timed out, using limited analysis")
+                # Perform limited analysis with fewer fields
+                analyzer_result = self._limited_analyze_for_query(query)
             
             # Format analysis result as a structured dictionary
             result = {
@@ -448,12 +583,20 @@ ANSWER:
             
             # Add specific analysis based on query content
             if "altitude" in query.lower() or "altitude" in reasoning.lower():
+                # For altitude queries, ensure we're using proper altitude fields
                 altitude_analysis = analyzer_result.get("altitude_analysis", {})
                 if altitude_analysis and "statistics" in altitude_analysis:
                     result["metrics"]["altitude"] = altitude_analysis["statistics"]
-                elif "altitude" in result["metrics"]:
-                    # Ensure altitude data is available if already in metrics
-                    result["metrics"]["altitude"] = result["metrics"]["altitude"]
+                    
+                    # Add field used information if available
+                    if "field_used" in altitude_analysis:
+                        result["metrics"]["altitude"]["field_used"] = altitude_analysis["field_used"]
+                    
+                    # Remove any potentially unreasonable altitude values
+                    for key in ["max", "min", "mean"]:
+                        if key in result["metrics"]["altitude"] and result["metrics"]["altitude"][key] > 1000000:
+                            print(f"TelemetryAnalyzer: Removing unreasonable {key} altitude value: {result['metrics']['altitude'][key]}")
+                            result["metrics"]["altitude"][key] = "N/A (unreasonable value)"
             
             if "battery" in query.lower() or "battery" in reasoning.lower():
                 battery_analysis = analyzer_result.get("battery_analysis", {})
@@ -474,10 +617,279 @@ ANSWER:
             
             # Return a minimal result that won't cause formatting issues
             return {
-                "metrics": {"error": "Could not analyze flight data."},
+                "metrics": {"error": f"Could not analyze flight data: {str(e)}"},
                 "anomalies": [],
                 "kpis": {}
             }
+    
+    async def _async_analyze_for_query(self, query: str) -> Dict[str, Any]:
+        """Async wrapper for analyzer's analyze_for_query to allow timeout management."""
+        # The new analyzer may not have analyze_for_query method, so implement it here
+        try:
+            # Update cache if needed - safely check for existence using .get()
+            if not self.analyzer.cache.get("metrics"):
+                metrics = self._calculate_basic_metrics()
+                self.analyzer.cache["metrics"] = metrics
+            
+            if not self.analyzer.cache.get("anomalies"):
+                anomalies = self.analyzer._detect_anomalies()
+                self.analyzer.cache["anomalies"] = anomalies
+            
+            # Extract relevant data for the query
+            relevant_data = {
+                "metrics": self._filter_relevant_metrics(query),
+                "anomalies": self._filter_relevant_anomalies(query),
+                "kpis": self.analyzer.cache.get("kpis", {})  # Safely access KPIs with default
+            }
+            
+            # Add query-specific analysis
+            if "altitude" in query.lower() or "height" in query.lower():
+                alt_analysis = self.analyzer._analyze_altitude()
+                if alt_analysis:
+                    relevant_data["altitude_analysis"] = alt_analysis
+            
+            if "battery" in query.lower() or "power" in query.lower():
+                bat_analysis = self._analyze_battery(query)
+                if bat_analysis:
+                    relevant_data["battery_analysis"] = bat_analysis
+            
+            # Add other analyses if implemented in TelemetryAnalyzer
+            try:
+                # Try accessing additional analysis methods if they exist
+                if hasattr(self.analyzer, '_analyze_speed') and 'speed' in query.lower():
+                    speed_analysis = self.analyzer._analyze_speed()
+                    if speed_analysis:
+                        relevant_data["speed_analysis"] = speed_analysis
+                    
+                if hasattr(self.analyzer, '_analyze_gps') and any(term in query.lower() for term in ['gps', 'satellite']):
+                    gps_analysis = self.analyzer._analyze_gps()
+                    if gps_analysis:
+                        relevant_data["gps_analysis"] = gps_analysis
+            except Exception as additional_err:
+                print(f"Note: Additional analysis methods failed: {str(additional_err)}")
+                # Non-critical, continue with what we have
+            
+            return relevant_data
+        except Exception as e:
+            print(f"Error in _async_analyze_for_query: {str(e)}")
+            import traceback
+            print(f"ANALYZE QUERY ERROR: {traceback.format_exc()}")
+            return {
+                "error": f"Error analyzing flight data: {str(e)}",
+                "metrics": {"info": "Analysis incomplete due to error."},
+                "anomalies": []
+            }
+
+    def _calculate_basic_metrics(self) -> Dict[str, Any]:
+        """Calculate basic flight metrics from time series data."""
+        metrics = {}
+        
+        try:
+            ts = self.analyzer.time_series
+            if not ts or "timestamp" not in ts or not ts["timestamp"]:
+                print("WARNING: Empty time series or missing timestamp field")
+                return metrics
+            
+            # Get all non-timestamp keys
+            potential_fields = [k for k in ts.keys() if k != 'timestamp']
+            if not potential_fields:
+                print("WARNING: No data fields found in time series")
+                return metrics
+            
+            print(f"Calculating metrics for {len(potential_fields)} potential fields")
+            
+            for field_name in potential_fields:
+                data_list = ts.get(field_name)
+                if not isinstance(data_list, list) or not data_list:
+                    continue
+                
+                # Convert to numpy array for faster calculations and filter valid values
+                try:
+                    valid_data = np.array([x for x in data_list if pd.notnull(x) and isinstance(x, (int, float))])
+                    if valid_data.size == 0:
+                        continue
+                    
+                    # Calculate basic statistics
+                    metrics[field_name] = {
+                        "mean": float(np.mean(valid_data)),
+                        "min": float(np.min(valid_data)),
+                        "max": float(np.max(valid_data)),
+                        "std": float(np.std(valid_data)),
+                        "count": len(valid_data),
+                        "variance": float(np.var(valid_data))
+                    }
+                except Exception as field_err:
+                    print(f"Error calculating metrics for field {field_name}: {str(field_err)}")
+                    continue
+            
+            # Calculate altitude metrics separately for fields that match altitude patterns
+            alt_fields = []
+            for field_name in metrics:
+                if any(pattern in field_name.lower() for pattern in ["alt", "height", "terrain"]):
+                    alt_fields.append(field_name)
+                    
+            if alt_fields:
+                # Create a dedicated altitude field in metrics if it doesn't exist yet
+                if "altitude" not in metrics:
+                    # Find the best altitude field based on known reliable fields
+                    best_alt_field = None
+                    for priority_field in ["GLOBAL_POSITION_INT_relative_alt", "VFR_HUD_alt", "TERRAIN_REPORT_current_height"]:
+                        if priority_field in alt_fields:
+                            best_alt_field = priority_field
+                            break
+                    
+                    # If no priority field found, use the first one
+                    if not best_alt_field and alt_fields:
+                        best_alt_field = alt_fields[0]
+                    
+                    if best_alt_field:
+                        alt_values = np.array(ts[best_alt_field])
+                        # Convert from mm to m if it's a relative_alt field
+                        if "relative_alt" in best_alt_field and np.max(alt_values) > 1000:
+                            alt_values = alt_values / 1000.0
+                            
+                        metrics["altitude"] = {
+                            "mean": float(np.mean(alt_values)),
+                            "min": float(np.min(alt_values)),
+                            "max": float(np.max(alt_values)),
+                            "std": float(np.std(alt_values)),
+                            "count": len(alt_values),
+                            "field_used": best_alt_field
+                        }
+            
+            print(f"FlightAgent: Calculated metrics for {len(metrics)} fields")
+            return metrics
+        except Exception as e:
+            print(f"Error in _calculate_basic_metrics: {str(e)}")
+            import traceback
+            print(f"METRICS CALCULATION ERROR: {traceback.format_exc()}")
+            return metrics  # Return empty dict
+
+    def _filter_relevant_metrics(self, query: str) -> Dict[str, Any]:
+        """Filter metrics relevant to the query from the analyzer's cache."""
+        metrics = self.analyzer.cache.get("metrics", {})
+        if not metrics:
+            return {}
+        
+        query_lower = query.lower()
+        relevant_metrics = {}
+        
+        # First, check for specific keywords in query
+        important_keywords = ["altitude", "height", "speed", "velocity", "battery", 
+                             "voltage", "current", "gps", "position", "attitude",
+                             "roll", "pitch", "yaw"]
+        
+        for keyword in important_keywords:
+            if keyword in query_lower:
+                for field_name, stats in metrics.items():
+                    if keyword in field_name.lower():
+                        relevant_metrics[field_name] = stats
+        
+        # If no specific matches, provide a subset of common metrics
+        if not relevant_metrics:
+            # Find common field types (altitude, speed, battery)
+            for field_type in ["alt", "speed", "groundspeed", "battery", "voltage"]:
+                for field_name, stats in metrics.items():
+                    if field_type in field_name.lower() and field_name not in relevant_metrics:
+                        relevant_metrics[field_name] = stats
+                        # Limit to 1 field per type to avoid overwhelming
+                        break
+        
+        return relevant_metrics
+
+    def _filter_relevant_anomalies(self, query: str) -> List[Dict[str, Any]]:
+        """Filter anomalies relevant to the query from the analyzer's cache."""
+        anomalies = self.analyzer.cache.get("anomalies", [])
+        if not anomalies:
+            return []
+        
+        query_lower = query.lower()
+        
+        # If query is about anomalies or issues generally, return all (up to a limit)
+        if any(term in query_lower for term in ["anomaly", "issue", "problem", "error"]):
+            # Limit to 20 anomalies to avoid overwhelming
+            return sorted(anomalies[:20], key=lambda x: x.get("severity", 0), reverse=True)
+        
+        # Otherwise filter by relevance to query
+        filtered_anomalies = []
+        for anomaly in anomalies:
+            # Check if any of the metrics in the anomaly match keywords in the query
+            metrics = anomaly.get("metrics", {})
+            for metric_name in metrics.keys():
+                if any(part in metric_name.lower() for part in query_lower.split()):
+                    filtered_anomalies.append(anomaly)
+                    break
+        
+        # Limit results and sort by severity
+        return sorted(filtered_anomalies[:10], key=lambda x: x.get("severity", 0), reverse=True)
+
+    def _analyze_battery(self, query: str) -> Dict[str, Any]:
+        """Analyze battery data for a specific query."""
+        ts = self.analyzer.time_series
+        
+        # Look for battery-related fields
+        bat_fields = ["battery_remaining", "voltage_battery", "current_battery", "bat_volt"]
+        bat_field = None
+        
+        for field in bat_fields:
+            for key in ts.keys():
+                if field in key.lower():
+                    bat_field = key
+                    break
+            if bat_field:
+                break
+        
+        if not bat_field or bat_field not in ts:
+            return {"info": "No battery data found"}
+        
+        battery_data = [x for x in ts[bat_field] if isinstance(x, (int, float))]
+        if len(battery_data) < 2:
+            return {"info": "Insufficient battery data for analysis"}
+        
+        # Basic battery analysis
+        return {
+            "field_used": bat_field,
+            "levels": {
+                "initial": float(battery_data[0]),
+                "final": float(battery_data[-1]),
+                "mean": float(np.mean(battery_data)),
+                "min": float(np.min(battery_data)),
+                "max": float(np.max(battery_data))
+            },
+            "change": float(battery_data[-1] - battery_data[0])
+        }
+
+    def _limited_analyze_for_query(self, query: str) -> Dict[str, Any]:
+        """Perform a limited analysis with fewer fields when full analysis times out."""
+        try:
+            # Get only relevant fields for the query to limit processing time
+            query_lower = query.lower()
+            
+            # Basic metrics dictionary with error handling
+            metrics = {}
+            
+            # If altitude in query, try to get altitude metrics directly
+            if "altitude" in query_lower or "height" in query_lower:
+                alt_analysis = self.analyzer._analyze_altitude()
+                if alt_analysis:
+                    metrics["altitude"] = alt_analysis.get("statistics", {})
+                    if "field_used" in alt_analysis:
+                        metrics["altitude"]["field_used"] = alt_analysis["field_used"]
+            
+            # If battery in query, get battery metrics
+            if "battery" in query_lower or "power" in query_lower:
+                bat_analysis = self.analyzer._analyze_battery()
+                if bat_analysis:
+                    metrics["battery"] = bat_analysis
+            
+            return {
+                "metrics": metrics,
+                "anomalies": [],  # Skip anomaly detection in limited analysis
+                "kpis": {}  # Skip KPIs in limited analysis
+            }
+        except Exception as e:
+            print(f"Error in _limited_analyze_for_query: {str(e)}")
+            return {"metrics": {"error": "Limited analysis failed"}, "anomalies": [], "kpis": {}}
     
     def _process_memory_recall(self, context: Dict) -> str:
         """Process memory recall from entity memory and semantic context."""
