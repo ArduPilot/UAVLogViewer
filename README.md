@@ -32,7 +32,7 @@ npm test
 run the prebuilt docker image:
 
 ``` bash
-docker run -p 8080:8080 -d ghcr.io/ArduPilot/UAVLogViewer:latest
+docker run -p 8080:8080 -d ghcr.io/ardupilot/uavlogviewer:latest
 
 ```
 
