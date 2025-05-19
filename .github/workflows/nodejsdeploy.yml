@@ -32,6 +32,8 @@ jobs:
 
             - run: npm install
             - run: npm run build --if-present
+              env:
+                  VUE_APP_CESIUM_TOKEN: ${{ secrets.CESIUM_TOKEN }}
 
             - name: deploy to server
               uses: AEnterprise/rsync-deploy@v1.0.2
