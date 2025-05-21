@@ -1,17 +1,30 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Dict, Any, Optional, List
+from pydantic import BaseModel, Field
+from typing import Dict, Any, Optional, List, Union
 import os
+import json
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 import uuid
 import asyncio
 import re  # For regex pattern matching
+import logging
+import traceback
+from contextlib import asynccontextmanager
+from fastapi.responses import JSONResponse
+import pandas as pd
 
-from agents.flight_agent import FlightAgent
+from agents.uav_agent import UavAgent, CustomJSONEncoder, ensure_serializable
 from telemetry.parser import TelemetryParser
 from telemetry.analyzer import TelemetryAnalyzer
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -20,16 +33,127 @@ load_dotenv()
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 
+# Session timeout in minutes (default: 30 minutes)
+SESSION_TIMEOUT_MINUTES = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
+
 # CORS configuration
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:8080").split(",")
 ALLOWED_METHODS = os.getenv("ALLOWED_METHODS", "GET,POST,PUT,DELETE").split(",")
-ALLOWED_HEADERS = os.getenv("ALLOWED_HEADERS", "Content-Type,Accept,Origin,X-Requested-With").split(",")
+ALLOWED_HEADERS = os.getenv("ALLOWED_HEADERS", "Content-Type,Accept,Origin,X-Requested-With,X-Session-ID").split(",")
 CORS_MAX_AGE = int(os.getenv("CORS_MAX_AGE", "3600"))
 
 # File upload configuration
 TEMP_UPLOAD_DIR = os.getenv("TEMP_UPLOAD_DIR", "temp")
 
-app = FastAPI()
+# Global session registry
+class SessionRegistry:
+    def __init__(self):
+        self.sessions: Dict[str, SessionData] = {}
+        # Schedule periodic cleanup of expired sessions
+        self.last_cleanup = datetime.now(timezone.utc)
+        
+    def create_session(self, session_id: str, telemetry_data: Dict, analyzer: TelemetryAnalyzer) -> 'SessionData':
+        """Create a new session with the given ID and data."""
+        if session_id in self.sessions:
+            # Update existing session
+            session = self.sessions[session_id]
+            session.telemetry_data = telemetry_data
+            session.analyzer = analyzer
+            session.last_activity = datetime.now(timezone.utc)
+            # Create new agent with updated data
+            if analyzer is not None:  # Only create agent if analyzer is provided
+                session.agent = UavAgent(session_id=session_id, analyzer=analyzer)
+            return session
+        else:
+            # Create new session
+            session = SessionData(
+                id=session_id,
+                telemetry_data=telemetry_data,
+                analyzer=analyzer
+            )
+            self.sessions[session_id] = session
+            return session
+    
+    def get_session(self, session_id: str) -> Optional['SessionData']:
+        """Get session by ID, updating its last activity time."""
+        session = self.sessions.get(session_id)
+        if session:
+            session.last_activity = datetime.now(timezone.utc)
+        return session
+    
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a session by ID."""
+        if session_id in self.sessions:
+            # Clean up session resources
+            try:
+                session = self.sessions[session_id]
+                if session.agent and hasattr(session.agent, 'clear_memory'):
+                    session.agent.clear_memory()
+            except Exception as e:
+                logger.error(f"Error during session cleanup: {str(e)}")
+            
+            # Remove from registry
+            del self.sessions[session_id]
+            return True
+        return False
+    
+    def cleanup_expired_sessions(self):
+        """Remove sessions that have been inactive for too long."""
+        now = datetime.now(timezone.utc)
+        # Only run cleanup every 5 minutes
+        if (now - self.last_cleanup).total_seconds() < 300:
+            return
+        
+        self.last_cleanup = now
+        expired_ids = []
+        
+        for session_id, session in self.sessions.items():
+            # Check if session has expired
+            if (now - session.last_activity).total_seconds() > SESSION_TIMEOUT_MINUTES * 60:
+                expired_ids.append(session_id)
+        
+        # Delete expired sessions
+        for session_id in expired_ids:
+            logger.info(f"Cleaning up expired session: {session_id}")
+            self.delete_session(session_id)
+        
+        if expired_ids:
+            logger.info(f"Cleaned up {len(expired_ids)} expired sessions")
+
+# Session data class
+class SessionData:
+    def __init__(
+        self, 
+        id: str, 
+        telemetry_data: Dict,
+        analyzer: TelemetryAnalyzer
+    ):
+        self.id = id
+        self.created_at = datetime.now(timezone.utc)
+        self.last_activity = self.created_at
+        self.telemetry_data = telemetry_data
+        self.analyzer = analyzer
+        # Create agent for this session only if we have an analyzer
+        self.agent = UavAgent(session_id=id, analyzer=analyzer) if analyzer is not None else None
+        self.messages: List[Dict] = []
+
+# Create global session registry
+registry = SessionRegistry()
+
+# Define FastAPI app lifecycle
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Ensure temporary directory exists
+    os.makedirs(TEMP_UPLOAD_DIR, exist_ok=True)
+    logger.info(f"UAV Log Viewer API starting. Temp directory: {TEMP_UPLOAD_DIR}")
+    yield
+    # Shutdown: Clean up
+    logger.info("UAV Log Viewer API shutting down. Cleaning up resources.")
+    for session_id in list(registry.sessions.keys()):
+        registry.delete_session(session_id)
+
+# Initialize FastAPI application
+app = FastAPI(lifespan=lifespan)
 
 # Add CORS middleware with explicit method and header restrictions
 app.add_middleware(
@@ -38,368 +162,529 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=ALLOWED_METHODS,
     allow_headers=ALLOWED_HEADERS,
-    expose_headers=["*"],  # Headers that can be exposed to the browser
-    max_age=CORS_MAX_AGE,  # Maximum time to cache pre-flight requests (in seconds)
+    expose_headers=["X-Session-ID"],  # Expose session ID header for client use
+    max_age=CORS_MAX_AGE,
 )
 
-# In-memory storage
-flight_sessions = {}
-active_sessions = {}
-
-class FlightSession(BaseModel):
-    id: str
-    created_at: datetime
-    telemetry_data: Dict
+# ─────────────────────────────────────────────────────────────────────────────
+# Pydantic models for API
+# ─────────────────────────────────────────────────────────────────────────────
 
 class ChatMessage(BaseModel):
-    session_id: str
     message: str
+    session_id: Optional[str] = None
 
 class ChatResponse(BaseModel):
     response: str
     analysis: Optional[Dict[str, Any]] = None
+    session_id: str
 
-@app.post("/upload")
-async def upload_log(file: UploadFile = File(...)):
+class SessionInfo(BaseModel):
+    id: str
+    created_at: datetime
+    last_activity: datetime
+    has_telemetry: bool
+
+class SessionListResponse(BaseModel):
+    sessions: List[SessionInfo]
+
+class SessionResponse(BaseModel):
+    session_id: str
+    message: str
+
+class ErrorResponse(BaseModel):
+    detail: str
+    error_code: Optional[str] = None
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Dependencies
+# ─────────────────────────────────────────────────────────────────────────────
+
+async def get_session_from_header(
+    x_session_id: Optional[str] = Header(None)
+) -> Optional[SessionData]:
+    """Get session from X-Session-ID header if provided."""
+    if not x_session_id:
+        logger.debug("No X-Session-ID header provided")
+        return None
+    
+    logger.debug(f"Looking up session with ID: {x_session_id}")
+    
+    # Check if session exists
+    session = registry.get_session(x_session_id)
+    if session:
+        logger.debug(f"Found session {x_session_id}, analyzer present: {session.analyzer is not None}")
+        return session
+    
+    # Session not found
+    logger.debug(f"Session not found: {x_session_id}")
+    return None
+
+async def get_or_create_session(
+    session: Optional[SessionData] = Depends(get_session_from_header)
+) -> SessionData:
+    """Get existing session or create a new one."""
+    if session:
+        return session
+    
+    # Create new session ID
+    session_id = str(uuid.uuid4())
+    
+    # Create minimal session without telemetry data
+    # This will be updated when telemetry is uploaded
+    minimal_session = SessionData(
+        id=session_id,
+        telemetry_data={},
+        analyzer=None  # Will be populated with upload
+    )
+    
+    registry.sessions[session_id] = minimal_session
+    return minimal_session
+
+async def ensure_session_with_telemetry(
+    session: SessionData = Depends(get_or_create_session)
+) -> SessionData:
+    """Ensure the session has telemetry data, raising an exception if not."""
+    # Check if session has telemetry data
+    if not session.telemetry_data or not session.analyzer:
+        raise HTTPException(
+            status_code=400,
+            detail="No telemetry data available. Please upload a log file first."
+        )
+    
+    return session
+
+# ─────────────────────────────────────────────────────────────────────────────
+# API routes
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/upload", response_model=SessionResponse)
+async def upload_log(
+    file: UploadFile = File(...),
+    session: SessionData = Depends(get_or_create_session)
+):
+    """
+    Upload a telemetry log file for processing.
+    
+    This endpoint parses the uploaded log file into telemetry data and creates/updates
+    a session with an agent that can analyze the data.
+    
+    Returns:
+        SessionResponse: Confirmation with session ID
+    """
+    file_path = None
     try:
+        # Clean up old sessions periodically
+        registry.cleanup_expired_sessions()
+        
         # Save file temporarily
-        file_path = f"{TEMP_UPLOAD_DIR}/{file.filename}"
-        os.makedirs(TEMP_UPLOAD_DIR, exist_ok=True)
+        file_path = f"{TEMP_UPLOAD_DIR}/{session.id}_{file.filename}"
         
         with open(file_path, "wb") as buffer:
             content = await file.read()
             buffer.write(content)
         
         try:
-            # Parse telemetry data with the updated parser (returns DataFrames with only important columns)
-            print(f"Parsing telemetry data from {file.filename}...")
+            # Parse telemetry data - rely on parser to handle the details
+            logger.info(f"Parsing telemetry log: {file.filename} for session {session.id}")
             parser = TelemetryParser(file_path)
-            telemetry_data = parser.parse()
             
-            # Verify we have meaningful data before proceeding
-            if not telemetry_data or all(df.empty for df in telemetry_data.values()):
-                raise ValueError("No meaningful telemetry data could be extracted from the log file")
+            try:
+                telemetry_data = parser.parse()
+                
+                # Check if we have any data
+                if not telemetry_data or all(df.empty for df in telemetry_data.values()):
+                    logger.warning(f"No usable data found in {file.filename}")
+                    raise HTTPException(
+                        status_code=400,
+                        detail="No usable telemetry data found in the log file. Please try a different file."
+                    )
+                
+                # Create analyzer with the parsed telemetry data
+                logger.info(f"Creating analyzer for session {session.id}")
+                analyzer = TelemetryAnalyzer(telemetry_data)
             
-            # Create analyzer with the parsed telemetry data
-            print("Creating analyzer with parsed telemetry data...")
-            analyzer = TelemetryAnalyzer(telemetry_data)
+                # Update session with telemetry data and analyzer
+                registry.create_session(
+                    session_id=session.id,
+                    telemetry_data=telemetry_data,
+                    analyzer=analyzer
+                )
             
-            # Create new flight session
-            session_id = str(uuid.uuid4())
+                logger.info(f"Successfully processed log for session {session.id}")
+                
+                # Clean up temporary file
+                if file_path and os.path.exists(file_path):
+                    try:
+                        os.remove(file_path)
+                        file_path = None
+                    except Exception as cleanup_error:
+                        logger.warning(f"Failed to clean up temporary file: {str(cleanup_error)}")
+                
+                # Create response with session ID and set header
+                response = SessionResponse(
+                    session_id=session.id, 
+                    message=f"Log file {file.filename} processed successfully"
+                )
+                
+                # Convert the response to a dict, make it serializable, then dump to JSON
+                response_dict = ensure_serializable(response.model_dump())
+                response_json = json.dumps(response_dict, cls=CustomJSONEncoder)
+                
+                # Use FastAPI Response with pre-serialized JSON
+                return JSONResponse(
+                    content=json.loads(response_json),  # Parse back to dict
+                    headers={"X-Session-ID": session.id}
+                )
             
-            # Store session info
-            flight_sessions[session_id] = FlightSession(
-                id=session_id,
-                created_at=datetime.now(timezone.utc),
-                telemetry_data=telemetry_data
-            )
-            
-            # Create flight agent with the analyzer
-            print(f"Creating flight agent for session {session_id}...")
-            active_sessions[session_id] = FlightAgent(
-                session_id=session_id,
-                telemetry_data=telemetry_data,
-                analyzer=analyzer
-            )
-            
-            # Cleanup
-            os.remove(file_path)
-            
-            print(f"Successfully created session {session_id} from {file.filename}")
-            return {"session_id": session_id, "message": "Log file processed successfully"}
+            except Exception as parsing_error:
+                logger.error(f"Error parsing log file: {str(parsing_error)}")
+                logger.error(traceback.format_exc())
+                
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Could not parse the log file: {str(parsing_error)}"
+                )
+                
+        except HTTPException:
+            # Re-raise HTTP exceptions directly
+            raise
         
         except Exception as processing_error:
-            # If file exists but processing fails, clean up the file
-            if os.path.exists(file_path):
-                os.remove(file_path)
+            # Log other errors and return a friendly message
+            logger.error(f"Error processing log file: {str(processing_error)}")
+            logger.error(f"Processing error traceback: {traceback.format_exc()}")
             
-            # Log the error with stack trace
-            print(f"ERROR processing log file: {str(processing_error)}")
-            import traceback
-            print(f"UPLOAD PROCESSING ERROR: {traceback.format_exc()}")
-            
-            # Return specific error for API clients
             raise HTTPException(
                 status_code=400, 
                 detail=f"Failed to process log file: {str(processing_error)}"
             )
     
+    except HTTPException:
+        # Make sure to clean up the file if there's an exception
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to clean up temporary file during error: {str(cleanup_error)}")
+        # Re-raise HTTP exceptions
+        raise
+    
     except Exception as e:
-        # Log the error with stack trace
-        print(f"ERROR in upload endpoint: {str(e)}")
-        import traceback
-        print(f"UPLOAD ENDPOINT ERROR: {traceback.format_exc()}")
+        # Make sure to clean up the file if there's an exception
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to clean up temporary file during error: {str(cleanup_error)}")
+                
+        # Log general errors
+        logger.error(f"Unexpected error in upload endpoint: {str(e)}")
+        logger.error(f"Unexpected error traceback: {traceback.format_exc()}")
         
-        # Return specific error for API clients
+        # Return a generic error message
         raise HTTPException(
-            status_code=400, 
-            detail=f"Upload failed: {str(e)}"
+            status_code=500, 
+            detail="An unexpected error occurred while processing your upload. Please try again later."
         )
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(message: ChatMessage):
-    session_id = message.session_id
-    if session_id not in active_sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
+async def chat(
+    message: ChatMessage,
+    current_session: Optional[SessionData] = Depends(get_session_from_header)
+):
+    """
+    Process a chat message using the UAV agent.
     
+    This endpoint takes a user message and processes it against the telemetry
+    data in the session, returning a response from the agent.
+    
+    Args:
+        message: The user's chat message
+        current_session: The session from header (from dependency)
+        
+    Returns:
+        ChatResponse: Agent's response with analysis data
+    """
     try:
-        # Process message with flight agent with a hard timeout at API level
+        logger.info(f"Chat request received. Message: '{message.message[:30]}...', Header session: {current_session.id if current_session else 'None'}, Message session_id: {message.session_id or 'None'}")
+        
+        # Check if session ID is provided in the message and use it if available
+        if message.session_id:
+            session = registry.get_session(message.session_id)
+            if not session:
+                logger.warning(f"Session ID from message not found: {message.session_id}")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Session with ID {message.session_id} not found. Please upload a log file first."
+                )
+            logger.info(f"Using session from message ID: {session.id}")
+        else:
+            # Use the session from header
+            session = current_session
+            if not session:
+                logger.warning("No session available in header or message")
+                raise HTTPException(
+                    status_code=400,
+                    detail="No session available. Please upload a log file first."
+                )
+            logger.info(f"Using session from header: {session.id}")
+
+        # Verify the session has telemetry data
+        if not session.telemetry_data or not session.analyzer:
+            logger.warning(f"Session {session.id} has no telemetry data")
+            raise HTTPException(
+                status_code=400,
+                detail="No telemetry data available. Please upload a log file first."
+            )
+        logger.info(f"Session {session.id} has telemetry data and analyzer")
+        
+        # Ensure agent is initialized
+        if not session.agent:
+            if session.analyzer:
+                # Initialize agent if we have analyzer but no agent
+                logger.info(f"Initializing agent for session {session.id}")
+                session.agent = UavAgent(session_id=session.id, analyzer=session.analyzer)
+            else:
+                logger.warning(f"Session {session.id} has no analyzer for agent initialization")
+                raise HTTPException(
+                    status_code=400,
+                    detail="No telemetry data available. Please upload a log file first."
+                )
+        else:
+            logger.info(f"Using existing agent for session {session.id}")
+                
+        # Process message with the agent
         try:
-            # Set an overall timeout for the chat operation
+            # Set a timeout for the chat operation
             result = await asyncio.wait_for(
-                active_sessions[session_id].process_message(message.message),
-                timeout=90.0  # 90 seconds max at API level
+                session.agent.process_message(message.message),
+                timeout=90.0  # 90 seconds timeout
             )
         except asyncio.TimeoutError:
-            print(f"ERROR: Chat endpoint timed out after 90 seconds for session {session_id}")
-            raise HTTPException(
-                status_code=504, 
-                detail="The request took too long to process. Please try a simpler query."
+            logger.error(f"Chat operation timed out for session {session.id}")
+            return ChatResponse(
+                response="I'm sorry, but your query is taking too long to process. Please try a simpler question.",
+                session_id=session.id
+            )
+        except Exception as agent_error:
+            # Log the error but return a graceful response
+            logger.error(f"Agent error processing message: {str(agent_error)}")
+            logger.error(f"Agent error traceback: {traceback.format_exc()}")
+            
+            return ChatResponse(
+                response="I encountered an issue while processing your question. Let me try a simpler approach.",
+                session_id=session.id
             )
         
-        # Check if result contains an error field, which indicates a failure
-        if "error" in result and result["error"]:
-            print(f"ERROR returned from flight agent: {result['error']}")
+        # Check if result contains an error field
+        if isinstance(result, dict) and "error" in result and result["error"]:
+            logger.error(f"Error reported from agent: {result['error']}")
             
-            # Provide the error message to the client
-            raise HTTPException(
-                status_code=500, 
-                detail=f"Error processing chat: {result['error']}"
+            # Instead of raising an exception, return a graceful response
+            return ChatResponse(
+                response=f"I encountered a problem analyzing the telemetry data. {result.get('answer', 'Please try asking in a different way.')}",
+                session_id=session.id
             )
         
-        # Build analysis data from the result
-        analysis_data = {
-            "type": "Flight Analysis",
-            "metrics": {},
-            "anomalies": "No anomalies detected"
-        }
+        # Extract response and analysis data
+        response_text = result.get("answer") or (
+            "I couldn't generate an answer for your question."
+        )
+        analysis_data = result.get("analysis")
         
-        # Extract metrics from result
-        if "analysis" in result and isinstance(result["analysis"], dict):
-            # Extract metrics data, prioritizing proper altitude metrics
-            metrics_data = result["analysis"].get("metrics", {})
-            
-            # Look for altitude analysis in the result
-            altitude_analysis = None
-            if "altitude_analysis" in result["analysis"]:
-                altitude_analysis = result["analysis"]["altitude_analysis"]
-                # Store the altitude analysis in metrics explicitly
-                if altitude_analysis and "statistics" in altitude_analysis:
-                    metrics_data["altitude"] = altitude_analysis["statistics"]
-                    # Also record if this was converted from absolute altitude
-                    if "is_absolute_altitude" in altitude_analysis:
-                        metrics_data["altitude"]["source_was_absolute"] = altitude_analysis["is_absolute_altitude"]
-                    if "field_used" in altitude_analysis:
-                        metrics_data["altitude"]["field_used"] = altitude_analysis["field_used"]
-            elif "altitude" in metrics_data:
-                altitude_analysis = {"statistics": metrics_data["altitude"]}
-            
-                            # If we have altitude analysis, make sure it's using reasonable values
-                if altitude_analysis and "statistics" in altitude_analysis:
-                    alt_stats = altitude_analysis["statistics"]
-                    # Check if the max altitude is reasonable
-                    max_alt = alt_stats.get("max")
-                    if max_alt is not None and isinstance(max_alt, (int, float)) and max_alt > 1000:
-                        print(f"WARNING: Unreasonably high max altitude in API response: {max_alt}")
-                        # Try to apply an additional correction factor if it looks like sea level data
-                        if max_alt > 100000:  # Extremely high, might be in mm or µm
-                            alt_stats["max"] = max_alt / 1000.0
-                            print(f"Applied mm->m conversion: {alt_stats['max']}")
-                        else:
-                            # Otherwise, flag this value as suspicious
-                            alt_stats["max"] = f"Suspicious value: {max_alt}"
-                    
-                    # Verify min altitude is present
-                    min_alt = alt_stats.get("min")
-                    if min_alt is None:
-                        print(f"WARNING: Missing min altitude in API response, attempting to calculate")
-                        # If missing, try to derive from range
-                        if "range" in alt_stats and max_alt is not None and isinstance(max_alt, (int, float)):
-                            range_value = alt_stats.get("range")
-                            if isinstance(range_value, (int, float)):
-                                alt_stats["min"] = max_alt - range_value
-                                print(f"Calculated min altitude: {alt_stats['min']}")
-                    
-                    # Use the verified altitude stats
-                    metrics_data["altitude"] = alt_stats
-            
-            # Include up to 30 metrics fields maximum to avoid overwhelming response
-            field_count = 0
-            pruned_metrics = {}
-            
-            # First, add any altitude-related metrics
-            for field_name, field_data in metrics_data.items():
-                if any(term in field_name.lower() for term in ["alt", "height"]):
-                    pruned_metrics[field_name] = field_data
-                    field_count += 1
-            
-            # Then add other important metrics
-            for field_name, field_data in metrics_data.items():
-                if field_count >= 30:
-                    break
-                    
-                if field_name not in pruned_metrics and any(term in field_name.lower() for term in 
-                                                           ["speed", "battery", "volt", "gps", "position"]):
-                    pruned_metrics[field_name] = field_data
-                    field_count += 1
-            
-            # Finally add remaining metrics up to the limit
-            for field_name, field_data in metrics_data.items():
-                if field_count >= 30:
-                    break
-                    
-                if field_name not in pruned_metrics:
-                    pruned_metrics[field_name] = field_data
-                    field_count += 1
-            
-            analysis_data["metrics"] = pruned_metrics
-            
-            # Extract anomalies data
-            anomalies_data = result["analysis"].get("anomalies", [])
-            if isinstance(anomalies_data, list) and anomalies_data:
-                analysis_data["anomalies"] = f"Detected {len(anomalies_data)} anomalies"
-            elif isinstance(anomalies_data, str):
-                analysis_data["anomalies"] = anomalies_data
+        # Store the message in session history
+        try:
+            session.messages.append({
+                "role": "user",
+                "content": message.message,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+            session.messages.append({
+                "role": "assistant",
+                "content": response_text,
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+        except Exception as history_error:
+            # Log but continue if saving to history fails
+            logger.warning(f"Failed to save message to history: {str(history_error)}")
         
-        # CRITICAL: Check LLM response for unreasonable altitude values and correct them
-        response_text = result["answer"]
-        
-        # Fix incorrect statements about missing altitude data
-        if "altitude" in analysis_data["metrics"] and "min" in analysis_data["metrics"]["altitude"]:
-            min_alt_value = analysis_data["metrics"]["altitude"]["min"]
-            if isinstance(min_alt_value, (int, float)):
-                min_alt_str = f"{min_alt_value:.1f}" if min_alt_value != int(min_alt_value) else f"{int(min_alt_value)}"
-                # Replace incorrect statements about min altitude not being available
-                incorrect_patterns = [
-                    r"(?:does not explicitly state|doesn't include|doesn't show|no data for|missing|unavailable) (?:the )?minimum altitude",
-                    r"minimum altitude (?:is not available|is missing|was not provided|isn't included|isn't given)",
-                    r"not (?:the|a) minimum altitude",
-                    r"without the minimum (?:altitude|value)"
-                ]
-                for pattern in incorrect_patterns:
-                    response_text = re.sub(
-                        pattern, 
-                        f"minimum altitude was {min_alt_str} m", 
-                        response_text, 
-                        flags=re.IGNORECASE
-                    )
-        
-        # Look for absolute altitude values and replace them with relative values
-        altitude_patterns = [
-            r"(\d{3,})(?:\.?\d*)?(?:\s*|\-)?(?:m|meters|metre)",  # matches "644.5 meters" or "644 m"
-            r"altitude(?:.+?)(?:was|of|reached)(?:.+?)(\d{3,})(?:\.?\d*)?(?:\s*|\-)?(?:m|meters|metre)", # matches "altitude was 644.5 meters"
-            r"(?:max|maximum)(?:.+?)(?:altitude|height)(?:.+?)(\d{3,})(?:\.?\d*)?(?:\s*|\-)?(?:m|meters|metre)" # matches "max altitude of 644.5 meters"
-        ]
-        
-        # Get the correct altitude value from our processed metrics
-        # Look for the most reliable altitude value from our metrics
-        correct_max_altitude = None
-        
-        # Try to get from the altitude field we trust
-        if "altitude" in analysis_data["metrics"] and "max" in analysis_data["metrics"]["altitude"]:
-            max_val = analysis_data["metrics"]["altitude"]["max"]
-            if isinstance(max_val, (int, float)) and max_val < 1000:
-                correct_max_altitude = max_val
-                
-        # If we still don't have a value, try other altitude fields
-        if correct_max_altitude is None:
-            for field_name, field_data in analysis_data["metrics"].items():
-                if ("alt" in field_name.lower() or "height" in field_name.lower()) and isinstance(field_data, dict):
-                    # Skip absolute altitude fields that mention "sea level" or "absolute"
-                    if "sea" in field_name.lower() or "absolute" in field_name.lower():
-                        continue
-                        
-                    if "max" in field_data:
-                        max_val = field_data["max"]
-                        if isinstance(max_val, (int, float)) and max_val < 1000:
-                            correct_max_altitude = max_val
-                            break
-        
-        # If we found a reasonable altitude value, use it to correct the response
-        if correct_max_altitude is not None:
-            for pattern in altitude_patterns:
-                # Find all matches in the response
-                matches = re.findall(pattern, response_text, re.IGNORECASE)
-                for match in matches:
-                    # Convert match to numeric value
-                    try:
-                        value = float(match.replace(",", ""))
-                        # Only replace if it's suspiciously high
-                        if value > 100:  # Higher than 100 meters might be suspicious 
-                            # Replace the value
-                            formatted_old = f"{value:,}" if "," in match else str(value)
-                            formatted_new = f"{correct_max_altitude:.1f}"
-                            response_text = response_text.replace(formatted_old, formatted_new)
-                            print(f"Replaced suspicious altitude {match} with {formatted_new} meters")
-                    except (ValueError, TypeError):
-                        continue  # Not a valid number, skip it
-        
-        # Return the corrected response
-        return ChatResponse(
+        # Return the response with session ID in both body and header
+        response = ChatResponse(
             response=response_text,
-            analysis=analysis_data
+            analysis=analysis_data,
+            session_id=session.id
+        )
+        
+        # Ensure the response is serializable using our custom encoder
+        response_dict = ensure_serializable(response.model_dump())
+        
+        # Manually serialize to JSON with our custom encoder
+        response_json = json.dumps(response_dict, cls=CustomJSONEncoder)
+        
+        # Use JSONResponse with pre-serialized content
+        return JSONResponse(
+            content=json.loads(response_json),  # Parse back to dict
+            headers={"X-Session-ID": session.id}
         )
     except HTTPException:
-        # Re-raise HTTP exceptions without wrapping
+        # Re-raise HTTP exceptions for proper handling
         raise
     except asyncio.CancelledError:
-        # Handle task cancellation explicitly
-        print(f"CANCELLED: Chat task was cancelled for session {session_id}")
-        raise HTTPException(
-            status_code=504,
-            detail="The request was cancelled due to server load or timeout."
+        logger.error(f"Chat task cancelled for session {session.id}")
+        return ChatResponse(
+            response="I'm sorry, but your request was cancelled. Please try again.",
+            session_id=session.id
         )
     except Exception as e:
-        print(f"ERROR in /chat endpoint: {str(e)}")
-        import traceback
-        print(f"CHAT ENDPOINT ERROR TRACEBACK: {traceback.format_exc()}")
+        # Log the error but return a graceful response
+        logger.error(f"Unexpected error in chat endpoint: {str(e)}")
+        logger.error(f"Chat error traceback: {traceback.format_exc()}")
         
-        # Provide a specific error message
-        raise HTTPException(
-            status_code=500, 
-            detail=f"Error processing chat message: {str(e)}"
+        return ChatResponse(
+            response="I'm sorry, but I encountered an unexpected issue. Please try again or upload a different log file.",
+            session_id=session.id
         )
 
-@app.get("/session/{session_id}/messages")
-async def get_session_messages(session_id: str):
-    if session_id not in active_sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
+@app.get("/session/messages", response_model=Dict[str, List[Dict]])
+async def get_session_messages(
+    session_id: Optional[str] = None,
+    current_session: Optional[SessionData] = Depends(get_session_from_header)
+):
+    """
+    Get all messages for the current session.
     
-    # Get session messages using memory manager
-    messages = active_sessions[session_id].memory_manager.get_session_messages()
-    
-    return {"messages": messages}
+    Returns:
+        Dict: Contains a list of messages in the session
+    """
+    try:
+        # Determine which session to use
+        if session_id:
+            session = registry.get_session(session_id)
+            if not session:
+                error_content = {"detail": f"Session with ID {session_id} not found"}
+                error_json = json.dumps(ensure_serializable(error_content), cls=CustomJSONEncoder)
+                return JSONResponse(
+                    status_code=404,
+                    content=json.loads(error_json),
+                    headers={}
+                )
+        else:
+            session = current_session
+            if not session:
+                error_content = {"detail": "No session available. Please upload a log file first."}
+                error_json = json.dumps(ensure_serializable(error_content), cls=CustomJSONEncoder)
+                return JSONResponse(
+                    status_code=400, 
+                    content=json.loads(error_json),
+                    headers={}
+                )
+        
+        # Get agent messages if available
+        if session.agent and hasattr(session.agent, 'memory_manager'):
+            try:
+                agent_messages = session.agent.memory_manager.get_session_messages()
+                content = {"messages": agent_messages}
+                content_json = json.dumps(ensure_serializable(content), cls=CustomJSONEncoder)
+                return JSONResponse(
+                    content=json.loads(content_json),
+                    headers={"X-Session-ID": session.id}
+                )
+            except Exception as e:
+                # Log error but fall back to session messages
+                logger.warning(f"Error retrieving agent messages: {str(e)}")
+        
+        # Fall back to session messages
+        content = {"messages": session.messages}
+        content_json = json.dumps(ensure_serializable(content), cls=CustomJSONEncoder)
+        return JSONResponse(
+            content=json.loads(content_json),
+            headers={"X-Session-ID": session.id}
+        )
+    except Exception as e:
+        # Log error but return empty list rather than failing
+        logger.error(f"Error retrieving session messages: {str(e)}")
+        logger.error(traceback.format_exc())
+        return {"messages": []}
 
-@app.get("/sessions")
+@app.get("/sessions", response_model=SessionListResponse)
 async def list_sessions():
-    # Return all available flight sessions
-    return {
-        "sessions": [
-            {
-                "id": session_id,
-                "created_at": session.created_at.isoformat(),
-                "has_telemetry": bool(session.telemetry_data)
-            } for session_id, session in flight_sessions.items()
-        ]
-    }
+    """
+    List all active sessions.
+    
+    Returns:
+        SessionListResponse: List of session information
+    """
+    try:
+        # Clean up old sessions
+        registry.cleanup_expired_sessions()
+        
+        # Return all available sessions
+        return SessionListResponse(
+            sessions=[
+                SessionInfo(
+                    id=session.id,
+                    created_at=session.created_at,
+                    last_activity=session.last_activity,
+                    has_telemetry=bool(session.telemetry_data and session.analyzer)
+                ) for session in registry.sessions.values()
+            ]
+        )
+    except Exception as e:
+        # Log error but return empty list rather than failing
+        logger.error(f"Error listing sessions: {str(e)}")
+        logger.error(traceback.format_exc())
+        return SessionListResponse(sessions=[])
 
-@app.delete("/session/{session_id}")
-async def end_session(session_id: str):
-    if session_id not in active_sessions:
-        raise HTTPException(status_code=404, detail="Session not found")
+@app.delete("/session", response_model=Dict[str, str])
+async def end_session(
+    session: SessionData = Depends(get_session_from_header)
+):
+    """
+    End and delete a session.
     
-    # Clean up session resources
-    if session_id in active_sessions:
-        active_sessions[session_id].clear_memory()
-        del active_sessions[session_id]
-    
-    return {"message": "Session ended successfully"}
+    Args:
+        session: The session to end (from dependency)
+        
+    Returns:
+        Dict: Success message
+    """
+    try:
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Clean up session
+        if registry.delete_session(session.id):
+            return {"message": f"Session {session.id} ended successfully"}
+        else:
+            logger.warning(f"Failed to delete session {session.id}")
+            return {"message": f"Session {session.id} may not have been fully cleaned up"}
+            
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        # Log error but return a user-friendly message
+        logger.error(f"Error ending session: {str(e)}")
+        logger.error(traceback.format_exc())
+        return {"message": "An error occurred while ending the session, but it may have been partially cleaned up"}
 
 @app.get("/")
 async def root():
-    return {"status": "API is running", "endpoints": ["/upload", "/chat", "/sessions", "/session/{session_id}/messages"]}
+    """API root endpoint with information."""
+    return {
+        "status": "API is running", 
+        "version": "2.0",
+        "endpoints": [
+            "/upload - Upload a telemetry log file",
+            "/chat - Process a chat message",
+            "/session/messages - Get session messages",
+            "/sessions - List all active sessions",
+            "/session - Delete current session"
+        ]
+    }
 
 if __name__ == "__main__":
     import uvicorn
-    print(f"Starting server on {HOST}:{PORT}")
+    logger.info(f"Starting server on {HOST}:{PORT}")
     uvicorn.run("main:app", host=HOST, port=PORT, reload=True) 
