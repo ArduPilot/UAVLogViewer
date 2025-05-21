@@ -651,85 +651,119 @@ class TelemetryAnalyzer:
         return result
     
     def _analyze_gps(self) -> Dict[str, Any]:
-        """Analyze GPS quality and position data."""
-        # Look for GPS-related fields
-        fix_type_key = self._pick_key(["fix_type"])
+        """
+        Analyse GPS quality and position data.
+
+        • Discards rows without a reliable fix (fix_type < 3 or lat/lon == 0)
+        • Rejects segments that imply an airspeed > 120 m s-¹
+        • Robustly converts timestamps to numpy datetime64 to avoid dtype errors
+        """
+        # ---------- pick available field names --------------------------------
+        fix_type_key  = self._pick_key(["fix_type"])
         satellites_key = self._pick_key(["satellites_visible", "satellites"])
-        lat_key = self._pick_key(["lat"])
-        lon_key = self._pick_key(["lon"])
-        
-        result = {"fields_used": []}
-        
-        # Analyze fix type if available
+        lat_key       = self._pick_key(["lat"])
+        lon_key       = self._pick_key(["lon"])
+        ts_key        = "timestamp"          # always present in self.time_series
+
+        result: Dict[str, Any] = {"fields_used": []}
+
+        # -------------------- FIX-TYPE STATISTICS -----------------------------
         if fix_type_key:
             result["fields_used"].append(fix_type_key)
-            fix_values = np.array(self.time_series[fix_type_key])
-            
-            # Count different fix types
-            fix_types, fix_counts = np.unique(fix_values, return_counts=True)
-            
-            # Determine fix quality transitions
-            fix_changes = np.where(np.diff(fix_values) != 0)[0]
-            fix_transitions = []
-            
-            for idx in fix_changes:
-                fix_transitions.append({
-                    "time": self.time_series["timestamp"][idx + 1],
-                    "from": int(fix_values[idx]),
-                    "to": int(fix_values[idx + 1])
-                })
-            
+            fix_vals = np.asarray(self.time_series[fix_type_key])
+
+            uniq, counts = np.unique(fix_vals, return_counts=True)
+            changes = np.nonzero(np.diff(fix_vals) != 0)[0]
+            transitions = [
+                {
+                    "time": str(self.time_series[ts_key][i + 1]),
+                    "from": int(fix_vals[i]),
+                    "to": int(fix_vals[i + 1]),
+                }
+                for i in changes
+            ]
+
             result["fix_type"] = {
-                "counts": {int(t): int(c) for t, c in zip(fix_types, fix_counts)},
-                "transitions": fix_transitions[:10],  # Limit to first 10 transitions
-                "no_fix_percentage": float(np.sum(fix_values < 2) / len(fix_values) * 100),
-                "good_fix_percentage": float(np.sum(fix_values >= 3) / len(fix_values) * 100)
+                "counts": {int(t): int(c) for t, c in zip(uniq, counts)},
+                "transitions": transitions[:10],
+                "no_fix_percentage": float(np.sum(fix_vals < 2) / len(fix_vals) * 100),
+                "good_fix_percentage": float(np.sum(fix_vals >= 3) / len(fix_vals) * 100),
             }
-            
-        # Analyze satellites if available
+
+        # -------------------- SATELLITE STATISTICS ----------------------------
         if satellites_key:
             result["fields_used"].append(satellites_key)
-            sat_values = np.array(self.time_series[satellites_key])
-            
+            sats = np.asarray(self.time_series[satellites_key])
             result["satellites"] = {
-                "min": int(np.min(sat_values)),
-                "max": int(np.max(sat_values)),
-                "mean": float(np.mean(sat_values)),
-                "poor_signal_percentage": float(np.sum(sat_values < 6) / len(sat_values) * 100)
+                "min": int(sats.min()),
+                "max": int(sats.max()),
+                "mean": float(sats.mean()),
+                "poor_signal_percentage": float(np.sum(sats < 6) / len(sats) * 100),
             }
-            
-        # Analyze position data if available
+
+        # -------------------- POSITION / DISTANCE -----------------------------
         if lat_key and lon_key:
             result["fields_used"].extend([lat_key, lon_key])
-            lat_values = np.array(self.time_series[lat_key])
-            lon_values = np.array(self.time_series[lon_key])
-            
-            # Convert from integer (1e7) format if needed
-            if np.max(np.abs(lat_values)) > 90:
-                lat_values = lat_values / 1e7
-            if np.max(np.abs(lon_values)) > 180:
-                lon_values = lon_values / 1e7
-                
-            # Calculate distance traveled (rough approximation)
-            total_distance = 0
-            for i in range(1, len(lat_values)):
-                total_distance += self._haversine_distance(
-                    lat_values[i-1], lon_values[i-1],
-                    lat_values[i], lon_values[i]
+
+            lat = np.asarray(self.time_series[lat_key], dtype=float)
+            lon = np.asarray(self.time_series[lon_key], dtype=float)
+
+            # *** NEW: force timestamp column to datetime64 ***
+            ts_all = np.array(self.time_series[ts_key], dtype="datetime64[ns]")
+
+            # Convert 1 e7-scaled integers → degrees if needed
+            if np.abs(lat).max() > 90:
+                lat /= 1e7
+            if np.abs(lon).max() > 180:
+                lon /= 1e7
+
+            # Keep only ‘good’ rows
+            mask = (lat != 0) & (lon != 0)
+            if fix_type_key:
+                mask &= (np.asarray(self.time_series[fix_type_key]) >= 3)
+
+            if mask.sum() < 2:
+                result["position"] = {"error": "No reliable GPS data"}
+                return result
+
+            lat_g = lat[mask]
+            lon_g = lon[mask]
+            ts_g  = ts_all[mask]
+
+            # Great-circle distances (Haversine)
+            def hav_km(lat1, lon1, lat2, lon2):
+                R = 6371.0
+                dlat = np.radians(lat2 - lat1)
+                dlon = np.radians(lon2 - lon1)
+                a = (
+                    np.sin(dlat / 2) ** 2
+                    + np.cos(np.radians(lat1))
+                    * np.cos(np.radians(lat2))
+                    * np.sin(dlon / 2) ** 2
                 )
-                
+                return 2 * R * np.arcsin(np.sqrt(a))
+
+            seg_km = hav_km(lat_g[:-1], lon_g[:-1], lat_g[1:], lon_g[1:])
+
+            # Speed sanity filter (> 120 m s-¹ → reject)
+            dt_sec = (ts_g[1:] - ts_g[:-1]) / np.timedelta64(1, "s")
+            vmax = 120.0  # m s-¹
+            bad = (dt_sec <= 0) | ((seg_km * 1000.0 / dt_sec) > vmax)
+            seg_km[bad] = 0.0
+
+            total_km = float(seg_km.sum())
+
             result["position"] = {
-                "start_lat": float(lat_values[0]),
-                "start_lon": float(lon_values[0]),
-                "end_lat": float(lat_values[-1]),
-                "end_lon": float(lon_values[-1]),
-                "distance_traveled_km": float(total_distance),
-                "return_distance_km": float(self._haversine_distance(
-                    lat_values[0], lon_values[0],
-                    lat_values[-1], lon_values[-1]
-                ))
+                "start_lat": float(lat_g[0]),
+                "start_lon": float(lon_g[0]),
+                "end_lat": float(lat_g[-1]),
+                "end_lon": float(lon_g[-1]),
+                "distance_traveled_km": total_km,
+                "return_distance_km": float(
+                    hav_km(lat_g[0], lon_g[0], lat_g[-1], lon_g[-1])
+                ),
             }
-            
+
         return result
 
     # -------------------------------------------------------------------------
