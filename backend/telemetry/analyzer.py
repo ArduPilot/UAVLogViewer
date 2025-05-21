@@ -3,13 +3,15 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime   import datetime, timezone
-from typing     import Dict, List, Any, Optional, Tuple
+from typing     import Dict, List, Any, Optional, Tuple, Set, Union
 
 import numpy  as np
 import pandas as pd
 import logging
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble      import IsolationForest
+import re
+import traceback
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,15 +31,54 @@ class AnomalyDetection:
 class TelemetryAnalyzer:
     """Advanced analytics on telemetry data from multiple UAV platforms."""
 
+    # Unit metadata extracted from MAVLink specifications
+    TELEMETRY_UNITS = {
+        # Position and altitude units
+        "lat": {"unit": "deg", "scale": 1e-7, "for_fields": ["lat", "latitude", "lng", "lon", "longitude"]},
+        "lon": {"unit": "deg", "scale": 1e-7, "for_fields": ["lon", "lng", "longitude"]},
+        "alt": {"unit": "m", "scale": 1.0, "for_fields": ["alt", "altitude", "height", "terrain_height"]},
+        "relative_alt": {"unit": "m", "scale": 1e-3, "for_fields": ["relative_alt", "relative_altitude"]},
+        "climb": {"unit": "m/s", "scale": 1.0, "for_fields": ["climb", "climb_rate", "vspeed"]},
+        
+        # Velocity units
+        "vx": {"unit": "m/s", "scale": 0.01, "for_fields": ["vx", "velocity_x", "vel_x"]},
+        "vy": {"unit": "m/s", "scale": 0.01, "for_fields": ["vy", "velocity_y", "vel_y"]},
+        "vz": {"unit": "m/s", "scale": 0.01, "for_fields": ["vz", "velocity_z", "vel_z"]},
+        "groundspeed": {"unit": "m/s", "scale": 1.0, "for_fields": ["groundspeed", "ground_speed", "gspeed"]},
+        "airspeed": {"unit": "m/s", "scale": 1.0, "for_fields": ["airspeed", "air_speed", "aspeed"]},
+        
+        # Battery and power units
+        "voltage": {"unit": "V", "scale": 1e-3, "for_fields": ["voltage", "volt", "voltage_battery", "voltages"]},
+        "current": {"unit": "A", "scale": 0.01, "for_fields": ["current", "current_battery", "curr"]},
+        "remaining": {"unit": "%", "scale": 1.0, "for_fields": ["battery_remaining", "remaining", "capacity"]},
+        
+        # Attitude units
+        "roll": {"unit": "rad", "scale": 1.0, "for_fields": ["roll", "roll_angle"]},
+        "pitch": {"unit": "rad", "scale": 1.0, "for_fields": ["pitch", "pitch_angle"]},
+        "yaw": {"unit": "rad", "scale": 1.0, "for_fields": ["yaw", "yaw_angle", "heading"]},
+        
+        # GPS units
+        "eph": {"unit": "m", "scale": 1.0, "for_fields": ["eph", "h_accuracy", "hdop"]},
+        "epv": {"unit": "m", "scale": 1.0, "for_fields": ["epv", "v_accuracy", "vdop"]},
+        "satellites_visible": {"unit": "count", "scale": 1.0, "for_fields": ["satellites_visible", "satellites", "sats"]}
+    }
+    
+    # Build reverse lookup for unit identification
+    FIELD_TO_UNIT_MAP = {}
+    for unit_key, unit_info in TELEMETRY_UNITS.items():
+        for field in unit_info["for_fields"]:
+            FIELD_TO_UNIT_MAP[field] = {
+                "base_field": unit_key,
+                "unit": unit_info["unit"],
+                "scale": unit_info["scale"]
+            }
+
     # -------------------------------------------------------------------------
     def __init__(self, telemetry: Dict[str, pd.DataFrame]) -> None:
         self.telemetry = telemetry
-        self.scaler = StandardScaler()
-        self.anomaly_detector = IsolationForest(
-            contamination=0.05, random_state=42, n_estimators=100
-        )
         self.cache: Dict[str, Any] = {}
         self.time_series: Dict[str, List[float]] = {}
+        self.unit_info: Dict[str, Dict[str, Any]] = {}
         
         # Process the telemetry data
         logger.info("Processing telemetry data into time series")
@@ -126,8 +167,8 @@ class TelemetryAnalyzer:
             return
             
         # Create a sorted, unique timestamp index
-        master_index = sorted(set(timestamps))
-        logger.info(f"Created master index with {len(master_index)} unique timestamps")
+        self.master_index = sorted(set(timestamps))
+        logger.info(f"Created master index with {len(self.master_index)} unique timestamps")
         
         # -------------------------------------------------------------------- #
         # Second pass: collect and align all numeric fields with master index
@@ -166,6 +207,9 @@ class TelemetryAnalyzer:
                     field_name = f"{msg_type}_{col}"
                     numeric_data[field_name] = series
                     field_origins[field_name] = msg_type
+                    
+                    # Store unit information based on field name
+                    self._extract_unit_info(field_name, col)
                     
                 except Exception as e:
                     # If conversion fails, skip this column
@@ -215,8 +259,7 @@ class TelemetryAnalyzer:
         except Exception as e:
             # Handle any errors in processing
             logger.error(f"Error in _process_telemetry_data: {str(e)}")
-            import traceback
-            logger.debug(f"Traceback: {traceback.format_exc()}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             
             # Provide a minimal time series if processing fails
             self.time_series = {"timestamp": timestamps[:min(1000, len(timestamps))]}
@@ -793,10 +836,16 @@ class TelemetryAnalyzer:
         # Prepare data for anomaly detection
         try:
             X = np.column_stack([self.time_series[k] for k in important_keys]).astype("float32")
-            X_scaled = self.scaler.fit_transform(X)
-            lbl = self.anomaly_detector.fit_predict(X_scaled)
+            # --- use a fresh scaler each call to avoid stale state ---
+            scaler = StandardScaler()
+            X_scaled = scaler.fit_transform(X)
+            # ---------------------------------------------------------
+            detector = IsolationForest(
+                contamination=0.05, random_state=42, n_estimators=100
+            )
+            lbl = detector.fit_predict(X_scaled)
             
-            decision_scores = self.anomaly_detector.decision_function(X_scaled)
+            decision_scores = detector.decision_function(X_scaled)
             
             anomalies = []
             for i, flag in enumerate(lbl):
@@ -822,7 +871,8 @@ class TelemetryAnalyzer:
             # Sort by severity
             return sorted(anomalies, key=lambda x: x["severity"], reverse=True)
         except Exception as e:
-            print(f"Error in anomaly detection: {str(e)}")
+            logger.error(f"Error in anomaly detection: {str(e)}")
+            logger.error(traceback.format_exc())
             return []
             
     def _generate_anomaly_description(self, feature: str, value: float) -> str:
@@ -909,3 +959,312 @@ class TelemetryAnalyzer:
             kpis["overall_performance"] = float(np.mean(list(kpis.values())))
             
         return kpis
+
+    # -------------------------------------------------------------------------
+    # Add new filtering methods
+    # -------------------------------------------------------------------------
+    def _filter_relevant_metrics(self, query: str) -> Dict[str, Dict[str, float]]:
+        """
+        Extract metrics relevant to a specific query from the telemetry data.
+        This method analyzes the query semantically to determine which metrics
+        are most relevant and returns their statistics.
+        
+        Args:
+            query: User query string
+            
+        Returns:
+            Dictionary of relevant metrics with their statistics
+        """
+        if not self.time_series.get("timestamp"):
+            return {"error": "No usable telemetry found."}
+            
+        # Get all available metrics with basic stats
+        if "metrics" not in self.cache:
+            self.cache["metrics"] = self._calc_metrics()
+        
+        all_metrics = self.cache["metrics"]
+        
+        # Convert query to lowercase for easier matching
+        q = query.lower()
+        
+        # Define relevance categories for different query types
+        relevance_map = {
+            "altitude": ["alt", "height", "elevation", "climb", "ascent", "descent"],
+            "battery": ["battery", "volt", "current", "power", "charge", "energy"],
+            "speed": ["speed", "velocity", "groundspeed", "airspeed", "vx", "vy", "vz"],
+            "position": ["position", "lat", "lon", "gps", "location", "coordinate"],
+            "attitude": ["roll", "pitch", "yaw", "attitude", "orientation", "rotation"],
+            "motor": ["motor", "throttle", "rpm", "esc", "rotor", "propeller"],
+            "general": ["flight", "stats", "overview", "summary", "telemetry", "data"]
+        }
+        
+        # Determine relevant categories based on query
+        relevant_categories = []
+        for category, keywords in relevance_map.items():
+            if any(keyword in q for keyword in keywords):
+                relevant_categories.append(category)
+                
+        # If no specific category was matched, include general flight metrics
+        if not relevant_categories or 'general' in relevant_categories:
+            relevant_categories = list(relevance_map.keys())
+            
+        # Create patterns to match for each category
+        patterns = []
+        for category in relevant_categories:
+            patterns.extend(relevance_map[category])
+            
+        # Filter metrics based on patterns
+        relevant_metrics = {}
+        
+        # First pass: exact matches
+        exact_matches = 0
+        for field_name, field_stats in all_metrics.items():
+            field_lower = field_name.lower()
+            if any(pattern in field_lower for pattern in patterns):
+                relevant_metrics[field_name] = field_stats
+                exact_matches += 1
+                
+        # If we have too few exact matches, include more metrics
+        if exact_matches < 3:
+            # Include metrics from important categories
+            priority_categories = ["altitude", "battery", "speed"]
+            additional_patterns = []
+            for category in priority_categories:
+                if category in relevance_map:
+                    additional_patterns.extend(relevance_map[category])
+                    
+            for field_name, field_stats in all_metrics.items():
+                if field_name not in relevant_metrics:
+                    field_lower = field_name.lower()
+                    if any(pattern in field_lower for pattern in additional_patterns):
+                        relevant_metrics[field_name] = field_stats
+        
+        # If still empty, include key metrics
+        if not relevant_metrics:
+            for field_name, field_stats in all_metrics.items():
+                field_lower = field_name.lower()
+                if any(term in field_lower for term in ["alt", "bat", "volt", "speed", "gps"]):
+                    relevant_metrics[field_name] = field_stats
+                    
+            # Ensure we have at least some metrics
+            if not relevant_metrics and all_metrics:
+                # Include up to 5 key metrics
+                key_fields = list(all_metrics.keys())[:min(5, len(all_metrics))]
+                for field in key_fields:
+                    relevant_metrics[field] = all_metrics[field]
+        
+        return relevant_metrics
+    
+    def _filter_relevant_anomalies(self, query: str) -> List[Dict[str, Any]]:
+        """
+        Filter anomalies based on the user query to return the most relevant ones.
+        
+        Args:
+            query: User query string
+            
+        Returns:
+            List of anomaly dictionaries relevant to the query
+        """
+        if not self.time_series.get("timestamp"):
+            return []
+            
+        # Ensure anomalies are detected and cached
+        if "anomalies" not in self.cache:
+            self.cache["anomalies"] = self._detect_anomalies()
+            
+        all_anomalies = self.cache["anomalies"]
+        
+        # If no anomalies or empty query, return all anomalies
+        if not all_anomalies or not query:
+            return all_anomalies
+            
+        # Convert query to lowercase for matching
+        q = query.lower()
+        
+        # Define relevance categories for different anomaly types
+        relevance_map = {
+            "altitude": ["alt", "height", "elevation", "climb", "descent"],
+            "battery": ["battery", "volt", "current", "power", "energy"],
+            "speed": ["speed", "velocity", "vx", "vy", "vz"],
+            "gps": ["gps", "position", "lat", "lon", "fix", "satellite"],
+            "attitude": ["roll", "pitch", "yaw", "attitude", "orientation"],
+            "system": ["error", "warning", "fault", "issue", "problem", "anomaly"]
+        }
+        
+        # Determine relevant categories based on query
+        relevant_categories = []
+        for category, keywords in relevance_map.items():
+            if any(keyword in q for keyword in keywords):
+                relevant_categories.append(category)
+                
+        # If no specific category was matched, check if query asks about problems in general
+        if not relevant_categories:
+            if any(term in q for term in ["problem", "issue", "anomaly", "concern", "error"]):
+                # Include all categories for general problem queries
+                relevant_categories = list(relevance_map.keys())
+            else:
+                # Default to return all anomalies if query is too vague
+                return all_anomalies
+                
+        # Create patterns to match for each category
+        patterns = []
+        for category in relevant_categories:
+            patterns.extend(relevance_map[category])
+            
+        # Filter anomalies based on patterns
+        relevant_anomalies = []
+        for anomaly in all_anomalies:
+            # Check if primary factor or type matches any pattern
+            primary_factor = anomaly.get("primary_factor", "").lower()
+            anomaly_type = anomaly.get("type", "").lower()
+            description = anomaly.get("description", "").lower()
+            
+            if any(pattern in primary_factor or pattern in anomaly_type or pattern in description for pattern in patterns):
+                relevant_anomalies.append(anomaly)
+                
+        # If no matches found but we had anomalies, return all of them (better to show all than none)
+        if not relevant_anomalies and all_anomalies:
+            return all_anomalies
+            
+        return relevant_anomalies
+
+    def _extract_unit_info(self, field_name: str, column_name: str) -> None:
+        """
+        Extract unit information from field names and store for later conversion.
+        
+        This method attempts to determine the unit for a field based on:
+        1. Field name matching to known unit patterns
+        2. Message type conventions from MAVLink
+        3. Embedded unit information in column names or metadata
+        
+        Args:
+            field_name: Full field name with message type prefix
+            column_name: Original column name from DataFrame
+        """
+        lower_col = column_name.lower()
+        
+        # Look for unit patterns in column name 
+        # Some logs have units in parentheses or brackets like "voltage(mV)" or "altitude[m]"
+        unit_patterns = [
+            r'\(([a-zA-Z%/]+)\)',  # (mV), (deg), etc.
+            r'\[([a-zA-Z%/]+)\]',  # [mV], [deg], etc.
+            r'_([a-zA-Z%/]+)$'     # _mV, _deg, etc.
+        ]
+        
+        embedded_unit = None
+        for pattern in unit_patterns:
+            match = re.search(pattern, column_name)
+            if match:
+                embedded_unit = match.group(1)
+                break
+                
+        # If we found an embedded unit, use it
+        if embedded_unit:
+            self.unit_info[field_name] = {
+                "unit": embedded_unit,
+                "scale": 1.0,  # Default scale factor
+                "source": "embedded"
+            }
+            return
+            
+        # Otherwise, check against our known field mappings
+        for key_field, info in self.FIELD_TO_UNIT_MAP.items():
+            if key_field in lower_col:
+                self.unit_info[field_name] = {
+                    "unit": info["unit"],
+                    "scale": info["scale"],
+                    "source": "field_mapping"
+                }
+                return
+                
+        # If we still don't have unit info, try to infer from field name
+        if "lat" in lower_col or "lon" in lower_col:
+            # Latitude/longitude fields often use 1e7 encoding
+            self.unit_info[field_name] = {
+                "unit": "deg",
+                "scale": 1e-7 if self._check_value_range(field_name, 1e6, 9e7) else 1.0,
+                "source": "inferred"
+            }
+        elif "alt" in lower_col or "height" in lower_col:
+            # Altitude fields might be in mm, cm, or m
+            if self._check_value_range(field_name, 1000, 1e6):
+                # Likely millimeters
+                self.unit_info[field_name] = {
+                    "unit": "m",
+                    "scale": 1e-3,
+                    "source": "inferred"
+                }
+            elif self._check_value_range(field_name, 100, 1000):
+                # Likely centimeters
+                self.unit_info[field_name] = {
+                    "unit": "m",
+                    "scale": 1e-2,
+                    "source": "inferred"
+                }
+            else:
+                # Likely meters
+                self.unit_info[field_name] = {
+                    "unit": "m",
+                    "scale": 1.0,
+                    "source": "inferred"
+                }
+        elif "volt" in lower_col:
+            # Voltage often in millivolts
+            if self._check_value_range(field_name, 1000, 50000):
+                self.unit_info[field_name] = {
+                    "unit": "V",
+                    "scale": 1e-3,
+                    "source": "inferred"
+                }
+            else:
+                self.unit_info[field_name] = {
+                    "unit": "V",
+                    "scale": 1.0,
+                    "source": "inferred"
+                }
+        elif "current" in lower_col:
+            # Current often in 10mA or centiamperes
+            if self._check_value_range(field_name, 100, 50000):
+                self.unit_info[field_name] = {
+                    "unit": "A",
+                    "scale": 0.01,
+                    "source": "inferred"
+                }
+            else:
+                self.unit_info[field_name] = {
+                    "unit": "A",
+                    "scale": 1.0,
+                    "source": "inferred"
+                }
+        else:
+            # Default unit info with no conversion
+            self.unit_info[field_name] = {
+                "unit": "unknown",
+                "scale": 1.0,
+                "source": "default"
+            }
+
+    def _check_value_range(self, field_name: str, min_val: float, max_val: float) -> bool:
+        """
+        Check if values in a field are mostly within a specified range.
+        Used for unit inference when explicit unit data is not available.
+        
+        Args:
+            field_name: Name of the field to check
+            min_val: Minimum expected value
+            max_val: Maximum expected value
+            
+        Returns:
+            True if most values in the field are within the specified range
+        """
+        # Get data for the field from telemetry DataFrame
+        for msg_type, df in self.telemetry.items():
+            col_name = field_name.replace(f"{msg_type}_", "")
+            if col_name in df.columns:
+                values = pd.to_numeric(df[col_name], errors='coerce').dropna()
+                if not values.empty:
+                    # Check if at least 80% of values are in range
+                    in_range = ((values >= min_val) & (values <= max_val)).mean()
+                    return in_range >= 0.8
+                    
+        return False
