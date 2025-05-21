@@ -4,8 +4,6 @@ import inspect
 import json
 import logging
 import textwrap
-import traceback
-import uuid
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Any, Dict, List, Optional, TypedDict, Union
@@ -83,8 +81,7 @@ INT_ROUTE_PROMPT = textwrap.dedent(
        {
          "clarification_needed": "YES" | "NO",
          "follow_up": "<question or null>",
-         "tools": ["metrics","anomalies","altitude_details","battery_details",
-                   "speed_details","gps_details","performance_details","flight_statistics"]
+         "tools": [<tool1>, <tool2>, ...]
        }
 
        *The tools list may be empty.*
