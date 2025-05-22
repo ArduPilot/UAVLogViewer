@@ -1,0 +1,13 @@
+chatbot:
+  max_history: 15
+  timeout: 30
+  llm:
+    model: "gemini-2.0-flash"
+    temperature: 0.2
+    api_key: "AIzaSyCrvQpJyzcclbKwqexH9RvEGIP0Gh0fVK0"
+uav:
+  supported_fields:
+    - altitude
+    - GPS_status
+    - battery_temp
+    - errors
