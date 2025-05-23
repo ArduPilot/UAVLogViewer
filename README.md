@@ -3,6 +3,8 @@
 
 This project extends the [ArduPilot UAVLogViewer](https://github.com/ArduPilot/UAVLogViewer) with an **agentic chatbot backend** powered by Python (FastAPI) and a Large Language Model (LLM). The chatbot allows users to upload MAVLink `.bin` flight logs and ask natural language questions about the telemetry data, including flight summaries and potential anomalies.
 
+🎥 **Demo Video:** [Watch on Google Drive](https://drive.google.com/file/d/13yPT0xM1YrJEahm031l3Ngx_x0thPdKz/view?usp=drive_link)
+
 ---
 
 ## 📦 New Backend Module: `Chatbotbackend`
