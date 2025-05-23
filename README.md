@@ -122,6 +122,49 @@ npm run dev
 ---
 ---
 
+## 🧩 Frontend Troubleshooting Instructions
+
+If you encounter issues during frontend setup or while running the development server, follow these steps:
+
+### 1. Clean Up Node Modules and Cache
+
+If `npm install` fails or gives warnings/errors:
+```bash
+del package-lock.json
+npm cache clean --force
+npm install
+```
+
+### 2. Fix Missing `JsDataflashParser/parser.js` File
+
+If you see errors like:
+```
+Field 'browser' doesn't contain a valid alias configuration
+...JsDataflashParser\parser doesn't exist
+```
+
+➡️ Follow these steps:
+
+1. Navigate to:
+```
+UAVLogViewer/src/tools/parsers/JsDataflashParser/
+```
+
+2. Download the missing `parser.js` file from:
+   - [https://github.com/Williangalvani/JsDataflashParser](https://github.com/Williangalvani/JsDataflashParser)
+
+3. Place it inside:
+```
+UAVLogViewer/src/tools/parsers/JsDataflashParser/parser.js
+```
+
+4. Then re-run the frontend:
+```bash
+npm run dev
+```
+
+---
+
 ## 🛠️ Built With
 
 - Python, FastAPI, Langchain, Uvicorn
