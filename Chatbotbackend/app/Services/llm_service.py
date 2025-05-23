@@ -7,7 +7,7 @@ from app.models import ChatMessageInput
 
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, BaseMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-# from langchain_anthropic import ChatAnthropic
+
 
 # Load environment variables from .env file in project root
 dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env') 
