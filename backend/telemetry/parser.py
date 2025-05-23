@@ -103,7 +103,7 @@ class TelemetryParser:
     UNIT_CONVERSIONS = {
         'GLOBAL_POSITION_INT.lat': 1e-7,        # Convert from 1e7 degrees to degrees
         'GLOBAL_POSITION_INT.lon': 1e-7,        # Convert from 1e7 degrees to degrees
-        'GLOBAL_POSITION_INT.relative_alt': 1e-3, # Convert from mm to m
+        # 'GLOBAL_POSITION_INT.relative_alt': 1e-3, # Convert from mm to m
         'GLOBAL_POSITION_INT.alt': 1e-3,        # Convert from mm to m
         'GPS_RAW_INT.lat': 1e-7,                # Convert from 1e7 degrees to degrees
         'GPS_RAW_INT.lon': 1e-7,                # Convert from 1e7 degrees to degrees
@@ -114,25 +114,32 @@ class TelemetryParser:
     }
 
     def __init__(self, file_path: str):
-        """Initialize the telemetry parser with the specified log file."""
-        self.file_path = file_path
-        self.file_extension = os.path.splitext(file_path)[1].lower()
-        self.use_pyulog = False
-        
-        # Check for format compatibility
-        if self.file_extension not in ['.tlog', '.bin', '.log', '.ulg', '.ulog']:
-            raise ValueError(f"Unsupported file format: {self.file_extension}. "
-                            f"Supported formats: .tlog, .bin, .log, .ulg, .ulog")
-            
-        # For ULog files, we'll use pyulog if available
-        if self.file_extension in ['.ulg', '.ulog']:
+        """Initialise the telemetry parser and basic runtime caches."""
+        self.file_path        = file_path
+        self.file_extension   = os.path.splitext(file_path)[1].lower()
+        self.use_pyulog       = False
+
+        # ── runtime caches needed by downstream helpers ──────────────────────
+        # (analyser & exporter expect these to exist)
+        self.cache:        Dict[str, Any]  = {}
+        self.time_series:  Dict[str, List] = {}
+
+        # ── format sanity check ──────────────────────────────────────────────
+        if self.file_extension not in ('.tlog', '.bin', '.log', '.ulg', '.ulog'):
+            raise ValueError(
+                f"Unsupported file format: {self.file_extension}. "
+                "Supported: .tlog, .bin, .log, .ulg, .ulog"
+            )
+
+        # PX4 ULog → try pyulog first
+        if self.file_extension in ('.ulg', '.ulog'):
             try:
-                import pyulog
+                import pyulog  # noqa: F401  (import test only)
                 self.use_pyulog = True
-                logger.info(f"Using pyulog parser for {self.file_extension} file")
+                logger.info("Using pyulog parser for ULog file")
             except ImportError:
-                logger.warning("pyulog not available, falling back to pymavlink")
-                
+                logger.warning("pyulog not available – falling back to pymavlink")
+
         logger.info(f"Initialized parser for {file_path}")
 
     def parse(self) -> Dict[str, pd.DataFrame]:
@@ -156,65 +163,158 @@ class TelemetryParser:
         
         return processed_data
     
+    # def _parse_mavlink(self) -> Dict[str, List[Dict[str, Any]]]:
+    #     """Parse MAVLink-based log files (.tlog, .bin)."""
+    #     # Initialize connection with appropriate dialect
+    #     try:
+    #         mlog = mavutil.mavlink_connection(self.file_path, dialect="common")
+    #     except Exception as e:
+    #         logger.error(f"Failed to initialize MAVLink connection: {str(e)}")
+    #         raise
+            
+    #     data: Dict[str, List[Dict[str, Any]]] = {}
+    #     msg_count = 0
+        
+    #     # Determine which message types to extract
+    #     msg_types_to_extract = list(self.ESSENTIAL_MESSAGES.keys())
+        
+    #     # Process messages in the log
+    #     try:
+    #         while True:
+    #             msg = mlog.recv_match(type=msg_types_to_extract, blocking=False)
+    #             if msg is None:
+    #                 break
+                    
+    #             msg_type = msg.get_type()
+                
+    #             # Skip non-essential message types
+    #             if msg_type not in self.ESSENTIAL_MESSAGES:
+    #                 continue
+                
+    #             # Extract message data including timestamp
+    #             try:
+    #                 msg_dict = msg.to_dict()
+                    
+    #                 # # Add timestamp from message metadata
+    #                 # msg_dict["timestamp"] = pd.to_datetime(msg._timestamp, unit='s')
+
+    #                 # prefer vehicle’s own timestamp fields:
+    #                 if hasattr(msg, "time_boot_ms"):
+    #                     msg_time = msg.time_boot_ms / 1000.0  # seconds since boot
+    #                 elif hasattr(msg, "time_usec"):
+    #                     msg_time = msg.time_usec / 1e6
+    #                 else:
+    #                     msg_time = msg._timestamp
+    #                 # anchor at first message’s time
+    #                 if not hasattr(self, "_start_time"):
+    #                     self._start_time = msg_time
+    #                 elapsed = msg_time - self._start_time
+    #                 msg_dict["timestamp"] = pd.to_datetime(elapsed, unit="s")
+                    
+    #                 # Store message data
+    #                 if msg_type not in data:
+    #                     data[msg_type] = []
+    #                 data[msg_type].append(msg_dict)
+                    
+    #                 # Count processed messages
+    #                 msg_count += 1
+                    
+    #                 # Log progress for large files
+    #                 if msg_count % 100000 == 0:
+    #                     logger.info(f"Processed {msg_count} messages...")
+                        
+    #             except Exception as e:
+    #                 logger.warning(f"Error processing message {msg_type}: {str(e)}")
+    #                 continue
+                    
+    #     except KeyboardInterrupt:
+    #         logger.warning("Parsing interrupted by user")
+    #     except Exception as e:
+    #         logger.error(f"Error parsing MAVLink data: {str(e)}")
+    #         raise
+            
+    #     logger.info(f"Processed {msg_count} total messages from {len(data)} message types")
+    #     return data
+
     def _parse_mavlink(self) -> Dict[str, List[Dict[str, Any]]]:
-        """Parse MAVLink-based log files (.tlog, .bin)."""
-        # Initialize connection with appropriate dialect
+        """Parse MAVLink-based logs (.tlog / .bin) and attach sane UTC timestamps."""
         try:
+            # Use the common dialect so we get `time_boot_ms`, `time_usec`, … fields
             mlog = mavutil.mavlink_connection(self.file_path, dialect="common")
         except Exception as e:
-            logger.error(f"Failed to initialize MAVLink connection: {str(e)}")
+            logger.error(f"Could not open MAVLink log: {e}")
             raise
-            
+
         data: Dict[str, List[Dict[str, Any]]] = {}
         msg_count = 0
-        
-        # Determine which message types to extract
+
         msg_types_to_extract = list(self.ESSENTIAL_MESSAGES.keys())
-        
-        # Process messages in the log
-        try:
-            while True:
-                msg = mlog.recv_match(type=msg_types_to_extract, blocking=False)
-                if msg is None:
-                    break
-                    
-                msg_type = msg.get_type()
-                
-                # Skip non-essential message types
-                if msg_type not in self.ESSENTIAL_MESSAGES:
-                    continue
-                
-                # Extract message data including timestamp
-                try:
-                    msg_dict = msg.to_dict()
-                    
-                    # Add timestamp from message metadata
-                    msg_dict["timestamp"] = pd.to_datetime(msg._timestamp, unit='s')
-                    
-                    # Store message data
-                    if msg_type not in data:
-                        data[msg_type] = []
-                    data[msg_type].append(msg_dict)
-                    
-                    # Count processed messages
-                    msg_count += 1
-                    
-                    # Log progress for large files
-                    if msg_count % 100000 == 0:
-                        logger.info(f"Processed {msg_count} messages...")
-                        
-                except Exception as e:
-                    logger.warning(f"Error processing message {msg_type}: {str(e)}")
-                    continue
-                    
-        except KeyboardInterrupt:
-            logger.warning("Parsing interrupted by user")
-        except Exception as e:
-            logger.error(f"Error parsing MAVLink data: {str(e)}")
-            raise
-            
-        logger.info(f"Processed {msg_count} total messages from {len(data)} message types")
+
+        # ──  Runtime bookkeeping ────────────────────────────────────────────────
+        wall_time_anchor: Optional[float] = None     # first definitely-UTC timestamp
+        boot_time_offset: Optional[float] = None     # seconds to convert boot-time→UTC
+
+        while True:
+            msg = mlog.recv_match(type=msg_types_to_extract, blocking=False)
+            if msg is None:                       # EOF
+                break
+
+            mtype = msg.get_type()
+            if mtype not in self.ESSENTIAL_MESSAGES:
+                continue
+
+            try:
+                mdict = msg.to_dict()             # raw field → value mapping
+
+                # --------------------------------------------------------------- #
+                # 1️⃣  Work out an **absolute** timestamp for this message
+                # --------------------------------------------------------------- #
+                # a) “native” wall-clock timestamp provided by pymavlink
+                native_ts = getattr(msg, "_timestamp", None)
+                if native_ts and native_ts > 1_000_000_000:   # ≈ 2001-09-09
+                    wall = float(native_ts)
+                    if wall_time_anchor is None:
+                        wall_time_anchor = wall
+                else:
+                    wall = None
+
+                # b) Vehicle’s time-since-boot (preferred if we know the offset)
+                if hasattr(msg, "time_boot_ms"):
+                    boot = msg.time_boot_ms / 1000.0
+                elif "time_usec" in mdict:
+                    boot = mdict["time_usec"] / 1e6
+                else:
+                    boot = None
+
+                if boot is not None:
+                    # First time we see both kinds → fix the offset
+                    if boot_time_offset is None and wall is not None:
+                        boot_time_offset = wall - boot
+                    if boot_time_offset is not None:
+                        wall = boot_time_offset + boot
+
+                # Still nothing?  Fallback to anchor or 0
+                if wall is None:
+                    wall = wall_time_anchor if wall_time_anchor else 0.0
+
+                # Final pandas UTC timestamp
+                mdict["timestamp"] = pd.to_datetime(wall, unit="s", utc=True)
+
+                # --------------------------------------------------------------- #
+                # 2️⃣  Collect message
+                # --------------------------------------------------------------- #
+                data.setdefault(mtype, []).append(mdict)
+                msg_count += 1
+                if msg_count % 100_000 == 0:
+                    logger.info(f"Parsed {msg_count:,} messages…")
+
+            except Exception as e:
+                logger.warning(f"Skipping corrupt {mtype} message: {e}")
+                continue
+
+        logger.info(f"Finished: {msg_count:,} messages from {len(data)} types")
         return data
+
     
     def _parse_ulog(self) -> Dict[str, List[Dict[str, Any]]]:
         """Parse PX4 ULog files using pyulog."""
@@ -269,57 +369,178 @@ class TelemetryParser:
             logger.error(f"Error parsing ULog file: {str(e)}")
             raise
     
-    def _process_dataframes(self, data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, pd.DataFrame]:
-        """Convert raw message dictionaries to processed DataFrames."""
-        processed_data: Dict[str, pd.DataFrame] = {}
+    # def _process_dataframes(self, data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, pd.DataFrame]:
+    #     """Convert raw message dictionaries to processed DataFrames."""
+    #     processed_data: Dict[str, pd.DataFrame] = {}
         
-        for msg_type, messages in data.items():
-            if not messages:
-                continue
+    #     for msg_type, messages in data.items():
+    #         if not messages:
+    #             continue
                 
-            # Create a DataFrame from the message data
-            try:
-                df = pd.DataFrame(messages)
+    #         # Create a DataFrame from the message data
+    #         try:
+    #             df = pd.DataFrame(messages)
                 
-                # Ensure timestamp is a datetime and convert to index
-                if 'timestamp' in df.columns:
-                    # Handle duplicate timestamps using microsecond offset method
-                    if not df['timestamp'].is_unique:
-                        # Group by timestamp and add increasing microsecond offsets
-                        timestamp_groups = df.groupby('timestamp').cumcount()
-                        df['timestamp'] = df['timestamp'] + pd.to_timedelta(timestamp_groups, unit='us')
+    #             # Ensure timestamp is a datetime and convert to index
+    #             if 'timestamp' in df.columns:
+    #                 # Handle duplicate timestamps using microsecond offset method
+    #                 if not df['timestamp'].is_unique:
+    #                     # Group by timestamp and add increasing microsecond offsets
+    #                     timestamp_groups = df.groupby('timestamp').cumcount()
+    #                     df['timestamp'] = df['timestamp'] + pd.to_timedelta(timestamp_groups, unit='us')
                         
-                    # Sort by timestamp
-                    df = df.sort_values('timestamp')
+    #                 # Sort by timestamp
+    #                 df = df.sort_values('timestamp')
                     
-                    # Set timestamp as index
-                    df.set_index('timestamp', inplace=True)
+    #                 # Set timestamp as index
+    #                 df.set_index('timestamp', inplace=True)
                 
-                # Apply unit conversions for specific fields
-                for col in df.columns:
-                    conversion_key = f"{msg_type}.{col}"
-                    if conversion_key in self.UNIT_CONVERSIONS:
-                        df[col] = df[col] * self.UNIT_CONVERSIONS[conversion_key]
+    #             # Apply unit conversions for specific fields
+    #             for col in df.columns:
+    #                 conversion_key = f"{msg_type}.{col}"
+    #                 if conversion_key in self.UNIT_CONVERSIONS:
+    #                     df[col] = df[col] * self.UNIT_CONVERSIONS[conversion_key]
                 
-                # Handle list-type fields like 'voltages' in BATTERY_STATUS
-                for col in df.columns:
-                    if isinstance(df[col].iloc[0], list) if len(df) > 0 else False:
-                        # Extract first element for simple fields like voltages[0]
-                        try:
-                            df[f"{col}[0]"] = df[col].apply(lambda x: x[0] if x and len(x) > 0 else None)
-                        except:
-                            # Skip if extraction fails
-                            pass
+    #             # Handle list-type fields like 'voltages' in BATTERY_STATUS
+    #             for col in df.columns:
+    #                 if isinstance(df[col].iloc[0], list) if len(df) > 0 else False:
+    #                     # Extract first element for simple fields like voltages[0]
+    #                     try:
+    #                         df[f"{col}[0]"] = df[col].apply(lambda x: x[0] if x and len(x) > 0 else None)
+    #                     except:
+    #                         # Skip if extraction fails
+    #                         pass
                 
-                # Store the processed DataFrame
-                processed_data[msg_type] = df
+    #             # Store the processed DataFrame
+    #             processed_data[msg_type] = df
                 
-            except Exception as e:
-                logger.warning(f"Error processing DataFrame for {msg_type}: {str(e)}")
+    #         except Exception as e:
+    #             logger.warning(f"Error processing DataFrame for {msg_type}: {str(e)}")
+    #             continue
+                
+    #     return processed_data
+
+    # def _process_dataframes(self, data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, pd.DataFrame]:
+    #     """Convert raw message dictionaries to processed DataFrames."""
+    #     processed_data: Dict[str, pd.DataFrame] = {}
+        
+    #     for msg_type, messages in data.items():
+    #         if not messages:
+    #             continue
+                
+    #         try:
+    #             df = pd.DataFrame(messages)
+                
+    #             # ─── Normalize timestamps ────────────────────────────────────────
+    #             if 'timestamp' in df.columns:
+    #                 # de-dupe identical timestamps by micro-offset
+    #                 if not df['timestamp'].is_unique:
+    #                     groups = df.groupby('timestamp').cumcount()
+    #                     df['timestamp'] = df['timestamp'] + pd.to_timedelta(groups, unit='us')
+    #                 df = df.sort_values('timestamp')
+    #                 df.set_index('timestamp', inplace=True)
+                
+    #             # ─── Apply any explicit unit conversions ─────────────────────────
+    #             for col in df.columns:
+    #                 key = f"{msg_type}.{col}"
+    #                 if key in self.UNIT_CONVERSIONS:
+    #                     df[col] = df[col] * self.UNIT_CONVERSIONS[key]
+                
+    #             # ─── Handle list-type fields (e.g. BATTERY_STATUS.voltages) ──────
+    #             for col in list(df.columns):
+    #                 if len(df) > 0 and isinstance(df[col].iloc[0], list):
+    #                     # 1) pack‐sum (sum of all cells)
+    #                     df[f"{col}_sum"] = df[col].apply(lambda x: float(np.sum(x)) if x else None)
+    #                     # 2) preserve first element, too
+    #                     df[f"{col}[0]"]  = df[col].apply(lambda x: x[0] if x and len(x) > 0 else None)
+                
+    #             processed_data[msg_type] = df
+                
+    #         except Exception as e:
+    #             logger.warning(f"Error processing DataFrame for {msg_type}: {e}")
+    #             continue
+                
+    #     return processed_data
+
+    def _process_dataframes(
+        self,
+        data: Dict[str, List[Dict[str, Any]]]
+    ) -> Dict[str, pd.DataFrame]:
+        """
+        Build clean per-message DataFrames, apply unit fixes, then assemble the
+        wide time-series table.  Results are stored in `self.time_series` and
+        a copy of the wide DataFrame is cached in `self.cache['wide_df']`.
+        """
+        # make sure the cache exists even when __init__ was bypassed
+        if not hasattr(self, "cache"):
+            self.cache = {}
+        processed: Dict[str, pd.DataFrame] = {}
+
+        for mtype, msgs in data.items():
+            if not msgs:
                 continue
-                
-        return processed_data
-    
+            try:
+                df = pd.DataFrame(msgs)
+
+                # ── timestamp clean-up ─────────────────────────────────────────
+                if "timestamp" in df.columns:
+                    if not df["timestamp"].is_unique:               # micro-offset dups
+                        dup = df.groupby("timestamp").cumcount()
+                        df["timestamp"] += pd.to_timedelta(dup, unit="us")
+
+                    df["timestamp"] = pd.to_datetime(df["timestamp"]).dt.round("10ms")
+                    df = (
+                        df.set_index("timestamp")
+                        .groupby(level=0)
+                        .mean(numeric_only=True)
+                        .sort_index()
+                    )
+
+                # ── explicit unit conversions ─────────────────────────────────
+                for col in df.columns:
+                    key = f"{mtype}.{col}"
+                    if key in self.UNIT_CONVERSIONS:
+                        df[col] = df[col] * self.UNIT_CONVERSIONS[key]
+
+                # ── expand list-type fields (e.g. BATTERY_STATUS.voltages) ────
+                for col in list(df.columns):
+                    if len(df) and isinstance(df[col].iloc[0], list):
+                        df[f"{col}_sum"] = df[col].apply(
+                            lambda x: float(np.sum(x)) if x else np.nan
+                        )
+                        df[f"{col}[0]"] = df[col].apply(
+                            lambda x: x[0] if x else np.nan
+                        )
+
+                processed[mtype] = df
+
+            except Exception as e:
+                logger.warning(f"Failed to process {mtype}: {e}")
+
+        # ── assemble wide table ───────────────────────────────────────────────
+        if not processed:
+            self.time_series = {"timestamp": []}
+            return processed
+
+        wide = pd.concat(processed, axis=1, join="outer")
+
+        if not wide.index.is_unique:
+            wide = wide.groupby(level=0).mean()
+
+        wide = (
+            wide.sort_index()
+                .ffill(limit=5)
+                .bfill(limit=5)
+                .fillna(0)
+        )
+
+        self.time_series = {
+            "timestamp": wide.index.to_list(),
+            **{c: wide[c].astype("float32").to_list() for c in wide.columns},
+        }
+        self.cache["wide_df"] = wide
+        return processed
+
     def get_key_metrics(self) -> Dict[str, Any]:
         """Extract key flight metrics from the telemetry data."""
         # This requires parsing the data first - future enhancement
