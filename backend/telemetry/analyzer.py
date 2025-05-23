@@ -91,7 +91,7 @@ class TelemetryAnalyzer:
             logger.info(f"Successfully processed {len(self.time_series) - 1} data fields")
 
     # -------------------------------------------------------------------------
-    # 1) TIME-SERIES PREP ––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    # TIME-SERIES PREP
     # -------------------------------------------------------------------------
     IMPORTANT_PATTERNS = [
         "alt", "height",
@@ -122,6 +122,7 @@ class TelemetryAnalyzer:
             'GPS2_RAW',             # Secondary GPS
             'ALTITUDE',             # Altitude data (various types)
             'TERRAIN_REPORT',       # Terrain data and relative height
+            'RC_CHANNELS',          # RC receiver channel pulses      
         ]
         
         # Additional message types that might contain useful data
@@ -286,7 +287,7 @@ class TelemetryAnalyzer:
                 self.time_series[field] = [val / 1000.0 for val in self.time_series[field]]
 
     # -------------------------------------------------------------------------
-    # 2) PUBLIC ENTRY ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+    # PUBLIC ENTRY
     # -------------------------------------------------------------------------
     def analyze_for_query(self, query: str) -> Dict[str, Any]:
         """Fast, on-demand answer builder.  (KPIs / anomalies are cached)."""
@@ -340,360 +341,755 @@ class TelemetryAnalyzer:
         return out
 
     # -------------------------------------------------------------------------
-    # 3) SPECIALIZED ANALYSIS METHODS  ––––––––––––––––––––––––––––––––––––––––
+    # SPECIALIZED ANALYSIS METHODS
     # -------------------------------------------------------------------------
-    def _analyze_altitude(self) -> Dict[str, Any]:
-        """Perform detailed altitude analysis with improved handling of different altitude sources."""
-        # Define altitude field priority list with known field characteristics
-        altitude_fields_priority = [
-            # Field name, is_mm_units, is_absolute, description
-            ("GLOBAL_POSITION_INT_relative_alt", False, False, "MAVLink relative altitude (already in m)"),
-            ("ALTITUDE_altitude_relative", False, False, "MAVLink relative altitude (already in m)"),
-            ("TERRAIN_REPORT_current_height", False, False, "MAVLink terrain relative height (already in m)"),
-            ("VFR_HUD_alt", False, True, "MAVLink VFR HUD altitude (usually absolute, in m)"),
-            ("LOCAL_POSITION_NED_z", False, False, "MAVLink local position Z (already in m, negated)"),
-            ("GPS_RAW_INT_alt", False, True, "GPS altitude above MSL (usually absolute, in m)"),
-            ("AHRS_altitude", False, True, "AHRS altitude (usually absolute, in m)"),
-            ("AHRS2_altitude", False, True, "AHRS2 altitude (usually absolute, in m)"),
-            ("AHRS3_altitude", False, True, "AHRS3 altitude (usually absolute, in m)"),
-        ]
+    # def _analyze_altitude(self) -> Dict[str, Any]:
+    #     """Perform detailed altitude analysis with improved handling of different altitude sources."""
+    #     # Define altitude field priority list with known field characteristics
+    #     altitude_fields_priority = [
+    #         # Field name, is_mm_units, is_absolute, description
+    #         ("GLOBAL_POSITION_INT_relative_alt", False, False, "MAVLink relative altitude (already in m)"),
+    #         ("ALTITUDE_altitude_relative", False, False, "MAVLink relative altitude (already in m)"),
+    #         ("TERRAIN_REPORT_current_height", False, False, "MAVLink terrain relative height (already in m)"),
+    #         ("VFR_HUD_alt", False, True, "MAVLink VFR HUD altitude (usually absolute, in m)"),
+    #         ("LOCAL_POSITION_NED_z", False, False, "MAVLink local position Z (already in m, negated)"),
+    #         ("GPS_RAW_INT_alt", False, True, "GPS altitude above MSL (usually absolute, in m)"),
+    #         ("AHRS_altitude", False, True, "AHRS altitude (usually absolute, in m)"),
+    #         ("AHRS2_altitude", False, True, "AHRS2 altitude (usually absolute, in m)"),
+    #         ("AHRS3_altitude", False, True, "AHRS3 altitude (usually absolute, in m)"),
+    #     ]
         
-        logger.info("Starting altitude analysis")
+    #     logger.info("Starting altitude analysis")
         
-        # Check all fields in order of priority
-        alt_field = None
-        alt_is_mm = False
-        alt_is_absolute = False
-        alt_description = None
+    #     # Check all fields in order of priority
+    #     alt_field = None
+    #     alt_is_mm = False
+    #     alt_is_absolute = False
+    #     alt_description = None
         
-        for field, is_mm, is_absolute, description in altitude_fields_priority:
-            if field in self.time_series:
-                alt_field = field
-                alt_is_mm = is_mm
-                alt_is_absolute = is_absolute
-                alt_description = description
-                logger.info(f"Selected altitude field: {field} ({description})")
-                break
+    #     for field, is_mm, is_absolute, description in altitude_fields_priority:
+    #         if field in self.time_series:
+    #             alt_field = field
+    #             alt_is_mm = is_mm
+    #             alt_is_absolute = is_absolute
+    #             alt_description = description
+    #             logger.info(f"Selected altitude field: {field} ({description})")
+    #             break
         
-        # If no exact match found, try partial matching for fallback
-        if not alt_field:
-            # Look for any field containing altitude or height keywords
-            for key in self.time_series.keys():
-                if key != "timestamp" and any(term in key.lower() for term in ["alt", "height", "terrain"]):
-                    alt_field = key
-                    # Make educated guess about format
-                    alt_is_mm = "relative_alt" in key.lower() and max(self.time_series[key]) > 1000
-                    alt_is_absolute = any(term in key.lower() for term in ["gps", "position", "amsl", "absolute"])
-                    alt_description = "Fallback altitude field (format estimated)"
-                    logger.info(f"Using fallback altitude field: {key} (estimated format)")
-                    break
+    #     # If no exact match found, try partial matching for fallback
+    #     if not alt_field:
+    #         # Look for any field containing altitude or height keywords
+    #         for key in self.time_series.keys():
+    #             if key != "timestamp" and any(term in key.lower() for term in ["alt", "height", "terrain"]):
+    #                 alt_field = key
+    #                 # Make educated guess about format
+    #                 alt_is_mm = "relative_alt" in key.lower() and max(self.time_series[key]) > 1000
+    #                 alt_is_absolute = any(term in key.lower() for term in ["gps", "position", "amsl", "absolute"])
+    #                 alt_description = "Fallback altitude field (format estimated)"
+    #                 logger.info(f"Using fallback altitude field: {key} (estimated format)")
+    #                 break
         
-        # If still no altitude field found, give up
-        if not alt_field:
-            logger.warning("No usable altitude field found in telemetry data")
-            return {}
+    #     # If still no altitude field found, give up
+    #     if not alt_field:
+    #         logger.warning("No usable altitude field found in telemetry data")
+    #         return {}
         
-        # Get raw altitude values
-        alt_values_raw = np.array(self.time_series[alt_field])
+    #     # Get raw altitude values
+    #     alt_values_raw = np.array(self.time_series[alt_field])
         
-        # Apply conversion for mm values if needed
-        if alt_is_mm or (max(alt_values_raw) > 1000 and "relative_alt" in alt_field):
-            logger.info(f"Converting {alt_field} from mm to m")
-            alt_values = alt_values_raw / 1000.0
-        else:
-            alt_values = alt_values_raw
+    #     # Apply conversion for mm values if needed
+    #     if alt_is_mm or (max(alt_values_raw) > 1000 and "relative_alt" in alt_field):
+    #         logger.info(f"Converting {alt_field} from mm to m")
+    #         alt_values = alt_values_raw / 1000.0
+    #     else:
+    #         alt_values = alt_values_raw
             
-        # Special handling for LOCAL_POSITION_NED.z which is negative of height
-        if "LOCAL_POSITION_NED_z" in alt_field:
-            logger.info("Negating LOCAL_POSITION_NED.z to get height")
-            alt_values = -alt_values
+    #     # Special handling for LOCAL_POSITION_NED.z which is negative of height
+    #     if "LOCAL_POSITION_NED_z" in alt_field:
+    #         logger.info("Negating LOCAL_POSITION_NED.z to get height")
+    #         alt_values = -alt_values
 
-        # Handle absolute altitudes (convert to relative)
-        if alt_is_absolute:
-            logger.info("Processing absolute altitude to extract relative height")
+    #     # Handle absolute altitudes (convert to relative)
+    #     if alt_is_absolute:
+    #         logger.info("Processing absolute altitude to extract relative height")
             
-            # Sort values and use percentile method to estimate ground level
-            sorted_vals = np.sort(alt_values)
+    #         # Sort values and use percentile method to estimate ground level
+    #         sorted_vals = np.sort(alt_values)
             
-            # Use 10th percentile as ground level to be robust against outliers
-            ground_idx = min(int(len(sorted_vals) * 0.1), len(sorted_vals) - 1)
-            ground_level_estimate = sorted_vals[max(0, ground_idx)]
+    #         # Use 10th percentile as ground level to be robust against outliers
+    #         ground_idx = min(int(len(sorted_vals) * 0.1), len(sorted_vals) - 1)
+    #         ground_level_estimate = sorted_vals[max(0, ground_idx)]
             
-            logger.info(f"Estimated ground level: {ground_level_estimate:.1f}m")
+    #         logger.info(f"Estimated ground level: {ground_level_estimate:.1f}m")
             
-            # Verify this is reasonable (must be positive and not too large)
-            if ground_level_estimate > 0 and ground_level_estimate < 10000:
-                # Convert to relative altitude by subtracting ground level
-                alt_values = alt_values - ground_level_estimate
-                logger.info(f"Converted absolute to relative: {np.min(alt_values):.1f}m to {np.max(alt_values):.1f}m")
-            else:
-                logger.warning(f"Unreasonable ground level estimate: {ground_level_estimate:.1f}m")
-                # If estimate is unreasonable, try a different approach
-                # Use the minimum value as reference
-                ground_level_estimate = np.min(alt_values)
-                alt_values = alt_values - ground_level_estimate
-                logger.info(f"Used minimum as reference: {np.min(alt_values):.1f}m to {np.max(alt_values):.1f}m")
+    #         # Verify this is reasonable (must be positive and not too large)
+    #         if ground_level_estimate > 0 and ground_level_estimate < 10000:
+    #             # Convert to relative altitude by subtracting ground level
+    #             alt_values = alt_values - ground_level_estimate
+    #             logger.info(f"Converted absolute to relative: {np.min(alt_values):.1f}m to {np.max(alt_values):.1f}m")
+    #         else:
+    #             logger.warning(f"Unreasonable ground level estimate: {ground_level_estimate:.1f}m")
+    #             # If estimate is unreasonable, try a different approach
+    #             # Use the minimum value as reference
+    #             ground_level_estimate = np.min(alt_values)
+    #             alt_values = alt_values - ground_level_estimate
+    #             logger.info(f"Used minimum as reference: {np.min(alt_values):.1f}m to {np.max(alt_values):.1f}m")
         
-        # Final safety check for unreasonable values
-        max_expected_altitude = 10000  # 10km - max reasonable UAV altitude
-        if np.max(alt_values) > max_expected_altitude:
-            logger.warning(f"Altitude values suspiciously high: {np.max(alt_values):.1f}m, applying correction")
-            # Try to determine correct scale factor
-            if np.max(alt_values) > 10000:
-                scale_factor = 1000.0
-            else:
-                scale_factor = 10.0
-            alt_values = alt_values / scale_factor
-            logger.info(f"Scaled altitude values by 1/{scale_factor}")
+    #     # Final safety check for unreasonable values
+    #     max_expected_altitude = 10000  # 10km - max reasonable UAV altitude
+    #     if np.max(alt_values) > max_expected_altitude:
+    #         logger.warning(f"Altitude values suspiciously high: {np.max(alt_values):.1f}m, applying correction")
+    #         # Try to determine correct scale factor
+    #         if np.max(alt_values) > 10000:
+    #             scale_factor = 1000.0
+    #         else:
+    #             scale_factor = 10.0
+    #         alt_values = alt_values / scale_factor
+    #         logger.info(f"Scaled altitude values by 1/{scale_factor}")
         
-        # Get timestamps for phase detection
-        timestamps = self.time_series["timestamp"]
+    #     # Get timestamps for phase detection
+    #     timestamps = self.time_series["timestamp"]
         
-        # Find takeoff and landing points
-        takeoff_idx, landing_idx = self._detect_takeoff_landing(alt_values)
-        logger.info(f"Detected takeoff/landing indices: {takeoff_idx}, {landing_idx}")
+    #     # Find takeoff and landing points
+    #     takeoff_idx, landing_idx = self._detect_takeoff_landing(alt_values)
+    #     logger.info(f"Detected takeoff/landing indices: {takeoff_idx}, {landing_idx}")
         
-        # Calculate climb/descent rates
-        try:
-            # Convert timestamps to seconds for rate calculation
-            time_values = np.array([pd.to_datetime(ts).timestamp() for ts in timestamps])
-            time_diffs = np.diff(time_values)
+    #     # Calculate climb/descent rates
+    #     try:
+    #         # Convert timestamps to seconds for rate calculation
+    #         time_values = np.array([pd.to_datetime(ts).timestamp() for ts in timestamps])
+    #         time_diffs = np.diff(time_values)
             
-            # Protect against zero time differences
-            time_diffs = np.maximum(time_diffs, 0.001)
+    #         # Protect against zero time differences
+    #         time_diffs = np.maximum(time_diffs, 0.001)
             
-            # Calculate vertical speed
-            climb_rates = np.diff(alt_values) / time_diffs
+    #         # Calculate vertical speed
+    #         climb_rates = np.diff(alt_values) / time_diffs
             
-            max_climb_rate = float(np.max(climb_rates))
-            max_descent_rate = float(np.min(climb_rates))
+    #         max_climb_rate = float(np.max(climb_rates))
+    #         max_descent_rate = float(np.min(climb_rates))
             
-            logger.info(f"Max climb/descent rates: {max_climb_rate:.2f}m/s, {max_descent_rate:.2f}m/s")
+    #         logger.info(f"Max climb/descent rates: {max_climb_rate:.2f}m/s, {max_descent_rate:.2f}m/s")
             
-            max_climb_idx = np.argmax(climb_rates)
-            max_descent_idx = np.argmin(climb_rates)
+    #         max_climb_idx = np.argmax(climb_rates)
+    #         max_descent_idx = np.argmin(climb_rates)
             
-        except Exception as e:
-            logger.error(f"Error calculating climb rates: {str(e)}")
-            climb_rates = np.zeros(len(alt_values)-1)
-            max_climb_rate = 0.0
-            max_descent_rate = 0.0
-            max_climb_idx = None
-            max_descent_idx = None
+    #     except Exception as e:
+    #         logger.error(f"Error calculating climb rates: {str(e)}")
+    #         climb_rates = np.zeros(len(alt_values)-1)
+    #         max_climb_rate = 0.0
+    #         max_descent_rate = 0.0
+    #         max_climb_idx = None
+    #         max_descent_idx = None
         
-        # Calculate key statistics
+    #     # Calculate key statistics
+    #     stats = {
+    #         "max": float(np.max(alt_values)),
+    #         "min": float(np.min(alt_values)),
+    #         "mean": float(np.mean(alt_values)),
+    #         "median": float(np.median(alt_values)),
+    #         "std": float(np.std(alt_values)),
+    #         "range": float(np.max(alt_values) - np.min(alt_values))
+    #     }
+        
+    #     logger.info(f"Altitude statistics: max={stats['max']:.1f}m, min={stats['min']:.1f}m, range={stats['range']:.1f}m")
+        
+    #     # Return comprehensive analysis
+    #     return {
+    #         "field_used": alt_field,
+    #         "is_absolute_altitude": alt_is_absolute,
+    #         "description": alt_description,
+    #         "conversion_applied": alt_is_mm or alt_is_absolute,
+    #         "statistics": stats,
+    #         "flight_phases": {
+    #             "takeoff_time": timestamps[takeoff_idx] if takeoff_idx is not None else None,
+    #             "landing_time": timestamps[landing_idx] if landing_idx is not None else None,
+    #             "max_climb_rate": max_climb_rate,
+    #             "max_descent_rate": max_descent_rate,
+    #             "flight_duration": (
+    #                 (pd.to_datetime(timestamps[landing_idx]) - pd.to_datetime(timestamps[takeoff_idx])).total_seconds()
+    #                 if takeoff_idx is not None and landing_idx is not None else None
+    #             )
+    #         }
+    #     }
+
+    def _analyze_altitude(self) -> Dict[str, Any]:
+        """Return realistic altitude stats plus take-off / landing info."""
+        # ── candidate fields, ordered by preference ----------------------------
+        priority = [
+            ("GLOBAL_POSITION_INT_relative_alt", True,  False,
+            "MAVLink relative altitude (mm → m)"),
+            ("ALTITUDE_altitude_relative",       False, False,
+            "MAVLink relative altitude (m)"),
+            ("TERRAIN_REPORT_current_height",    False, False,
+            "Terrain-relative height (m)"),
+            ("VFR_HUD_alt",                      False, True,
+            "VFR-HUD absolute altitude (m)"),
+            ("LOCAL_POSITION_NED_z",             False, False,
+            "Local NED Z (negated m)"),
+            ("GPS_RAW_INT_alt",                  False, True,
+            "GPS MSL altitude (absolute m)"),
+            ("AHRS_altitude",                    False, True, "AHRS altitude"),
+            ("AHRS2_altitude",                   False, True, "AHRS2 altitude"),
+            ("AHRS3_altitude",                   False, True, "AHRS3 altitude"),
+        ]
+
+        alt_field = alt_is_mm = alt_is_abs = False
+        description = ""
+        for f, mm, abs_, desc in priority:
+            if f in self.time_series:
+                alt_field, alt_is_mm, alt_is_abs, description = f, mm, abs_, desc
+                break
+
+        # fallback: anything containing “alt” / “height”
+        if not alt_field:
+            for key in self.time_series:
+                if key == "timestamp":
+                    continue
+                lk = key.lower()
+                if any(tok in lk for tok in ("alt", "height", "terrain")):
+                    alt_field = key
+                    alt_is_mm = "relative_alt" in lk and max(self.time_series[key]) > 1000
+                    alt_is_abs = any(tok in lk for tok in ("gps", "position", "amsl", "absolute"))
+                    description = "Fallback altitude field (format estimated)"
+                    break
+
+        if not alt_field:
+            logger.warning("No altitude field found")
+            return {}
+
+        # ── raw values ---------------------------------------------------------
+        vals = np.asarray(self.time_series[alt_field], dtype=float)
+
+        # If the *current* magnitudes look like “already metres”, suppress the second division
+        if alt_is_mm and vals.max() < 300:      # <300 m ⇒ not mm any more
+            alt_is_mm = False
+
+        # → convert only if needed
+        if alt_is_mm or vals.max() > 1000:      # still looks like mm
+            vals /= 1000.0
+            conversion_applied = True
+        else:
+            conversion_applied = False
+
+        # LOCAL_POSITION_NED.z sign convention
+        if "LOCAL_POSITION_NED_z" in alt_field:
+            vals = -vals
+
+        # absolute → relative
+        if alt_is_abs:
+            ground = np.percentile(vals, 10)
+            ground = ground if 0 < ground < 10000 else vals.min()
+            vals = vals - ground
+
+        alt_values = vals
+
+        # ── timestamps ----------------------------------------------------------
+        ts = [pd.to_datetime(t) for t in self.time_series["timestamp"]]
+        if len(ts) < 3:
+            return {}
+
+        take_idx, land_idx = self._detect_takeoff_landing(alt_values)
+
+        # climb / descent rates
+        t_sec = np.asarray([t.timestamp() for t in ts])
+        dz = np.diff(alt_values)
+        dt = np.diff(t_sec)
+        mask = dt >= 0.05
+        rates = np.divide(dz[mask], dt[mask], out=np.zeros_like(dz[mask]), where=dt[mask] > 0)
+        rates = rates[np.abs(rates) < 50]
+
         stats = {
-            "max": float(np.max(alt_values)),
-            "min": float(np.min(alt_values)),
-            "mean": float(np.mean(alt_values)),
+            "max":    float(alt_values.max()),
+            "min":    float(alt_values.min()),
+            "mean":   float(alt_values.mean()),
             "median": float(np.median(alt_values)),
-            "std": float(np.std(alt_values)),
-            "range": float(np.max(alt_values) - np.min(alt_values))
+            "std":    float(alt_values.std()),
+            "range":  float(alt_values.ptp()),
         }
-        
-        logger.info(f"Altitude statistics: max={stats['max']:.1f}m, min={stats['min']:.1f}m, range={stats['range']:.1f}m")
-        
-        # Return comprehensive analysis
+
+        def safe(idx):
+            return ts[idx] if idx is not None and 0 <= idx < len(ts) else None
+
         return {
-            "field_used": alt_field,
-            "is_absolute_altitude": alt_is_absolute,
-            "description": alt_description,
-            "conversion_applied": alt_is_mm or alt_is_absolute,
-            "statistics": stats,
+            "field_used":           alt_field,
+            "is_absolute_altitude": alt_is_abs,
+            "description":          description,
+            "conversion_applied":   conversion_applied,
+            "statistics":           stats,
             "flight_phases": {
-                "takeoff_time": timestamps[takeoff_idx] if takeoff_idx is not None else None,
-                "landing_time": timestamps[landing_idx] if landing_idx is not None else None,
-                "max_climb_rate": max_climb_rate,
-                "max_descent_rate": max_descent_rate,
+                "takeoff_time":     safe(take_idx),
+                "landing_time":     safe(land_idx),
+                "max_climb_rate":   float(rates.max()) if rates.size else 0.0,
+                "max_descent_rate": float(rates.min()) if rates.size else 0.0,
                 "flight_duration": (
-                    (pd.to_datetime(timestamps[landing_idx]) - pd.to_datetime(timestamps[takeoff_idx])).total_seconds()
-                    if takeoff_idx is not None and landing_idx is not None else None
-                )
-            }
+                    (safe(land_idx) - safe(take_idx)).total_seconds()
+                    if take_idx is not None and land_idx is not None else None
+                ),
+            },
         }
-    
+
+
+    # def _analyze_battery(self) -> Dict[str, Any]:
+    #     """Perform detailed battery analysis."""
+    #     # Try to find battery-related fields
+    #     # voltage_key = self._pick_key(["voltage_battery", "volt"])
+    #     current_key = self._pick_key(["current_battery", "current"])
+    #     remaining_key = self._pick_key(["battery_remaining", "remaining"])
+        
+    #     result = {"fields_used": []}
+        
+    #     # Analyze voltage if available
+    #     if voltage_key:
+    #         result["fields_used"].append(voltage_key)
+    #         voltage_values = np.array(self.time_series[voltage_key])
+            
+    #         # Normalize values based on likely scale
+    #         if np.max(voltage_values) > 100:  # Likely in millivolts
+    #             voltage_values = voltage_values / 1000.0
+                
+    #         result["voltage"] = {
+    #             "initial": float(voltage_values[0]),
+    #             "final": float(voltage_values[-1]),
+    #             "min": float(np.min(voltage_values)),
+    #             "max": float(np.max(voltage_values)),
+    #             "drop_percent": float((voltage_values[0] - voltage_values[-1]) / voltage_values[0] * 100)
+    #             if voltage_values[0] > 0 else 0
+    #         }
+        
+    #     # Analyze current if available
+    #     if current_key:
+    #         result["fields_used"].append(current_key)
+    #         current_values = np.array(self.time_series[current_key])
+            
+    #         # Normalize values based on likely scale
+    #         if np.max(current_values) > 1000:  # Likely in milliamps
+    #             current_values = current_values / 1000.0
+                
+    #         result["current"] = {
+    #             "min": float(np.min(current_values)),
+    #             "max": float(np.max(current_values)),
+    #             "mean": float(np.mean(current_values)),
+    #             "peak_times": [
+    #                 self.time_series["timestamp"][i] 
+    #                 for i in np.where(current_values > np.mean(current_values) + 2*np.std(current_values))[0]
+    #             ][:5]  # Limit to 5 peak times
+    #         }
+        
+    #     # Analyze remaining capacity if available
+    #     if remaining_key:
+    #         result["fields_used"].append(remaining_key)
+    #         remaining_values = np.array(self.time_series[remaining_key])
+            
+    #         result["remaining"] = {
+    #             "initial": float(remaining_values[0]),
+    #             "final": float(remaining_values[-1]),
+    #             "consumption_rate": float((remaining_values[0] - remaining_values[-1]) / len(remaining_values))
+    #             if len(remaining_values) > 1 else 0
+    #         }
+            
+    #     # If we have both voltage and current, estimate power
+    #     if voltage_key and current_key:
+    #         voltage_values = np.array(self.time_series[voltage_key])
+    #         current_values = np.array(self.time_series[current_key])
+            
+    #         # Normalize if needed
+    #         if np.max(voltage_values) > 100:
+    #             voltage_values = voltage_values / 1000.0
+    #         if np.max(current_values) > 1000:
+    #             current_values = current_values / 1000.0
+                
+    #         # Calculate power (P = V * I)
+    #         power_values = voltage_values * current_values
+            
+    #         result["power"] = {
+    #             "min": float(np.min(power_values)),
+    #             "max": float(np.max(power_values)),
+    #             "mean": float(np.mean(power_values)),
+    #             "total_energy_wh": float(np.trapz(power_values) / 3600)  # Integrate power over time (approx)
+    #         }
+            
+    #     return result
+
     def _analyze_battery(self) -> Dict[str, Any]:
         """Perform detailed battery analysis."""
-        # Try to find battery-related fields
-        voltage_key = self._pick_key(["voltage_battery", "volt"])
-        current_key = self._pick_key(["current_battery", "current"])
+        # Prefer pack-sum, then SYS_STATUS, then first cell
+        voltage_key   = self._pick_key(["voltages_sum", "voltage_battery", "voltages[0]"])
+        current_key   = self._pick_key(["current_battery", "current"])
         remaining_key = self._pick_key(["battery_remaining", "remaining"])
         
-        result = {"fields_used": []}
-        
-        # Analyze voltage if available
+        result: Dict[str, Any] = {"fields_used": []}
+        ts = [pd.to_datetime(t).timestamp() for t in self.time_series["timestamp"]]
+
+        # ——— Voltage ———
         if voltage_key:
             result["fields_used"].append(voltage_key)
-            voltage_values = np.array(self.time_series[voltage_key])
-            
-            # Normalize values based on likely scale
-            if np.max(voltage_values) > 100:  # Likely in millivolts
-                voltage_values = voltage_values / 1000.0
-                
+            v = np.array(self.time_series[voltage_key], dtype=float)
+            # mV→V
+            if v.max() > 100:
+                v = v / 1000.0
             result["voltage"] = {
-                "initial": float(voltage_values[0]),
-                "final": float(voltage_values[-1]),
-                "min": float(np.min(voltage_values)),
-                "max": float(np.max(voltage_values)),
-                "drop_percent": float((voltage_values[0] - voltage_values[-1]) / voltage_values[0] * 100)
-                if voltage_values[0] > 0 else 0
+                "initial":      float(v[0]),
+                "final":        float(v[-1]),
+                "min":          float(v.min()),
+                "max":          float(v.max()),
+                "drop_percent": float((v[0] - v[-1]) / v[0] * 100) if v[0] > 0 else 0.0
             }
-        
-        # Analyze current if available
+
+        # ——— Current ———
         if current_key:
             result["fields_used"].append(current_key)
-            current_values = np.array(self.time_series[current_key])
-            
-            # Normalize values based on likely scale
-            if np.max(current_values) > 1000:  # Likely in milliamps
-                current_values = current_values / 1000.0
-                
+            c = np.array(self.time_series[current_key], dtype=float)
+            # mA→A
+            if c.max() > 1000:
+                c = c / 1000.0
+            mean_c = float(c.mean())
+            std_c  = float(c.std())
+            # Peak times > mean+2σ
+            peaks = np.where(c > mean_c + 2*std_c)[0]
+            peak_times = [self.time_series["timestamp"][i].isoformat()
+                        for i in peaks][:5]
             result["current"] = {
-                "min": float(np.min(current_values)),
-                "max": float(np.max(current_values)),
-                "mean": float(np.mean(current_values)),
-                "peak_times": [
-                    self.time_series["timestamp"][i] 
-                    for i in np.where(current_values > np.mean(current_values) + 2*np.std(current_values))[0]
-                ][:5]  # Limit to 5 peak times
+                "min":         float(c.min()),
+                "max":         float(c.max()),
+                "mean":        mean_c,
+                "std":         std_c,
+                "peak_times":  peak_times
             }
-        
-        # Analyze remaining capacity if available
+
+        # ——— Remaining Capacity ———
         if remaining_key:
             result["fields_used"].append(remaining_key)
-            remaining_values = np.array(self.time_series[remaining_key])
-            
+            r = np.array(self.time_series[remaining_key], dtype=float)
+            duration = ts[-1] - ts[0] if len(ts) > 1 else 1.0
             result["remaining"] = {
-                "initial": float(remaining_values[0]),
-                "final": float(remaining_values[-1]),
-                "consumption_rate": float((remaining_values[0] - remaining_values[-1]) / len(remaining_values))
-                if len(remaining_values) > 1 else 0
+                "initial":         float(r[0]),
+                "final":           float(r[-1]),
+                "consumption_pct_per_s":
+                    float((r[0] - r[-1]) / duration) if duration > 0 else 0.0
             }
-            
-        # If we have both voltage and current, estimate power
+
+        # ——— Power & Energy ———
         if voltage_key and current_key:
-            voltage_values = np.array(self.time_series[voltage_key])
-            current_values = np.array(self.time_series[current_key])
-            
-            # Normalize if needed
-            if np.max(voltage_values) > 100:
-                voltage_values = voltage_values / 1000.0
-            if np.max(current_values) > 1000:
-                current_values = current_values / 1000.0
-                
-            # Calculate power (P = V * I)
-            power_values = voltage_values * current_values
-            
+            # reuse normalized v, c
+            power = v * c
+            # integrate P over real time to Wh
+            energy_wh = float(np.trapz(power, x=ts) / 3600.0)
             result["power"] = {
-                "min": float(np.min(power_values)),
-                "max": float(np.max(power_values)),
-                "mean": float(np.mean(power_values)),
-                "total_energy_wh": float(np.trapz(power_values) / 3600)  # Integrate power over time (approx)
+                "min":            float(power.min()),
+                "max":            float(power.max()),
+                "mean":           float(power.mean()),
+                "total_energy_wh": energy_wh
             }
-            
+
         return result
+
     
+    # def _analyze_speed(self) -> Dict[str, Any]:
+    #     """Perform detailed speed analysis."""
+    #     # Look for speed-related fields
+    #     groundspeed_key = self._pick_key(["groundspeed", "ground_speed"])
+    #     airspeed_key = self._pick_key(["airspeed", "air_speed"])
+    #     velocity_keys = [k for k in self.time_series.keys() if any(p in k.lower() for p in ["vx", "vy", "vz"])]
+        
+    #     result = {"fields_used": []}
+        
+    #     # Analyze groundspeed if available
+    #     if groundspeed_key:
+    #         result["fields_used"].append(groundspeed_key)
+    #         speed_values = np.array(self.time_series[groundspeed_key])
+            
+    #         result["groundspeed"] = {
+    #             "max": float(np.max(speed_values)),
+    #             "mean": float(np.mean(speed_values)),
+    #             "std": float(np.std(speed_values)),
+    #             "percentile_95": float(np.percentile(speed_values, 95))
+    #         }
+            
+    #     # Analyze airspeed if available
+    #     if airspeed_key:
+    #         result["fields_used"].append(airspeed_key)
+    #         speed_values = np.array(self.time_series[airspeed_key])
+            
+    #         result["airspeed"] = {
+    #             "max": float(np.max(speed_values)),
+    #             "mean": float(np.mean(speed_values)),
+    #             "std": float(np.std(speed_values)),
+    #             "percentile_95": float(np.percentile(speed_values, 95))
+    #         }
+            
+    #     # If we have velocity components, calculate 3D velocity
+    #     if len(velocity_keys) >= 2:
+    #         result["fields_used"].extend(velocity_keys)
+    #         # Combine velocity components (using available ones)
+    #         vel_components = []
+    #         for component in ["vx", "vy", "vz"]:
+    #             key = self._pick_key([component])
+    #             if key:
+    #                 vel_components.append(np.array(self.time_series[key]) / 100.0)  # Convert cm/s to m/s
+    #             else:
+    #                 vel_components.append(np.zeros(len(self.time_series["timestamp"])))
+                    
+    #         # Calculate 3D velocity magnitude
+    #         if len(vel_components) >= 2:  # At least 2D velocity
+    #             velocity_magnitude = np.sqrt(sum(v**2 for v in vel_components))
+                
+    #             result["velocity_3d"] = {
+    #                 "max": float(np.max(velocity_magnitude)),
+    #                 "mean": float(np.mean(velocity_magnitude)),
+    #                 "std": float(np.std(velocity_magnitude))
+    #             }
+                
+    #     return result
+
     def _analyze_speed(self) -> Dict[str, Any]:
         """Perform detailed speed analysis."""
         # Look for speed-related fields
         groundspeed_key = self._pick_key(["groundspeed", "ground_speed"])
-        airspeed_key = self._pick_key(["airspeed", "air_speed"])
-        velocity_keys = [k for k in self.time_series.keys() if any(p in k.lower() for p in ["vx", "vy", "vz"])]
-        
-        result = {"fields_used": []}
-        
-        # Analyze groundspeed if available
+        airspeed_key   = self._pick_key(["airspeed",    "air_speed"])
+        # Identify any 3D velocity components
+        velocity_keys  = [k for k in self.time_series.keys()
+                        if any(seg in k.lower() for seg in ["vx", "vy", "vz"])]
+
+        result: Dict[str, Any] = {"fields_used": []}
+
+        # Helper: convert knots → m/s if values exceed 50
+        def _ensure_ms(arr: np.ndarray) -> np.ndarray:
+            return arr * 0.514444 if arr.max() > 50 else arr
+
+        # ———– Grounds­peed ———–
         if groundspeed_key:
             result["fields_used"].append(groundspeed_key)
-            speed_values = np.array(self.time_series[groundspeed_key])
-            
+            gs = np.array(self.time_series[groundspeed_key], dtype=float)
+            gs = _ensure_ms(gs)
             result["groundspeed"] = {
-                "max": float(np.max(speed_values)),
-                "mean": float(np.mean(speed_values)),
-                "std": float(np.std(speed_values)),
-                "percentile_95": float(np.percentile(speed_values, 95))
+                "max":           float(gs.max()),
+                "mean":          float(gs.mean()),
+                "std":           float(gs.std()),
+                "percentile_95": float(np.percentile(gs, 95)),
             }
-            
-        # Analyze airspeed if available
+
+        # ———– Air­speed ———–
         if airspeed_key:
             result["fields_used"].append(airspeed_key)
-            speed_values = np.array(self.time_series[airspeed_key])
-            
+            ap = np.array(self.time_series[airspeed_key], dtype=float)
+            ap = _ensure_ms(ap)
             result["airspeed"] = {
-                "max": float(np.max(speed_values)),
-                "mean": float(np.mean(speed_values)),
-                "std": float(np.std(speed_values)),
-                "percentile_95": float(np.percentile(speed_values, 95))
+                "max":           float(ap.max()),
+                "mean":          float(ap.mean()),
+                "std":           float(ap.std()),
+                "percentile_95": float(np.percentile(ap, 95)),
             }
-            
-        # If we have velocity components, calculate 3D velocity
+
+        # ———– 3D Velocity ———–
         if len(velocity_keys) >= 2:
             result["fields_used"].extend(velocity_keys)
-            # Combine velocity components (using available ones)
-            vel_components = []
-            for component in ["vx", "vy", "vz"]:
-                key = self._pick_key([component])
+            # build component arrays (cm/s → m/s)
+            comps: List[np.ndarray] = []
+            for axis in ["vx", "vy", "vz"]:
+                key = self._pick_key([axis])
                 if key:
-                    vel_components.append(np.array(self.time_series[key]) / 100.0)  # Convert cm/s to m/s
+                    vals = np.array(self.time_series[key], dtype=float)
+                    comps.append(vals / 100.0)
                 else:
-                    vel_components.append(np.zeros(len(self.time_series["timestamp"])))
-                    
-            # Calculate 3D velocity magnitude
-            if len(vel_components) >= 2:  # At least 2D velocity
-                velocity_magnitude = np.sqrt(sum(v**2 for v in vel_components))
-                
-                result["velocity_3d"] = {
-                    "max": float(np.max(velocity_magnitude)),
-                    "mean": float(np.mean(velocity_magnitude)),
-                    "std": float(np.std(velocity_magnitude))
-                }
-                
+                    comps.append(np.zeros(len(self.time_series["timestamp"])))
+            vel3 = np.sqrt(sum(c**2 for c in comps))
+            result["velocity_3d"] = {
+                "max":  float(vel3.max()),
+                "mean": float(vel3.mean()),
+                "std":  float(vel3.std()),
+            }
+
         return result
-    
+
+    # def _analyze_gps(self) -> Dict[str, Any]:
+    #     """
+    #     Analyse GPS quality and position data.
+    #     """
+    #     # ---------- pick available field names --------------------------------
+    #     fix_type_key  = self._pick_key(["fix_type"])
+    #     satellites_key = self._pick_key(["satellites_visible", "satellites"])
+    #     lat_key       = self._pick_key(["lat"])
+    #     lon_key       = self._pick_key(["lon"])
+    #     ts_key        = "timestamp"          # always present in self.time_series
+
+    #     result: Dict[str, Any] = {"fields_used": []}
+
+    #     # -------------------- FIX-TYPE STATISTICS -----------------------------
+    #     if fix_type_key:
+    #         result["fields_used"].append(fix_type_key)
+    #         fix_vals = np.asarray(self.time_series[fix_type_key])
+
+    #         uniq, counts = np.unique(fix_vals, return_counts=True)
+    #         changes = np.nonzero(np.diff(fix_vals) != 0)[0]
+    #         transitions = [
+    #             {
+    #                 "time": str(self.time_series[ts_key][i + 1]),
+    #                 "from": int(fix_vals[i]),
+    #                 "to": int(fix_vals[i + 1]),
+    #             }
+    #             for i in changes
+    #         ]
+
+    #         result["fix_type"] = {
+    #             "counts": {int(t): int(c) for t, c in zip(uniq, counts)},
+    #             "transitions": transitions[:10],
+    #             "no_fix_percentage": float(np.sum(fix_vals < 2) / len(fix_vals) * 100),
+    #             "good_fix_percentage": float(np.sum(fix_vals >= 3) / len(fix_vals) * 100),
+    #         }
+
+    #     # -------------------- SATELLITE STATISTICS ----------------------------
+    #     if satellites_key:
+    #         result["fields_used"].append(satellites_key)
+    #         sats = np.asarray(self.time_series[satellites_key])
+    #         result["satellites"] = {
+    #             "min": int(sats.min()),
+    #             "max": int(sats.max()),
+    #             "mean": float(sats.mean()),
+    #             "poor_signal_percentage": float(np.sum(sats < 6) / len(sats) * 100),
+    #         }
+
+    #     # -------------------- POSITION / DISTANCE -----------------------------
+    #     if lat_key and lon_key:
+    #         result["fields_used"].extend([lat_key, lon_key])
+
+    #         lat = np.asarray(self.time_series[lat_key], dtype=float)
+    #         lon = np.asarray(self.time_series[lon_key], dtype=float)
+
+    #         # *** NEW: force timestamp column to datetime64 ***
+    #         ts_all = np.array(self.time_series[ts_key], dtype="datetime64[ns]")
+
+    #         # Convert 1 e7-scaled integers → degrees if needed
+    #         if np.abs(lat).max() > 90:
+    #             lat /= 1e7
+    #         if np.abs(lon).max() > 180:
+    #             lon /= 1e7
+
+    #         # Keep only ‘good’ rows
+    #         mask = (lat != 0) & (lon != 0)
+    #         if fix_type_key:
+    #             mask &= (np.asarray(self.time_series[fix_type_key]) >= 3)
+
+    #         if mask.sum() < 2:
+    #             result["position"] = {"error": "No reliable GPS data"}
+    #             return result
+
+    #         lat_g = lat[mask]
+    #         lon_g = lon[mask]
+    #         ts_g  = ts_all[mask]
+
+    #         # Great-circle distances (Haversine)
+    #         def hav_km(lat1, lon1, lat2, lon2):
+    #             R = 6371.0
+    #             dlat = np.radians(lat2 - lat1)
+    #             dlon = np.radians(lon2 - lon1)
+    #             a = (
+    #                 np.sin(dlat / 2) ** 2
+    #                 + np.cos(np.radians(lat1))
+    #                 * np.cos(np.radians(lat2))
+    #                 * np.sin(dlon / 2) ** 2
+    #             )
+    #             return 2 * R * np.arcsin(np.sqrt(a))
+
+    #         seg_km = hav_km(lat_g[:-1], lon_g[:-1], lat_g[1:], lon_g[1:])
+
+    #         # Speed sanity filter (> 120 m s-¹ → reject)
+    #         dt_sec = (ts_g[1:] - ts_g[:-1]) / np.timedelta64(1, "s")
+    #         vmax = 120.0  # m s-¹
+    #         bad = (dt_sec <= 0) | ((seg_km * 1000.0 / dt_sec) > vmax)
+    #         seg_km[bad] = 0.0
+
+    #         total_km = float(seg_km.sum())
+
+    #         result["position"] = {
+    #             "start_lat": float(lat_g[0]),
+    #             "start_lon": float(lon_g[0]),
+    #             "end_lat": float(lat_g[-1]),
+    #             "end_lon": float(lon_g[-1]),
+    #             "distance_traveled_km": total_km,
+    #             "return_distance_km": float(
+    #                 hav_km(lat_g[0], lon_g[0], lat_g[-1], lon_g[-1])
+    #             ),
+    #         }
+
+    #     return result
+
     def _analyze_gps(self) -> Dict[str, Any]:
         """
         Analyse GPS quality and position data.
 
-        • Discards rows without a reliable fix (fix_type < 3 or lat/lon == 0)
-        • Rejects segments that imply an airspeed > 120 m s-¹
-        • Robustly converts timestamps to numpy datetime64 to avoid dtype errors
+        Adds dropout statistics similar to _analyze_rc_signal:
+            • loss_count                 – # samples with fix_type == 0
+            • dropout_total              – # distinct 0-fix events
+            • first_loss_time            – ISO timestamp of first 0-fix
+            • longest_loss_duration_sec  – longest continuous 0-fix duration
         """
-        # ---------- pick available field names --------------------------------
-        fix_type_key  = self._pick_key(["fix_type"])
+        # ---------- field selection ------------------------------------------
+        fix_type_key   = self._pick_key(["fix_type"])
         satellites_key = self._pick_key(["satellites_visible", "satellites"])
-        lat_key       = self._pick_key(["lat"])
-        lon_key       = self._pick_key(["lon"])
-        ts_key        = "timestamp"          # always present in self.time_series
+        lat_key        = self._pick_key(["lat"])
+        lon_key        = self._pick_key(["lon"])
+        ts_key         = "timestamp"
 
         result: Dict[str, Any] = {"fields_used": []}
 
-        # -------------------- FIX-TYPE STATISTICS -----------------------------
+        # -------------------- FIX-TYPE STATISTICS ----------------------------
         if fix_type_key:
             result["fields_used"].append(fix_type_key)
-            fix_vals = np.asarray(self.time_series[fix_type_key])
+            fix_vals = np.asarray(self.time_series[fix_type_key], dtype=int)
+            ts_all   = np.array(self.time_series[ts_key], dtype="datetime64[ns]")
 
             uniq, counts = np.unique(fix_vals, return_counts=True)
             changes = np.nonzero(np.diff(fix_vals) != 0)[0]
             transitions = [
                 {
-                    "time": str(self.time_series[ts_key][i + 1]),
+                    "time": str(ts_all[i + 1]),
                     "from": int(fix_vals[i]),
-                    "to": int(fix_vals[i + 1]),
+                    "to":   int(fix_vals[i + 1]),
                 }
                 for i in changes
             ]
 
+            # ----- NEW dropout metrics ---------------------------------------
+            lost_samples           = (fix_vals == 0)
+            loss_count             = int(lost_samples.sum())
+            dropout_events         = [tr for tr in transitions if tr["to"] == 0]
+            dropout_total          = len(dropout_events)
+            first_loss_time        = dropout_events[0]["time"] if dropout_events else None
+
+            # longest continuous 0-fix stretch
+            if lost_samples.any():
+                padded     = np.r_[0, lost_samples.astype(int), 0]
+                diffs      = np.diff(padded)
+                starts     = np.where(diffs == 1)[0]
+                ends       = np.where(diffs == -1)[0]
+                durations  = ((ts_all[ends - 1] - ts_all[starts])
+                            / np.timedelta64(1, "s")).astype(float)
+                longest_sec = float(durations.max()) if durations.size else 0.0
+            else:
+                longest_sec = 0.0
+
+            result.update(
+                {
+                    "loss_count":               loss_count,
+                    "dropout_total":            dropout_total,
+                    "first_loss_time":          first_loss_time,
+                    "longest_loss_duration_sec": longest_sec,
+                }
+            )
+
+            # keep the original per-type stats
             result["fix_type"] = {
                 "counts": {int(t): int(c) for t, c in zip(uniq, counts)},
-                "transitions": transitions[:10],
-                "no_fix_percentage": float(np.sum(fix_vals < 2) / len(fix_vals) * 100),
+                "transitions": transitions[:10],      # still cap at 10
+                "no_fix_percentage":   float(np.sum(fix_vals == 0) / len(fix_vals) * 100),
                 "good_fix_percentage": float(np.sum(fix_vals >= 3) / len(fix_vals) * 100),
             }
 
-        # -------------------- SATELLITE STATISTICS ----------------------------
+        # -------------------- SATELLITE STATISTICS --------------------------
         if satellites_key:
             result["fields_used"].append(satellites_key)
-            sats = np.asarray(self.time_series[satellites_key])
+            sats = np.asarray(self.time_series[satellites_key], dtype=int)
             result["satellites"] = {
                 "min": int(sats.min()),
                 "max": int(sats.max()),
@@ -701,64 +1097,52 @@ class TelemetryAnalyzer:
                 "poor_signal_percentage": float(np.sum(sats < 6) / len(sats) * 100),
             }
 
-        # -------------------- POSITION / DISTANCE -----------------------------
+        # -------------------- POSITION / DISTANCE ---------------------------
         if lat_key and lon_key:
             result["fields_used"].extend([lat_key, lon_key])
 
             lat = np.asarray(self.time_series[lat_key], dtype=float)
             lon = np.asarray(self.time_series[lon_key], dtype=float)
-
-            # *** NEW: force timestamp column to datetime64 ***
             ts_all = np.array(self.time_series[ts_key], dtype="datetime64[ns]")
 
-            # Convert 1 e7-scaled integers → degrees if needed
+            # Convert 1 e7-scaled integers → degrees
             if np.abs(lat).max() > 90:
                 lat /= 1e7
             if np.abs(lon).max() > 180:
                 lon /= 1e7
 
-            # Keep only ‘good’ rows
             mask = (lat != 0) & (lon != 0)
             if fix_type_key:
-                mask &= (np.asarray(self.time_series[fix_type_key]) >= 3)
+                mask &= (fix_vals >= 3)  # keep only good fixes
 
             if mask.sum() < 2:
                 result["position"] = {"error": "No reliable GPS data"}
                 return result
 
-            lat_g = lat[mask]
-            lon_g = lon[mask]
-            ts_g  = ts_all[mask]
+            lat_g, lon_g, ts_g = lat[mask], lon[mask], ts_all[mask]
 
-            # Great-circle distances (Haversine)
+            # Haversine distance in km
             def hav_km(lat1, lon1, lat2, lon2):
                 R = 6371.0
                 dlat = np.radians(lat2 - lat1)
                 dlon = np.radians(lon2 - lon1)
-                a = (
-                    np.sin(dlat / 2) ** 2
-                    + np.cos(np.radians(lat1))
-                    * np.cos(np.radians(lat2))
-                    * np.sin(dlon / 2) ** 2
-                )
+                a = (np.sin(dlat / 2) ** 2 +
+                    np.cos(np.radians(lat1)) *
+                    np.cos(np.radians(lat2)) *
+                    np.sin(dlon / 2) ** 2)
                 return 2 * R * np.arcsin(np.sqrt(a))
 
             seg_km = hav_km(lat_g[:-1], lon_g[:-1], lat_g[1:], lon_g[1:])
-
-            # Speed sanity filter (> 120 m s-¹ → reject)
             dt_sec = (ts_g[1:] - ts_g[:-1]) / np.timedelta64(1, "s")
-            vmax = 120.0  # m s-¹
-            bad = (dt_sec <= 0) | ((seg_km * 1000.0 / dt_sec) > vmax)
-            seg_km[bad] = 0.0
-
-            total_km = float(seg_km.sum())
+            vmax   = 120.0
+            seg_km[(dt_sec <= 0) | ((seg_km * 1000 / dt_sec) > vmax)] = 0.0
 
             result["position"] = {
                 "start_lat": float(lat_g[0]),
                 "start_lon": float(lon_g[0]),
-                "end_lat": float(lat_g[-1]),
-                "end_lon": float(lon_g[-1]),
-                "distance_traveled_km": total_km,
+                "end_lat":   float(lat_g[-1]),
+                "end_lon":   float(lon_g[-1]),
+                "distance_traveled_km": float(seg_km.sum()),
                 "return_distance_km": float(
                     hav_km(lat_g[0], lon_g[0], lat_g[-1], lon_g[-1])
                 ),
@@ -766,8 +1150,120 @@ class TelemetryAnalyzer:
 
         return result
 
+    
+    def _analyze_rc_signal(self) -> Dict[str, Any]:
+        """
+        Analyse RC-link quality and detect signal-loss events.
+
+        Returns
+        -------
+        Dict with keys
+            • fields_used                 – list[str]  telemetry columns inspected
+            • rssi                        – {min,max,mean} percentages  *or* None
+            • transitions                 – list[{time:str, from:int, to:int}]
+                                            where 1 = link-OK, 0 = link-lost
+            • loss_count                  – total number of samples with link lost
+            • dropout_total               – number of *distinct* dropout events
+            • first_loss_time             – ISO-timestamp of first loss (or None)
+            • longest_loss_duration_sec   – duration [s] of the longest dropout
+        If no usable RC data is present → {"error": "..."}.
+        """
+        result: Dict[str, Any] = {"fields_used": []}
+
+        # Determine link-OK / link-lost for every sample
+        link_ok: Optional[np.ndarray] = None
+
+        # Preferred source: RSSI (% or 0-255)
+        rssi_key = self._pick_key(["rssi"])
+        if rssi_key:
+            result["fields_used"].append(rssi_key)
+            rssi_raw = np.asarray(self.time_series[rssi_key], dtype=float)
+
+            # normalise to percent
+            rssi_pct = (rssi_raw / 255.0) * 100.0 if rssi_raw.max() > 1.0 else rssi_raw * 100.0
+            result["rssi"] = {
+                "min":  float(rssi_pct.min()),
+                "max":  float(rssi_pct.max()),
+                "mean": float(rssi_pct.mean()),
+            }
+
+            # ≤ 5 % is considered lost
+            link_ok = (rssi_pct > 5.0).astype(int)
+
+        else:
+            # Fallback: raw RC channel pulses (µs)
+            chan_keys = [k for k in self.time_series if "chan" in k.lower() and "raw" in k.lower()]
+            if chan_keys:
+                result["fields_used"].extend(chan_keys)
+
+                ts_len = len(self.time_series["timestamp"])
+                link_ok = np.zeros(ts_len, dtype=int)
+                for k in chan_keys:
+                    vals = np.asarray(self.time_series[k], dtype=float)
+                    link_ok = link_ok | (vals > 900.0).astype(int)    # any pulse >900 µs → link OK
+
+                result["rssi"] = None
+
+        # If we still have no data, bail out
+        if link_ok is None or link_ok.size == 0:
+            return {"error": "No RC signal or RSSI data in telemetry."}
+
+        # Build transitions & basic counters
+        loss_count, transitions = self._rc__build_transitions(link_ok.astype(bool))
+        result["transitions"] = transitions
+        result["loss_count"]  = loss_count
+
+        # Higher-level dropout statistics
+        dropout_events = [tr for tr in transitions if tr["to"] == 0]
+        result["dropout_total"]   = len(dropout_events)
+        result["first_loss_time"] = dropout_events[0]["time"] if dropout_events else None
+
+        # longest continuous lost streak
+        ts = np.array(self.time_series["timestamp"], dtype="datetime64[ns]")
+        lost = (link_ok == 0)
+        if lost.any():
+            padded = np.r_[0, lost.astype(int), 0]
+            diffs  = np.diff(padded)
+            starts = np.where(diffs == 1)[0]
+            ends   = np.where(diffs == -1)[0]
+            durations = ((ts[ends - 1] - ts[starts]) / np.timedelta64(1, "s")).astype(float)
+            result["longest_loss_duration_sec"] = float(durations.max()) if durations.size else 0.0
+        else:
+            result["longest_loss_duration_sec"] = 0.0
+
+        return result
+
+
+    def _rc__build_transitions(self, link_ok: np.ndarray) -> Tuple[int, List[Dict[str, Any]]]:
+        """
+        Helper for `_analyze_rc_signal` – generate loss/recovery transitions.
+
+        Parameters
+        ----------
+        link_ok : np.ndarray[bool]
+            True where link is healthy, False where lost.
+
+        Returns
+        -------
+        loss_count : int
+            Total number of samples with link lost.
+        transitions : list[dict]
+            List of {time, from, to} edges (1 = OK, 0 = lost).
+        """
+        changes = np.nonzero(np.diff(link_ok.astype(int)) != 0)[0]
+        transitions = [
+            {
+                "time": str(self.time_series["timestamp"][i + 1]),
+                "from": int(link_ok[i]),
+                "to":   int(link_ok[i + 1]),
+            }
+            for i in changes
+        ]
+        loss_count = int((~link_ok).sum())
+        return loss_count, transitions
+
     # -------------------------------------------------------------------------
-    # 4) UTILITY METHODS  –––––––––––––––––––––––––––––––––––––––––––––––––––––
+    # utility methods
     # -------------------------------------------------------------------------
     def _pick_key(self, patterns: List[str]) -> Optional[str]:
         """Find first key in time_series matching any of the patterns."""
@@ -779,40 +1275,68 @@ class TelemetryAnalyzer:
                 return key
         return None
 
-    def _detect_takeoff_landing(self, altitude_values: np.ndarray) -> Tuple[Optional[int], Optional[int]]:
-        """Detect takeoff and landing points based on altitude changes."""
+    def _detect_takeoff_landing(
+        self,
+        altitude_values: np.ndarray,
+        *,
+        min_flight_alt: float = 2.0,       # m above “ground” that must be exceeded
+        min_sustain_sec: float = 3.0       # seconds the aircraft must stay airborne
+    ) -> Tuple[Optional[int], Optional[int]]:
+        """
+        Return indices (take-off_idx, landing_idx) inside *altitude_values*.
+
+        • Automatically estimates the sampling-rate – no hard-coded Hz needed.  
+        • Uses a rolling median of the first 5 % of samples as ground reference.  
+        • Employs hysteresis (+min_flight_alt going up, +0.5 m coming down) so we
+        don’t oscillate around the threshold.  
+        • Requires the altitude to be above the threshold for *min_sustain_sec*
+        before we call it ‘airborne’, and the same condition when coming down.
+        """
         if len(altitude_values) < 10:
-            return None, None
-            
-        # Smooth altitude to reduce noise
-        window_size = min(10, len(altitude_values) // 10)
-        if window_size < 2:
-            window_size = 2
-            
-        smoothed = np.convolve(altitude_values, np.ones(window_size)/window_size, mode='valid')
-        
-        # Acceptable altitude threshold (somewhat above ground level)
-        threshold = np.min(altitude_values) + 2.0  # 2 meters above min altitude
-        
-        # Find where altitude crosses threshold
-        above_threshold = smoothed > threshold
-        transitions = np.diff(above_threshold.astype(int))
-        
-        takeoff_indices = np.where(transitions == 1)[0]
-        landing_indices = np.where(transitions == -1)[0]
-        
-        # Adjust indices to match original array
-        if len(takeoff_indices) > 0:
-            takeoff_idx = takeoff_indices[0] + window_size//2
-        else:
-            takeoff_idx = None
-            
-        if len(landing_indices) > 0:
-            landing_idx = landing_indices[-1] + window_size//2
-        else:
-            landing_idx = None
-            
+            return None, None  # not enough data to be meaningful
+
+        # Ground reference = median of the first 5 % of the log
+        first_chunk = altitude_values[: max(5, int(0.05 * len(altitude_values)))]
+        ground_level = float(np.median(first_chunk))
+
+        # Build a simple time-axis in seconds (assume uniform sampling)
+        ts = np.arange(len(altitude_values), dtype="float32")
+        if len(ts) >= 2:
+            approx_dt = np.median(np.diff(ts)) or 1.0
+            ts = ts * approx_dt
+
+        # Hysteresis thresholds
+        up_thr   = ground_level + min_flight_alt          # must cross this to be ‘airborne’
+        down_thr = ground_level + 0.5                     # must drop below to be ‘landed’
+
+        airborne = altitude_values > up_thr
+        on_ground = altitude_values < down_thr
+
+        # Convolve with a window long enough to satisfy *min_sustain_sec*
+        sustain_samples = max(1, int(min_sustain_sec / (ts[1] - ts[0])))
+        kernel = np.ones(sustain_samples, dtype=int)
+
+        # True when condition is met for >= sustain_samples consecutively
+        sustained_airborne = np.convolve(airborne, kernel, "same") >= sustain_samples
+        sustained_ground   = np.convolve(on_ground, kernel, "same") >= sustain_samples
+
+        # take-off = first transition ground → sustained_airborne
+        takeoff_idx = None
+        for i in range(1, len(sustained_airborne)):
+            if sustained_airborne[i] and not sustained_airborne[i - 1]:
+                takeoff_idx = i
+                break
+
+        # landing = last transition sustained_airborne → ground (after take-off)
+        landing_idx = None
+        if takeoff_idx is not None:
+            for i in range(len(sustained_ground) - 1, takeoff_idx, -1):
+                if sustained_ground[i] and not sustained_ground[i - 1]:
+                    landing_idx = i
+                    break
+
         return takeoff_idx, landing_idx
+
         
     def _haversine_distance(self, lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """Calculate great-circle distance between two points in kilometers."""
@@ -827,7 +1351,7 @@ class TelemetryAnalyzer:
         r = 6371  # Radius of earth in kilometers
         return c * r
 
-    # .................................................... metrics & anomalies
+    # metrics & anomalies
     def _calc_metrics(self) -> Dict[str, Dict[str, float]]:
         metrics: Dict[str, Dict[str, float]] = {}
         for k, vals in self.time_series.items():
