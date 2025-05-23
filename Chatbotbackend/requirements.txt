@@ -1,0 +1,12 @@
+fastapi>=0.95.0
+uvicorn[standard]>=0.20.0
+pydantic>=1.10.0
+python-multipart>=0.0.5
+pymavlink>=2.4.8
+requests>=2.25.0
+Jinja2>=3.0.0 
+python-dotenv>=0.19.0
+werkzeug>=2.0.0
+langchain>=0.1.0
+langchain-google-genai>=0.0.5
+langchain-anthropic>=0.0.9
