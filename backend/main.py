@@ -1,19 +1,17 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional, List, Union
+from pydantic import BaseModel
+from typing import Dict, Any, Optional, List
 import os
 import json
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 import uuid
 import asyncio
-import re  # For regex pattern matching
 import logging
 import traceback
 from contextlib import asynccontextmanager
 from fastapi.responses import JSONResponse
-import pandas as pd
 
 from agents.uav_agent import UavAgent, CustomJSONEncoder, ensure_serializable
 from telemetry.parser import TelemetryParser
@@ -388,6 +386,7 @@ async def upload_log(
             detail="An unexpected error occurred while processing your upload. Please try again later."
         )
 
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat(
     message: ChatMessage,
@@ -546,6 +545,7 @@ async def chat(
             session_id=session.id
         )
 
+
 @app.get("/session/messages", response_model=Dict[str, List[Dict]])
 async def get_session_messages(
     session_id: Optional[str] = None,
@@ -607,6 +607,7 @@ async def get_session_messages(
         logger.error(traceback.format_exc())
         return {"messages": []}
 
+
 @app.get("/sessions", response_model=SessionListResponse)
 async def list_sessions():
     """
@@ -635,6 +636,7 @@ async def list_sessions():
         logger.error(f"Error listing sessions: {str(e)}")
         logger.error(traceback.format_exc())
         return SessionListResponse(sessions=[])
+
 
 @app.delete("/session", response_model=Dict[str, str])
 async def end_session(
@@ -669,6 +671,7 @@ async def end_session(
         logger.error(traceback.format_exc())
         return {"message": "An error occurred while ending the session, but it may have been partially cleaned up"}
 
+
 @app.get("/")
 async def root():
     """API root endpoint with information."""
@@ -683,6 +686,7 @@ async def root():
             "/session - Delete current session"
         ]
     }
+
 
 if __name__ == "__main__":
     import uvicorn
