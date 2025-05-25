@@ -1017,12 +1017,6 @@ class TelemetryAnalyzer:
     def _analyze_gps(self) -> Dict[str, Any]:
         """
         Analyse GPS quality and position data.
-
-        Adds dropout statistics similar to _analyze_rc_signal:
-            • loss_count                 – # samples with fix_type == 0
-            • dropout_total              – # distinct 0-fix events
-            • first_loss_time            – ISO timestamp of first 0-fix
-            • longest_loss_duration_sec  – longest continuous 0-fix duration
         """
         # ---------- field selection ------------------------------------------
         fix_type_key   = self._pick_key(["fix_type"])
@@ -1050,16 +1044,16 @@ class TelemetryAnalyzer:
                 for i in changes
             ]
 
-            # ----- NEW dropout metrics ---------------------------------------
-            lost_samples           = (fix_vals == 0)
-            loss_count             = int(lost_samples.sum())
+            # ----- dropout metrics ----------------
+            no_fix_mask           = (fix_vals == 0)
+            zero_fix_sample_count = int(no_fix_mask.sum())
             dropout_events         = [tr for tr in transitions if tr["to"] == 0]
             dropout_total          = len(dropout_events)
             first_loss_time        = dropout_events[0]["time"] if dropout_events else None
 
             # longest continuous 0-fix stretch
-            if lost_samples.any():
-                padded     = np.r_[0, lost_samples.astype(int), 0]
+            if no_fix_mask.any():
+                padded     = np.r_[0, no_fix_mask.astype(int), 0]
                 diffs      = np.diff(padded)
                 starts     = np.where(diffs == 1)[0]
                 ends       = np.where(diffs == -1)[0]
@@ -1071,22 +1065,19 @@ class TelemetryAnalyzer:
 
             result.update(
                 {
-                    "loss_count":               loss_count,
-                    "dropout_total":            dropout_total,
-                    "first_loss_time":          first_loss_time,
-                    "longest_loss_duration_sec": longest_sec,
+                    "gps_signal_loss_count":          dropout_total,
+                    "gps_signal_dropouts":            dropout_total,
+                    "gps_signal_first_loss_time":     first_loss_time,
+                    "gps_signal_longest_loss_duration_sec":longest_sec,
+                    "gps_no_fix_percentage":   float(np.sum(fix_vals == 0) / len(fix_vals) * 100),
+                    "gps_good_fix_percentage": float(np.sum(fix_vals >= 3) / len(fix_vals) * 100),
+                    "gps_fix_transitions": transitions[:10], # max 10 transitions
+                    "gps_fix_type_counts": {int(t): int(c) for t, c in zip(uniq, counts)},
+                    "gps_zero_fix_samples":    zero_fix_sample_count
                 }
             )
 
-            # keep the original per-type stats
-            result["fix_type"] = {
-                "counts": {int(t): int(c) for t, c in zip(uniq, counts)},
-                "transitions": transitions[:10],      # still cap at 10
-                "no_fix_percentage":   float(np.sum(fix_vals == 0) / len(fix_vals) * 100),
-                "good_fix_percentage": float(np.sum(fix_vals >= 3) / len(fix_vals) * 100),
-            }
-
-        # -------------------- SATELLITE STATISTICS --------------------------
+        # ----------- SATELLITE STATISTICS ----------
         if satellites_key:
             result["fields_used"].append(satellites_key)
             sats = np.asarray(self.time_series[satellites_key], dtype=int)
@@ -1097,7 +1088,7 @@ class TelemetryAnalyzer:
                 "poor_signal_percentage": float(np.sum(sats < 6) / len(sats) * 100),
             }
 
-        # -------------------- POSITION / DISTANCE ---------------------------
+        # ----------- POSITION / DISTANCE ------------
         if lat_key and lon_key:
             result["fields_used"].extend([lat_key, lon_key])
 
@@ -1154,18 +1145,6 @@ class TelemetryAnalyzer:
     def _analyze_rc_signal(self) -> Dict[str, Any]:
         """
         Analyse RC-link quality and detect signal-loss events.
-
-        Returns
-        -------
-        Dict with keys
-            • fields_used                 – list[str]  telemetry columns inspected
-            • rssi                        – {min,max,mean} percentages  *or* None
-            • transitions                 – list[{time:str, from:int, to:int}]
-                                            where 1 = link-OK, 0 = link-lost
-            • loss_count                  – total number of samples with link lost
-            • dropout_total               – number of *distinct* dropout events
-            • first_loss_time             – ISO-timestamp of first loss (or None)
-            • longest_loss_duration_sec   – duration [s] of the longest dropout
         If no usable RC data is present → {"error": "..."}.
         """
         result: Dict[str, Any] = {"fields_used": []}
@@ -1209,14 +1188,15 @@ class TelemetryAnalyzer:
             return {"error": "No RC signal or RSSI data in telemetry."}
 
         # Build transitions & basic counters
-        loss_count, transitions = self._rc__build_transitions(link_ok.astype(bool))
-        result["transitions"] = transitions
-        result["loss_count"]  = loss_count
+        loss_samples, transitions = self._rc__build_transitions(link_ok.astype(bool))
+        result["rc_signal_transitions"] = transitions[:10]
+        result["rc_signal_zero_samples"]  = loss_samples
 
         # Higher-level dropout statistics
         dropout_events = [tr for tr in transitions if tr["to"] == 0]
-        result["dropout_total"]   = len(dropout_events)
-        result["first_loss_time"] = dropout_events[0]["time"] if dropout_events else None
+        result["rc_signal_loss_count"] = len(dropout_events)
+        result["rc_signal_dropouts"] = len(dropout_events)
+        result["rc_signal_first_loss_time"] = dropout_events[0]["time"] if dropout_events else None
 
         # longest continuous lost streak
         ts = np.array(self.time_series["timestamp"], dtype="datetime64[ns]")
@@ -1227,9 +1207,9 @@ class TelemetryAnalyzer:
             starts = np.where(diffs == 1)[0]
             ends   = np.where(diffs == -1)[0]
             durations = ((ts[ends - 1] - ts[starts]) / np.timedelta64(1, "s")).astype(float)
-            result["longest_loss_duration_sec"] = float(durations.max()) if durations.size else 0.0
+            result["rc_signal_longest_loss_duration_sec"] = float(durations.max()) if durations.size else 0.0
         else:
-            result["longest_loss_duration_sec"] = 0.0
+            result["rc_signal_longest_loss_duration_sec"] = 0.0
 
         return result
 
