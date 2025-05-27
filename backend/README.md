@@ -2,6 +2,8 @@
 
 A sophisticated AI-powered backend system for analyzing UAV (Unmanned Aerial Vehicle) telemetry data using advanced agentic AI architecture with multi-tiered memory management and ReAct-based reasoning.
 
+**Agentic Chatbot Demo Video**: [Link](https://drive.google.com/file/d/1f1Fz9QSIR2i6Q-iaWyDqM0kguaa5FLgX/view?usp=sharing)
+
 ## 🚀 Overview
 
 This backend provides intelligent analysis of MAVLink telemetry logs through an agentic AI system that can reason about flight data, detect anomalies, and provide detailed insights. The system features a multi-layered memory architecture, semantic search capabilities, and comprehensive telemetry analysis tools.
