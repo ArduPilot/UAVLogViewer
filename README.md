@@ -91,8 +91,8 @@ npm run dev
 
 **Supported Log Formats:**
 - MAVLink Binary Logs (.bin)
-- MAVLink Text Logs (.tlog)
-- ULog Format (.ulg) - PX4 format (not fully supported yet)
+- MAVLink Text Logs (.tlog/.log)
+- ULog Format (.ulg) - PX4 format (limited support, .bin/.tlog recommended)
 
 ## Chat Download Feature/Option
 - The entire chat (during the session) can be downloaded by clicking on the "Download" button below the chatbox.
