@@ -5,6 +5,8 @@
 This is a Javascript-based log viewer for MAVLink telemetry and dataflash logs with an **AI-powered analysis chatbot**.
 [Live demo here](http://plot.ardupilot.org).
 
+**Agentic Chatbot Backend Demo Video**: [Link](https://drive.google.com/file/d/1f1Fz9QSIR2i6Q-iaWyDqM0kguaa5FLgX/view?usp=sharing)
+
 ## ✨ New Features
 
 ### 🤖 AI-Powered Flight Analysis Chat
