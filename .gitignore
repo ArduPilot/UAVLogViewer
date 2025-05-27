@@ -10,7 +10,7 @@ selenium-debug.log
 
 # Environment variables
 .env
-.env.*
+# .env.*
 *.env
 backend/.env
 venv/

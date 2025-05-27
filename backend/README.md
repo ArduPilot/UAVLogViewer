@@ -21,25 +21,30 @@ This backend provides intelligent analysis of MAVLink telemetry logs through an 
 ```mermaid
 graph TB
     subgraph "Client Layer"
-        UI[Frontend UI]
-        API_CLIENT[API Client]
+        UI[Vue.js Frontend<br/>AgenticChat Component]
+        WS_CLIENT[WebSocket Client<br/>Real-time Streaming]
+        REST_CLIENT[REST API Client<br/>File Upload & Session]
     end
 
     subgraph "API Gateway"
         FASTAPI[FastAPI Server]
         CORS[CORS Middleware]
         SESSION_AUTH[Session Authentication]
+        WS_ENDPOINT[WebSocket Endpoint<br/>/ws/chat]
+        REST_ENDPOINTS[REST Endpoints<br/>/upload, /chat, /session/*]
     end
 
     subgraph "Session Management"
         REGISTRY[Session Registry]
         SESSION_DATA[Session Data Store]
         CLEANUP[Session Cleanup]
+        DOWNLOAD[Chat History Download<br/>TXT/JSON/CSV]
     end
 
     subgraph "Agentic AI Core"
         AGENT[UAV Agent]
         LANGGRAPH[LangGraph State Machine]
+        STREAMING_LLM[Streaming LLM<br/>Token-by-token Generation]
         TOOLS[Analysis Tools]
         
         subgraph "ReAct Loop"
@@ -47,6 +52,7 @@ graph TB
             PLAN[Plan Actions]
             EXECUTE[Execute Tools]
             REFLECT[Reflect & Synthesize]
+            STREAM_SYNTH[Streaming Synthesis]
         end
     end
 
@@ -76,19 +82,25 @@ graph TB
 
     subgraph "External Services"
         OPENAI[OpenAI API<br/>GPT-4o + Embeddings]
+        OPENAI_STREAM[OpenAI Streaming API<br/>Real-time Tokens]
         FAISS_STORE[FAISS Vector Store]
     end
 
     subgraph "Data Storage"
         TEMP_FILES[Temporary Files]
         SESSION_CACHE[Session Cache]
+        CHAT_HISTORY[Chat History Storage]
     end
 
     %% Client connections
-    UI --> API_CLIENT
-    API_CLIENT --> FASTAPI
+    UI --> WS_CLIENT
+    UI --> REST_CLIENT
+    WS_CLIENT -.->|WebSocket| WS_ENDPOINT
+    REST_CLIENT --> REST_ENDPOINTS
 
     %% API layer
+    WS_ENDPOINT --> FASTAPI
+    REST_ENDPOINTS --> FASTAPI
     FASTAPI --> CORS
     CORS --> SESSION_AUTH
     SESSION_AUTH --> REGISTRY
@@ -97,8 +109,10 @@ graph TB
     REGISTRY --> SESSION_DATA
     REGISTRY --> CLEANUP
     SESSION_DATA --> AGENT
+    SESSION_DATA --> DOWNLOAD
+    DOWNLOAD --> CHAT_HISTORY
 
-    %% Agent workflow
+    %% Agent workflow - Regular
     AGENT --> LANGGRAPH
     LANGGRAPH --> INTERPRET
     INTERPRET --> PLAN
@@ -106,6 +120,11 @@ graph TB
     EXECUTE --> TOOLS
     TOOLS --> REFLECT
     REFLECT --> INTERPRET
+
+    %% Agent workflow - Streaming
+    AGENT --> STREAMING_LLM
+    STREAMING_LLM --> STREAM_SYNTH
+    STREAM_SYNTH -.->|Real-time tokens| WS_ENDPOINT
 
     %% Memory integration
     AGENT --> MEMORY_MGR
@@ -129,11 +148,13 @@ graph TB
     %% External services
     MEMORY_MGR --> OPENAI
     AGENT --> OPENAI
+    STREAMING_LLM --> OPENAI_STREAM
     ENTITY --> OPENAI
 
     %% Data storage
     PARSER --> TEMP_FILES
     SESSION_DATA --> SESSION_CACHE
+    MEMORY_MGR --> CHAT_HISTORY
 
     %% Styling
     classDef aiCore fill:#e1f5fe,stroke:#01579b,stroke-width:2px
@@ -141,12 +162,16 @@ graph TB
     classDef telemetry fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
     classDef external fill:#fff3e0,stroke:#e65100,stroke-width:2px
     classDef api fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef frontend fill:#e3f2fd,stroke:#0277bd,stroke-width:2px
+    classDef streaming fill:#f1f8e9,stroke:#33691e,stroke-width:2px
 
     class AGENT,LANGGRAPH,INTERPRET,PLAN,EXECUTE,REFLECT,TOOLS aiCore
     class MEMORY_MGR,BUFFER,VECTOR,ENTITY memory
     class PARSER,ANALYZER,ALT_ANALYSIS,BATTERY_ANALYSIS,GPS_ANALYSIS,SPEED_ANALYSIS,RC_ANALYSIS,ANOMALY_DETECTION telemetry
     class OPENAI,FAISS_STORE external
-    class FASTAPI,CORS,SESSION_AUTH,REGISTRY api
+    class FASTAPI,CORS,SESSION_AUTH,REGISTRY,REST_ENDPOINTS api
+    class UI,WS_CLIENT,REST_CLIENT frontend
+    class WS_ENDPOINT,STREAMING_LLM,STREAM_SYNTH,OPENAI_STREAM streaming
 ```
 
 ## 🛠️ Prerequisites
@@ -282,6 +307,41 @@ Send a message to the AI agent for analysis.
 }
 ```
 
+#### `WS /ws/chat`
+**Real-time streaming chat endpoint using WebSockets for token-by-token response generation.**
+
+**Connection:**
+```javascript
+const ws = new WebSocket('ws://localhost:8000/ws/chat');
+```
+
+**Send Message:**
+```json
+{
+    "message": "What was the highest altitude reached?",
+    "session_id": "optional-session-id"
+}
+```
+
+**Receive Streaming Response:**
+```json
+// Start of response
+{"type": "start", "session_id": "uuid-string"}
+
+// Token stream (multiple messages)
+{"type": "token", "content": "The", "full_content": "The"}
+{"type": "token", "content": " highest", "full_content": "The highest"}
+{"type": "token", "content": " altitude", "full_content": "The highest altitude"}
+
+// Final response
+{
+    "type": "complete",
+    "content": "The highest altitude reached was 120.5 meters...",
+    "analysis": {...},
+    "session_id": "uuid-string"
+}
+```
+
 #### `GET /sessions`
 List all active sessions.
 
@@ -322,6 +382,21 @@ Get chat messages for a session.
 }
 ```
 
+#### `GET /session/download`
+Download chat history for the current session in various formats.
+
+**Headers**: `X-Session-ID: session-uuid`
+**Query Parameters**: `format=txt|json|csv` (default: txt)
+
+**Response:** File download with chat history
+
+**Example:**
+```bash
+curl -H "X-Session-ID: your-session-id" \
+     "http://localhost:8000/session/download?format=json" \
+     -o chat_history.json
+```
+
 #### `DELETE /session`
 End a session and clean up resources.
 
@@ -356,6 +431,24 @@ The system uses a **ReAct (Reasoning + Acting)** approach:
 - **`gps_details`**: GPS accuracy, fix status, and positioning
 - **`rc_signal_details`**: RC signal strength and dropouts
 - **`flight_statistics`**: Comprehensive flight summary
+
+### 🔥 Real-time Streaming Features
+
+#### WebSocket Streaming Chat
+The system supports real-time token-by-token streaming for enhanced user experience:
+
+- **Immediate Response**: Users see the AI's response as it's being generated
+- **Live Connection Status**: WebSocket connection indicator for real-time features
+- **Graceful Fallback**: Falls back to standard REST API if WebSocket unavailable
+- **Session Continuity**: Maintains session state across WebSocket and REST calls
+
+#### Chat History Export
+Multiple download formats for conversation archives:
+
+- **TXT Format**: Human-readable conversation log with timestamps
+- **JSON Format**: Machine-readable format with full metadata and analysis data
+- **CSV Format**: Spreadsheet-compatible format for data analysis
+- **Session Isolation**: Each session's history is kept separate and secure
 
 ## 🧠 Agent Reasoning Flow Examples
 
@@ -637,10 +730,46 @@ python main.py
 4. Push to branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-## 🙏 Acknowledgments
+## 🙏 Acknowledgments & Technologies Used
 
-- **MAVLink**: For the telemetry protocol specification
-- **LangChain**: For the memory and agent framework
-- **OpenAI**: For the language model and embeddings
-- **FastAPI**: For the high-performance web framework
-- **FAISS**: For efficient vector similarity search 
+* **🛰 MAVLink** –
+  Lightweight messaging protocol for communicating with drones; used as the telemetry data standard for parsing `.tlog` files.
+
+* **🧠 OpenAI (GPT-4o, ada-002)** –
+  Powering the agent’s reasoning (`gpt-4o`) and semantic memory embeddings (`text-embedding-ada-002`) for both planning and answer generation.
+
+* **🦜 LangChain** –
+  Used for tool abstraction, agent orchestration (`BaseTool`, `ChatOpenAI`), and memory integration (Buffer, FAISS, Entity, CombinedMemory).
+
+* **⚡ FastAPI** –
+  Fast, async-ready Python web framework powering the backend API and WebSocket chat streaming.
+
+* **🔍 FAISS (Facebook AI Similarity Search)** –
+  High-performance similarity search for time-weighted memory retrieval and context-aware long-term recall.
+
+* **📈 pandas & numpy** –
+  Backbone of all telemetry data processing, statistical analysis, and time-series metric computation.
+
+* **🧰 scikit-learn (IsolationForest)** –
+  Used for anomaly detection in UAV signal metrics (e.g., voltage drops, GPS fix instability, RC link losses).
+
+* **📚 Pydantic** –
+  For request/response validation and serialization in FastAPI endpoints.
+
+* **🌐 HTTPX** –
+  Async HTTP client for OpenAI API calls, streaming completions, and retry-resilient embedding generation.
+
+* **🧪 watchfiles** –
+  Dev-time hot-reloading of FastAPI and agent modules with minimal latency.
+
+* **🔧 dotenv & os** –
+  For clean environment management and configuration loading across API and agent layers.
+
+* **🔄 LangGraph** –
+  Graph-based agentic planning and execution pipeline with support for conditional branching (`StateGraph`, `ainvoke`).
+
+* **🗃 JSON & Regex** –
+  Used extensively for prompt I/O extraction, sanitization, and handling LangChain tool JSON parsing.
+
+* **🧼 Uvicorn** –
+  ASGI server for running FastAPI with support for auto-reloading, WebSockets, and streaming endpoints.
