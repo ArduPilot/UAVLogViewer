@@ -121,7 +121,7 @@ npm run dev
 - **Axios**: HTTP client for API communication
 - **WebSocket**: Real-time bidirectional communication
 
-## Backend - 🙏 Acknowledgments & Technologies Used
+## Backend - Technologies Used
 
 * **🛰 MAVLink** –
   Lightweight messaging protocol for communicating with drones; used as the telemetry data standard for parsing `.tlog` files.
