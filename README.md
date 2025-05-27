@@ -92,6 +92,9 @@ npm run dev
 - MAVLink Text Logs (.log, .tlog)
 - ULog Format (.ulg) - PX4 format
 
+## Chat Download Feature/Option
+- The entire chat (during the session) can be downloaded by clicking on the "Download" button below the chatbox.
+
 ## 🎯 Features
 
 ### Core Features
