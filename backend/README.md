@@ -663,6 +663,9 @@ python main.py
 PYTHONPATH=. python -m uvicorn main:app --reload --log-level debug
 ```
 
+## Chat Download Option
+- The entire chat (during the session) can be downloaded by clicking on the "Download" button below the chatbox in the UI interface.
+
 ## 🔒 Security Features
 
 - **Session-based authentication**: Uses X-Session-ID headers for session management
