@@ -16,6 +16,7 @@ export const store = {
     showDeviceIDs: false,
     showAttitude: false,
     showEkfHelper: false,
+    showChat: false,
     flightModeChanges: [],
     file: null,
     events: [],

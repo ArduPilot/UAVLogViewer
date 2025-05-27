@@ -34,6 +34,13 @@
                     <div class="col-12 noPadding">
                         <CesiumViewer ref="cesiumViewer"/>
                     </div>
+                                </div>
+
+                <!-- Agentic Chat Interface -->
+                <div class="row h-100" v-if="state.showChat">
+                    <div class="col-12 noPadding">
+                        <AgenticChat/>
+                    </div>
                 </div>
             </main>
 
@@ -60,6 +67,7 @@ import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
 import { DjiDataExtractor } from '../tools/djiDataExtractor'
 import MagFitTool from '@/components/widgets/MagFitTool.vue'
 import EkfHelperTool from '@/components/widgets/EkfHelperTool.vue'
+import AgenticChat from '@/components/AgenticChat.vue'
 import Vue from 'vue'
 
 export default {
@@ -239,7 +247,8 @@ export default {
         DeviceIDViewer,
         AttitudeViewer,
         MagFitTool,
-        EkfHelperTool
+        EkfHelperTool,
+        AgenticChat
     },
     computed: {
         mapOk () {

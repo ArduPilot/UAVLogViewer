@@ -1,5 +1,6 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import Dict, Any, Optional, List
 import os
@@ -11,7 +12,7 @@ import asyncio
 import logging
 import traceback
 from contextlib import asynccontextmanager
-from fastapi.responses import JSONResponse
+import io
 
 from agents.uav_agent import UavAgent, CustomJSONEncoder, ensure_serializable
 from telemetry.parser import TelemetryParser
@@ -36,7 +37,7 @@ SESSION_TIMEOUT_MINUTES = int(os.getenv("SESSION_TIMEOUT_MINUTES", "30"))
 
 # CORS configuration
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:8080").split(",")
-ALLOWED_METHODS = os.getenv("ALLOWED_METHODS", "GET,POST,PUT,DELETE").split(",")
+ALLOWED_METHODS = os.getenv("ALLOWED_METHODS", "GET,POST,PUT,DELETE,OPTIONS").split(",")
 ALLOWED_HEADERS = os.getenv("ALLOWED_HEADERS", "Content-Type,Accept,Origin,X-Requested-With,X-Session-ID").split(",")
 CORS_MAX_AGE = int(os.getenv("CORS_MAX_AGE", "3600"))
 
@@ -159,7 +160,8 @@ app.add_middleware(
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=ALLOWED_METHODS,
-    allow_headers=ALLOWED_HEADERS,
+    # allow_headers=ALLOWED_HEADERS,
+    allow_headers=["*"],  # Allow all headers for development
     expose_headers=["X-Session-ID"],  # Expose session ID header for client use
     max_age=CORS_MAX_AGE,
 )
@@ -672,6 +674,136 @@ async def end_session(
         return {"message": "An error occurred while ending the session, but it may have been partially cleaned up"}
 
 
+@app.get("/session/download")
+async def download_chat_history(
+    format: str = Query("txt", description="Download format: txt, json, or csv"),
+    session: SessionData = Depends(get_session_from_header)
+):
+    """
+    Download chat history for the current session in various formats.
+    
+    Args:
+        format: Download format (txt, json, or csv)
+        session: The session to download (from dependency)
+        
+    Returns:
+        StreamingResponse: File download with chat history
+    """
+    try:
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Get messages from agent memory if available
+        messages = []
+        if session.agent and hasattr(session.agent, 'memory_manager'):
+            try:
+                messages = session.agent.memory_manager.get_session_messages()
+            except Exception as e:
+                logger.warning(f"Error retrieving agent messages: {str(e)}")
+                # Fall back to session messages
+                messages = session.messages
+        else:
+            messages = session.messages
+        
+        if not messages:
+            raise HTTPException(status_code=404, detail="No chat history found for this session")
+        
+        # Generate filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        session_short = session.id[:8]
+        filename = f"uav_chat_{session_short}_{timestamp}.{format}"
+        
+        # Generate content based on format
+        if format.lower() == "json":
+            content = json.dumps({
+                "session_id": session.id,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "messages": messages
+            }, indent=2, cls=CustomJSONEncoder)
+            media_type = "application/json"
+            
+        elif format.lower() == "csv":
+            import csv
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            # Write header
+            writer.writerow(["Timestamp", "Role", "Content", "Analysis"])
+            
+            # Write messages
+            for msg in messages:
+                analysis_str = ""
+                if msg.get("analysis"):
+                    analysis_str = json.dumps(msg["analysis"], cls=CustomJSONEncoder)
+                
+                writer.writerow([
+                    msg.get("timestamp", ""),
+                    msg.get("role", ""),
+                    msg.get("content", ""),
+                    analysis_str
+                ])
+            
+            content = output.getvalue()
+            output.close()
+            media_type = "text/csv"
+            
+        else:  # Default to txt format
+            header = f"""UAV Agentic Analysis Chat Log
+Session ID: {session.id}
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Total Messages: {len(messages)}
+{'=' * 60}
+
+"""
+            
+            content = header
+            for msg in messages:
+                timestamp = msg.get("timestamp", "Unknown")
+                if isinstance(timestamp, str):
+                    try:
+                        # Try to parse and reformat timestamp
+                        dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                        timestamp = dt.strftime('%Y-%m-%d %H:%M:%S')
+                    except:
+                        logger.warning(f"Failed to parse timestamp: {timestamp}")
+                
+                role = msg.get("role", "unknown").upper()
+                message_content = msg.get("content", "")
+                
+                content += f"[{timestamp}] {role}:\n"
+                content += f"{message_content}\n"
+                
+                # Add analysis data if present
+                if msg.get("analysis"):
+                    content += f"\nANALYSIS DATA:\n"
+                    content += json.dumps(msg["analysis"], indent=2, cls=CustomJSONEncoder)
+                    content += f"\n"
+                
+                content += f"\n{'-' * 50}\n\n"
+            
+            media_type = "text/plain"
+        
+        # Create streaming response
+        def generate():
+            yield content.encode('utf-8')
+        
+        return StreamingResponse(
+            io.BytesIO(content.encode('utf-8')),
+            media_type=media_type,
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error downloading chat history: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while generating the download file"
+        )
+
+
 @app.get("/")
 async def root():
     """API root endpoint with information."""
@@ -682,10 +814,150 @@ async def root():
             "/upload - Upload a telemetry log file",
             "/chat - Process a chat message",
             "/session/messages - Get session messages",
+            "/session/download - Download chat history",
             "/sessions - List all active sessions",
             "/session - Delete current session"
         ]
     }
+
+@app.get("/health")
+async def health_check():
+    """Simple health check endpoint."""
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
+@app.websocket("/ws/chat")
+async def websocket_chat(
+    websocket: WebSocket, 
+    current_session: Optional[SessionData] = Depends(get_session_from_header)
+):
+    """
+    WebSocket endpoint for streaming chat responses.
+    
+    This endpoint allows real-time streaming of chat responses as they are generated,
+    providing a better user experience with token-by-token streaming.
+    """
+    await websocket.accept()
+    
+    try:
+        while True:
+            # Receive message from client
+            data = await websocket.receive_json()
+            
+            message_text = data.get("message", "")
+            session_id = data.get("session_id")
+            
+            if not message_text:
+                await websocket.send_json({
+                    "type": "error",
+                    "message": "No message provided"
+                })
+                continue
+            
+            # Get session
+            session = None
+            if session_id:
+                session = registry.get_session(session_id)
+            else:
+                session = current_session
+            
+            if not session:
+                await websocket.send_json({
+                    "type": "error",
+                    "message": "No valid session found. Please upload a log file first."
+                })
+                continue
+            
+            # Verify session has telemetry data
+            if not session.telemetry_data or not session.analyzer:
+                await websocket.send_json({
+                    "type": "error",
+                    "message": "No telemetry data available. Please upload a log file first."
+                })
+                continue
+            
+            # Ensure agent is initialized
+            if not session.agent:
+                if session.analyzer:
+                    session.agent = UavAgent(session_id=session.id, analyzer=session.analyzer)
+                else:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "No telemetry data available. Please upload a log file first."
+                    })
+                    continue
+            
+            # Send start message
+            await websocket.send_json({
+                "type": "start",
+                "session_id": session.id
+            })
+            
+            try:
+                # Store user message in session history first
+                try:
+                    session.messages.append({
+                        "role": "user",
+                        "content": message_text,
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    })
+                except Exception as history_error:
+                    logger.warning(f"Failed to save user message to history: {str(history_error)}")
+                
+                # Process message with real streaming from LLM
+                full_response = ""
+                analysis_data = None
+                
+                async for token_data in session.agent.process_message_streaming(message_text):
+                    if token_data["type"] == "token":
+                        # Real token from LLM
+                        full_response = token_data["full_content"]
+                        await websocket.send_json({
+                            "type": "token",
+                            "content": token_data["content"],
+                            "full_content": token_data["full_content"]
+                        })
+                    elif token_data["type"] == "complete":
+                        # Final response with analysis
+                        full_response = token_data["content"]
+                        analysis_data = token_data.get("analysis")
+                        await websocket.send_json({
+                            "type": "complete",
+                            "content": full_response,
+                            "analysis": analysis_data,
+                            "session_id": session.id
+                        })
+                        break
+                
+                # Store assistant message in session history
+                try:
+                    session.messages.append({
+                        "role": "assistant",
+                        "content": full_response,
+                        "timestamp": datetime.now(timezone.utc).isoformat()
+                    })
+                except Exception as history_error:
+                    logger.warning(f"Failed to save assistant message to history: {str(history_error)}")
+                
+            except Exception as e:
+                logger.error(f"Error processing WebSocket message: {str(e)}")
+                logger.error(f"WebSocket error traceback: {traceback.format_exc()}")
+                await websocket.send_json({
+                    "type": "error",
+                    "message": "I encountered an issue while processing your question. Please try again."
+                })
+                
+    except WebSocketDisconnect:
+        logger.info("WebSocket client disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket error: {str(e)}")
+        try:
+            await websocket.send_json({
+                "type": "error",
+                "message": "Connection error occurred"
+            })
+        except:
+            logger.error(f"Error sending error message to client: {str(e)}")
 
 
 if __name__ == "__main__":

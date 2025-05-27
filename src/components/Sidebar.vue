@@ -18,6 +18,9 @@
                 <!-- Plot -->
                 <a :class="selected === 'plot' ? 'selected' : ''" @click="selected='plot'"
                    v-if="state.processDone"> <i class="fas fa-chart-line"></i>Plot</a>
+                <!-- Chat -->
+                <a :class="selected === 'chat' ? 'selected' : ''" @click="selected='chat'">
+                    <i class="fas fa-robot"></i>AI Chat</a>
                 <!-- more -->
                 <a :class="selected ==='other' ? 'selected' : ''" @click="selected='other'" v-if="state.processDone">
                     <i class="fas fa-ellipsis-v"></i>
@@ -223,6 +226,22 @@ export default {
     watch: {
         blob () {
             this.downloadURL = URL.createObjectURL(this.blob)
+        },
+        selected (newVal) {
+            // Reset all view states
+            this.state.plotOn = false
+            this.state.showMap = false
+            this.state.showChat = false
+            
+            // Set the appropriate view based on selection
+            if (newVal === 'plot') {
+                this.state.plotOn = true
+                if (this.state.mapAvailable) {
+                    this.state.showMap = true
+                }
+            } else if (newVal === 'chat') {
+                this.state.showChat = true
+            }
         }
     },
     components: {PlotSetup, MessageMenu, Dropzone}

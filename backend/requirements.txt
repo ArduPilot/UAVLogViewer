@@ -15,19 +15,28 @@ spacy
 
 # LLM and Embeddings
 openai
-langchain
-langchain-core
-langchain-community
-langchain-openai
+
+# ——— LLM + Agenting core ———
+langchain==0.2.17
+langchain-core==0.2.43
+langchain-community==0.2.19
+langchain-openai==0.1.7
+langchain-text-splitters==0.2.4
+
+# ——— LangGraph + checkpointing ———
+langgraph==0.2.3
+langgraph-checkpoint==1.0.2
+langgraph-checkpoint-sqlite==1.0.0
 faiss-cpu
 
 # API and Web
 fastapi
-uvicorn
+uvicorn[standard]
+websockets
+python-multipart
 python-dotenv
 python-jose[cryptography]
 passlib[bcrypt]
-python-multipart
 
 # Testing
 pytest
