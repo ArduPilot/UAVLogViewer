@@ -165,12 +165,20 @@ class EnhancedMemoryManager:
             self.buffer_memory.chat_memory.add_user_message(content)
             try:
                 self.entity_memory.save_context({"input": content}, {"output": ""})
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error("entity_memory.save_context error: %s", e)
         elif role == "assistant":
             self.buffer_memory.chat_memory.add_ai_message(content)
         elif role == "tool":
-            self.buffer_memory.chat_memory.add_message(ToolMessage(content=content, tool_call_id=meta.get("tool", "unknown")))
+            # self.buffer_memory.chat_memory.add_message(ToolMessage(content=content, tool_call_id=meta.get("tool", "unknown")))
+            self.buffer_memory.chat_memory.add_message(
+                ToolMessage(
+                    content=content,
+                    tool_call_id=meta.get("tool", "unknown"),
+                    # keep the timestamp so .get_session_messages() can sort
+                    additional_kwargs={"timestamp": meta.get("timestamp")}
+                )
+            )
         elif role == "system":
             self.buffer_memory.chat_memory.add_message(SystemMessage(content=content))
         else:
@@ -240,9 +248,17 @@ class EnhancedMemoryManager:
                         ).isoformat(),
                     }
                 )
-        except Exception:
-            pass
-        msgs.sort(key=lambda m: m.get("timestamp", ""), reverse=True)
+        except Exception as e:
+            logger.error("get_session_messages error: %s", e)
+        
+        # Safe sorting with None handling
+        def safe_timestamp_key(m):
+            ts = m.get("timestamp")
+            if ts is None:
+                return ""  # Default to empty string for None values
+            return str(ts)  # Ensure it's a string for comparison
+        
+        msgs.sort(key=safe_timestamp_key, reverse=True)
         return msgs[:limit]
 
     # -----------------------------------------------------
