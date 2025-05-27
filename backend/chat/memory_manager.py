@@ -13,11 +13,11 @@ from langchain.memory import (
     ConversationEntityMemory,
     VectorStoreRetrieverMemory,
 )
+from langchain_core.messages import ToolMessage, SystemMessage
 from langchain.retrievers import TimeWeightedVectorStoreRetriever
 from langchain.schema import Document
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-import numpy as np
 
 # ──────────────────────────────────────────────────────────
 # Initialisation & helpers
@@ -68,7 +68,7 @@ class EnhancedMemoryManager:
         self.chat_id = chat_id
 
         # Embeddings
-        self.embeddings = embeddings or OpenAIEmbeddings(
+        self.embedding_model = embeddings or OpenAIEmbeddings(
             model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-ada-002"),
             openai_api_key=os.getenv("OPENAI_API_KEY"),
         )
@@ -93,7 +93,7 @@ class EnhancedMemoryManager:
             },
         )
         self.vector_store = FAISS.from_documents(
-            [stub_doc], embedding=self.embeddings, index_factory="HNSW32"
+            [stub_doc], embedding=self.embedding_model
         )
         self.retriever = TimeWeightedVectorStoreRetriever(
             vectorstore=self.vector_store,
@@ -109,9 +109,13 @@ class EnhancedMemoryManager:
 
         # ── Entity memory ────────────────────────────────────────────────
         self.entity_memory = ConversationEntityMemory(
-            llm=ChatOpenAI(model="gpt-4o", temperature=0.0),
+            llm=ChatOpenAI(
+                model=os.getenv("OPENAI_MODEL", "gpt-4o"),
+                temperature=0.0
+            ),
             k=entity_k,
             memory_key="entity_store",
+            input_key="input",
             return_messages=False,
         )
 
@@ -157,7 +161,6 @@ class EnhancedMemoryManager:
         )
         meta["importance_score"] = _importance(content, meta)
 
-        # 1️⃣  short-term buffer
         if role == "user":
             self.buffer_memory.chat_memory.add_user_message(content)
             try:
@@ -166,10 +169,15 @@ class EnhancedMemoryManager:
                 pass
         elif role == "assistant":
             self.buffer_memory.chat_memory.add_ai_message(content)
+        elif role == "tool":
+            self.buffer_memory.chat_memory.add_message(ToolMessage(content=content, tool_call_id=meta.get("tool", "unknown")))
+        elif role == "system":
+            self.buffer_memory.chat_memory.add_message(SystemMessage(content=content))
         else:
-            self.buffer_memory.chat_memory.add_message(role, content)  # tool / system
+            self.buffer_memory.chat_memory.add_message(SystemMessage(content=f"[{role}] {content}"))
 
-        # 2️⃣  long-term – add to FAISS immediately
+
+        # long-term – add to FAISS immediately
         try:
             self.vector_store.add_texts([content], metadatas=[meta])
         except Exception as e:
@@ -246,6 +254,6 @@ class EnhancedMemoryManager:
         self.__init__(
             session_id=self.session_id,
             chat_id=self.chat_id,
-            embeddings=self.embeddings,
+            embeddings=self.embedding_model,
         )
         logger.info("Memory cleared  session=%s  chat=%s", self.session_id, self.chat_id)

@@ -595,8 +595,8 @@ class UavAgent:
             raise ValueError("One of analyzer, telemetry_data or log_path must be supplied")
 
         # LLMs
-        self.think_llm = ChatOpenAI(model="gpt-4o", temperature=0.0)
-        self.ans_llm = ChatOpenAI(model="gpt-4o", temperature=0.3)
+        self.decide_llm = ChatOpenAI(model="gpt-4o", temperature=0.0)
+        self.answer_llm = ChatOpenAI(model="gpt-4o", temperature=0.3)
 
         # Memory
         self.memory_manager = EnhancedMemoryManager(session_id=session_id)
@@ -896,9 +896,20 @@ class UavAgent:
     # -----------------------------------------------------
     async def _interpret(self, st: AgentState) -> AgentState:
         query = st["input"]
+        # await self.memory_manager.add_message(role="user", content=query, metadata={"session_id": st["session_id"]})
+        # raw = self.think_llm.invoke([SystemMessage(content=INT_ROUTE_PROMPT), HumanMessage(content=query)]).content
+        
         await self.memory_manager.add_message(role="user", content=query, metadata={"session_id": st["session_id"]})
-
-        raw = self.think_llm.invoke([SystemMessage(content=INT_ROUTE_PROMPT), HumanMessage(content=query)]).content
+        # pull relevant history and pass it to the planner LLM
+        ctx = await self.memory_manager.get_context(query)
+        hist_txt = self._history_to_text(ctx.get("relevant_history", []))
+        
+        msgs = [SystemMessage(content=INT_ROUTE_PROMPT)]
+        if hist_txt:
+            msgs.append(SystemMessage(content=f"Relevant chat so far:\n{hist_txt}"))
+        
+        msgs.append(HumanMessage(content=query))
+        raw = self.decide_llm.invoke(msgs).content
         errors = st.get("errors", [])
         try:
             cfg = _extract_json(raw)
@@ -998,10 +1009,19 @@ class UavAgent:
 
     async def _reflect(self, st: AgentState) -> AgentState:
         scratch = st.get("scratch", {})
+        # bring in memory context
+        mem_ctx = await self.memory_manager.get_context(st["input"])
+        hist_txt = self._history_to_text(mem_ctx.get("relevant_history", []))
+
         current_step = st.get("current_step", 0) + 1
         tool_history = scratch.get("tool_history", [])
 
-        msgs = [SystemMessage(content=REFLECT_PROMPT), HumanMessage(content=st["input"])]
+        msgs = [SystemMessage(content=REFLECT_PROMPT)]
+        if hist_txt:
+            msgs.append(SystemMessage(content=f"Relevant chat so far:\n{hist_txt}"))
+        
+        msgs.append(HumanMessage(content=st["input"]))
+
         if scratch.get("tool_results"):
             optimised = self._optimise_results(scratch['tool_results'])
             logger.info(f"Optimised tool results: {optimised}")
@@ -1011,7 +1031,7 @@ class UavAgent:
             logger.info(f"Tool history: {tool_history}")
             msgs.append(AIMessage(content=f"Tool history:\n{tool_history}"))
 
-        raw = self.think_llm.invoke(msgs).content
+        raw = self.decide_llm.invoke(msgs).content
         errors = st.get("errors", [])
         try:
             cfg = _extract_json(raw)
@@ -1059,7 +1079,15 @@ class UavAgent:
             return {}  # already have it
 
         scratch = st.get("scratch", {})
-        msgs = [SystemMessage(content=SYNTH_PROMPT), HumanMessage(content=st["input"])]
+        mem_ctx = await self.memory_manager.get_context(st["input"])
+        hist_txt = self._history_to_text(mem_ctx.get("relevant_history", []))
+
+        msgs = [SystemMessage(content=SYNTH_PROMPT)]
+        if hist_txt:
+            msgs.append(SystemMessage(content=f"Relevant chat so far:\n{hist_txt}"))
+        
+        msgs.append(HumanMessage(content=st["input"]))
+
         if scratch.get("tool_results"):
             msgs.append(
                 SystemMessage(
@@ -1074,7 +1102,7 @@ class UavAgent:
                 )
             )
 
-        answer = self.ans_llm.invoke(msgs).content
+        answer = self.answer_llm.invoke(msgs).content
         await self.memory_manager.add_message(
             role="assistant", content=answer, metadata={"session_id": st["session_id"], "final": True}
         )
@@ -1099,6 +1127,29 @@ class UavAgent:
                 "session_id": self.session_id,
             }
         )
+    
+
+    # ──────────────────────────────────────────────────────────
+    # Helper – turn LC messages / dicts into Chat-style lines
+    # ──────────────────────────────────────────────────────────
+    @staticmethod
+    def _history_to_text(history: List[Any], limit: int = 40) -> str:
+        """
+        Convert a list coming from EnhancedMemoryManager into plain text
+        the LLM can digest.  Keeps the newest `limit` messages.
+        """
+        out: List[str] = []
+        for msg in history[-limit:]:
+            # Two possible shapes: a langchain Message or a dict
+            if hasattr(msg, "type"):                        # Message object
+                role = msg.type
+                content = msg.content
+            else:                                          # dict from FAISS
+                role = msg.get("metadata", {}).get("role", "unknown")
+                content = msg.get("content", "")
+            out.append(f"{role.capitalize()}: {content}")
+        return "\n".join(out)
+
 
     def _optimise_results(self, results: List[Dict[str, Any]]) -> str:
         """
@@ -1260,6 +1311,7 @@ class UavAgent:
                             _add(f"{tool}_{k}={v}")
 
         return " | ".join(parts)
+
 
     def _format_analysis(self, st: AgentState) -> Dict[str, Any]:
         analysis: Dict[str, Any] = {"type": "Flight Analysis"}
