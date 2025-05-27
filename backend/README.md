@@ -275,7 +275,7 @@ Upload a MAVLink log file for analysis.
 
 **Request:**
 - **Content-Type**: `multipart/form-data`
-- **Body**: MAVLink log file (.bin, .log)
+- **Body**: MAVLink log file (.bin, .tlog or .log)
 - **Headers**: `X-Session-ID` (optional, creates new session if not provided)
 
 **Response:**
@@ -586,8 +586,8 @@ The following examples demonstrate how the ReAct agent processes different types
 ### Supported Log Formats
 
 - **MAVLink Binary Logs** (.bin)
-- **MAVLink Text Logs** (.log)
-- **ULog Format** (.ulg) - PX4 format (limited support, .bin/.log recommended)
+- **MAVLink Text Logs** (.log/.tlog)
+- **ULog Format** (.ulg) - PX4 format (limited support, .bin/.tlog recommended)
 
 ### Analysis Capabilities
 
