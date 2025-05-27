@@ -827,7 +827,10 @@ async def health_check():
 
 
 @app.websocket("/ws/chat")
-async def websocket_chat(websocket: WebSocket):
+async def websocket_chat(
+    websocket: WebSocket, 
+    current_session: Optional[SessionData] = Depends(get_session_from_header)
+):
     """
     WebSocket endpoint for streaming chat responses.
     
@@ -855,6 +858,8 @@ async def websocket_chat(websocket: WebSocket):
             session = None
             if session_id:
                 session = registry.get_session(session_id)
+            else:
+                session = current_session
             
             if not session:
                 await websocket.send_json({
