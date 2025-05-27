@@ -597,6 +597,8 @@ class UavAgent:
         # LLMs
         self.decide_llm = ChatOpenAI(model="gpt-4o", temperature=0.0)
         self.answer_llm = ChatOpenAI(model="gpt-4o", temperature=0.3)
+        # Streaming LLM for real-time token generation
+        self.streaming_llm = ChatOpenAI(model="gpt-4o", temperature=0.3, streaming=True)
 
         # Memory
         self.memory_manager = EnhancedMemoryManager(session_id=session_id)
@@ -731,12 +733,7 @@ class UavAgent:
             # fetch raw RC analysis
             rc = a._analyze_rc_signal() or {}
             return ensure_serializable(rc)
-
-        # @tool("performance_details")
-        # def performance_details() -> Dict[str, Any]:
-        #     """Calculated KPIs such as altitude stability, attitude stability,
-        # battery efficiency, overall performance score."""
-        #     return a._calculate_kpis()
+        
 
         @tool("flight_statistics")
         def flight_statistics() -> Dict[str, Any]:
@@ -930,7 +927,11 @@ class UavAgent:
             "tool_history": st.get("scratch", {}).get("tool_history", []),
             "tool_results": [],
         }
-        return {"scratch": scratch, "errors": errors} if errors else {"scratch": scratch}
+        # return {"scratch": scratch, "errors": errors} if errors else {"scratch": scratch}
+        out: AgentState = {"input": query, "scratch": scratch, "session_id": st.get("session_id", self.session_id)}
+        if errors:
+            out["errors"] = errors
+        return out
 
     async def _ask_clarification(self, st: AgentState) -> AgentState:
         follow_up = st.get("scratch", {}).get("follow_up") or "Could you clarify what you need?"
@@ -947,12 +948,26 @@ class UavAgent:
 
         if not pending:
             # keep loop counter + never store `None` for errors
-            out = {"scratch": scratch, "current_step": st.get("current_step", 0)}
+            out = {"input": st["input"], "scratch": scratch, "current_step": st.get("current_step", 0), "session_id": st.get("session_id", self.session_id)}
             if errors:
                 out["errors"] = errors
             return out
 
         calls = []
+        # for name in pending:
+        #     if name in tool_history:
+        #         continue
+
+        #     obj = self.tool_map.get(name)
+        #     if obj is None:
+        #         errors.append(f"unknown_tool:{name}")
+        #         continue
+
+        #     # If the wrapped LangChain tool takes **any** parameter, we’ll
+        #     # feed the user’s question positionally; else call with no args.
+        #     takes_arg = bool(inspect.signature(obj.run).parameters)
+        #     calls.append((name, obj, st["input"] if takes_arg else None))
+
         for name in pending:
             if name not in tool_history:
                 obj = self.tool_map.get(name)
@@ -982,12 +997,18 @@ class UavAgent:
                         metadata={"tool": name, "session_id": st["session_id"]},
                     )
                 except Exception as e:
-                    errors.append(f"tool_fail:{name}:{e}")
+                    # errors.append(f"tool_fail:{name}:{e}")
+                    errors.append(f"tool_fail:{name}:{type(e).__name__}:{e}")
 
         scratch["pending_tools"] = []
         scratch["tool_history"] = tool_history + executed
         scratch["tool_results"] = tool_results
-        out = {"scratch": scratch, "current_step": st.get("current_step", 0)}
+        out: AgentState = {
+            "input": st["input"],
+            "scratch": scratch,
+            "current_step": st.get("current_step", 0),
+            "session_id": st.get("session_id", self.session_id)
+        }
         if errors:
             out["errors"] = errors
         return out
@@ -1031,8 +1052,13 @@ class UavAgent:
             logger.info(f"Tool history: {tool_history}")
             msgs.append(AIMessage(content=f"Tool history:\n{tool_history}"))
 
-        raw = self.decide_llm.invoke(msgs).content
+        # CRITICAL: Add error information to the LLM so it knows when tools failed
         errors = st.get("errors", [])
+        if errors:
+            error_summary = "\n".join(errors)
+            msgs.append(SystemMessage(content=f"TOOL ERRORS ENCOUNTERED:\n{error_summary}\n\nNote: When tools fail, you MUST inform the user that the requested data is unavailable due to errors. DO NOT hallucinate or make up numbers."))
+
+        raw = self.decide_llm.invoke(msgs).content
         try:
             cfg = _extract_json(raw)
         except Exception as e:
@@ -1066,7 +1092,12 @@ class UavAgent:
             self._log_loop_guard("Disabled `need_more` because no viable tools left")
 
         scratch.update({"need_more": need_more, "pending_tools": pruned})
-        out: AgentState = {"scratch": scratch, "current_step": current_step}
+        out: AgentState = {
+            "input": st["input"],
+            "scratch": scratch,
+            "current_step": current_step,
+            "session_id": st.get("session_id", self.session_id)
+        }
         if not need_more:
             out["answer"] = cfg.get("final")
             # or "Information missing in the log due to which I could not derive an answer."
@@ -1102,11 +1133,99 @@ class UavAgent:
                 )
             )
 
+        # CRITICAL: Add error information to the LLM so it knows when tools failed
+        errors = st.get("errors", [])
+        if errors:
+            error_summary = "\n".join(errors)
+            msgs.append(SystemMessage(content=f"TOOL ERRORS ENCOUNTERED:\n{error_summary}\n\nNote: When tools fail, you MUST inform the user that the requested data is unavailable due to errors. DO NOT hallucinate or make up numbers."))
+
         answer = self.answer_llm.invoke(msgs).content
         await self.memory_manager.add_message(
             role="assistant", content=answer, metadata={"session_id": st["session_id"], "final": True}
         )
         return {"answer": answer}
+
+    async def _synthesize_streaming(self, st: AgentState):
+        """
+        Streaming version of _synthesize that yields tokens as they are generated.
+        """
+        if st.get("answer"):
+            # Already have answer, just return it
+            yield {
+                "type": "complete",
+                "content": st["answer"],
+                "analysis": self._format_analysis(st),
+                "session_id": st.get("session_id", self.session_id)
+            }
+            return
+
+        scratch = st.get("scratch", {})
+        user_input = st.get("input", "")
+        session_id = st.get("session_id", self.session_id)
+        
+        # Get memory context if we have user input
+        hist_txt = ""
+        if user_input:
+            mem_ctx = await self.memory_manager.get_context(user_input)
+            hist_txt = self._history_to_text(mem_ctx.get("relevant_history", []))
+
+        msgs = [SystemMessage(content=SYNTH_PROMPT)]
+        if hist_txt:
+            msgs.append(SystemMessage(content=f"Relevant chat so far:\n{hist_txt}"))
+        
+        if user_input:
+            msgs.append(HumanMessage(content=user_input))
+
+        if scratch.get("tool_results"):
+            msgs.append(
+                SystemMessage(
+                    content=f"Tool results:\n{json.dumps(scratch['tool_results'], cls=CustomJSONEncoder)[:6000]}"
+                )
+            )
+
+        if scratch.get("tool_history"):
+            msgs.append(
+                SystemMessage(
+                    content=f"Tool history:\n{json.dumps(scratch['tool_history'])[:2000]}"
+                )
+            )
+
+        # CRITICAL: Add error information to the LLM so it knows when tools failed
+        errors = st.get("errors", [])
+        if errors:
+            error_summary = "\n".join(errors)
+            msgs.append(SystemMessage(content=f"TOOL ERRORS ENCOUNTERED:\n{error_summary}\n\nNote: When tools fail, you MUST inform the user that the requested data is unavailable due to errors. DO NOT hallucinate or make up numbers."))
+
+        # Stream the response
+        full_content = ""
+        async for chunk in self.streaming_llm.astream(msgs):
+            # if chunk.content:
+            #     full_content += chunk.content
+            # LangChain v0.1 and v0.2 emit different chunk shapes
+            token_text = getattr(chunk, "content", None)
+            if token_text is None and hasattr(chunk, "message"):
+                token_text = getattr(chunk.message, "content", None)
+            
+            if token_text:
+                full_content += token_text
+                yield {
+                    "type": "token",
+                    # "content": chunk.content,
+                    "content": token_text,
+                    "full_content": full_content
+                }
+
+        # Save to memory and send completion
+        await self.memory_manager.add_message(
+            role="assistant", content=full_content, metadata={"session_id": session_id, "final": True}
+        )
+        
+        yield {
+            "type": "complete",
+            "content": full_content,
+            "analysis": self._format_analysis(st),
+            "session_id": session_id
+        }
 
     # -----------------------------------------------------
     # Public API
@@ -1127,6 +1246,54 @@ class UavAgent:
                 "session_id": self.session_id,
             }
         )
+
+    async def process_message_streaming(self, message: str):
+        """
+        Process a message with streaming token generation.
+        Yields tokens as they are generated from the LLM.
+        """
+        init_state: AgentState = {
+            "input": message,
+            "session_id": self.session_id,
+            "scratch": {"tool_history": []},
+            "current_step": 0,
+            "errors": [],
+        }
+        
+        # Process through the graph until we reach synthesis
+        # We need to run all steps except the final synthesis
+        current_state = init_state
+        
+        # Run interpret step
+        current_state = await self._interpret(current_state)
+        
+        # Check if we need clarification
+        if self._branch_after_interpret(current_state) == "ask_clarification":
+            current_state = await self._ask_clarification(current_state)
+            # For clarification, we don't stream - just return the question
+            yield {
+                "type": "complete",
+                "content": current_state.get("answer", "I need clarification."),
+                "analysis": self._format_analysis(current_state),
+                "session_id": self.session_id
+            }
+            return
+        
+        # Run tools if needed
+        if self._branch_after_interpret(current_state) == "run_tools":
+            current_state = await self._run_tools(current_state)
+            
+            # Run reflection loop until we're ready to synthesize
+            while self._branch_after_reflect(current_state) == "run_tools":
+                current_state = await self._reflect(current_state)
+                if current_state.get("scratch", {}).get("need_more", False):
+                    current_state = await self._run_tools(current_state)
+                else:
+                    break
+        
+        # Now do streaming synthesis
+        async for token_data in self._synthesize_streaming(current_state):
+            yield token_data
     
 
     # ──────────────────────────────────────────────────────────
@@ -1182,8 +1349,8 @@ class UavAgent:
                     for k, v in payload.items():
                         if v is None:
                             continue
-                        if isinstance(v, (int, float)):
-                            _add(f"{k}={v:.3f}" if isinstance(v, float) else f"{k}={v}")
+                        if isinstance(v, float):
+                            _add(f"{k}={v:.3f}")
                         else:
                             _add(f'{k}="{v}"')
 
@@ -1193,12 +1360,17 @@ class UavAgent:
                     phases = payload.get("flight_phases", {})
                     for k, v in stats.items():
                         if v is not None:
-                            _add(f"altitude_{k}={v:.2f}")
+                            if isinstance(v, float):
+                                _add(f"altitude_{k}={v:.3f}")
+                            else:
+                                _add(f'altitude_{k}="{v}"')
+
                     for k, v in phases.items():
                         if v is None:
                             continue
-                        if isinstance(v, (int, float)):
-                            _add(f"{k}={v:.2f}")
+
+                        if isinstance(v, float):
+                            _add(f"{k}={v:.3f}")
                         else:
                             _add(f'{k}="{v}"')
 
@@ -1210,7 +1382,7 @@ class UavAgent:
                             if v is not None:
                                 label = f"{section}_{k}"
                                 if isinstance(v, float):
-                                    _add(f"{label}={v:.2f}")
+                                    _add(f"{label}={v:.3f}")
                                 else:
                                     _add(f"{label}={v}")
 
@@ -1219,9 +1391,13 @@ class UavAgent:
                     for speed_type, stats in payload.items():
                         if not isinstance(stats, dict):
                             continue
+
                         for k, v in stats.items():
                             if v is not None:
-                                _add(f"{speed_type}_{k}={v:.2f}")
+                                if isinstance(v, float):
+                                    _add(f"{speed_type}_{k}={v:.3f}")
+                                else:
+                                    _add(f'{speed_type}_{k}="{v}"')
 
                 # 5) gps_details
                 elif tool == "gps_details":
@@ -1242,12 +1418,14 @@ class UavAgent:
                                 _add(f"{key}={val:.3f}")
                             else:
                                 _add(f'{key}="{val}"')
+
                     # nested gps_fix_type_counts, satellites, position
                     for section in ("gps_fix_type_counts", "satellites", "position"):
                         sub = payload.get(section, {}) or {}
                         for k, v in sub.items():
                             if v is None:
                                 continue
+
                             label = f"{section}_{k}"
                             if isinstance(v, float):
                                 _add(f"{label}={v:.3f}")
@@ -1266,8 +1444,8 @@ class UavAgent:
                     ):
                         if key in payload and payload[key] is not None:
                             val = payload[key]
-                            if isinstance(val, (int, float)):
-                                _add(f"{key}={val}")
+                            if isinstance(val, float):
+                                _add(f"{key}={val:.3f}")
                             else:
                                 _add(f'{key}="{val}"')
 
