@@ -7,6 +7,8 @@ This is a Javascript-based log viewer for MAVLink telemetry and dataflash logs w
 
 **Agentic Chatbot Backend Demo Video**: [Link](https://drive.google.com/file/d/1f1Fz9QSIR2i6Q-iaWyDqM0kguaa5FLgX/view?usp=sharing)
 
+- You can checkout the **Readme** file in the '**backend**' directory.
+
 ## ✨ New Features
 
 ### 🤖 AI-Powered Flight Analysis Chat
@@ -126,7 +128,8 @@ npm run dev
 - **Axios**: HTTP client for API communication
 - **WebSocket**: Real-time bidirectional communication
 
-### Backend
+### Backend 
+- (for more details - please checkout the **Readme** file in the '**backend**' directory.)
 
 * **🛰 MAVLink** –
   Lightweight messaging protocol for communicating with drones; used as the telemetry data standard for parsing `.tlog` files.
