@@ -225,6 +225,19 @@ export default {
             a.click()
             document.body.removeChild(a)
             window.URL.revokeObjectURL(url)
+        },
+        saveJson (jsonData) {
+            const dataStr = JSON.stringify(jsonData, null, 2)
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+
+            const exportFileDefaultName = 'data.json'
+
+            const linkElement = document.createElement('a')
+            linkElement.setAttribute('href', dataUri)
+            linkElement.setAttribute('download', exportFileDefaultName)
+            document.body.appendChild(linkElement)
+            linkElement.click()
+            document.body.removeChild(linkElement)
         }
     },
     mounted () {
@@ -249,6 +262,8 @@ export default {
                 this.state.messages = event.data.messages
                 this.$eventHub.$emit('messages')
             } else if (event.data.messagesDoneLoading) {
+                console.log('loading messages', Object.keys(this.state.messages))
+                // this.saveJson(this.state.messages)
                 this.$eventHub.$emit('messagesDoneLoading')
             } else if (event.data.messageType) {
                 this.state.messages[event.data.messageType] = event.data.messageList

@@ -66,6 +66,7 @@ export default {
     name: 'Home',
     created () {
         this.$eventHub.$on('messagesDoneLoading', this.extractFlightData)
+        this.$eventHub.$on('getAllFlightsData', this.getAllFlightsData)
         this.state.messages = {}
         this.state.timeAttitude = []
         this.state.timeAttitudeQ = []
@@ -207,7 +208,9 @@ export default {
                 }
             }
         },
-
+        getAllFlightsData () {
+            return this.state.messages
+        },
         generateColorMMap () {
             const colorMapOptions = {
                 colormap: 'hsv',

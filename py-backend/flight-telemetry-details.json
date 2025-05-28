@@ -1,0 +1,133 @@
+{
+    "SYSTEM_TIME": {
+      "purpose": "Synchronizes onboard time with real-world (Unix) time.",
+      "fields": [
+        "time_unix_usec (UTC timestamp in microseconds)",
+        "time_boot_ms (Time since boot in milliseconds)"
+      ],
+      "use_cases": [
+        "Align telemetry with real-world time",
+        "Synchronize with video or external data sources"
+      ]
+    },
+    "GLOBAL_POSITION_INT": {
+      "purpose": "High-precision global position of the drone.",
+      "fields": [
+        "lat (Latitude in degrees × 1E7)",
+        "lon (Longitude in degrees × 1E7)",
+        "alt (Altitude above sea level in mm)",
+        "relative_alt (Altitude relative to home in mm)",
+        "vx, vy, vz (Ground velocity components in cm/s)",
+        "hdg (Heading in centidegrees)"
+      ],
+      "use_cases": [
+        "Reconstruct 3D flight path",
+        "Analyze velocity and heading",
+        "Geospatial data logging"
+      ]
+    },
+    "GPS_RAW_INT": {
+      "purpose": "Raw GPS receiver data.",
+      "fields": [
+        "fix_type (GPS fix type: 0 = no fix, 3 = 3D fix)",
+        "lat, lon, alt (GPS-based position)",
+        "eph, epv (Position accuracy estimates)",
+        "vel (Ground speed in cm/s)",
+        "satellites_visible (Number of locked satellites)"
+      ],
+      "use_cases": [
+        "Assess GPS lock quality",
+        "Analyze position accuracy",
+        "Check number of visible satellites"
+      ]
+    },
+    "HEARTBEAT": {
+      "purpose": "Basic system status and mode indicator.",
+      "fields": [
+        "type (Vehicle type)",
+        "autopilot (Firmware type)",
+        "base_mode, custom_mode (Flight mode flags)",
+        "system_status (System state e.g. active, standby)"
+      ],
+      "use_cases": [
+        "Detect arming/disarming",
+        "Monitor flight mode transitions",
+        "Track system reboots"
+      ]
+    },
+    "ATTITUDE": {
+      "purpose": "Drone’s orientation and angular velocities.",
+      "fields": [
+        "roll, pitch, yaw (Euler angles in radians)",
+        "rollspeed, pitchspeed, yawspeed (Angular velocities in rad/s)"
+      ],
+      "use_cases": [
+        "Analyze maneuvering behavior",
+        "Evaluate flight stability",
+        "Plot orientation over time"
+      ]
+    },
+    "AHRS": {
+      "purpose": "State of internal orientation estimation filters.",
+      "fields": [
+        "omegaIx, omegaIy, omegaIz (Estimated gyro drift)",
+        "accel_weight (Accelerometer influence)",
+        "renorm_val (Normalization error)"
+      ],
+      "use_cases": [
+        "Debug sensor fusion stability",
+        "Evaluate filter reliability",
+        "Analyze estimator performance"
+      ]
+    },
+    "PARAM_VALUE": {
+      "purpose": "Autopilot parameter reporting.",
+      "fields": [
+        "param_id (Name of the parameter)",
+        "param_value (Numeric value)",
+        "param_type (Data type)",
+        "param_count, param_index (Parameter indexing)"
+      ],
+      "use_cases": [
+        "Log autopilot configuration",
+        "Compare tuned parameters",
+        "Track mid-flight param changes"
+      ]
+    },
+    "STATUSTEXT": {
+      "purpose": "Human-readable status, warning, or debug messages.",
+      "fields": [
+        "severity (Info, warning, error level)",
+        "text (Message string)"
+      ],
+      "use_cases": [
+        "Track onboard events and warnings",
+        "Debug flight issues",
+        "Correlate with telemetry anomalies"
+      ]
+    },
+    "AHRS2": {
+      "purpose": "Secondary orientation estimation data.",
+      "fields": [
+        "roll, pitch, yaw (Backup attitude estimates in radians)"
+      ],
+      "use_cases": [
+        "Cross-verify against primary AHRS",
+        "Enable redundant navigation logic",
+        "Compare performance of different estimators"
+      ]
+    },
+    "AHRS3": {
+      "purpose": "Tertiary orientation estimate or additional heading source.",
+      "fields": [
+        "roll, pitch, yaw (Tertiary attitude estimates)",
+        "magnetic_declination (optional)",
+        "heading_accuracy (optional)"
+      ],
+      "use_cases": [
+        "Integrate additional navigation systems (e.g. visual odometry)",
+        "Evaluate sensor fusion with external heading",
+        "Add robustness through estimator diversity"
+      ]
+    }
+}
