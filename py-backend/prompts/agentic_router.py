@@ -13,7 +13,8 @@ def get_routing_prompt(query: str) -> str:
         "get_events": "for armed/disarmed events or safety state.",
         "get_mission": "for waypoints, missions, or navigation.",
         "get_vehicle_type": "for the type of UAV.",
-        "get_all": "when the question is broad or needs everything."
+        "get_all": "when the question is broad or needs everything.",
+        "no_data": "when none of the extractors can provide data to answer the question"
     }
 
     ### Input Format:

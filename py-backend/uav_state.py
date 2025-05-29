@@ -31,7 +31,6 @@ class UAVState(TypedDict):
     output: str
     llm: BaseLanguageModel
     plan: List[str]
-    completed_steps: List[str]
 
 def get_flight_modes(state: UAVState) -> UAVState:
     return { "flight_modes": extract_flight_modes(state["raw_messages"]), "completed_get_flight_modes": True }
@@ -43,7 +42,6 @@ def get_mission(state: UAVState) -> UAVState:
     return { "mission": extract_mission(state["raw_messages"]), "completed_get_mission": True }
 
 def get_vehicle_type(state: UAVState) -> UAVState:
-    print('executing node vehicle type...')
     return { "vehicle_type": extract_vehicle_type(state["raw_messages"]), "completed_get_vehicle_type": True }
 
 def answer_summarizer(state: UAVState) -> UAVState:
@@ -61,7 +59,7 @@ def answer_summarizer(state: UAVState) -> UAVState:
     response_obj = extract_json_text_by_key(res.content, "answer")
     print("\nFINAL ANSWER: ", response_obj)
     if response_obj['answer'] == 'INSUFFICIENT DATA':
-        return { "output": "Sorry, I have insufficient data to answer this query." }
+        return { "output": "Sorry, I have insufficient or no data to answer this query." }
     return { "output": response_obj['answer'] }
 
 def get_plan(state: UAVState) -> UAVState:
@@ -72,27 +70,26 @@ def get_plan(state: UAVState) -> UAVState:
     res_arr = extract_array_from_response(response_str = res.content, target_key = "extractors")
     print('extracted res obj', res_arr, type(res_arr))
     if res_arr != None and len(res_arr) > 0:
-        if res_arr[0] == 'get_all':
-            return { "plan": ["get_flight_modes", "get_events", "get_mission", "get_vehicle_type"], "completed_steps": [] }       
-        return { "plan": res_arr, "completed_steps": []}
-    return { "plan": ["get_flight_modes", "get_events", "get_mission", "get_vehicle_type"], "completed_steps": [] }
+        if "no_data" in res_arr:
+            return { "plan": [] }
+        if "get_all" in res_arr:
+            return { "plan": ["get_flight_modes", "get_events", "get_mission", "get_vehicle_type"] }
+        return { "plan": res_arr }
+    return { "plan": ["get_flight_modes", "get_events", "get_mission", "get_vehicle_type"] }
 
-def agentic_router(state: UAVState) -> str:
-    plan = state.get("plan", [])
-    all_steps_completed = True
-    for step in plan:
-        ckey = f"completed_{step}"
-        all_steps_completed = all_steps_completed and state.get(ckey, False)
-    if all_steps_completed:
-        return "summarize_answer"
-    
 def step_selector(state: UAVState) -> str:
     plan = state.get("plan", [])
-    for step in plan:
-        ckey = f"completed_{step}"
-        print('state keys', state.keys())
-        if not(state.get(ckey, False)):
-            return step
+    if len(plan) > 0:
+        all_steps_completed = True
+        for step in plan:
+            ckey = f"completed_{step}"
+            print('state keys', state.keys())
+            all_steps_completed = all_steps_completed and state.get(ckey, False)
+            if not(state.get(ckey, False)):
+                return step
+        if all_steps_completed:
+            return "summarize_answer"
+    return "no_plan"
         
 class UAVGraph:
 
@@ -105,7 +102,7 @@ class UAVGraph:
 
         # add all extractors as nodes
         graph_builder.add_node("get_plan", get_plan)
-        graph_builder.add_node("route_step", agentic_router)
+        #graph_builder.add_node("route_step", agentic_router)
         #graph_builder.add_node("step_selector", step_selector)
         graph_builder.add_node("get_flight_modes", get_flight_modes)
         graph_builder.add_node("get_events", get_events)
@@ -118,18 +115,20 @@ class UAVGraph:
             "get_flight_modes": "get_flight_modes",
             "get_events": "get_events",
             "get_mission": "get_mission",
-            "get_vehicle_type": "get_vehicle_type"
+            "get_vehicle_type": "get_vehicle_type",
+            "summarize_answer": "summarize_answer",
+            "no_plan": "summarize_answer"
         })
 
 
         # connect all extractor nodes to the plan selection node (get_plan)
-        graph_builder.add_conditional_edges("get_flight_modes", agentic_router)
+        graph_builder.add_conditional_edges("get_flight_modes", step_selector)
 
-        graph_builder.add_conditional_edges("get_events", agentic_router)
+        graph_builder.add_conditional_edges("get_events", step_selector)
 
-        graph_builder.add_conditional_edges("get_mission", agentic_router)
+        graph_builder.add_conditional_edges("get_mission", step_selector)
 
-        graph_builder.add_conditional_edges("get_vehicle_type", agentic_router)
+        graph_builder.add_conditional_edges("get_vehicle_type", step_selector)
 
         graph_builder.set_finish_point("summarize_answer")
 
