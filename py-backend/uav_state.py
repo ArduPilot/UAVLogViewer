@@ -90,11 +90,12 @@ def step_selector(state: UAVState) -> str:
         if all_steps_completed:
             return "summarize_answer"
     return "no_plan"
-        
+
 class UAVGraph:
 
-    def __init__(self, llm):
-        self.llm = llm
+    def __init__(self, chat_agent):
+        self.chat_agent = chat_agent
+        self.llm = chat_agent.get_llm()
         self.graph = self.build()
 
     def build(self):

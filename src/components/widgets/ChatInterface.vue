@@ -1,12 +1,30 @@
 <template>
     <div class="uav-chat-container">
-        <div class="uav-chat-header">Chatbot</div>
+        <div class="uav-chat-header">
+            <div class="uav-chat-header__title">Chatbot</div>
+            <button
+                @click="closeChatWindow"
+                type="button" id="chat-close-button"
+                class="cesium-button cesium-toolbar-button uav-close-btn" title="Close 3D view">
+                <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                    <line x1="12" y1="12" x2="28" y2="28" stroke="white" stroke-width="2" stroke-linecap="round" />
+                    <line x1="28" y1="12" x2="12" y2="28" stroke="white" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </button>
+        </div>
         <div class="uav-chat-messages">
             <div v-for="(msg, idx) in chatMessages" :key="idx" :class="`uav-chat-bubble-container ${msg.sender}`">
                 <div :class="`uav-chat-bubble ${msg.sender}`">
                     <div class="fw-bold">{{ msg.sender }}:</div> {{ msg.text }}
                 </div>
             </div>
+        </div>
+        <div
+            id="agent-loader"
+            v-show="isThinking"
+            class="uav-chat-processing"
+            >
+            🤖 <span>Agent is thinking<span class="uav-chat-processing__dots"></span></span>
         </div>
         <form @submit.prevent="sendMessage" class="uav-chat-input">
             <input v-model="userInput" placeholder="Ask a question..." />
@@ -26,7 +44,8 @@ export default {
             state: store,
             dataExtractors: null,
             chatMessages: [{ sender: 'bot', text: 'Hi! How can I help you?.' }],
-            userInput: ''
+            userInput: '',
+            isThinking: false
         }
     },
     mounted () {
@@ -35,12 +54,26 @@ export default {
         }
     },
     methods: {
+        async closeChatWindow () {
+            this.chatMessages = []
+            try {
+                await fetch('http://localhost:8000/chat-session-end', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: ''
+                })
+            } catch (err) {
+                console.log('Error closing chat session: ', err)
+            }
+            this.$emit('closeChat')
+        },
         async sendMessage () {
             if (!this.userInput.trim()) return
             this.chatMessages.push({ sender: 'you', text: this.userInput })
 
             const query = this.userInput
             this.userInput = ''
+            this.isThinking = true
 
             try {
                 const res = await fetch('http://localhost:8000/chat', {
@@ -50,6 +83,7 @@ export default {
                 })
                 const data = await res.json()
                 this.chatMessages.push({ sender: 'bot', text: data.response })
+                this.isThinking = false
             } catch (err) {
                 this.chatMessages.push({ sender: 'bot', text: '⚠️ Error contacting chatbot API.' })
             }
@@ -75,8 +109,8 @@ export default {
 /* CSS for chat interface */
 
 .uav-chat-container {
-  width: 300px;
-  height: 400px;
+  width: 450px;
+  height: 500px;
   display: flex;
   flex-direction: column;
   position: absolute;
@@ -94,6 +128,12 @@ export default {
   background: #3d3a38;
   color: white;
   font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+}
+
+.uav-chat-header__title {
+    padding: 8px 0;
 }
 
 .uav-chat-messages {
@@ -158,9 +198,37 @@ export default {
     border: none;
 }
 
+.uav-chat-processing {
+    margin-top: 8px;
+    color: grey;
+}
+
+.uav-chat-processing > span {
+    font-style: italic;
+}
+
+.uav-close-btn svg {
+    stroke: white;
+    stroke-width: 2px;
+    width: 25px;
+    height: 25px;
+}
+
+.uav-chat-processing__dots::after {
+  content: '';
+  display: inline-block;
+  animation: dots 1.2s steps(3, end) infinite;
+}
+
+@keyframes dots {
+  0%   { content: ''; }
+  33%  { content: '.'; }
+  66%  { content: '..'; }
+  100% { content: '...'; }
+}
+
 /* Utility CSS */
 .fw-bold {
     font-weight: 700;
 }
-
 </style>

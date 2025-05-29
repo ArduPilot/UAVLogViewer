@@ -17,7 +17,7 @@
         </div>
         <div id="cesiumContainer">
             <div id="chat-interface-overlay" v-if="state.showChatInterface">
-                <ChatInterface @componentLoaded="handleChatInterfaceLoad"/>
+                <ChatInterface @componentLoaded="handleChatInterfaceLoad" @closeChat="hideChatInterface"/>
             </div>
         </div>
     </div>
@@ -547,9 +547,8 @@ export default {
                 })
             })
         },
-        displayChatInterface () {
-            const chatButton = document.getElementById('cesium-chat-button')
-            console.log(chatButton)
+        hideChatInterface () {
+            this.state.showChatInterface = false
         },
         addBathymetryButton () {
             /* Creates the bathymetry button on the Cesium toolbar */
