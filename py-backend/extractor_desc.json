@@ -1,38 +1,83 @@
 {
     "extract_attitude": {
-      "purpose": "Extracts Euler angles (roll, pitch, yaw) from ATTITUDE messages.",
-      "returns": "Dictionary mapping time_boot_ms to [roll, pitch, yaw]."
+      "purpose": "Extracts the roll, pitch, and yaw attitude angles over time from ATTITUDE messages.",
+      "returns": "Dictionary with timestamps as keys and [roll, pitch, yaw] lists as values.",
+      "use_cases": [
+        "Visualizing UAV orientation over time",
+        "Detecting instability or erratic attitude changes",
+        "Supporting flight dynamics analysis and simulation validation"
+      ]
     },
     "extract_flight_modes": {
-      "purpose": "Extracts flight mode changes using HEARTBEAT messages.",
-      "returns": "List of [time_boot_ms, flight_mode_string] when mode changes."
+      "purpose": "Identifies and tracks changes in the UAV flight modes over time from HEARTBEAT messages.",
+      "returns": "List of [timestamp, flight_mode] pairs indicating mode changes.",
+      "use_cases": [
+        "Analyzing transition patterns between flight modes",
+        "Verifying adherence to autonomous or manual flight plans",
+        "Detecting unauthorized mode switches"
+      ]
     },
     "extract_events": {
-      "purpose": "Extracts arming/disarming events from HEARTBEAT message's base_mode field.",
-      "returns": "List of [time_boot_ms, 'Armed' or 'Disarmed'] based on mode changes."
+      "purpose": "Tracks arming and disarming events of the UAV based on HEARTBEAT messages.",
+      "returns": "List of [timestamp, 'Armed' or 'Disarmed'] indicating mode transitions.",
+      "use_cases": [
+        "Identifying when the UAV was armed for flight",
+        "Correlating mission events with arming states",
+        "Security auditing of takeoff/landing events"
+      ]
     },
     "extract_mission": {
-      "purpose": "Extracts mission waypoints (lat, lon, alt) from CMD messages.",
-      "returns": "List of [lon, lat, alt] waypoints."
+      "purpose": "Extracts waypoint coordinates from CMD messages that describe the UAV's mission.",
+      "returns": "List of [longitude, latitude, altitude] for each mission waypoint.",
+      "use_cases": [
+        "Mapping planned mission trajectory",
+        "Validating mission planning tools",
+        "Comparing planned versus actual flight paths"
+      ]
     },
     "extract_vehicle_type": {
-      "purpose": "Identifies the vehicle type from HEARTBEAT.craft messages.",
-      "returns": "First defined entry in messages.HEARTBEAT.craft."
+      "purpose": "Determines the type of vehicle (e.g., quadrotor, fixed-wing) based on HEARTBEAT 'craft' fields.",
+      "returns": "String representing the UAV vehicle type or null if not found.",
+      "use_cases": [
+        "Tailoring analytics based on vehicle type",
+        "Filtering logs by UAV model",
+        "Adapting control strategies to vehicle architecture"
+      ]
     },
     "extract_trajectory_sources": {
-      "purpose": "Detects available sources for trajectory data.",
-      "returns": "List of available source keys such as GLOBAL_POSITION_INT, GPS_RAW_INT, AHRS2, AHRS3."
+      "purpose": "Identifies which trajectory-related message types are available in the dataset.",
+      "returns": "List of strings among ['GLOBAL_POSITION_INT', 'GPS_RAW_INT', 'AHRS2', 'AHRS3'].",
+      "use_cases": [
+        "Selecting best available source for trajectory extraction",
+        "Adapting preprocessing pipelines to available data",
+        "Validating sensor presence across datasets"
+      ]
     },
     "extract_trajectory": {
-      "purpose": "Extracts trajectory data (lon, lat, alt, time) from one of the supported sources.",
-      "returns": "Dictionary with source as key and values including startAltitude, trajectory (list), and timeTrajectory (dict)."
+      "purpose": "Generates normalized UAV trajectory data based on selected sensor type (e.g., GPS_RAW_INT).",
+      "returns": "Dictionary containing 'startAltitude', full trajectory list, and time-aligned trajectory keyed by timestamp.",
+      "use_cases": [
+        "Visualizing 3D flight path of UAV",
+        "Detecting anomalies like abrupt altitude drops",
+        "Calculating flight metrics such as distance and duration"
+      ]
     },
     "extract_text_messages": {
-      "purpose": "Extracts status messages from STATUSTEXT messages.",
-      "returns": "List of [time_boot_ms, severity, text]."
+      "purpose": "Extracts UAV status messages such as errors or logs from STATUSTEXT messages.",
+      "returns": "List of [timestamp, severity, message] entries.",
+      "use_cases": [
+        "Diagnosing onboard system errors",
+        "Correlating warnings with flight events",
+        "Monitoring flight health and telemetry logs"
+      ]
     },
     "extract_named_value_float_names": {
-      "purpose": "Returns unique parameter names from NAMED_VALUE_FLOAT in messages.",
-      "returns": "List of string parameter names."
+      "purpose": "Lists all available named floating-point telemetry values from NAMED_VALUE_FLOAT messages.",
+      "returns": "List of unique named float keys (e.g., 'speed', 'battery_voltage').",
+      "use_cases": [
+        "Discovering available telemetry metrics",
+        "Enabling dynamic telemetry plotting",
+        "Generating custom analytics dashboards"
+      ]
     }
-}
+  }

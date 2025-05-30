@@ -262,6 +262,7 @@ export default {
                 this.state.messages = event.data.messages
                 this.$eventHub.$emit('messages')
             } else if (event.data.messagesDoneLoading) {
+                // console.log('global position int data length', this.state.messages.GLOBAL_POSITION_INT.length)
                 console.log('loading messages', Object.keys(this.state.messages))
                 // this.saveJson(this.state.messages)
                 this.$eventHub.$emit('messagesDoneLoading')

@@ -17,6 +17,13 @@ with open("./config.json", "r") as fp:
     os.environ['OPENAI_API_BASE'] = TOGETHERAI_API_BASE
     os.environ['OPENAI_API_KEY'] = config['TOGETHER_API_KEY']
 
+FALLBACK_ERR_RESPONSE_UNABLE_HELP = "I'm sorry, I'm unable to answer your query."
+SYSTEM_RESPONSE_GLAD = "Glad to be of help."
+
+MODELS = [
+    "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8"
+]
 
 class Message(BaseModel):
     message: str
@@ -26,7 +33,7 @@ class ChatAgent:
         #self.llm = OpenAI(temperature=0.5)
 
         self.llm = ChatOpenAI(
-            model = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+            model = MODELS[0],
             temperature = 0.3
         )
         self.chat_history = []
@@ -45,6 +52,7 @@ class ChatAgent:
         return res_obj["task_summary"]
     
     def get_task_clarification(self, user_message):
+        print('chat history length: ', len(self.chat_history))
         task_clarification_prompt = get_task_clarification_prompt(user_message = user_message, context_messages = self.chat_history[-1:])
         messages = [HumanMessage(content = task_clarification_prompt)]
         res = self.llm.invoke(messages)
@@ -56,13 +64,18 @@ class ChatAgent:
             return res_obj["task_info"]
 
     def get_message_elaboration(self, user_message):
-        chat_history = self.chat_history[-21:-1]
+        chat_history = self.chat_history[-51:-1]
         query_elaboration_prompt = get_elaboration_prompt(query = user_message, chat_history = chat_history)
         messages = [HumanMessage(content = query_elaboration_prompt)]
         res = self.llm.invoke(messages)
+        print('elaboration raw response: ', res.content)
         res_obj = extract_json_text_by_key(raw_text = res.content, target_key="answer")
-        self.chat_history.append({"role": "system", "message": res_obj['answer']})
-        return res_obj['answer']
+        print("Elaboration response: ", res_obj['answer'])
+        if res_obj != None and "answer" in res_obj and res_obj["answer"] != None:
+            self.chat_history.append({"role": "system", "message": res_obj['answer']})
+            return res_obj['answer']
+        self.chat_history.append({"role": "system", "message": FALLBACK_ERR_RESPONSE_UNABLE_HELP})
+        return FALLBACK_ERR_RESPONSE_UNABLE_HELP
     
     def classify_message(self, user_message: str) -> str:
         query_classification_prompt = get_message_classification_prompt(user_message = user_message, chat_history = self.chat_history[-20:])
@@ -131,7 +144,7 @@ class ChatApp:
                         self.agent.add_to_history(role = "system", message = response)
                         return { "response": response }
                     else:
-                        return { "response": "I'm sorry, I can't help you with this query." }
+                        return { "response": FALLBACK_ERR_RESPONSE_UNABLE_HELP }
                 else:
                     return { "response": res }
             elif res == "MESSAGE_ELABORATION":
@@ -142,7 +155,7 @@ class ChatApp:
             else:
                 self.current_message_status = "TASK_END"
                 self.agent.reset_chat_history()
-                return { "response": "Glad to be of help!" }
+                return { "response": SYSTEM_RESPONSE_GLAD }
         
         @self.app.post("/chat-session-end")
         async def end_chat_session(msg: Message):

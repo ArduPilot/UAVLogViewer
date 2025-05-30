@@ -38,3 +38,37 @@ def extract_json_text_by_key(raw_text, target_key):
         except json.JSONDecodeError:
             return None
     return None
+
+def extract_json_object_array_by_keys(text, top_level_key, required_keys):
+    """
+    Extract a JSON object from the text that contains a specific top-level key
+    whose value is a list of JSON objects. Then filter this list to only include
+    objects that contain all required second-level keys.
+    
+    Parameters:
+        text (str): The raw string potentially containing JSON.
+        top_level_key (str): The expected top-level key whose value is a list of dicts.
+        required_keys (list): Keys required in each dict inside the list at top_level_key.
+    
+    Returns:
+        list: A filtered list of dicts under the given top-level key.
+    """
+    # Clean string from code block markers like ```json ... ```
+    text = re.sub(r"^```json\s*|\s*```$", "", text.strip(), flags=re.IGNORECASE)
+
+    try:
+        # Parse JSON string
+        data = json.loads(text)
+        
+        # Check for the presence of the top-level key and ensure it's a list
+        if isinstance(data, dict) and top_level_key in data and isinstance(data[top_level_key], list):
+            filtered = [
+                item for item in data[top_level_key]
+                if isinstance(item, dict) and all(k in item for k in required_keys)
+            ]
+            return filtered
+    except json.JSONDecodeError:
+        print("Error parsing JSON array from string")
+    
+    return []
+

@@ -1,0 +1,41 @@
+{
+    "trajectory": {
+    "description": "List of relative UAV positions over time for path reconstruction.",
+    "structure": [
+      "longitude (float): Longitude in degrees",
+      "latitude (float): Latitude in degrees",
+      "relative_altitude (float): Altitude relative to starting altitude, in meters",
+      "time_boot_ms (int): Timestamp in milliseconds since system boot"
+    ],
+    "notes": "Used for visualizing trajectory with altitude changes normalized to launch point."
+  },
+  "timeTrajectory": {
+    "description": "Dictionary mapping timestamps to absolute UAV positions.",
+    "structure": {
+      "time_boot_ms (int)": [
+        "longitude (float): Longitude in degrees",
+        "latitude (float): Latitude in degrees",
+        "absolute_altitude (float): Raw altitude in meters",
+        "time_boot_ms (int): Redundant timestamp"
+      ]
+    },
+    "notes": "Used for time-based lookup and correlation with other telemetry sources (e.g., attitude, events)."
+  },
+  "events": {
+    "description": "List of UAV arming state transitions over time.",
+    "structure": [
+      "time_boot_ms (int): Timestamp in milliseconds since system boot",
+      "event_state (str): Either 'Armed' or 'Disarmed' depending on the base_mode flag"
+    ],
+    "notes": "Derived from HEARTBEAT messages. Captures changes in the armed/disarmed status of the UAV. Useful for identifying mission start, end, and safety-critical transitions."
+  },
+  "text_messages": {
+    "description": "List of status text messages emitted by the UAV system.",
+    "structure": [
+      "time_boot_ms (int): Timestamp in milliseconds since system boot",
+      "severity (int): Numerical code representing importance/severity (typically 0 = emergency, 6 = info)",
+      "text (str): Human-readable system message"
+    ],
+    "notes": "Extracted from STATUSTEXT messages. Provides logs, warnings, and diagnostics directly from the flight controller. Useful for debugging, alerts, or explaining anomalies."
+  }
+}

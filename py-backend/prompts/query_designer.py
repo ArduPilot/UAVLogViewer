@@ -33,10 +33,12 @@ def get_message_classification_prompt(user_message, chat_history):
 
     ### Guidelines:
     - Analyze the lastest message and the chat history provided to response approriately for the task.
-    - If the message is a message/query that seeks to elaborate on previous messages and if previous messages seem related to the new message, return "elaboration"
-    - If the message is a query seeking completely new information, return "new_task"
+    - If the message is a message/query that seeks to elaborate on previous messages and if previous messages seem related to the new message and have
+    data/information that could respond to the latest message, return "elaboration".
+    - If the message is a query seeking completely new information, return "new_task".
     - If the message is just a simple message, acknowledging that the previous responses are satisfactory
     or if it's neither a new query nor elaboration on old messages, return "task_end"
+    - If message is just a related question to previously asked tasks/queries, treat this as "new_task" not "elaboration"
 
 
     ### Input Format:
@@ -122,7 +124,7 @@ def get_task_clarification_prompt(user_message, context_messages):
             "returns": "List of available source keys such as GLOBAL_POSITION_INT, GPS_RAW_INT, AHRS2, AHRS3."
         },
         "extract_trajectory": {
-            "purpose": "Extracts trajectory data (lon, lat, alt, time) from one of the supported sources.",
+            "purpose": "Extracts trajectory data (lon, lat, alt, time) using GPS_RAW_INT as the source.",
             "returns": "Dictionary with source as key and values including startAltitude, trajectory (list), and timeTrajectory (dict)."
         },
         "extract_text_messages": {
@@ -150,3 +152,40 @@ def get_task_clarification_prompt(user_message, context_messages):
     clarification_instruction_prompt = clarification_instruction_prompt + f"\nLatest User Message: {user_message}\nPast Message Exchanges: {context_str}"
 
     return clarification_instruction_prompt
+
+
+def get_telemetry_summarization_prompt(telemetry_data, data_info):
+    telemetry_data_str = str(telemetry_data)
+
+    telemetry_summarization_prompt = """
+    ### Task:
+    You are a telemetry data summarizer.
+    Given telemetry data and some metadata about the data, summarize the changes
+    in the telemetry data. Clearly list every change, the change observed,
+    what it implies. Also list any unusual changes and what they imply.
+
+    ### Guidelines:
+    - describe every significant change event in a JSON object format. Add "description", "implications", "changes_observed", "timestamp" (if available in the telemetry data) as keys.
+    - describe only changes where there is significant change happening. For eg: if there is a sudden ascent happening staying in level altitude.
+    - "description" and "implication" are text descriptions and "changes_observed" can be a JSON object of
+    some arbitrary structure of your choosing, to explain the changes clearly.
+    - Leave "timestamp" field as blank if the data is not available in the original telemetry data.
+    - Only sent events that you can fully send in the response string while adhering to the output token limits.
+    - Do not send incorrectly formatted json objects in the response and fully close the json object.
+
+    ### Input Format:
+    Telemetry Data: <a json array consisting of telemetry data>
+    Data Info: <a description of structure of the data point in the json array and what they signify>
+
+    ### Output Format (JSON):
+    {"data_summary": [<list of every change observed in the data, description of the change and what it implies>]}
+
+    ### Example Output (JSON):
+    {"data_summary": [{ "timestamp": 2156200, "changes_observed": { "previous_altitude_m": 120.5, "current_altitude_m": 85.3, "delta_altitude_m": -35.2 }, "description": "The UAV experienced a rapid descent of over 35 meters within a 5-second interval.", "implication": "This may indicate an emergency descent, possible loss of lift, or a commanded rapid landing. Further checks on attitude and control inputs are recommended to determine if the maneuver was planned or anomalous." }]}
+
+    ### Input for your task:
+    """
+
+    telemetry_summarization_prompt = telemetry_summarization_prompt + f"\nTelemetry Data: {telemetry_data_str}\nData Info: {data_info}"
+
+    return telemetry_summarization_prompt
