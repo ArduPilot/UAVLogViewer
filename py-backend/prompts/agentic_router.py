@@ -12,6 +12,8 @@ def get_routing_prompt(query: str) -> str:
     return_values information given below for each extractor.
     - Also refer to the possible_use_cases for the extractor to determine if data fetched from it, can be useful.
     But keep note that the use cases are not limited to the ones listed in the prompt.
+    - If trajectory data is needed, look for instruction in the query about the source to be used. If it's
+    not explicitly stated, return the extractor that uses GPS_RAW_INT as the trajectory source.
 
     
     ### Data Extractors:
@@ -70,8 +72,35 @@ def get_routing_prompt(query: str) -> str:
                 "Validating sensor presence across datasets"
             ]
         },
-        "get_trajectory": {
+        "get_trajectory_with_gps": {
             "purpose": "Generates normalized UAV trajectory data using GPS_RAW_INT as the sensor type.",
+            "return_values": "Dictionary containing 'startAltitude', full trajectory list, and time-aligned trajectory keyed by timestamp.",
+            "possible_use_cases": [
+                "Visualizing 3D flight path of UAV",
+                "Detecting anomalies like abrupt altitude drops",
+                "Calculating flight metrics such as distance and duration"
+            ]
+        },
+        "get_trajectory_with_globalposition": {
+            "purpose": "Generates normalized UAV trajectory data using GLOBAL_POSITION_INT as the sensor type.",
+            "return_values": "Dictionary containing 'startAltitude', full trajectory list, and time-aligned trajectory keyed by timestamp.",
+            "possible_use_cases": [
+                "Visualizing 3D flight path of UAV",
+                "Detecting anomalies like abrupt altitude drops",
+                "Calculating flight metrics such as distance and duration"
+            ]
+        },
+        "get_trajectory_with_ahrs2": {
+            "purpose": "Generates normalized UAV trajectory data using AHRS2 as the sensor type.",
+            "return_values": "Dictionary containing 'startAltitude', full trajectory list, and time-aligned trajectory keyed by timestamp.",
+            "possible_use_cases": [
+                "Visualizing 3D flight path of UAV",
+                "Detecting anomalies like abrupt altitude drops",
+                "Calculating flight metrics such as distance and duration"
+            ]
+        },
+        "get_trajectory_with_ahrs3": {
+            "purpose": "Generates normalized UAV trajectory data using AHRS3 as the sensor type.",
             "return_values": "Dictionary containing 'startAltitude', full trajectory list, and time-aligned trajectory keyed by timestamp.",
             "possible_use_cases": [
                 "Visualizing 3D flight path of UAV",

@@ -95,80 +95,84 @@ def extract_trajectory_sources(messages):
             sources.append(key)
     return sources
 
-def extract_trajectory(messages, source = 'GPS_RAW_INT'):
+def extract_trajectory_with_globalposition(messages):
+    ret = {}
+    trajectory = []
+    time_trajectory = {}
+    start_altitude = None
+    gps_data = messages['GLOBAL_POSITION_INT']
+
+    for i in range(len(gps_data['time_boot_ms'])):
+        if gps_data['lat'][i] != 0:
+            if start_altitude is None:
+                start_altitude = gps_data['relative_alt'][i]
+
+            trajectory.append([
+                gps_data['lon'][i],
+                gps_data['lat'][i],
+                gps_data['relative_alt'][i] - start_altitude,
+                gps_data['time_boot_ms'][i]
+            ])
+
+            time_trajectory[gps_data['time_boot_ms'][i]] = [
+                gps_data['lon'][i],
+                gps_data['lat'][i],
+                gps_data['relative_alt'][i],
+                gps_data['time_boot_ms'][i]
+            ]
+
+    if trajectory:
+        ret['GLOBAL_POSITION_INT'] = {
+            'startAltitude': start_altitude,
+            'trajectory': trajectory,
+            'timeTrajectory': time_trajectory
+        }
+    return ret
+
+def extract_trajectory_with_ahrs2(messages):
+
     ret = {}
 
-    if 'GLOBAL_POSITION_INT' in messages and source == 'GLOBAL_POSITION_INT':
-        trajectory = []
-        time_trajectory = {}
-        start_altitude = None
-        gps_data = messages['GLOBAL_POSITION_INT']
+    trajectory = []
+    time_trajectory = {}
+    start_altitude = None
+    gps_data = messages['AHRS2']
 
-        for i in range(len(gps_data['time_boot_ms'])):
-            if gps_data['lat'][i] != 0:
-                if start_altitude is None:
-                    start_altitude = gps_data['relative_alt'][i]
+    for i in range(len(gps_data['time_boot_ms'])):
+        if start_altitude is None:
+            start_altitude = gps_data['altitude'][0]
 
-                trajectory.append([
-                    gps_data['lon'][i],
-                    gps_data['lat'][i],
-                    gps_data['relative_alt'][i] - start_altitude,
-                    gps_data['time_boot_ms'][i]
-                ])
+        trajectory.append([
+            gps_data['lng'][i] * 1e-7,
+            gps_data['lat'][i] * 1e-7,
+            gps_data['altitude'][i] - start_altitude,
+            gps_data['time_boot_ms'][i]
+        ])
 
-                time_trajectory[gps_data['time_boot_ms'][i]] = [
-                    gps_data['lon'][i],
-                    gps_data['lat'][i],
-                    gps_data['relative_alt'][i],
-                    gps_data['time_boot_ms'][i]
-                ]
+        time_trajectory[gps_data['time_boot_ms'][i]] = [
+            gps_data['lng'][i] * 1e-7,
+            gps_data['lat'][i] * 1e-7,
+            gps_data['altitude'][i],
+            gps_data['time_boot_ms'][i]
+        ]
 
-        if trajectory:
-            ret['GLOBAL_POSITION_INT'] = {
-                'startAltitude': start_altitude,
-                'trajectory': trajectory,
-                'timeTrajectory': time_trajectory
-            }
+    if trajectory:
+        ret['AHRS2'] = {
+            'startAltitude': start_altitude,
+            'trajectory': trajectory,
+            'timeTrajectory': time_trajectory
+        }
+    return ret
 
-    if 'GPS_RAW_INT' in messages and source == 'GPS_RAW_INT':
-        trajectory = []
-        time_trajectory = {}
-        start_altitude = None
-        gps_data = messages['GPS_RAW_INT']
+def extract_trajectory_with_ahrs3(messages):
+    ret = {}
+    trajectory = []
+    time_trajectory = {}
+    start_altitude = None
+    gps_data = messages['AHRS3']
 
-        for i in range(len(gps_data['time_boot_ms'])):
-            if gps_data['lat'][i] != 0:
-                if start_altitude is None:
-                    start_altitude = gps_data['alt'][0] / 1000
-
-                trajectory.append([
-                    gps_data['lon'][i] * 1e-7,
-                    gps_data['lat'][i] * 1e-7,
-                    gps_data['alt'][i] / 1000 - start_altitude,
-                    gps_data['time_boot_ms'][i]
-                ])
-
-                time_trajectory[gps_data['time_boot_ms'][i]] = [
-                    gps_data['lon'][i] * 1e-7,
-                    gps_data['lat'][i] * 1e-7,
-                    gps_data['alt'][i] / 1000,
-                    gps_data['time_boot_ms'][i]
-                ]
-        #print('trajector', trajectory)
-        if trajectory:
-            ret['GPS_RAW_INT'] = {
-                'startAltitude': start_altitude,
-                'trajectory': trajectory,
-                'timeTrajectory': time_trajectory
-            }
-
-    if 'AHRS2' in messages and source == 'AHRS2':
-        trajectory = []
-        time_trajectory = {}
-        start_altitude = None
-        gps_data = messages['AHRS2']
-
-        for i in range(len(gps_data['time_boot_ms'])):
+    for i in range(len(gps_data['time_boot_ms'])):
+        if gps_data['lat'][i] != 0:
             if start_altitude is None:
                 start_altitude = gps_data['altitude'][0]
 
@@ -186,44 +190,50 @@ def extract_trajectory(messages, source = 'GPS_RAW_INT'):
                 gps_data['time_boot_ms'][i]
             ]
 
-        if trajectory:
-            ret['AHRS2'] = {
-                'startAltitude': start_altitude,
-                'trajectory': trajectory,
-                'timeTrajectory': time_trajectory
-            }
+    if trajectory:
+        ret['AHRS3'] = {
+            'startAltitude': start_altitude,
+            'trajectory': trajectory,
+            'timeTrajectory': time_trajectory
+        }
 
-    if 'AHRS3' in messages and source == 'AHRS3':
-        trajectory = []
-        time_trajectory = {}
-        start_altitude = None
-        gps_data = messages['AHRS3']
+    return ret
 
-        for i in range(len(gps_data['time_boot_ms'])):
-            if gps_data['lat'][i] != 0:
-                if start_altitude is None:
-                    start_altitude = gps_data['altitude'][0]
 
-                trajectory.append([
-                    gps_data['lng'][i] * 1e-7,
-                    gps_data['lat'][i] * 1e-7,
-                    gps_data['altitude'][i] - start_altitude,
-                    gps_data['time_boot_ms'][i]
-                ])
 
-                time_trajectory[gps_data['time_boot_ms'][i]] = [
-                    gps_data['lng'][i] * 1e-7,
-                    gps_data['lat'][i] * 1e-7,
-                    gps_data['altitude'][i],
-                    gps_data['time_boot_ms'][i]
-                ]
+def extract_trajectory_with_gps(messages):
+    ret = {}
 
-        if trajectory:
-            ret['AHRS3'] = {
-                'startAltitude': start_altitude,
-                'trajectory': trajectory,
-                'timeTrajectory': time_trajectory
-            }
+    trajectory = []
+    time_trajectory = {}
+    start_altitude = None
+    gps_data = messages['GPS_RAW_INT']
+
+    for i in range(len(gps_data['time_boot_ms'])):
+        if gps_data['lat'][i] != 0:
+            if start_altitude is None:
+                start_altitude = gps_data['alt'][0] / 1000
+
+            trajectory.append([
+                gps_data['lon'][i] * 1e-7,
+                gps_data['lat'][i] * 1e-7,
+                gps_data['alt'][i] / 1000 - start_altitude,
+                gps_data['time_boot_ms'][i]
+            ])
+
+            time_trajectory[gps_data['time_boot_ms'][i]] = [
+                gps_data['lon'][i] * 1e-7,
+                gps_data['lat'][i] * 1e-7,
+                gps_data['alt'][i] / 1000,
+                gps_data['time_boot_ms'][i]
+            ]
+    #print('trajector', trajectory)
+    if trajectory:
+        ret['GPS_RAW_INT'] = {
+            'startAltitude': start_altitude,
+            'trajectory': trajectory,
+            'timeTrajectory': time_trajectory
+        }
 
     return ret
 
@@ -233,6 +243,7 @@ def extract_text_messages(messages):
         text_msgs = messages['STATUSTEXT']
         for i in range(len(text_msgs['time_boot_ms'])):
             texts.append([text_msgs['time_boot_ms'][i], text_msgs['severity'][i], text_msgs['text'][i]])
+    print('unique severity values: ', set(text_msgs['severity']))
     return texts
 
 

@@ -11,7 +11,10 @@ from utils.extractors import (
     extract_mission,
     extract_vehicle_type,
     extract_attitude,
-    extract_trajectory,
+    extract_trajectory_with_gps,
+    extract_trajectory_with_ahrs3,
+    extract_trajectory_with_ahrs2,
+    extract_trajectory_with_globalposition,
     extract_trajectory_sources,
     extract_text_messages,
     extract_named_value_float_names
@@ -21,7 +24,7 @@ from prompts.agentic_router import get_routing_prompt
 from utils.string_utils import extract_json_text_by_key, extract_array_from_response
 from telemetry_summarizer import TelemetrySummarizer
 
-ALL_STEPS = ["get_flight_modes", "get_events", "get_mission", "get_vehicle_type", "get_trajectory_sources", "get_trajectory", "get_attitudes", "get_text_messages"]
+ALL_STEPS = ["get_flight_modes", "get_events", "get_mission", "get_vehicle_type", "get_trajectory_sources", "get_trajectory_with_gps", "get_trajectory_with_globalposition", "get_trajectory_with_ahrs2", "get_trajectory_with_ahrs3", "get_attitudes", "get_text_messages"]
 
 TRAJECTORY_DATA_DESC = """
 {
@@ -56,6 +59,20 @@ TEXT_MSG_DATA_DESC = """
 }
 """
 
+ATTITUDES_DATA_DESC = """
+{
+    "description": "Dictionary of UAV attitude readings over time, keyed by timestamp.",
+    "structure": {
+        "timestamp (int)": "[roll (float), pitch (float), yaw (float)] — Attitude angles in radians recorded at the given timestamp. Each value represents rotation around a principal axis:"
+    },
+    "value_details": [
+        "roll: Rotation around the X-axis (positive = right wing down)",
+        "pitch: Rotation around the Y-axis (positive = nose up)",
+        "yaw: Rotation around the Z-axis (positive = clockwise from North)"
+    ]
+}
+"""
+
 class UAVState(TypedDict):
     raw_messages: Dict[str, Any]
     query: str
@@ -72,7 +89,10 @@ class UAVState(TypedDict):
     completed_get_mission: bool
     completed_get_vehicle_type: bool
     completed_get_trajectory_sources: bool
-    completed_get_trajectory: bool
+    completed_get_trajectory_with_gps: bool
+    completed_get_trajectory_with_globalposition: bool
+    completed_get_trajectory_with_ahrs2: bool
+    completed_get_trajectory_with_ahrs3: bool
     completed_get_text_messages: bool
     completed_get_attitudes: bool
     completed_summarize_answer: bool
@@ -98,17 +118,32 @@ def get_trajectory_sources(state: UAVState) -> UAVState:
 def get_attitudes(state: UAVState) -> UAVState:
     return { "attitudes": extract_attitude(state["raw_messages"]), "completed_get_attitudes": True }
 
-def get_trajectory(state: UAVState) -> UAVState:
-    res = extract_trajectory(state["raw_messages"])
+def get_trajectory_with_gps(state: UAVState) -> UAVState:
+    res = extract_trajectory_with_gps(state["raw_messages"])
     print('trajectory response: ', len(res["GPS_RAW_INT"]["trajectory"]))
-    return { "trajectory": res['GPS_RAW_INT'], "completed_get_trajectory": True }
+    return { "trajectory": res['GPS_RAW_INT'], "completed_get_trajectory_with_gps": True }
+
+def get_trajectory_with_globalposition(state: UAVState) -> UAVState:
+    res = extract_trajectory_with_globalposition(state["raw_messages"])
+    print('trajectory response: ', len(res["GLOBAL_POSITION_INT"]["trajectory"]))
+    return { "trajectory": res['GLOBAL_POSITION_INT'], "completed_get_trajectory_with_globalposition": True }
+
+def get_trajectory_with_ahrs2(state: UAVState) -> UAVState:
+    res = extract_trajectory_with_ahrs2(state["raw_messages"])
+    print('trajectory response: ', len(res["AHRS2"]["trajectory"]))
+    return { "trajectory": res['AHRS2'], "completed_get_trajectory_with_ahrs2": True }
+
+def get_trajectory_with_ahrs3(state: UAVState) -> UAVState:
+    res = extract_trajectory_with_ahrs3(state["raw_messages"])
+    print('trajectory response: ', len(res["AHRS3"]["trajectory"]))
+    return { "trajectory": res['AHRS3'], "completed_get_trajectory_with_ahrs3": True }
 
 def get_text_messages(state: UAVState) -> UAVState:
     return { "text_messages": extract_text_messages(state["raw_messages"]), "completed_get_text_messages": True }
 
-def summarize_data(telemetry_data, data_info) -> Dict[str, Any]:
+def summarize_data(telemetry_data, data_info, user_message) -> Dict[str, Any]:
     telmetry_summarizer = TelemetrySummarizer()
-    res = telmetry_summarizer.summarize_telemetry(telemetry_data=telemetry_data, data_info=data_info)
+    res = telmetry_summarizer.summarize_telemetry(telemetry_data=telemetry_data, data_info=data_info, user_message = user_message)
     print('data summary: ', res)
     return res
 
@@ -121,7 +156,7 @@ def get_necessary_context(state: UAVState) -> Dict[str, Any]:
         elif step == "get_events":
             events = state.get("events", [])
             if events!= []:
-                events_summary = summarize_data(telemetry_data=events, data_info = EVENT_DATA_DESC)
+                events_summary = summarize_data(telemetry_data=events, data_info = EVENT_DATA_DESC, user_message = state["query"])
                 context_data = context_data | { "events": events_summary }
             else:
                 context_data = context_data | { "events": state.get("events", []) }
@@ -131,21 +166,47 @@ def get_necessary_context(state: UAVState) -> Dict[str, Any]:
             context_data = context_data | { "vehicle_type": state.get("vehicle_type", "") }
         elif step == "get_trajectory_sources":
             context_data = context_data | { "trajectory_sources": state.get("trajectory_sources", []) }
-        elif step == "get_trajectory":
-            print('inside get trajectory context')
+        elif step == "get_trajectory_with_gps":
             trajectory = state.get("trajectory", {})
             if trajectory != {}:
-                trajectory_summary = summarize_data(telemetry_data=trajectory['trajectory'], data_info = TRAJECTORY_DATA_DESC)
-                print('trajectory summary: ', trajectory_summary)
+                trajectory_summary = summarize_data(telemetry_data=trajectory['trajectory'], data_info = TRAJECTORY_DATA_DESC, user_message=state["query"])
+                context_data = context_data | { "trajectory": trajectory_summary }
+            else:
+                context_data = context_data | { "trajectory": trajectory }
+        elif step == "get_trajectory_with_globalposition":
+            trajectory = state.get("trajectory", {})
+            if trajectory != {}:
+                trajectory_summary = summarize_data(telemetry_data=trajectory['trajectory'], data_info = TRAJECTORY_DATA_DESC, user_message=state["query"])
+                context_data = context_data | { "trajectory": trajectory_summary }
+            else:
+                context_data = context_data | { "trajectory": trajectory }
+        elif step == "get_trajectory_with_ahrs2":
+            trajectory = state.get("trajectory", {})
+            if trajectory != {}:
+                trajectory_summary = summarize_data(telemetry_data=trajectory['trajectory'], data_info = TRAJECTORY_DATA_DESC, user_message=state["query"])
+                #print('trajectory summary: ', trajectory_summary)
+                context_data = context_data | { "trajectory": trajectory_summary }
+            else:
+                context_data = context_data | { "trajectory": trajectory }
+        elif step == "get_trajectory_with_ahrs3":
+            trajectory = state.get("trajectory", {})
+            if trajectory != {}:
+                trajectory_summary = summarize_data(telemetry_data=trajectory['trajectory'], data_info = TRAJECTORY_DATA_DESC, user_message=state["query"])
+                #print('trajectory summary: ', trajectory_summary)
                 context_data = context_data | { "trajectory": trajectory_summary }
             else:
                 context_data = context_data | { "trajectory": trajectory }
         elif step == "get_attitudes":
-            context_data = context_data | { "attitudes": state.get("attitudes", {}) }
+            attitudes = state.get("attitudes", {})
+            if attitudes != {}:
+                attitudes_summary = summarize_data(telemetry_data=attitudes, data_info = ATTITUDES_DATA_DESC, user_message=state["query"])
+                context_data = context_data | { "attitudes": attitudes_summary }
+            else:
+                context_data = context_data | { "attitudes": state.get("attitudes", {}) }
         elif step == "get_text_messages":
             text_messages = state.get("text_messages", [])
             if text_messages != []:
-                text_messages_summary = summarize_data(telemetry_data=text_messages, data_info = TEXT_MSG_DATA_DESC)
+                text_messages_summary = summarize_data(telemetry_data=text_messages, data_info = TEXT_MSG_DATA_DESC, user_message=state["query"])
                 context_data = context_data | { "text_messages": text_messages_summary }
             else:
                 context_data = context_data | { "text_messages": state.get("text_messages", []) }
@@ -157,11 +218,10 @@ def answer_summarizer(state: UAVState) -> UAVState:
     context_data = get_necessary_context(state)
     prompt = get_final_answer_prompt(context_data, state['query'])
     input = HumanMessage(content = prompt)
-    print(input)
     res = state["llm"].invoke([input])
     response_obj = extract_json_text_by_key(res.content, "answer")
     print("\nFINAL ANSWER: ", response_obj)
-    if response_obj['answer'] == 'INSUFFICIENT DATA':
+    if (response_obj == None) or (response_obj != None and "answer" in response_obj and response_obj['answer'] == 'INSUFFICIENT DATA'):
         return { "output": "Sorry, I have insufficient or no data to answer this query." }
     return { "output": response_obj['answer'] }
 
@@ -214,7 +274,10 @@ class UAVGraph:
         graph_builder.add_node("get_vehicle_type", get_vehicle_type)
         graph_builder.add_node("get_attitudes", get_attitudes)
         graph_builder.add_node("get_trajectory_sources", get_trajectory_sources)
-        graph_builder.add_node("get_trajectory", get_trajectory)
+        graph_builder.add_node("get_trajectory_with_gps", get_trajectory_with_gps)
+        graph_builder.add_node("get_trajectory_with_globalposition", get_trajectory_with_globalposition)
+        graph_builder.add_node("get_trajectory_with_ahrs2", get_trajectory_with_ahrs2)
+        graph_builder.add_node("get_trajectory_with_ahrs3", get_trajectory_with_ahrs3)
         graph_builder.add_node("get_text_messages", get_text_messages)
 
         graph_builder.add_node("summarize_answer", answer_summarizer)
@@ -227,7 +290,10 @@ class UAVGraph:
             "get_vehicle_type": "get_vehicle_type",
             "get_attitudes": "get_attitudes",
             "get_trajectory_sources": "get_trajectory_sources",
-            "get_trajectory": "get_trajectory",
+            "get_trajectory_with_gps": "get_trajectory_with_gps",
+            "get_trajectory_with_globalposition": "get_trajectory_with_globalposition",
+            "get_trajectory_with_ahrs2": "get_trajectory_with_ahrs2",
+            "get_trajectory_with_ahrs3": "get_trajectory_with_ahrs3",
             "get_text_messages": "get_text_messages",
             "summarize_answer": "summarize_answer",
             "no_plan": "summarize_answer"
@@ -241,7 +307,10 @@ class UAVGraph:
         graph_builder.add_conditional_edges("get_vehicle_type", step_selector)
         graph_builder.add_conditional_edges("get_attitudes", step_selector)
         graph_builder.add_conditional_edges("get_trajectory_sources", step_selector)
-        graph_builder.add_conditional_edges("get_trajectory", step_selector)
+        graph_builder.add_conditional_edges("get_trajectory_with_gps", step_selector)
+        graph_builder.add_conditional_edges("get_trajectory_with_globalposition", step_selector)
+        graph_builder.add_conditional_edges("get_trajectory_with_ahrs2", step_selector)
+        graph_builder.add_conditional_edges("get_trajectory_with_ahrs3", step_selector)
         graph_builder.add_conditional_edges("get_text_messages", step_selector)
         graph_builder.set_finish_point("summarize_answer")
 

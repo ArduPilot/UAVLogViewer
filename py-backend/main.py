@@ -70,8 +70,8 @@ class ChatAgent:
         res = self.llm.invoke(messages)
         print('elaboration raw response: ', res.content)
         res_obj = extract_json_text_by_key(raw_text = res.content, target_key="answer")
-        print("Elaboration response: ", res_obj['answer'])
         if res_obj != None and "answer" in res_obj and res_obj["answer"] != None:
+            print("Elaboration response: ", res_obj['answer'])
             self.chat_history.append({"role": "system", "message": res_obj['answer']})
             return res_obj['answer']
         self.chat_history.append({"role": "system", "message": FALLBACK_ERR_RESPONSE_UNABLE_HELP})
@@ -90,9 +90,10 @@ class ChatAgent:
         elif res_obj['task_class'] == 'new_task':
             self.chat_history = []
             return 'EXECUTE_NEW_TASK'
-        elif res_obj['task_class'] == 'task_end':
-            self.chat_history = []
-            return 'TASK_END'
+        elif res_obj['task_class'] == 'task_clarification':
+            return 'TASK_CLARIFICATION'
+        elif res_obj['task_class'] == 'redo_task':
+            return 'REDO_TASK'
         return 'MESSAGE_ELABORATION'
     
     def reset_chat_history(self):
@@ -110,6 +111,7 @@ class ChatApp:
         self.knowledge_base = {}
         self.knowledge_base_info = {}
         self.current_message_status = "INIT"
+        self.current_task_summary = ""
         self.configure_cors()
         self.register_routes()
         
@@ -132,13 +134,17 @@ class ChatApp:
         @self.app.post("/chat")
         async def chat_endpoint(msg: Message):
             res = self.agent.classify_message(user_message = msg.message)
-            if self.current_message_status == "NEW_TASK_CLARIFICATION"  or (self.current_message_status != 'NEW_TASK_CLARIFICATION' and res == 'EXECUTE_NEW_TASK'):
+            if self.current_message_status != "NEW_TASK_CLARIFICATION" and res == "EXECUTE_NEW_TASK":
+                self.agent.reset_chat_history()
+                self.current_task_summary = ''
+            if res == 'EXECUTE_NEW_TASK' or res == 'TASK_CLARIFICATION':
                 self.current_message_status = "NEW_TASK_CLARIFICATION"
                 self.agent.add_to_history(role = "user", message = msg.message)
                 res = self.agent.get_task_clarification(user_message = msg.message)
                 if res == 'TASK_CLEAR':
-                    task_summary = self.agent.get_task_summary()
-                    response = self.uav_graph.invoke(query = task_summary, raw_messages = self.knowledge_base)
+                    self.current_task_summary = self.agent.get_task_summary()
+                    print('\nFinal user task summary: ', self.current_task_summary)
+                    response = self.uav_graph.invoke(query = self.current_task_summary, raw_messages = self.knowledge_base)
                     if response != "" or response != None:
                         self.current_message_status = "TASK_RESPONSE_COMPLETED"
                         self.agent.add_to_history(role = "system", message = response)
@@ -147,14 +153,22 @@ class ChatApp:
                         return { "response": FALLBACK_ERR_RESPONSE_UNABLE_HELP }
                 else:
                     return { "response": res }
+            elif res == 'REDO_TASK':
+                self.agent.add_to_history(role = "user", message = msg.message)
+                self.current_message_status = 'REDO_TASK'
+                response = self.uav_graph.invoke(query = self.current_task_summary, raw_messages = self.knowledge_base)
+                if response != "" or response != None:
+                    self.current_message_status = "TASK_RESPONSE_COMPLETED"
+                    self.agent.add_to_history(role = "system", message = response)
+                    return { "response": response }
+                else:
+                    return { "response": FALLBACK_ERR_RESPONSE_UNABLE_HELP }
             elif res == "MESSAGE_ELABORATION":
                 self.agent.add_to_history(role = "user", message = msg.message)
                 self.current_message_status = "MESSAGE_ELABORATION"
                 res = self.agent.get_message_elaboration(user_message = msg.message)
                 return { "response": res }
             else:
-                self.current_message_status = "TASK_END"
-                self.agent.reset_chat_history()
                 return { "response": SYSTEM_RESPONSE_GLAD }
         
         @self.app.post("/chat-session-end")

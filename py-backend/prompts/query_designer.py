@@ -33,13 +33,13 @@ def get_message_classification_prompt(user_message, chat_history):
 
     ### Guidelines:
     - Analyze the lastest message and the chat history provided to response approriately for the task.
-    - If the message is a message/query that seeks to elaborate on previous messages and if previous messages seem related to the new message and have
-    data/information that could respond to the latest message, return "elaboration".
     - If the message is a query seeking completely new information, return "new_task".
-    - If the message is just a simple message, acknowledging that the previous responses are satisfactory
-    or if it's neither a new query nor elaboration on old messages, return "task_end"
+    - If the message is a giving more detailed instruction for the a query/task previously answered by the system, return "new_task"
+    - If the message is asking to redo the previously defined task, return "redo_task".
+    - If the message is giving more details for task/query that was asked in previous messages return "task_clarification"
+    - If the message is a message/query that seeks to elaborate on previous answers to the task sent by the system and if previous messages seem related to the new message and have
+    data/information that could respond to the latest message, return "elaboration".
     - If message is just a related question to previously asked tasks/queries, treat this as "new_task" not "elaboration"
-
 
     ### Input Format:
     Latest User Message: <message text>
@@ -47,7 +47,7 @@ def get_message_classification_prompt(user_message, chat_history):
 
     ### Output Format (JSON):
     {
-        "task_class": <"elaboration" or "new_task" or "task_end">
+        "task_class": <"elaboration" or "new_task" or "redo_task" or "task_clarification">
     }
 
     ### Input for your task:
@@ -95,7 +95,8 @@ def get_task_clarification_prompt(user_message, context_messages):
     if the task described by the user is clear and if there is enough information to determine
     which data extractors to use to execute the user task. If there is ambiguity in user task 
     or a detail missing, ask for clarification on the detail. If the task is clear, gives enough
-    information to determine the next step, return "TASK_CLEAR"
+    information to determine the next step, return "TASK_CLEAR".
+    If extraction of trajectory data is needed, ask the user the source to be used.
 
     ### Data Extractors:
     {
@@ -123,13 +124,21 @@ def get_task_clarification_prompt(user_message, context_messages):
             "purpose": "Detects available sources for trajectory data.",
             "returns": "List of available source keys such as GLOBAL_POSITION_INT, GPS_RAW_INT, AHRS2, AHRS3."
         },
-        "extract_trajectory": {
+        "extract_trajectory_with_gps": {
             "purpose": "Extracts trajectory data (lon, lat, alt, time) using GPS_RAW_INT as the source.",
             "returns": "Dictionary with source as key and values including startAltitude, trajectory (list), and timeTrajectory (dict)."
         },
-        "extract_text_messages": {
-            "purpose": "Extracts status messages from STATUSTEXT messages.",
-            "returns": "List of [time_boot_ms, severity, text]."
+        "extract_trajectory_with_globalposition": {
+            "purpose": "Extracts trajectory data (lon, lat, alt, time) using GLOBAL_POSITION_INT as the source.",
+            "returns": "Dictionary with source as key and values including startAltitude, trajectory (list), and timeTrajectory (dict)."
+        },
+        "extract_trajectory_with_ahrs2": {
+            "purpose": "Extracts trajectory data (lon, lat, alt, time) using AHRS2 as the source.",
+            "returns": "Dictionary with source as key and values including startAltitude, trajectory (list), and timeTrajectory (dict)."
+        },
+        "extract_trajectory_with_ahrs3": {
+            "purpose": "Extracts trajectory data (lon, lat, alt, time) using AHRS3 as the source.",
+            "returns": "Dictionary with source as key and values including startAltitude, trajectory (list), and timeTrajectory (dict)."
         },
         "extract_named_value_float_names": {
             "purpose": "Returns unique parameter names from NAMED_VALUE_FLOAT in messages.",
@@ -154,27 +163,28 @@ def get_task_clarification_prompt(user_message, context_messages):
     return clarification_instruction_prompt
 
 
-def get_telemetry_summarization_prompt(telemetry_data, data_info):
+def get_telemetry_summarization_prompt(telemetry_data, data_info, user_message):
     telemetry_data_str = str(telemetry_data)
 
     telemetry_summarization_prompt = """
     ### Task:
     You are a telemetry data summarizer.
-    Given telemetry data and some metadata about the data, summarize the changes
-    in the telemetry data. Clearly list every change, the change observed,
-    what it implies. Also list any unusual changes and what they imply.
-
+    Given telemetry data, instruction by user and some metadata about the data, summarize the changes
+    in the telemetry data. Clearly describe the change that happens and what it implies.
+    Also list any unusual changes and what they imply.
+    
     ### Guidelines:
-    - describe every significant change event in a JSON object format. Add "description", "implications", "changes_observed", "timestamp" (if available in the telemetry data) as keys.
-    - describe only changes where there is significant change happening. For eg: if there is a sudden ascent happening staying in level altitude.
+    - Use the user message as primary guideline to look for specific changes, asked for in the user message.
+    - describe change event that are related to the change events, user asked for in the message.
+    - List the change event in a JSON object format. Add "description", "implications", "changes_observed", "timestamp" (if available in the telemetry data) as keys.
     - "description" and "implication" are text descriptions and "changes_observed" can be a JSON object of
     some arbitrary structure of your choosing, to explain the changes clearly.
     - Leave "timestamp" field as blank if the data is not available in the original telemetry data.
-    - Only sent events that you can fully send in the response string while adhering to the output token limits.
-    - Do not send incorrectly formatted json objects in the response and fully close the json object.
+    - Send only as many events as you can send while adhering to the output token limits of 8192.
 
     ### Input Format:
     Telemetry Data: <a json array consisting of telemetry data>
+    User Instruction: <a text describing what the change might look like in the data>
     Data Info: <a description of structure of the data point in the json array and what they signify>
 
     ### Output Format (JSON):
@@ -186,6 +196,6 @@ def get_telemetry_summarization_prompt(telemetry_data, data_info):
     ### Input for your task:
     """
 
-    telemetry_summarization_prompt = telemetry_summarization_prompt + f"\nTelemetry Data: {telemetry_data_str}\nData Info: {data_info}"
+    telemetry_summarization_prompt = telemetry_summarization_prompt + f"\nTelemetry Data: {telemetry_data_str}\nUser Instruction: {user_message}\nData Info: {data_info}"
 
     return telemetry_summarization_prompt

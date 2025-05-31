@@ -12,13 +12,13 @@ class TelemetrySummarizer:
             cfg = json.load(fp)
         self.client = genai.Client(api_key=cfg["GOOGLE_API_KEY"])
 
-    def summarize_telemetry(self, telemetry_data, data_info):
-        telemetry_summarization_prompt = get_telemetry_summarization_prompt(telemetry_data=telemetry_data, data_info=data_info)
+    def summarize_telemetry(self, telemetry_data, data_info, user_message):
+        telemetry_summarization_prompt = get_telemetry_summarization_prompt(telemetry_data=telemetry_data, data_info=data_info, user_message = user_message)
         response = self.client.models.generate_content(
             model = "gemini-2.0-flash",
             contents = telemetry_summarization_prompt
         )
-        print('gemini response: ', response.text)
+        #print('gemini response: ', response.text)
         response_obj = extract_json_object_array_by_keys(text=response.text, top_level_key="data_summary", required_keys=['description', 'implication', 'timestamp', 'changes_observed'])
         return response_obj
 

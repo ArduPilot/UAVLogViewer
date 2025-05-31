@@ -28,7 +28,7 @@
         </div>
         <form @submit.prevent="sendMessage" class="uav-chat-input">
             <input v-model="userInput" placeholder="Ask a question..." />
-            <button class="uav-chat-btn" type="submit">Send</button>
+            <button :disabled="isThinking" class="uav-chat-btn" type="submit">Send</button>
         </form>
     </div>
 </template>
@@ -196,6 +196,10 @@ export default {
     color: white;
     font-weight: 700;
     border: none;
+}
+
+.uav-chat-btn:disabled {
+    background: #5b5a59;
 }
 
 .uav-chat-processing {

@@ -28,6 +28,8 @@ def extract_json_text_by_key(raw_text, target_key):
     Searches raw text for a JSON object that contains a specific key
     and returns it as a Python dictionary. Returns None if not found.
     """
+    # Clean string from code block markers like ```json ... ```
+    raw_text = re.sub(r"^```json\s*|\s*```$", "", raw_text.strip(), flags=re.IGNORECASE)
     # Match any JSON object containing the key: { "target_key": "some_value" }
     pattern = rf'\{{[^{{}}]*"{re.escape(target_key)}"\s*:\s*"[^"{{}}]*"[^{{}}]*\}}'
 
