@@ -30,7 +30,6 @@ class Message(BaseModel):
 
 class ChatAgent:
     def __init__(self):
-        #self.llm = OpenAI(temperature=0.5)
 
         self.llm = ChatOpenAI(
             model = MODELS[0],

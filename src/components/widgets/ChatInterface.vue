@@ -43,7 +43,7 @@ export default {
         return {
             state: store,
             dataExtractors: null,
-            chatMessages: [{ sender: 'bot', text: 'Hi! How can I help you?.' }],
+            chatMessages: [{ sender: 'bot', text: 'Hi! How can I help you?' }],
             userInput: '',
             isThinking: false
         }

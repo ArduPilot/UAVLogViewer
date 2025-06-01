@@ -20,19 +20,48 @@ VALIDGCS = {
 
 
 def extract_attitude(messages):
-        attitudes = {}
-        if 'ATTITUDE' in messages:
-            attitude_msgs = messages['ATTITUDE']
-            for i in range(len(attitude_msgs['time_boot_ms'])):
-                timestamp = int(attitude_msgs['time_boot_ms'][i])
-                attitudes[timestamp] = [
-                    attitude_msgs['roll'][i],
-                    attitude_msgs['pitch'][i],
-                    attitude_msgs['yaw'][i]
-                ]
-        return attitudes
+    """
+    Extracts the roll, pitch, and yaw attitude angles over time from ATTITUDE messages.
+
+    Parameters
+    ----------
+    messages : dict
+        A dictionary of MAVLink messages keyed by message name.
+
+    Returns
+    -------
+    dict
+        A dictionary with timestamps as keys and lists of [roll, pitch, yaw] as values,
+        representing the attitude angles in radians recorded at each timestamp.
+    """
+
+    attitudes = {}
+    if 'ATTITUDE' in messages:
+        attitude_msgs = messages['ATTITUDE']
+        for i in range(len(attitude_msgs['time_boot_ms'])):
+            timestamp = int(attitude_msgs['time_boot_ms'][i])
+            attitudes[timestamp] = [
+                attitude_msgs['roll'][i],
+                attitude_msgs['pitch'][i],
+                attitude_msgs['yaw'][i]
+            ]
+    return attitudes
 
 def extract_flight_modes(messages):
+    """
+    Extract flight modes from a message dict.
+
+    Parameters
+    ----------
+    messages : dict
+        A dictionary of mavlink messages keyed by message name.
+
+    Returns
+    -------
+    list
+        A list of tuples, where each tuple contains a timestamp and a corresponding flight mode.
+        The flight mode is represented as a string, and will be 'Unknown' if the mode is not recognized.
+    """
     modes = []
     if 'HEARTBEAT' in messages:
         msgs = messages['HEARTBEAT']
@@ -45,6 +74,22 @@ def extract_flight_modes(messages):
     return modes
 
 def extract_events(messages):
+    """
+    Tracks the arming and disarming events of the UAV based on HEARTBEAT messages.
+
+    Parameters
+    ----------
+    messages : dict
+        A dictionary of MAVLink messages keyed by message name.
+
+    Returns
+    -------
+    list
+        A list of tuples, where each tuple contains a timestamp and a string indicating
+        the event state ('Armed' or 'Disarmed'). The list captures transitions between
+        the armed and disarmed states over time.
+    """
+
     armed_state = []
     if 'HEARTBEAT' in messages:
         msgs = messages['HEARTBEAT']
@@ -58,6 +103,19 @@ def extract_events(messages):
     return armed_state
 
 def extract_mission(messages):
+    """
+    Extracts the waypoint coordinates from CMD messages that describe the UAV's mission.
+
+    Parameters
+    ----------
+    messages : dict
+        A dictionary of MAVLink messages keyed by message name.
+
+    Returns
+    -------
+    list
+        A list of [longitude, latitude, altitude] for each mission waypoint.
+    """
     wps = []
     if 'CMD' in messages:
         cmd_msgs = messages['CMD']
@@ -72,6 +130,20 @@ def extract_mission(messages):
     return wps
 
 def extract_vehicle_type(messages):
+    """
+    Determines the type of vehicle based on HEARTBEAT 'craft' fields.
+
+    Parameters
+    ----------
+    messages : dict
+        A dictionary of MAVLink messages keyed by message name.
+
+    Returns
+    -------
+    str or None
+        A string representing the UAV vehicle type if found, otherwise None.
+    """
+
     if 'HEARTBEAT' in messages:
         heartbeat = messages['HEARTBEAT']
         if 'craft' in heartbeat:
@@ -80,15 +152,20 @@ def extract_vehicle_type(messages):
                     return value
     return None
 
-'''
-def extract_attitude_sources(messages):
-    return {
-        "quaternions": [],
-        "eulers": ["ATTITUDE"]
-    }
-'''
-
 def extract_trajectory_sources(messages):
+    """
+    Identifies which trajectory-related message types are available in the dataset.
+
+    Parameters
+    ----------
+    messages : dict
+        A dictionary of MAVLink messages keyed by message name.
+
+    Returns
+    -------
+    list
+        A list of strings among ['GLOBAL_POSITION_INT', 'GPS_RAW_INT', 'AHRS2', 'AHRS3'].
+    """
     sources = []
     for key in ['GLOBAL_POSITION_INT', 'GPS_RAW_INT', 'AHRS2', 'AHRS3']:
         if key in messages:
@@ -96,6 +173,19 @@ def extract_trajectory_sources(messages):
     return sources
 
 def extract_trajectory_with_globalposition(messages):
+    """
+    Extracts normalized UAV trajectory data from GLOBAL_POSITION_INT messages.
+
+    Parameters
+    ----------
+    messages : dict
+        A dictionary of MAVLink messages keyed by message name.
+
+    Returns
+    -------
+    dict
+        A dictionary containing 'startAltitude', full trajectory list, and time-aligned trajectory keyed by timestamp.
+    """
     ret = {}
     trajectory = []
     time_trajectory = {}
@@ -131,6 +221,23 @@ def extract_trajectory_with_globalposition(messages):
 
 def extract_trajectory_with_ahrs2(messages):
 
+    """
+    Extracts and normalizes the UAV trajectory data using AHRS2 sensor messages.
+
+    Parameters
+    ----------
+    messages : dict
+        Dictionary containing AHRS2 message data, with keys such as 'time_boot_ms', 'lat', 'lng', 'altitude'.
+
+    Returns
+    -------
+    dict
+        A dictionary with a key 'AHRS2' containing:
+        - 'startAltitude': Initial altitude derived from the first non-zero latitude entry.
+        - 'trajectory': List of [longitude, latitude, relative_altitude, time_boot_ms] for each valid entry.
+        - 'timeTrajectory': Dictionary mapping each timestamp to [longitude, latitude, absolute_altitude, time_boot_ms].
+    """
+
     ret = {}
 
     trajectory = []
@@ -165,6 +272,22 @@ def extract_trajectory_with_ahrs2(messages):
     return ret
 
 def extract_trajectory_with_ahrs3(messages):
+    """
+    Extracts and normalizes the UAV trajectory data using AHRS3 sensor messages.
+
+    Parameters
+    ----------
+    messages : dict
+        Dictionary containing AHRS3 message data, with keys such as 'time_boot_ms', 'lat', 'lng', 'altitude'.
+
+    Returns
+    -------
+    dict
+        A dictionary with a key 'AHRS3' containing:
+        - 'startAltitude': Initial altitude derived from the first non-zero latitude entry.
+        - 'trajectory': List of [longitude, latitude, relative_altitude, time_boot_ms] for each valid entry.
+        - 'timeTrajectory': Dictionary mapping each timestamp to [longitude, latitude, absolute_altitude, time_boot_ms].
+    """
     ret = {}
     trajectory = []
     time_trajectory = {}
@@ -202,6 +325,22 @@ def extract_trajectory_with_ahrs3(messages):
 
 
 def extract_trajectory_with_gps(messages):
+    """
+    Extracts and normalizes the UAV trajectory data using GPS_RAW_INT sensor messages.
+
+    Parameters
+    ----------
+    messages : dict
+        Dictionary containing GPS_RAW_INT message data, with keys such as 'time_boot_ms', 'lat', 'lng', 'alt'.
+
+    Returns
+    -------
+    dict
+        A dictionary with a key 'GPS_RAW_INT' containing:
+        - 'startAltitude': Initial altitude derived from the first non-zero latitude entry.
+        - 'trajectory': List of [longitude, latitude, relative_altitude, time_boot_ms] for each valid entry.
+        - 'timeTrajectory': Dictionary mapping each timestamp to [longitude, latitude, absolute_altitude, time_boot_ms].
+    """
     ret = {}
 
     trajectory = []
@@ -238,6 +377,23 @@ def extract_trajectory_with_gps(messages):
     return ret
 
 def extract_text_messages(messages):
+    """
+    Extracts UAV status messages such as errors or logs from STATUSTEXT messages.
+
+    Parameters
+    ----------
+    messages : dict
+        A dictionary of MAVLink messages keyed by message name.
+
+    Returns
+    -------
+    list
+        A list of [timestamp, severity, message] entries, where each entry contains:
+        - timestamp (int): Timestamp in milliseconds since system boot.
+        - severity (int): Numerical code representing the importance/severity of the message.
+        - message (str): Human-readable system message.
+    """
+
     texts = []
     if 'STATUSTEXT' in messages:
         text_msgs = messages['STATUSTEXT']
@@ -248,6 +404,19 @@ def extract_text_messages(messages):
 
 
 def extract_named_value_float_names(messages):
+    """
+    Lists all available named floating-point telemetry values from NAMED_VALUE_FLOAT messages.
+
+    Parameters
+    ----------
+    messages : dict
+        A dictionary of MAVLink messages keyed by message name.
+
+    Returns
+    -------
+    list
+        List of unique named float keys (e.g., 'speed', 'battery_voltage').
+    """
     if 'NAMED_VALUE_FLOAT' in messages:
         return list(set(messages['NAMED_VALUE_FLOAT']['name']))
     return []
