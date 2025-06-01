@@ -169,6 +169,72 @@ def extract_telemetry_summary(telemetry):
                     'source': 'GPS'
                 })
             
+            elif msg_type == 'GLOBAL_POSITION_INT':
+                # MAVLink global position data (includes altitude)
+                alt_msl = params.get('alt', 0) / 1000.0  # Convert mm to meters
+                relative_alt = params.get('relative_alt', 0) / 1000.0  # Convert mm to meters
+                lat = params.get('lat', 0) / 1e7  # Convert to degrees
+                lng = params.get('lon', 0) / 1e7  # Convert to degrees
+                
+                summary["flight_data"]["gps_data"].append({
+                    'time': timestamp,
+                    'lat': lat,
+                    'lng': lng,
+                    'alt': alt_msl,
+                    'relative_alt': relative_alt
+                })
+                summary["flight_data"]["altitude_data"].append({
+                    'time': timestamp,
+                    'altitude': alt_msl,
+                    'relative_altitude': relative_alt,
+                    'source': 'GLOBAL_POSITION_INT'
+                })
+            
+            elif msg_type == 'SCALED_PRESSURE':
+                # Barometric altitude data
+                if 'press_abs' in params:
+                    # Calculate approximate altitude from pressure if not directly available
+                    # Standard atmosphere: altitude ≈ (1 - (P/P0)^0.1903) * 44330
+                    press_abs = params.get('press_abs', 0)
+                    if press_abs > 0:
+                        # Using standard sea level pressure of 1013.25 hPa
+                        altitude_baro = (1 - (press_abs / 1013.25) ** 0.1903) * 44330
+                        summary["flight_data"]["altitude_data"].append({
+                            'time': timestamp,
+                            'altitude': altitude_baro,
+                            'pressure': press_abs,
+                            'temperature': params.get('temperature', 0) / 100.0,  # Convert to Celsius
+                            'source': 'BAROMETRIC'
+                        })
+            
+            elif msg_type == 'BARO':
+                # ArduPilot BARO message type (different from SCALED_PRESSURE)
+                if 'Alt' in params:
+                    summary["flight_data"]["altitude_data"].append({
+                        'time': timestamp,
+                        'altitude': params.get('Alt', 0),
+                        'pressure': params.get('Press', 0),
+                        'temperature': params.get('Temp', 0),
+                        'source': 'BARO'
+                    })
+            
+            elif msg_type == 'POS':
+                # ArduPilot POS message type
+                if 'Alt' in params:
+                    summary["flight_data"]["altitude_data"].append({
+                        'time': timestamp,
+                        'altitude': params.get('Alt', 0),
+                        'lat': params.get('Lat', 0),
+                        'lng': params.get('Lng', 0),
+                        'source': 'POS'
+                    })
+                    summary["flight_data"]["gps_data"].append({
+                        'time': timestamp,
+                        'lat': params.get('Lat', 0),
+                        'lng': params.get('Lng', 0),
+                        'alt': params.get('Alt', 0)
+                    })
+            
             elif msg_type == 'BATT':
                 summary["flight_data"]["battery_data"].append({
                     'time': timestamp,
@@ -235,11 +301,16 @@ You are an expert ArduPilot flight log analyst with comprehensive knowledge of U
 FLIGHT LOG SUMMARY:
 {json.dumps(telemetry_summary, indent=2)}
 
-Instructions:
-1. Analyze the flight log summary to answer user questions.
-2. Use ArduPilot terminology and explain message types when relevant.
-3. Provide specific values and insights from the flight data.
-4. For detailed analysis, reference the message counts and sampled data points provided.
+CRITICAL INSTRUCTIONS:
+1. IMMEDIATELY analyze the provided flight data and calculate specific answers when asked.
+2. DO NOT suggest analysis or say you'll analyze - PERFORM THE ANALYSIS NOW.
+3. When asked for specific values (highest/lowest/duration/etc.), calculate and provide the exact answer immediately.
+4. Use the sampled data points in the flight_data section to perform calculations.
+5. Always show your calculation process and the specific data you used.
+6. Reference ArduPilot message types and terminology when relevant.
+7. If you need to find max/min/average values, scan through the provided data arrays and calculate them.
+
+EXAMPLE: If asked "What was the highest altitude?", scan through altitude_data array, find the maximum value, and state: "The highest altitude was X meters at time Y, based on analysis of Z data points from [SOURCE] messages."
 """
 
     # Include conversation history
@@ -266,3 +337,28 @@ Instructions:
     session["history"].append({"role": "assistant", "content": reply})
 
     return {"reply": reply}
+
+@app.post("/api/debug-messages")
+async def debug_messages(data: dict):
+    """Debug endpoint to inspect message structures"""
+    session_id = data.get("sessionId")
+    message_type = data.get("messageType")
+    
+    if not session_id or session_id not in sessions:
+        raise HTTPException(status_code=400, detail="Invalid session ID")
+    
+    session = sessions[session_id]
+    telemetry = session.get("telemetry")
+    
+    if not telemetry:
+        return {"error": "No telemetry data available"}
+    
+    # Find samples of the requested message type
+    samples = []
+    for msg in telemetry:
+        if msg.get('type') == message_type:
+            samples.append(msg)
+            if len(samples) >= 3:  # Return first 3 samples
+                break
+    
+    return {"samples": samples}
