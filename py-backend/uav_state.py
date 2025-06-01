@@ -24,6 +24,8 @@ from prompts.agentic_router import get_routing_prompt
 from utils.string_utils import extract_json_text_by_key, extract_array_from_response
 from telemetry_summarizer import TelemetrySummarizer
 
+# constant variables
+
 ALL_STEPS = ["get_flight_modes", "get_events", "get_mission", "get_vehicle_type", "get_trajectory_sources", "get_trajectory_with_gps", "get_trajectory_with_globalposition", "get_trajectory_with_ahrs2", "get_trajectory_with_ahrs3", "get_attitudes", "get_text_messages"]
 
 TRAJECTORY_DATA_DESC = """

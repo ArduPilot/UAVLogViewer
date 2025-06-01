@@ -126,7 +126,7 @@ class ChatApp:
     def set_knowledgebase(self, knowledge_base_str):
         self.knowledge_base = json.loads(knowledge_base_str)
         print(self.knowledge_base.keys())
-        with open('./flight-telemetry-details.json', 'r') as fp:
+        with open('./data-descriptors/flight-telemetry-details.json', 'r') as fp:
             self.knowledge_base_info = json.load(fp)
 
     def register_routes(self):
