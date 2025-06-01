@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime   import datetime, timezone
-from typing     import Dict, List, Any, Optional, Tuple, Set, Union
+from typing     import Dict, List, Any, Optional, Tuple
 
 import numpy  as np
 import pandas as pd

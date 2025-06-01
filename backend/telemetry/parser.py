@@ -131,7 +131,6 @@ class TelemetryParser:
         # PX4 ULog → try pyulog first
         if self.file_extension in ('.ulg', '.ulog'):
             try:
-                import pyulog  # noqa: F401  (import test only)
                 self.use_pyulog = True
                 logger.info("Using pyulog parser for ULog file")
             except ImportError:
@@ -374,13 +373,6 @@ class TelemetryParser:
         self.cache["wide_df"] = wide
         return processed
 
-
-    def get_key_metrics(self) -> Dict[str, Any]:
-        """Extract key flight metrics from the telemetry data."""
-        # This requires parsing the data first - future enhancement
-        return {
-            "status": "Call parse() first, then access metrics through the TelemetryAnalyzer class"
-        }
 
 # Example usage
 # parser = TelemetryParser("flight_log.tlog")
