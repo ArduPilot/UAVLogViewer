@@ -15,6 +15,9 @@
             <p>Drop *.tlog or *.bin file here or click to browse</p>
             <input @change="onChange" id="choosefile" style="opacity: 0;" type="file">
         </div>
+        <li v-if="file && state.processDone">
+            <a @click="openChatbot" class="section"><i class="fas fa-robot"></i> AI Assistant</a>
+        </li>
         <!--<b-form-checkbox @change="uploadFile()" class="uploadCheckbox" v-if="file!=null && !uploadStarted"> Upload
         </b-form-checkbox>-->
         <VProgress v-bind:complete="transferMessage"
@@ -96,6 +99,10 @@ export default {
 
                 this.transferMessage = 'Download Done'
                 this.sampleLoaded = true
+
+                // Upload sample file to backend for chatbot analysis
+                this.uploadSampleForAnalysis(arrayBuffer, url)
+
                 worker.postMessage({
                     action: 'parse',
                     file: arrayBuffer,
@@ -151,6 +158,10 @@ export default {
             this.state.processStatus = 'Pre-processing...'
             this.state.processPercentage = 100
             this.file = file
+
+            // Upload file to backend for chatbot analysis
+            this.uploadFileForAnalysis(file)
+
             const reader = new FileReader()
             reader.onload = function (e) {
                 const data = reader.result
@@ -166,6 +177,65 @@ export default {
                 this.state.logType = 'dji'
             }
             reader.readAsArrayBuffer(file)
+        },
+        async uploadFileForAnalysis (file) {
+            // Only upload bin and tlog files for chatbot analysis
+            if (!file.name.endsWith('.bin') && !file.name.endsWith('.tlog')) {
+                return
+            }
+
+            try {
+                const formData = new FormData()
+                formData.append('file', file)
+
+                const response = await fetch('/api/upload-log', {
+                    method: 'POST',
+                    body: formData
+                })
+
+                if (response.ok) {
+                    const result = await response.json()
+                    // Store the session ID in the global state so chatbot can use it
+                    this.state.chatbotSessionId = result.sessionId
+                    console.log('File uploaded for analysis, session ID:', result.sessionId)
+                } else {
+                    console.error('Failed to upload file for analysis')
+                }
+            } catch (error) {
+                console.error('Error uploading file for analysis:', error)
+            }
+        },
+        async uploadSampleForAnalysis (arrayBuffer, url) {
+            // Only upload tlog files for chatbot analysis
+            if (url.indexOf('.tlog') === -1) {
+                return
+            }
+
+            try {
+                // Convert ArrayBuffer to Blob and then to File
+                const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' })
+                const fileName = url.split('/').pop() || 'sample.tlog'
+                const file = new File([blob], fileName)
+
+                const formData = new FormData()
+                formData.append('file', file)
+
+                const response = await fetch('/api/upload-log', {
+                    method: 'POST',
+                    body: formData
+                })
+
+                if (response.ok) {
+                    const result = await response.json()
+                    // Store the session ID in the global state so chatbot can use it
+                    this.state.chatbotSessionId = result.sessionId
+                    console.log('Sample file uploaded for analysis, session ID:', result.sessionId)
+                } else {
+                    console.error('Failed to upload sample file for analysis')
+                }
+            } catch (error) {
+                console.error('Error uploading sample file for analysis:', error)
+            }
         },
         uploadFile () {
             this.uploadStarted = true
@@ -225,6 +295,9 @@ export default {
             a.click()
             document.body.removeChild(a)
             window.URL.revokeObjectURL(url)
+        },
+        openChatbot () {
+            this.$emit('open-chatbot')
         }
     },
     mounted () {

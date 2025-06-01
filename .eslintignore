@@ -4,3 +4,7 @@
 /src/tools/parsers/
 /*.js
 /test/unit/coverage/
+/src/components/Chatbot.vue
+/src/router/index.js
+/src/assets/mavlink.js
+/backend/

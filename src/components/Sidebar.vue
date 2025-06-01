@@ -18,6 +18,10 @@
                 <!-- Plot -->
                 <a :class="selected === 'plot' ? 'selected' : ''" @click="selected='plot'"
                    v-if="state.processDone"> <i class="fas fa-chart-line"></i>Plot</a>
+                <!-- AI Assistant -->
+                <a @click="openChatbot" v-if="state.processDone" class="ai-assistant-btn">
+                    <i class="fas fa-robot"></i>AI
+                </a>
                 <!-- more -->
                 <a :class="selected ==='other' ? 'selected' : ''" @click="selected='other'" v-if="state.processDone">
                     <i class="fas fa-ellipsis-v"></i>
@@ -33,12 +37,15 @@
                     <message-menu/>
                 </div>
                 <div v-if="selected==='home'">
-                    <Dropzone/>
+                    <Dropzone @open-chatbot="openChatbot"/>
                     <span class="buildinfo">Commit {{state.commit}}</span>
                     <span class="buildinfo">Built {{state.buildDate}}</span>
                 </div>
                 <div v-if="selected==='other'">
                     <!-- PARAM/MESSAGES/RADIO -->
+                    <li v-if="state.processDone">
+                        <a @click="openChatbot" class="section"><i class="fas fa-robot"></i> AI Assistant</a>
+                    </li>
                     <hr>
                     <a class="centered-section"> Show / hide </a>
                     <div v-if="state.processDone" class="show-hide">
@@ -215,6 +222,10 @@ export default {
 
         downloadFile (filename) {
             this.downloadBlob(this.state.files[filename], filename, 'application/octet-stream')
+        },
+
+        openChatbot () {
+            this.$emit('open-chatbot')
         }
     },
     created () {
@@ -456,6 +467,19 @@ a.centered-section {
         -moz-transition: all 1s ease;
         -o-transition: all 1s ease;
         transition: all 1s ease;
+    }
+
+    /* AI Assistant button styling */
+    .ai-assistant-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: 1px solid #667eea !important;
+    }
+
+    .ai-assistant-btn:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+        transform: translateY(-1px);
+        box-shadow: 0px 2px 15px 0px rgba(102, 126, 234, 0.4) !important;
     }
 
     /* LABELS */

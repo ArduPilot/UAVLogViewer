@@ -1,5 +1,5 @@
 <template>
-    <div id='vuewrapper' style="height: 100%;">
+    <div id="vuewrapper" style="height: 100%;">
         <template v-if="state.mapLoading || state.plotLoading">
             <div id="waiting">
                 <atom-spinner
@@ -16,9 +16,10 @@
         <AttitudeViewer @close="state.showAttitude = false" v-if="state.showAttitude"></AttitudeViewer>
         <MagFitTool     @close="state.showMagfit = false" v-if="state.showMagfit"></MagFitTool>
         <EkfHelperTool  @close="state.showEkfHelper = false" v-if="state.showEkfHelper"></EkfHelperTool>
+        <ChatbotSidebar :isVisible="showChatbot" @close="showChatbot = false"></ChatbotSidebar>
         <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
-            <sidebar/>
+            <sidebar @open-chatbot="showChatbot = true"/>
 
             <main class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex" role="main">
 
@@ -46,6 +47,7 @@ import isOnline from 'is-online'
 import Plotly from '@/components/Plotly.vue'
 import CesiumViewer from '@/components/CesiumViewer.vue'
 import Sidebar from '@/components/Sidebar.vue'
+import ChatbotSidebar from '@/components/ChatbotSidebar.vue'
 import TxInputs from '@/components/widgets/TxInputs.vue'
 import ParamViewer from '@/components/widgets/ParamViewer.vue'
 import MessageViewer from '@/components/widgets/MessageViewer.vue'
@@ -78,7 +80,8 @@ export default {
     data () {
         return {
             state: store,
-            dataExtractor: null
+            dataExtractor: null,
+            showChatbot: false
         }
     },
     methods: {
@@ -232,6 +235,7 @@ export default {
         Sidebar,
         Plotly,
         CesiumViewer,
+        ChatbotSidebar,
         AtomSpinner,
         TxInputs,
         ParamViewer,
@@ -270,12 +274,10 @@ export default {
 
     .nav-side-menu ul :not(collapsed) .arrow:before,
     .nav-side-menu li :not(collapsed) .arrow:before {
-        font-family: 'Montserrat', sans-serif;
+        font-family: "Montserrat", sans-serif;
         content: "\f078";
-        display: inline-block;
         padding-left: 10px;
         padding-right: 10px;
-        vertical-align: middle;
         float: right;
     }
 

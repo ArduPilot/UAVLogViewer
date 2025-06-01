@@ -27,7 +27,29 @@ npm run e2e
 npm test
 ```
 
-# Docker
+## Backend Setup
+
+The UAV Log Viewer includes an optional FastAPI backend for AI-powered flight log analysis. To use the chat functionality:
+
+``` bash
+# Navigate to the backend directory
+cd backend
+
+# Install Python dependencies
+pip3 install -r requirements.txt
+
+# Create a .env file with your OpenAI API key
+echo "OPENAI_API_KEY=your_openai_api_key_here" > .env
+
+# Start the backend server
+python3 -m uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+The backend will be available at `http://localhost:8000` and provides:
+- `/api/upload-log` - Upload and process flight log files
+- `/api/chat` - AI-powered chat about flight data
+
+## Docker
 
 run the prebuilt docker image:
 
