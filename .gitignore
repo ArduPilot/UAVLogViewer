@@ -11,6 +11,46 @@ selenium-debug.log
 # Environment files
 .env
 
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+.env/
+
+# Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Analysis and log files
+analysis/
+*.log
+*.tlog
+*.bin
+
+# macOS specific
+._*
+.Spotlight-V100
+.Trashes
+
+# Node.js additional
+.npm
+.eslintcache
+*.tsbuildinfo
+
+# VS Code (optional - uncomment if you want to ignore)
+# .vscode/
+
+# Temporary and cache files
+*.tmp
+*.temp
+.cache/
+
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and WebStorm
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
