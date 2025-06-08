@@ -87,6 +87,9 @@ import {
 // Set Cesium token from environment variable
 Ion.defaultAccessToken = process.env.VUE_APP_CESIUM_TOKEN || ''
 
+const mapTilerKey = process.env.VUE_APP_MAPTILER_KEY || ''
+
+console.log('mapTilerKey: ' + mapTilerKey)
 const colorCoderMode = new ColorCoderMode(store)
 const colorCoderRange = new ColorCoderRange(store)
 
@@ -110,6 +113,7 @@ export default {
             lastEmitted: 0,
             colorCoder: null,
             selectedColorCoder: 'Mode'
+
         }
     },
     components: {
@@ -315,7 +319,8 @@ export default {
                 tooltip: 'Maptiler satellite imagery http://maptiler.com/',
                 creationFunction: function () {
                     return new UrlTemplateImageryProvider({
-                        url: 'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=o3JREHNnXex8WSPPm2BU',
+                        // eslint-disable-next-line quotes
+                        url: `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${mapTilerKey}`,
                         minimumLevel: 0,
                         maximumLevel: 20,
                         credit: 'https://www.maptiler.com/copyright'
