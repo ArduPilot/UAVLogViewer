@@ -86,7 +86,7 @@ import {
 
 // Set Cesium token from environment variable
 Ion.defaultAccessToken = process.env.VUE_APP_CESIUM_TOKEN || ''
-
+const cesiumResurceId = process.env.VUE_APP_CESIUM_RESOURCE_ID || 3
 const mapTilerKey = process.env.VUE_APP_MAPTILER_KEY || ''
 
 console.log('mapTilerKey: ' + mapTilerKey)
@@ -267,7 +267,7 @@ export default {
                         shadows: true,
                         // eslint-disable-next-line
                         baseLayer: new ImageryLayer.fromProviderAsync(
-                            IonImageryProvider.fromAssetId(3954)
+                            IonImageryProvider.fromAssetId(cesiumResurceId)
                         ),
                         imageryProviderViewModels: imageryProviders,
                         orderIndependentTranslucency: false,
