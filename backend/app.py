@@ -7,7 +7,7 @@ from pymavlink import mavutil
 app = Flask(__name__)
 CORS(app, resources={r"/chat": {"origins": "http://localhost:8080"}})
 
-openai.api_key = ""
+openai.api_key = "OPENAI-API KEY"
 BIN_FILE_PATH = '/Users/rahulpanchal/Desktop/Project/UAVLogViewer/backend/UAV.bin'
 
 def parse_dataflash_summary(log_path):
