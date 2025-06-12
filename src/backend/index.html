@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Chatbot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    #chatbox {
+      width: 100%;
+      height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    #userInput {
+      width: 80%;
+      padding: 8px;
+    }
+    #sendBtn {
+      padding: 8px 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Simple Chatbot</h2>
+  <div id="chatbox"></div>
+  <input type="text" id="userInput" placeholder="Type your message..." />
+  <button id="sendBtn">Send</button>
+
+  <script>
+    const chatbox = document.getElementById('chatbox');
+    const input = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    function updateChat(role, content) {
+      const msgDiv = document.createElement('div');
+      msgDiv.textContent = `${role === 'user' ? 'You' : 'Bot'}: ${content}`;
+      chatbox.appendChild(msgDiv);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const userMsg = input.value.trim();
+      if (!userMsg) return;
+
+      updateChat("user", userMsg);
+      input.value = "";
+
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: userMsg })
+      });
+
+      const data = await response.json();
+      if (data.response) {
+        updateChat("assistant", data.response);
+      } else {
+        updateChat("assistant", "Error: " + data.error);
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+
+</body>
+</html>
