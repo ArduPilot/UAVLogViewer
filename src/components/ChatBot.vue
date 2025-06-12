@@ -73,7 +73,7 @@ export default {
 </script>
 
 <style scoped>
-/* All your same chatbot styles, unchanged */
+    
 .chatbot-panel {
     background: #23243a;
     color: #fff;
