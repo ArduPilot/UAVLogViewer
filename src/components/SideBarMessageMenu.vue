@@ -5,12 +5,8 @@
         <!--<a class="section">-->
         <!--<i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>-->
         <!--</li>-->
-        <tree-menu
-            v-if="Object.keys(availableMessagePresets).length > 0"
-            :nodes="availableMessagePresets"
-            :label="'Presets'"
-            :clean-name="'Presets'"
-            :level="0">
+        <tree-menu v-if="Object.keys(availableMessagePresets).length > 0" :nodes="availableMessagePresets"
+            :label="'Presets'" :clean-name="'Presets'" :level="0">
 
         </tree-menu>
         <li v-b-toggle="'messages'">
@@ -25,27 +21,23 @@
             </li>
             <template v-for="key of Object.keys(this.messageTypesFiltered).sort()">
                 <li class="type" v-bind:key="key">
-                    <div
-                        v-b-toggle="'type' + key"
-                        :title="messageDocs[key.split('[')[0]] ? messageDocs[key.split('[')[0]].doc : ''"
-                    >
-                        <a class="section">{{key}} <span v-if="messageTypes[key].isArray">{{"[...]"}}</span>
+                    <div v-b-toggle="'type' + key"
+                        :title="messageDocs[key.split('[')[0]] ? messageDocs[key.split('[')[0]].doc : ''">
+                        <a class="section">{{ key }} <span v-if="messageTypes[key].isArray">{{ "[...]" }}</span>
                             <i class="expand fas fa-caret-down"></i></a>
                     </div>
                 </li>
-                <b-collapse :id="'type' + key" v-bind:key="key+'1'">
+                <b-collapse :id="'type' + key" v-bind:key="key + '1'">
                     <template v-for="item in messageTypes[key].complexFields">
-                        <li @click="toggle(key, item.name)"
-                            class="field"
+                        <li @click="toggle(key, item.name)" class="field"
                             :title="messageDocs[key] ? messageDocs[key][item.name] : ''"
-                            v-bind:key="key+'.'+item.name"
-                            v-if="isPlottable(key,item.name)
+                            v-bind:key="key + '.' + item.name" v-if="isPlottable(key, item.name)
                                 && item.name.toLowerCase().indexOf(filter.toLowerCase()) !== -1">
-                            <a> {{item.name}}
-                                <span v-if="item.units!=='?' && item.units!==''"> ({{item.units}})</span>
+                            <a> {{ item.name }}
+                                <span v-if="item.units !== '?' && item.units !== ''"> ({{ item.units }})</span>
                             </a>
 
-                            <a @click="$eventHub.$emit('togglePlot', field.name)" v-if="isPlotted(key,item.name)">
+                            <a @click="$eventHub.$emit('togglePlot', field.name)" v-if="isPlotted(key, item.name)">
                                 <i class="remove-icon fas fa-trash" title="Remove data"></i>
                             </a>
                         </li>
@@ -53,17 +45,21 @@
                 </b-collapse>
             </template>
         </b-collapse>
+        <!-- ChatBot Floating Button -->
+        <ChatBot :parsedData="state.messages" />
     </div>
 </template>
 <script>
+/* eslint-disable */
 import { store } from './Globals.js'
 import TreeMenu from './widgets/TreeMenu.vue'
 import fastXmlParser from 'fast-xml-parser'
+import ChatBot from './ChatBot.vue'
 
 export default {
     name: 'message-menu',
-    components: { TreeMenu },
-    data () {
+    components: { TreeMenu, ChatBot },
+    data() {
         return {
             filter: '',
             checkboxes: {},
@@ -96,18 +92,18 @@ export default {
             messageDocs: {}
         }
     },
-    created () {
+    created() {
         this.$eventHub.$on('messageTypes', this.handleMessageTypes)
         this.$eventHub.$on('presetsChanged', this.loadLocalPresets)
         this.messagePresets = this.loadXmlPresets()
         this.messageDocs = this.loadXmlDocs()
         this.loadLocalPresets()
     },
-    beforeDestroy () {
+    beforeDestroy() {
         this.$eventHub.$off('messageTypes')
     },
     methods: {
-        loadXmlPresets () {
+        loadXmlPresets() {
             // eslint-disable-next-line
             const graphs = {}
             const files = [
@@ -144,7 +140,7 @@ export default {
             }
             return graphs
         },
-        loadLocalPresets () {
+        loadLocalPresets() {
             const saved = window.localStorage.getItem('savedFields')
             if (saved !== null) {
                 this.userPresets = JSON.parse(saved)
@@ -156,7 +152,7 @@ export default {
                 }
             }
         },
-        loadXmlDocs () {
+        loadXmlDocs() {
             const logDocs = {}
             const files = [
                 require('../assets/logmetadata/plane.xml'),
@@ -176,7 +172,7 @@ export default {
             }
             return logDocs
         },
-        handleMessageTypes (messageTypes) {
+        handleMessageTypes(messageTypes) {
             if (this.$route.query.plots) {
                 this.state.plotOn = true
             }
@@ -208,7 +204,7 @@ export default {
             this.messageTypes = newMessages
             this.$set(this.state, 'messageTypes', newMessages)
         },
-        isPlotted (message, field) {
+        isPlotted(message, field) {
             const fullname = message + '.' + field
             for (const field of this.state.expressions) {
                 if (field.name === fullname) {
@@ -217,7 +213,7 @@ export default {
             }
             return false
         },
-        getMessageNumericField (message) {
+        getMessageNumericField(message) {
             const numberFields = []
             if (message && message.fieldnames) {
                 for (const field of message.fieldnames) {
@@ -228,30 +224,30 @@ export default {
             }
             return numberFields
         },
-        toggle (message, item) {
+        toggle(message, item) {
             this.state.plotOn = true
             this.$nextTick(function () {
                 this.$eventHub.$emit('togglePlot', message + '.' + item)
             })
         },
-        isPlottable (msgtype, item) {
+        isPlottable(msgtype, item) {
             return item !== 'TimeUS'
         },
-        collapse (name) {
+        collapse(name) {
             if (document.getElementById(name) &&
                 document.getElementById(name).style &&
                 document.getElementById(name).style.display !== 'none') {
                 this.$root.$emit('bv::toggle::collapse', name)
             }
         },
-        expand (name) {
+        expand(name) {
             if (document.getElementById(name) &&
                 document.getElementById(name).style &&
                 document.getElementById(name).style.display === 'none') {
                 this.$root.$emit('bv::toggle::collapse', name)
             }
         },
-        findMessagesInExpression (expression) {
+        findMessagesInExpression(expression) {
             // delete all expressions after dots (and dots)
             const toDelete = /\.[A-Za-z-0-9_]+/g
             const name = expression.replace(toDelete, '')
@@ -262,7 +258,7 @@ export default {
             }
             return fields
         },
-        isAvailable (msg) {
+        isAvailable(msg) {
             const msgRe = /[A-Z][A-Z0-9_]+(\[[0-9]\])?(\.[a-zA-Z0-9_]+)?/g
             const match = msg[0].match(msgRe)
             if (!match) {
@@ -284,10 +280,10 @@ export default {
         }
     },
     computed: {
-        hasMessages () {
+        hasMessages() {
             return Object.keys(this.messageTypes).length > 0
         },
-        messageTypesFiltered () {
+        messageTypesFiltered() {
             const filtered = {}
             for (const key of Object.keys(this.messageTypes)) {
                 if (this.hiddenTypes.indexOf(key) === -1) {
@@ -308,7 +304,7 @@ export default {
             }
             return filtered
         },
-        availableMessagePresets () {
+        availableMessagePresets() {
             const dict = {}
             // do it for default messages
             for (const [key, value] of Object.entries(this.messagePresets)) {
@@ -368,65 +364,79 @@ export default {
 }
 </script>
 <style scoped>
-    i {
-        margin: 5px;
-    }
-    i.expand {
-        float: right;
-    }
-    li > div {
-        display: inline-block;
-        width: 100%;
-    }
-    li.field {
-        line-height: 29px;
-        padding-left: 40px;
-        font-size: 90%;
-        display: inline-block;
-        vertical-align: middle;
-        width: 100%;
-    }
-    li.type {
-        line-height: 30px;
-        padding-left: 10px;
-        font-size: 85%;
-    }
-    input {
-        margin: 12px 12px 15px 10px;
-        border: 2px solid #ccc;
-        -webkit-border-radius: 4px;
-        -moz-border-radius: 4px;
-        border-radius: 4px;
-        background-color: rgba(255, 255, 255, 0.897);
-        color: rgb(51, 51, 51);
-        width: 92%;
-    }
-    input:focus {
-        outline: none;
-        border: 2px solid #135388;
-    }
-    .input-li:hover {
-        background-color: rgba(30, 37, 54, 0.205);
-        border-left: 3px solid rgba(24, 30, 44, 0.212);
-    }
-    ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
-        color: rgb(148, 147, 147);
-        opacity: 1; /* Firefox */
-    }
-    :-ms-input-placeholder { /* Internet Explorer 10-11 */
-        color: #2e2e2e;
-    }
-    ::-ms-input-placeholder { /* Microsoft Edge */
-        color: #2e2e2e;
-    }
-    i.remove-icon {
-        float: right;
-    }
+i {
+    margin: 5px;
+}
 
-    @media (min-width: 575px) and (max-width: 992px) {
-       a {
+i.expand {
+    float: right;
+}
+
+li>div {
+    display: inline-block;
+    width: 100%;
+}
+
+li.field {
+    line-height: 29px;
+    padding-left: 40px;
+    font-size: 90%;
+    display: inline-block;
+    vertical-align: middle;
+    width: 100%;
+}
+
+li.type {
+    line-height: 30px;
+    padding-left: 10px;
+    font-size: 85%;
+}
+
+input {
+    margin: 12px 12px 15px 10px;
+    border: 2px solid #ccc;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.897);
+    color: rgb(51, 51, 51);
+    width: 92%;
+}
+
+input:focus {
+    outline: none;
+    border: 2px solid #135388;
+}
+
+.input-li:hover {
+    background-color: rgba(30, 37, 54, 0.205);
+    border-left: 3px solid rgba(24, 30, 44, 0.212);
+}
+
+::placeholder {
+    /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: rgb(148, 147, 147);
+    opacity: 1;
+    /* Firefox */
+}
+
+:-ms-input-placeholder {
+    /* Internet Explorer 10-11 */
+    color: #2e2e2e;
+}
+
+::-ms-input-placeholder {
+    /* Microsoft Edge */
+    color: #2e2e2e;
+}
+
+i.remove-icon {
+    float: right;
+}
+
+@media (min-width: 575px) and (max-width: 992px) {
+    a {
         padding: 2px 60px 2px 55px !important;
-       }
     }
-
+}
 </style>
