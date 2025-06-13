@@ -1,6 +1,11 @@
 'use strict'
 const { merge } = require('webpack-merge')
 const prodEnv = require('./prod.env')
+const dotenv = require('dotenv')
+
+// Load environment variables from .env file
+dotenv.config()
+
 
 module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
