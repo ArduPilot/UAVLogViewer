@@ -1,0 +1,3 @@
+# Ignore files that need ESLint Standard formatting
+src/libs/chatApi.js
+src/libs/mavlink.js 

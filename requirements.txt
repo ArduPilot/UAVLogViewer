@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+pymavlink
+duckdb
+aiosqlite
+python-dotenv
+
+# Additional packages for AI functionality
+numpy
+pandas
+openai>=1.30.0
+
+# Development and debugging
+rich 

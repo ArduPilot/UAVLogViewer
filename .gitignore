@@ -74,3 +74,28 @@ fabric.properties
 
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
+
+# Environment variables
+.env*
+
+# Home assignment
+home_assignment_context.md
+
+# Python virtual environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/.env
+
+# Backend data (entire directory)
+backend/data/
+
+# Runtime uploads (never commit user files)
+backend/uploads/
+uploads
+
+# Python byte-code and pytest cache
+backend/__pycache__/
+backend/services/__pycache__/
+backend/.pytest_cache/

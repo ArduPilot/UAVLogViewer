@@ -64,5 +64,10 @@ export const store = {
     commit: _COMMIT_.slice(0, 6),
     /* global _BUILDDATE_ */
     buildDate: _BUILDDATE_,
-    childPlots: []
+    childPlots: [],
+    /* Chat integration */
+    sessionId: null, // Backend session_id returned by /upload-log
+    conversationId: null, // Backend conversation_id maintained across turns
+    chatMessages: [], // Array<{ sender: 'user'|'bot', text: string, ts: number }>
+    backendReady: false // becomes true when /sessions/{id} status == completed
 }

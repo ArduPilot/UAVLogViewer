@@ -31,8 +31,9 @@
 import VProgress from './SideBarFileManagerProgressBar.vue'
 import Worker from '../tools/parsers/parser.worker.js'
 import { store } from './Globals'
+import { uploadLog, getSessionStatus } from '../libs/chatApi'
 
-import { MAVLink20Processor as MAVLink } from '../libs/mavlink'
+import { mavlink20 as MAVLink } from '../libs/mavlink'
 
 const worker = new Worker()
 
@@ -146,7 +147,7 @@ export default {
                 type: type
             })
         },
-        process: function (file) {
+        process: async function (file) {
             this.state.file = file.name
             this.state.processStatus = 'Pre-processing...'
             this.state.processPercentage = 100
@@ -166,6 +167,21 @@ export default {
                 this.state.logType = 'dji'
             }
             reader.readAsArrayBuffer(file)
+
+            // === New: upload the file to backend to obtain session_id ===
+            try {
+                const resp = await uploadLog(file)
+                if (resp && resp.session_id) {
+                    this.state.sessionId = resp.session_id
+                    this.state.backendReady = false
+                    this.pollSessionStatus(resp.session_id)
+                    console.log('Received session_id from backend', resp.session_id)
+                } else {
+                    console.warn('upload-log response missing session_id', resp)
+                }
+            } catch (err) {
+                console.error('Failed to upload log to backend:', err)
+            }
         },
         uploadFile () {
             this.uploadStarted = true
@@ -225,6 +241,24 @@ export default {
             a.click()
             document.body.removeChild(a)
             window.URL.revokeObjectURL(url)
+        },
+        pollSessionStatus (sessionId) {
+            const pollInterval = 3000
+            const timer = setInterval(async () => {
+                try {
+                    const data = await getSessionStatus(sessionId)
+                    if (data.status === 'completed') {
+                        this.state.backendReady = true
+                        clearInterval(timer)
+                    }
+                    if (data.status === 'failed') {
+                        clearInterval(timer)
+                        console.error('Backend parsing failed', data.error_message)
+                    }
+                } catch (e) {
+                    console.error('Polling session status failed', e)
+                }
+            }, pollInterval)
         }
     },
     mounted () {

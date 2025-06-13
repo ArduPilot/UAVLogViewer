@@ -43,6 +43,7 @@
     "jspack": "0.0.4",
     "long": "^4.0.0",
     "luxon": "^3.5.0",
+    "marked": "^15.0.12",
     "patch-package": "^6.4.7",
     "plotly.js": "^2.12.1",
     "stream-browserify": "^3.0.0",
