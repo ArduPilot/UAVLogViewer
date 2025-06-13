@@ -84,7 +84,7 @@ python -m backend.main
 1. **Upload a Log File**: 
    - Open http://localhost:8080 in your browser
    - Upload a `.tlog` or `.bin` flight log file
-   - Wait for parsing to complete (status updates in real-time)
+   - Wait for parsing to complete (status updates in real-time. Unfortunately, may take a few minutes due to unoptimized parsing. a TODO in the future)
 
 2. **Chat with Your Data**:
    - Ask questions like:
