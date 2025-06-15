@@ -18,6 +18,7 @@ describe('parse binary logs', () => {
         self.postMessage = function (a) {
         }
         const result = parser.processData(logfile.buffer)
+        console.log("Parsed .bin file: ", result)
         const messageTypes = result.types
         const messages = result.messages
         expect(Object.keys(messageTypes)).toContain('MODE')

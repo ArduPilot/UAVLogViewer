@@ -96,6 +96,7 @@ export default {
         },
         async generateResponse (query, data) {
             this.state.sessionId = this.state.sessionId || ''
+            const flightData = this.state.sessionId ? {} : data
             try {
                 // TODO: Generate response based on query and data
                 const response = await fetch('/api/chat', {
@@ -106,7 +107,7 @@ export default {
                     body: JSON.stringify({
                         message: query,
                         sessionId: this.state.sessionId,
-                        flightData: data // TODO: Send only the relevant data
+                        flightData: flightData // TODO: Send only the relevant data
                     })
                 })
                 if (!response.ok) {
