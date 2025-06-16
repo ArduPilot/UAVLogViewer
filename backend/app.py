@@ -54,6 +54,42 @@ class ChatResponse(BaseModel):
 async def index():
     return {"message": "Server is running"}
 
+@app.get("/api/docs", response_model=Dict[str, Any])
+async def get_api_docs():
+    """Return API documentation and available endpoints."""
+    return {
+        "name": "UAV Log Viewer API",
+        "version": "1.0.0",
+        "description": "API for analyzing and visualizing UAV flight logs",
+        "endpoints": {
+            "/": {
+                "method": "GET",
+                "description": "Health check endpoint",
+                "response": {"message": "Server is running"}
+            },
+            "/api/chat": {
+                "method": "POST",
+                "description": "Process chat messages and flight data",
+                "request": {
+                    "message": "string (required)",
+                    "sessionId": "string (optional)",
+                    "flightData": "object (optional)"
+                },
+                "response": {
+                    "message": "string",
+                    "sessionId": "string",
+                    "error": "string (optional)"
+                }
+            },
+            "/api/docs": {
+                "method": "GET",
+                "description": "Get API documentation",
+                "response": "API documentation object"
+            }
+        }
+    }
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     try:
