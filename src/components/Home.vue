@@ -18,7 +18,15 @@
         <EkfHelperTool  @close="state.showEkfHelper = false" v-if="state.showEkfHelper"></EkfHelperTool>
         <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
-            <sidebar/>
+            <sidebar>
+                <template #chat>
+                    <div class="chat-container" style="width: 100%; margin-top: auto; padding: 10px;">                        
+                        <div class="chat-window" style="width: 100%;">
+                            <Chat ref="chat" />
+                        </div>
+                    </div>
+                </template>
+            </sidebar>
 
             <main class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex" role="main">
 
@@ -60,6 +68,7 @@ import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
 import { DjiDataExtractor } from '../tools/djiDataExtractor'
 import MagFitTool from '@/components/widgets/MagFitTool.vue'
 import EkfHelperTool from '@/components/widgets/EkfHelperTool.vue'
+import Chat from '@/components/Chat.vue'
 import Vue from 'vue'
 
 export default {
@@ -239,7 +248,8 @@ export default {
         DeviceIDViewer,
         AttitudeViewer,
         MagFitTool,
-        EkfHelperTool
+        EkfHelperTool,
+        Chat
     },
     computed: {
         mapOk () {

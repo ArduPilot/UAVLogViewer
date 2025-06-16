@@ -194,6 +194,42 @@ export default {
             , false)
             request.open('POST', '/upload')
             request.send(formData)
+            
+            // Also upload to the API in parallel
+            this.uploadToApi();
+        },
+        
+        // New method for API upload
+        async uploadToApi() {
+            console.log('Uploading to API...')
+            const formData = new FormData();
+            formData.append('file', this.file);
+            
+            try {
+                const response = await fetch('http://0.0.0.0:8000/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Emit event with session ID and message
+                this.$emit('file-uploaded', {
+                    sessionId: data.session_id,
+                    message: data.message
+                });
+                
+            } catch (error) {
+                console.error('Error uploading to API:', error);
+                // Optionally show an error message to the user
+                this.$emit('upload-error', {
+                    message: 'Failed to process file with AI. Please try again.'
+                });
+            }
         },
         fixData (message) {
             if (message.name === 'GLOBAL_POSITION_INT') {

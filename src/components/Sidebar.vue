@@ -124,6 +124,10 @@
                     </div>
                 </div>
             </b-collapse>
+            <!-- Chat slot will be rendered here -->
+            <div style="margin-top: auto;">
+                <slot name="chat"></slot>
+            </div>
         </div>
     </div>
 </template>
@@ -242,7 +246,7 @@ span.buildinfo {
     font-size: 70%;
     margin-left: 30px;
     display: block;
-    opacity: 50%;
+    opacity: 0.8;
 }
 
 a.section {

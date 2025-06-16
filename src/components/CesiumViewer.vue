@@ -139,6 +139,7 @@ export default {
     methods: {
         async asyncSetup () {
             if (this.viewer == null) {
+                console.log(this.state)
                 if (this.state.isOnline) {
                     this.viewer = this.createViewer(true)
                     if (this.state.vehicle !== 'boat') {
@@ -249,27 +250,38 @@ export default {
         createViewer (online) {
             if (online) {
                 console.log('creating online viewer')
-                const imageryProviders = this.createAdditionalProviders()
-                return new Viewer(
-                    'cesiumContainer',
-                    {
-                        homeButton: false,
-                        timeline: true,
-                        animation: true,
-                        requestRenderMode: true,
-                        shouldAnimate: false,
-                        scene3DOnly: false,
-                        selectionIndicator: false,
-                        shadows: true,
-                        // eslint-disable-next-line
-                        baseLayer: new ImageryLayer.fromProviderAsync(
-                            IonImageryProvider.fromAssetId(3954)
-                        ),
-                        imageryProviderViewModels: imageryProviders,
-                        orderIndependentTranslucency: false,
-                        useBrowserRecommendedResolution: false
-                    }
-                )
+                try {
+                    // Create OpenStreetMap as base layer
+                    const osm = new UrlTemplateImageryProvider({
+                        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c'],
+                        credit: ' OpenStreetMap contributors',
+                        maximumLevel: 19
+                    });
+
+                    // Create viewer with OpenStreetMap as base layer
+                    return new Viewer(
+                        'cesiumContainer',
+                        {
+                            homeButton: false,
+                            timeline: true,
+                            animation: true,
+                            requestRenderMode: true,
+                            shouldAnimate: false,
+                            scene3DOnly: false,
+                            selectionIndicator: false,
+                            shadows: true,
+                            baseLayer: new ImageryLayer(osm),
+                            imageryProviderViewModels: [],
+                            orderIndependentTranslucency: false,
+                            useBrowserRecommendedResolution: false,
+                            terrainProvider: createWorldTerrainAsync()
+                        }
+                    )
+                } catch (error) {
+                    console.error('Error creating online viewer:', error)
+                    return this.createViewer(false)
+                }
             }
             console.log('creating offline viewer')
             return new Viewer(
@@ -284,9 +296,6 @@ export default {
                     selectionIndicator: false,
                     shadows: true,
                     orderIndependentTranslucency: false,
-                    baseLayerPicker: false,
-                    imageryProvider: false,
-                    geocoder: false,
                     useBrowserRecommendedResolution: false
                 }
             )
@@ -321,8 +330,8 @@ export default {
                         credit: 'https://www.maptiler.com/copyright'
                     })
                 }
-            })
-            )
+            }
+            ))
             // save this one so it can be referenced when creating the cesium viewer
             this.sentinelProvider = new ProviderViewModel({
                 name: 'Sentinel 2',

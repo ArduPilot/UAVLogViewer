@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+pandas
+pymavlink
+langchain
+langchain_openai
+openai
+langchain-community
+tiktoken
+python-multipart
