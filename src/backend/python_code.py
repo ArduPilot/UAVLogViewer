@@ -1,62 +1,76 @@
 
 import json
 
-def analyze_gps_data(file_path):
+def analyze_telemetry(file_path="parsed_telemetry.json"):
     """
-    Analyzes GPS data from a JSON file for potential issues like signal loss,
-    sudden jumps in coordinates, or a low number of satellites.
+    Analyzes flight telemetry data for potential anomalies.
 
     Args:
-        file_path (str): The path to the JSON file containing flight telemetry data.
+        file_path (str): Path to the JSON file containing telemetry data.
 
     Returns:
-        str: A summary of any identified GPS issues. Returns "No GPS issues found."
-             if no issues are detected.
+        str: A summary of detected anomalies.
     """
 
     try:
         with open(file_path, 'r') as f:
-            data = json.load(f)
+            telemetry_data = json.load(f)
     except FileNotFoundError:
-        return "Error: File not found."
+        return "Error: Telemetry file not found."
     except Exception as e:
-        return f"Error: Could not parse JSON data. {e}"
+        return f"Error: Could not load telemetry data. {e}"
 
-    gps_data = []
-    for item in data:
-        if item["type"] == "GPS":
-            gps_data.append(item["data"])
+    anomalies = []
+    battery_anomalies = []
+    imu_anomalies = []
+    altitude_anomalies = []
 
-    if not gps_data:
-        return "No GPS data found in the file."
+    for entry in telemetry_data:
+        try:
+            if entry["type"] == "SYS_STATUS":
+                voltage_battery = entry["data"]["voltage_battery"]
+                current_battery = entry["data"]["current_battery"]
+                battery_remaining = entry["data"]["battery_remaining"]
 
-    issues = []
-    previous_location = None
-    satellite_threshold = 6  # Minimum number of satellites for a good fix
-    large_distance_threshold = 0.001 # Significant change in coordinates (adjust as needed, in degrees)
+                if voltage_battery == 0:
+                    battery_anomalies.append("Battery voltage is zero.")
+                if current_battery < 0:
+                     battery_anomalies.append("Battery current is negative.")
+                if battery_remaining < 0:
+                    battery_anomalies.append("Battery remaining is negative.")
 
-    for entry in gps_data:
-        num_satellites = entry.get("satellites_visible", 0)
-        latitude = entry.get("lat", None)
-        longitude = entry.get("lon", None)
+            elif entry["type"] in ("RAW_IMU", "SCALED_IMU2"):
+                xacc = entry["data"]["xacc"]
+                yacc = entry["data"]["yacc"]
+                zacc = entry["data"]["zacc"]
 
-        if num_satellites < satellite_threshold:
-            issues.append(f"Low number of satellites: {num_satellites}")
+                if abs(xacc) > 2000 or abs(yacc) > 2000 or abs(zacc) > 2000:
+                    imu_anomalies.append(f"High acceleration detected: x={xacc}, y={yacc}, z={zacc}")
 
-        if latitude is not None and longitude is not None:
-            current_location = (latitude, longitude)
-            if previous_location:
-                distance = ((current_location[0] - previous_location[0])**2 + (current_location[1] - previous_location[1])**2)**0.5
-                if distance > large_distance_threshold:
-                    issues.append(f"Sudden jump in coordinates. Distance: {distance:.4f} degrees")
+            elif entry["type"] == "SCALED_PRESSURE":
+                pressure_abs = entry["data"]["press_abs"]
+                temperature = entry["data"]["temperature"]
 
-            previous_location = current_location
+                if pressure_abs < 100:
+                    altitude_anomalies.append(f"Low absolute pressure: {pressure_abs}")
+                if temperature < 0 or temperature > 10000:
+                    altitude_anomalies.append(f"Unusual temperature: {temperature}")
+        except KeyError as e:
+             print(f"KeyError: {e} in entry {entry.get('type', 'Unknown')}")
+        except Exception as e:
+            print(f"An error occurred while processing entry {entry.get('type', 'Unknown')}: {e}")
 
-    if issues:
-        return ". ".join(issues)
+    if battery_anomalies:
+        anomalies.append(f"Battery Issues: {', '.join(battery_anomalies)}")
+    if imu_anomalies:
+        anomalies.append(f"IMU Issues: {', '.join(imu_anomalies)}")
+    if altitude_anomalies:
+        anomalies.append(f"Altitude/Pressure Issues: {', '.join(altitude_anomalies)}")
+
+    if not anomalies:
+        return "No anomalies detected."
     else:
-        return "No GPS issues found."
+        return "; ".join(anomalies)
 
 
-file_path = 'parsed_telemetry.json'
-result = analyze_gps_data(file_path)
+result = analyze_telemetry()

@@ -47,7 +47,13 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         { from: /.*/, to: path.posix.join(config.dev.assetsPublicPath, 'index.html') },
       ],
     },
-    hot: true,
+    hot: false,
+    liveReload: false, // disable full page reload
+    watchFiles: {
+    paths: [],
+    options: {
+      ignored: "**/*" // Ignore everything
+    }},
     static: "./",
     compress: true,
     host: HOST || config.dev.host,

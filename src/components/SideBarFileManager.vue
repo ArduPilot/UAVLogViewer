@@ -15,6 +15,8 @@
             <p>Drop *.tlog or *.bin file here or click to browse</p>
             <input @change="onChange" id="choosefile" style="opacity: 0;" type="file">
         </div>
+        <button v-if="buttonLoad" @click="giveChatBot" type="button" id="backendButton">
+            Ask ChatBot questions about this</button>
         <!--<b-form-checkbox @change="uploadFile()" class="uploadCheckbox" v-if="file!=null && !uploadStarted"> Upload
         </b-form-checkbox>-->
         <VProgress v-bind:complete="transferMessage"
@@ -25,6 +27,9 @@
                    v-bind:percent="state.processPercentage"
                    v-if="state.processPercentage > -1"
         ></VProgress>
+        <div v-if="loading" style="text-align: center; margin-top: 10px;">
+            <i class="fas fa-spinner fa-spin"></i> Sending to backend...
+        </div>
     </div>
 </template>
 <script>
@@ -52,7 +57,9 @@ export default {
             transferMessage: '',
             state: store,
             file: null,
-            uploadStarted: false
+            uploadStarted: false,
+            loading: false,
+            buttonLoad: false
         }
     },
     created () {
@@ -63,6 +70,27 @@ export default {
         this.$eventHub.$off('open-sample')
     },
     methods: {
+
+    uploadToBackend (file) {
+    this.buttonLoad = false
+    const formuploadData = new FormData()
+    formuploadData.append('file', file)
+
+    fetch('http://localhost:8000/parser', {
+        method: 'POST',
+        body: formuploadData
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to parse on server')
+                return res.json()
+            })
+            .catch(err => {
+                console.error('Server parse error:', err)
+            })
+            .finally(() => {
+                this.loading = false
+            })
+        },
         trimFile () {
             worker.postMessage({ action: 'trimFile', time: this.state.timeRange })
         },
@@ -117,8 +145,20 @@ export default {
             oReq.send()
         },
         onChange (ev) {
+            ev.preventDefault()
+            this.buttonLoad = true
             const fileinput = document.getElementById('choosefile')
-            this.process(fileinput.files[0])
+            const file = fileinput.files[0]
+            this.file = file
+            if (!file) return
+
+            this.process(file)
+        },
+        giveChatBot (ev) {
+            ev.preventDefault()
+            const file = this.file
+            this.loading = true
+            this.uploadToBackend(file)
         },
         onDrop (ev) {
             // Prevent default behavior (Prevent file from being opened)
@@ -271,6 +311,22 @@ export default {
 }
 </script>
 <style scoped>
+#backendButton {
+    bottom: 20px;
+    width: 100%;
+    z-index: 999;
+    opacity: 1;
+
+    background-color: #1e293b;
+    color: #ffffff;
+    padding: 10px 20px;
+    border: 1px solid #3b82f6;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 500;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+}
 
     /* NAVBAR */
 

@@ -1,7 +1,7 @@
 <template>
 <!-- HEADER -->
+ <div>
     <div class="nav-side-menu col-lg-2">
-
         <h1 class="brand">
             <a class="github" href="https://github.com/ardupilot/uavlogviewer">
             <img :src="require('../assets/GitHub-Mark-64px.png').default"/>
@@ -126,6 +126,8 @@
             </b-collapse>
         </div>
     </div>
+    <ChatBox />
+</div>
 </template>
 <script>
 /* eslint-disable */
@@ -133,6 +135,7 @@ import Dropzone from './SideBarFileManager.vue'
 import MessageMenu from './SideBarMessageMenu.vue'
 import {store} from './Globals.js'
 import PlotSetup from './PlotSetup.vue'
+import ChatBox from './ChatBox.vue'
 
 export default {
     name: 'sidebar',
@@ -225,7 +228,7 @@ export default {
             this.downloadURL = URL.createObjectURL(this.blob)
         }
     },
-    components: {PlotSetup, MessageMenu, Dropzone}
+    components: {PlotSetup, MessageMenu, Dropzone, ChatBox}
 }
 </script>
 <style scoped>

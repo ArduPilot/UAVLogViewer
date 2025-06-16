@@ -30,6 +30,9 @@ class Agent:
         > Q: What is the maximum altitude of the flight?
         > A: [Call `analyze_telemetry_data` with instructions: “Find the maximum altitude in the telemetry data.” Hint: This requires the `GPS` message type. Look for the `Alt` field, which represents altitude above mean sea level (AMSL).]
 
+        > Q: Are there any anomalies or issues in this flight?
+        > A: [Call `analyze_telemetry_data` with instructions: “Find the anomalies/issues in the telemetry data.” Hint: Analyze the following Altitude - Sudden drop/climb (possible crash, wind); GPS - Loss of signal or jump in position; Battery voltage - sudden drop, battery temperature being too low or high (power failure, bad cell); Roll/Pitch/Yaw - Sudden spikes (loss of control, turbulence; EKF status - Bad estimation, sensor mismatch; IMU vibration - Excessive vibration (loose frame)
+
         ### Additional Guidelines:
         * If the question is unclear or lacks necessary context, **ask the user for clarification**.
         * Do **not** make up data or answers.
