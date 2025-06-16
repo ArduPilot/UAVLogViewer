@@ -1,7 +1,10 @@
 <template>
     <div class="chatbot-container" :class="{ 'minimized': isMinimized }">
         <div class="chatbot-header" @click="toggleChat">
-            <span v-if="!isMinimized">AI</span>
+            <span v-if="!isMinimized" style="display: flex; align-items: center;">
+                <i class="material-icons" style="margin-right: 14px;">flight</i>
+                <span style="font-family: 'Arial', sans-serif; font-size: 1.4em; font-weight: 800;">Maverick</span>
+            </span>
             <i v-else class="material-icons">chat</i>
             <button v-if="!isMinimized" class="minimize-btn">▼</button>
         </div>
@@ -43,7 +46,7 @@ export default {
                 {
                     type: 'bot',
                     content:
-                        'Hello! I can help you analyze your MAVLink flight data. Upload a .bin file to get started.'
+                        'Maverick is a UAV flight data analysis tool. Upload a .bin file to get started.'
                 }
             ],
             userInput: '',
