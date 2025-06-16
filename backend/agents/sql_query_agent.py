@@ -151,8 +151,10 @@ class SQLQueryAgent:
             prompt = f"""
             You are a UAV flight data expert. Generate clear, concise answers based on SQL query results. 
             
-            Ensure to use the correct units as specified in the table description below.
+            Ensure to use the correct units as specified in the table description below. 
 
+            Convert the result to the metric unit system (m, km/h, etc.) wherever applicable.
+            
             Table descriptions: \n{db_schema}
 
             Original question: {question}
