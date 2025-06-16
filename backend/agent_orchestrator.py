@@ -1,84 +1,118 @@
-from typing import Dict, List, Any
-import openai
+from typing import Dict, List, Any, Optional
+from openai import OpenAI
 import json
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+from pydantic import BaseModel
+import logging
 
+from agents.query_classifier_agent import QueryClassifierAgent
+from agents.sql_query_agent import SQLQueryAgent
+from agents.data_analysis_agent import DataAnalysisAgent
 
-class QueryAgent:
-    """Agent responsible for answering specific questions about flight data."""
-    
-    def __init__(self):
-        self.system_prompt = """You are a UAV flight data expert assistant. Your role is to answer specific questions about flight data.
-        Guidelines:
-        1. Be precise and technical in your responses
-        2. Reference specific data points and timestamps
-        3. Explain technical terms when used
-        4. If the question is unclear, ask for clarification
-        5. If you notice concerning patterns, point them out
-        
-        Use the ArduPilot documentation (https://ardupilot.org/plane/docs/logmessages.html) as reference."""
-        
-    def answer_question(self, question: str, flight_data: Dict[str, Any], conversation_history: List[Dict[str, str]]) -> str:
-        """Answer a specific question about the flight data."""
-        try:
-            messages = [
-                {"role": "system", "content": self.system_prompt},
-                *conversation_history,
-                {"role": "user", "content": f"Flight data context:\n{json.dumps(flight_data, indent=2)}\n\nQuestion: {question}"}
-            ]
-            
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
-                messages=messages,
-                temperature=0.7,
-                max_tokens=500
-            )
-            
-            return response.choices[0].message.content
-        except Exception as e:
-            return f"Error answering question: {str(e)}"
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s - %(message)s'
+)
+
+logging.getLogger("openai").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
+
+# Load environment variables
+load_dotenv()
+
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+class Message(BaseModel):
+    role: str
+    content: str
+
+class FlightData(BaseModel):
+    data: Dict[str, Any]
+
+class AgentResponse(BaseModel):
+    message: str
+    sessionId: str
+    error: Optional[str] = None
+
 
 class AgentOrchestrator:
     """Orchestrates multiple AI agents for comprehensive flight data analysis."""
     
-    def __init__(self):
-        self.query_agent = QueryAgent()
-        self.conversations = {}
-        self.flight_data = {}
+    def __init__(self, flight_db):
+        logger.info("Initializing AgentOrchestrator")
+        self.sql_agent = SQLQueryAgent()
+        self.data_analysis_agent = DataAnalysisAgent()
+        self.conversations: Dict[str, List[Message]] = {}
+        self.flight_db = flight_db
         
-    def _get_conversation_history(self, session_id: str) -> List[Dict[str, str]]:
+    def _get_conversation_history(self, session_id: str) -> List[Message]:
         """Get or create conversation history for a session."""
+        logger.debug(f"Getting conversation history for session {session_id}")
         if session_id not in self.conversations:
+            logger.info(f"Creating new conversation history for session {session_id}")
             self.conversations[session_id] = []
         return self.conversations[session_id]
         
-    def process_message(self, message: str, session_id: str, flight_data: Dict[str, Any] = {}) -> Dict[str, Any]:
+    def process_message(self, message: str, session_id: str) -> AgentResponse:
         """Process a user message and coordinate agent responses."""
+        logger.info(f"Processing message for session {session_id}: {message}")
+        
         conversation = self._get_conversation_history(session_id)
-        if flight_data:
-            self.flight_data[session_id] = flight_data
         
         # Add user message to conversation history
-        conversation.append({"role": "user", "content": message})
+        conversation.append(Message(role="user", content=message))
         
         try:
-            # Determine if this is a general question or requires flight data analysis
-            response = self.query_agent.answer_question(message, self.flight_data, conversation)
+            # Get database connection and schema
+            logger.debug(f"Getting database information for session {session_id}")
+            db_schema = self.flight_db.get_database_information(session_id)
+            
+            # Classify query
+            query_classifier = QueryClassifierAgent()
+            classification = query_classifier.classify_query(message)
+            logger.info(f"Query classified as: {classification}")
+
+            if classification == 'SQL':
+                # Process the question using SQL agent
+                logger.info("Processing question through SQL agent")
+                response = self.sql_agent.process_question(
+                    session_id,
+                    message,
+                    db_schema,
+                    conversation,
+                    self.flight_db
+                )
+            elif classification == 'ANALYSIS':
+                # Process the question using data analysis agent
+                logger.info("Processing question through data analysis agent")
+                response = self.data_analysis_agent.analyze(
+                    message,
+                    self.flight_db,
+                    session_id
+                )
+            else:
+                response = "I can help you with questions about the UAV's flight data. Ask me something like 'What was the average altitude during the flight?'."
             
             # Add assistant response to conversation history
-            conversation.append({"role": "assistant", "content": response})
+            conversation.append(Message(role="assistant", content=response))
             
-            return {
-                "response": response,
-                "session_id": session_id,
-                "timestamp": datetime.now().isoformat()
-            }
+            logger.info(f"Successfully processed message for session {session_id}")
+            logger.info(f"Response: {response}")
+            return AgentResponse(
+                message=response,
+                sessionId=session_id,
+                error=None
+            )
             
         except Exception as e:
-            error_message = f"Error processing message: {str(e)}"
-            conversation.append({"role": "assistant", "content": error_message})
-            return {
-                "response": error_message,
-                "session_id": session_id,
-                "timestamp": datetime.now().isoformat()
-            }
+            error_message = f"Error processing message. Please try again."
+            logger.error(f"Error in process_message: {str(e)}", exc_info=True)
+            conversation.append(Message(role="assistant", content=error_message))
+            return AgentResponse(
+                message=error_message,
+                sessionId=session_id,
+                error=error_message
+            )
