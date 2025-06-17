@@ -25,10 +25,11 @@
             }
           ]">
         <div class="message-content">
-          <div class="message-text">
-            {{ message.content }}
-            <span v-if="message.isStreaming" class="typing-cursor">|</span>
-          </div>
+          <div 
+            class="message-text" 
+            v-html="renderMessageContent(message.content)"
+          ></div>
+          <span v-if="message.isStreaming" class="typing-cursor">|</span>
           <div class="message-time">{{ message.timestamp }}</div>
         </div>
       </div>
@@ -60,6 +61,8 @@
 </template>
 
 <script>
+import { marked } from 'marked';
+
 export default {
   props: {
     sessionId: {
@@ -85,6 +88,18 @@ export default {
     };
   },
   methods: {
+    renderMessageContent(content) {
+      if (!content) return '';
+      
+      // First, render markdown to handle **bold** and other markdown
+      let html = marked.parse(content);
+      
+      // Ensure line breaks are preserved
+      html = html.replace(/\n/g, '<br>');
+      
+      return html;
+    },
+    
     async sendMessage() {
       if (this.newMessage.trim() === '') return
       
@@ -207,11 +222,11 @@ export default {
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 400px;
-  max-height: 100%;
+  height: calc(100vh - 150px); /* Full viewport height minus header and input */
   background-color: #2d3748;
   border-radius: 8px;
   overflow: hidden;
+  position: relative;
   margin-top: 10px;
 }
 
@@ -233,8 +248,11 @@ export default {
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding: 15px;
   background-color: #1a202c;
+  height: calc(100% - 110px); /* Adjust based on header and input height */
+  position: relative;
+  scroll-behavior: smooth;
 }
 
 .message {

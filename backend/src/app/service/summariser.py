@@ -1,6 +1,8 @@
 import json
 import pandas as pd
+import logging
 
+logger = logging.getLogger(__name__)
 # -------------- helpers ----------------
 def _sample_df(df: pd.DataFrame, keep_rows: int = 100) -> str:
     if len(df) <= keep_rows:
@@ -14,8 +16,7 @@ def _describe_df(df: pd.DataFrame) -> str:
 
 def summarise_df(df: pd.DataFrame, max_rows: int = 10000) -> str:
     n = len(df)
-    print(f"Processing DataFrame with {n} rows")
-    
+    logger.info(f"Summarising {n} rows")
     if n <= 500:
         return df.to_json(orient="records")
 

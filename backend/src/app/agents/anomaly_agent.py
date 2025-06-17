@@ -13,6 +13,9 @@ from core.session_store import SessionStore
 from service.llm_router import infer_message_types_llm, refine_types_with_llm
 from service.summariser import build_context
 from models.telemetry_data import TelemetryData
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AnomalyAgent(Agent):
@@ -45,21 +48,18 @@ class AnomalyAgent(Agent):
         msg_types = set()
 
         if self.session_store:
-            last_intent = self.session_store.get_intent(self.session_id)
-            print("last_intent", last_intent)
-
             recent_user_msgs = [
                 m["content"]
                 for m in self.session_store.get_history(self.session_id)[-5:]
                 if m["role"] == "user"
             ]
-            combined_query = "\n".join(recent_user_msgs[-2:] + [message])
-            print("combined_query", combined_query)
+            combined_query = "\n".join(recent_user_msgs[-1:] + [message])
+            logger.info(f"combined_query: {combined_query}")
 
             raw_types = infer_message_types_llm(combined_query, frozenset(self.tdata.by_type.keys()))
-            print("raw_types", raw_types)
+            logger.info(f"raw_types: {raw_types}")
             msg_types = refine_types_with_llm(message, list(raw_types))
-            print("msg_types", msg_types)
+            logger.info(f"msg_types: {msg_types}")
             self.session_store.set_last_msg_types(self.session_id, list(msg_types))
 
         ctx = build_context(self.tdata, msg_types) if msg_types else "No relevant telemetry data found."

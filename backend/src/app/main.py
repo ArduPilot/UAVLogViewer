@@ -1,8 +1,29 @@
 from dotenv import load_dotenv
 import os
-import time
+import logging
+from logging.handlers import RotatingFileHandler
+import os
 
-# Load environment variables first thing
+
+os.makedirs('logs', exist_ok=True)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        RotatingFileHandler(
+            'logs/app.log',
+            maxBytes=1024*1024,  # 1MB
+            backupCount=5
+        ),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+logger.info("Starting UAV Log Viewer backend...")
+
+# Load environment variables
 load_dotenv()
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
@@ -27,18 +48,17 @@ app.add_middleware(
 async def upload(file: UploadFile = File(...)):
     if not file.filename.endswith(".bin"):
         raise HTTPException(400, "Only .bin logs supported.")
-    print("reading file")
+    logger.info("Received file upload request")
     raw = await file.read()
-    print("parsing file")
     data = TelemetryParser.parse(raw)
-    print("parsing done")
     session_id = str(uuid.uuid4())
     store.add_session(session_id, data)
-    print("session added")
+    logger.info("File uploaded successfully")
     return UploadResponse(session_id=session_id)
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
+    logger.info(f"Received chat request: {req}")
     if not store.has_session(req.session_id):
         raise HTTPException(
             status_code=400,
@@ -46,6 +66,7 @@ async def chat(req: ChatRequest):
         )
     router = IntentRouterAgent(req.session_id, store)
     answer = router.route(req.message)
+    logger.info(f"Chat response: {answer}")
     return ChatResponse(answer=answer)
 
 

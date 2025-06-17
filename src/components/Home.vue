@@ -20,8 +20,8 @@
 
             <sidebar @file-uploaded="onFileUploaded" @upload-error="onUploadError">
                 <template #chat>
-                    <div class="chat-container" style="width: 100%; margin-top: auto; padding: 10px;">                        
-                        <div class="chat-window" style="width: 100%;">
+                    <div class="chat-outer-container" style="width: 100%; height: 100%; display: flex; flex-direction: column;">                        
+                        <div class="chat-window" style="flex: 1; min-height: 0; display: flex; flex-direction: column;">
                             <Chat ref="chat" :session-id="sessionId"/>
                         </div>
                     </div>
@@ -39,7 +39,7 @@
                 </div>
                 <div class="row" v-bind:class="[state.plotOn ? 'h-50' : 'h-100']"
                      v-if="state.mapAvailable && mapOk && state.showMap">
-                    <div class="col-12 noPadding">
+                    <div class="col-12 noPadding" style="display: block;">
                         <CesiumViewer ref="cesiumViewer"/>
                     </div>
                 </div>
@@ -337,10 +337,10 @@ export default {
         font-family: 'Montserrat', sans-serif;
         content: "\f078";
         display: inline-block;
-        padding-left: 10px;
-        padding-right: 10px;
-        vertical-align: middle;
-        float: right;
+        padding: 0 10px;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
     }
 
     body {

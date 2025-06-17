@@ -23,10 +23,8 @@ class GreetingAgent(Agent):
         ))
 
     def chat(self, message: str) -> str:
-        # Start with system prompt
         messages = [self.system_prompt]
         
-        # Add conversation history if available
         if self.session_store:
             history = self.session_store.get_history(self.session_id)[-3:]  # Get last 3 turns
             for msg in history:
@@ -34,9 +32,7 @@ class GreetingAgent(Agent):
                 msg_class = HumanMessage if role == "user" else AIMessage
                 messages.append(msg_class(content=msg["content"]))
         
-        # Add current message
         messages.append(HumanMessage(content=message))
         
-        # Get response
         response = self.llm(messages)
         return response.content

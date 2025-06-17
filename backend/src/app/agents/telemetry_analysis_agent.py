@@ -10,7 +10,9 @@ from core.session_store import SessionStore
 from service.llm_router import infer_message_types_llm, refine_types_with_llm
 from service.summariser import build_context
 from models.telemetry_data import TelemetryData
+import logging
 
+logger = logging.getLogger(__name__)
 
 class TelemetryAnalysisAgent(Agent):
     """One-per-session conversational assistant."""
@@ -43,9 +45,6 @@ class TelemetryAnalysisAgent(Agent):
         msg_types = set()
 
         if self.session_store:
-            last_intent = self.session_store.get_intent(self.session_id)
-            print("last_intent", last_intent)
-
             # Collect message type inference context
             recent_user_msgs = [
                 m["content"]
@@ -53,13 +52,13 @@ class TelemetryAnalysisAgent(Agent):
                 if m["role"] == "user"
             ]
             combined_query = "\n".join(recent_user_msgs[-2:] + [message])
-            print("combined_query", combined_query)
+            logger.info(f"combined_query: {combined_query}")
 
             # Use history + current message to infer types
             raw_types = infer_message_types_llm(combined_query, frozenset(self.tdata.by_type.keys()))
-            print("raw_types", raw_types)
+            logger.info(f"raw_types: {raw_types}")
             msg_types = refine_types_with_llm(message, list(raw_types))  # use only current msg here for refining
-            print("msg_types", msg_types)
+            logger.info(f"msg_types: {msg_types}")
             self.session_store.set_last_msg_types(self.session_id, list(msg_types))
 
     
@@ -89,6 +88,11 @@ class TelemetryAnalysisAgent(Agent):
             "• Use first-person <i>sparingly</i>. Favor direct descriptions: 'The max altitude was...'\n"
             "• Always include relevant units (e.g., m/s, m, degrees) and precise UTC timestamps.\n\n"
 
+            "### When to Ask for Clarification\n"
+            "• If the question lacks specific field names or contextual clues, do NOT make assumptions.\n"
+            "• If you are unsure what the user is referring to — based on the current query and prior messages — ask for clarification.\n"
+            "• Your goal is to avoid misinterpretation by prompting the user to narrow down or specify their request.\n\n"
+
             # ---------- Capabilities ----------
             "### What You Can Do\n"
             "• Reference telemetry data rows provided in context.\n"
@@ -100,7 +104,7 @@ class TelemetryAnalysisAgent(Agent):
             "### Response Structure\n"
             "1. <b>Answer first</b> (1–2 clear sentences).<br>"
             "2. <b>Brief justification</b> with key values and timestamps.<br>"
-            "3. If unclear, ask a follow-up (e.g., 'Could you provide ATT messages around 18:32:14?')<br>"
+            "3. If the question is ambiguous, ask the user for clarification instead of answering directly.<br>"
             "4. Keep it focused and actionable."
             "5. Respond strictly using HTML formatting. Do not use Markdown or plain text. All bold must use <b>, italics with <i>, and new lines with <br>\n"
         )

@@ -8,3 +8,4 @@ env/
 *.so
 *.html  # Cython HTML annotation files
 build/
+logs/

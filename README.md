@@ -45,7 +45,7 @@ A powerful web application for analyzing UAV (Unmanned Aerial Vehicle) telemetry
    npm install
    ```
 
-## 🏃‍♂️ Running the Application
+## Running the Application
 
 1. Start the backend server:
    ```bash
@@ -61,7 +61,7 @@ A powerful web application for analyzing UAV (Unmanned Aerial Vehicle) telemetry
    ```
    The frontend will be available at `http://localhost:8080`
 
-## 🏗️ Architecture
+## Architecture
 
 ### Backend (FastAPI)
 
@@ -110,10 +110,7 @@ The system uses specialized AI agents to handle different types of user queries:
    - Handles queries that don't fit other categories
    - Provides helpful guidance when user intent is unclear
 
-#### Data Processing
-
-
-## 🌐 API Documentation
+## API Documentation
 
 ### Endpoints
 
