@@ -77,6 +77,7 @@ class AnomalyAgent(Agent):
             "• Use <br> for line breaks when you need to separate sections clearly.\n"
             "• Use <ul><li>bullet points</li><li>for lists</li></ul> when appropriate.\n"
             "• Always close HTML tags properly.\n\n"
+            "• Respond strictly using HTML formatting. Do not use Markdown or plain text. All bold must use <b>, italics with <i>, and new lines with <br>\n"
 
             "### Reasoning Strategy\n"
             "• Use flexible, data-driven reasoning rather than rigid thresholds.\n"

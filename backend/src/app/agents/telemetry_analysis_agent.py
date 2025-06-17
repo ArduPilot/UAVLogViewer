@@ -101,7 +101,8 @@ class TelemetryAnalysisAgent(Agent):
             "1. <b>Answer first</b> (1–2 clear sentences).<br>"
             "2. <b>Brief justification</b> with key values and timestamps.<br>"
             "3. If unclear, ask a follow-up (e.g., 'Could you provide ATT messages around 18:32:14?')<br>"
-            "4. Keep it focused and actionable.\n"
+            "4. Keep it focused and actionable."
+            "5. Respond strictly using HTML formatting. Do not use Markdown or plain text. All bold must use <b>, italics with <i>, and new lines with <br>\n"
         )
 
         # ---------- 2. Internal analysis prompt (chain-of-thought, not shown to user) ----------
