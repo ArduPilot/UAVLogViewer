@@ -33,7 +33,10 @@
                     <message-menu/>
                 </div>
                 <div v-if="selected==='home'">
-                    <Dropzone/>
+                    <Dropzone 
+                        @file-uploaded="onFileUploaded"
+                        @upload-error="onUploadError"
+                    />
                     <span class="buildinfo">Commit {{state.commit}}</span>
                     <span class="buildinfo">Built {{state.buildDate}}</span>
                 </div>
@@ -219,7 +222,15 @@ export default {
 
         downloadFile (filename) {
             this.downloadBlob(this.state.files[filename], filename, 'application/octet-stream')
-        }
+        },
+        onFileUploaded(data) {
+            // Emit the event up to the parent component (Home.vue)
+            this.$emit('file-uploaded', data);
+        },
+        onUploadError(error) {
+            // Emit the error up to the parent component (Home.vue)
+            this.$emit('upload-error', error);
+        },
     },
     created () {
         this.$eventHub.$on('set-selected', this.setSelected)

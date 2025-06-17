@@ -18,11 +18,11 @@
         <EkfHelperTool  @close="state.showEkfHelper = false" v-if="state.showEkfHelper"></EkfHelperTool>
         <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
-            <sidebar>
+            <sidebar @file-uploaded="onFileUploaded" @upload-error="onUploadError">
                 <template #chat>
                     <div class="chat-container" style="width: 100%; margin-top: auto; padding: 10px;">                        
                         <div class="chat-window" style="width: 100%;">
-                            <Chat ref="chat" />
+                            <Chat ref="chat" :session-id="sessionId"/>
                         </div>
                     </div>
                 </template>
@@ -86,6 +86,7 @@ export default {
     },
     data () {
         return {
+            sessionId: null,
             state: store,
             dataExtractor: null
         }
@@ -235,7 +236,50 @@ export default {
                 this.state.colors.push(new Color(rgba[0], rgba[1], rgba[2]))
                 // this.translucentColors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2], 0.1))
             }
-        }
+        },
+        onFileUploaded(data) {
+            console.log('File uploaded successfully:', data);
+            // Show success toast
+            this.$bvToast.toast('File uploaded successfully!', {
+                title: 'Success',
+                variant: 'success',
+                solid: true,
+                autoHideDelay: 3000
+            });
+            
+            // Add the API response message to the chat
+            if (data.message && this.$refs.chat) {
+                this.$refs.chat.addMessage({
+                    content: data.message,
+                    role: 'assistant',
+                    timestamp: new Date().toLocaleTimeString()
+                });
+                this.sessionId = data.sessionId;
+            }
+        },
+        
+        onUploadError(error) {
+            console.error('Upload error:', error);
+            const errorMessage = error.message || 'Failed to upload file';
+            
+            // Show an error message to the user
+            this.$bvToast.toast(errorMessage, {
+                title: 'Upload Error',
+                variant: 'danger',
+                solid: true,
+                autoHideDelay: 5000
+            });
+            
+            // Add the error message to the chat
+            if (this.$refs.chat) {
+                this.$refs.chat.addMessage({
+                    content: `Error: ${errorMessage}`,
+                    role: 'assistant',
+                    timestamp: new Date().toLocaleTimeString(),
+                    isError: true
+                });
+            }
+        },
     },
     components: {
         Sidebar,

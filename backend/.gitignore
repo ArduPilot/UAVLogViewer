@@ -1,0 +1,10 @@
+.env
+env/
+# Cython files
+*.c
+*.pyx
+*.pxd
+*.pyd
+*.so
+*.html  # Cython HTML annotation files
+build/

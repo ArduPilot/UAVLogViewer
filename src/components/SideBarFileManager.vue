@@ -152,14 +152,23 @@ export default {
             this.state.processPercentage = 100
             this.file = file
             const reader = new FileReader()
-            reader.onload = function (e) {
+            reader.onload = async (e) => {
                 const data = reader.result
+                // First process the file locally
                 worker.postMessage({
                     action: 'parse',
                     file: data,
                     isTlog: (file.name.endsWith('tlog')),
                     isDji: (file.name.endsWith('txt'))
                 })
+                
+                // Then upload to the API
+                try {
+                    await this.uploadToApi();
+                } catch (error) {
+                    console.error('Error uploading to API:', error);
+                    // The error is already handled in uploadToApi, so we don't need to do anything here
+                }
             }
             this.state.logType = file.name.endsWith('tlog') ? 'tlog' : 'bin'
             if (file.name.endsWith('.txt')) {

@@ -1,7 +1,7 @@
 <template>
   <div class="chat-container">
     <div class="chat-header">
-      <h3>Flight Data Assistant</h3>
+      <h3 class="chat-title">Flight Data Assistant</h3>
     </div>
     <div class="chat-messages" ref="messagesContainer">
       <!-- Initial welcome message -->
@@ -13,12 +13,26 @@
       </div>
       
       <!-- Dynamic messages -->
-      <div v-for="(message, index) in messages" :key="index" 
-           :class="['message', message.role === 'user' ? 'user-message' : 'assistant-message']">
+      <div v-for="(message, index) in messages" 
+           :key="index"
+           v-if="message.role === 'user' || message.content || message.isStreaming"
+           :class="['message', 
+                   message.role === 'user' ? 'user-message' : 'assistant-message',
+                   { 'streaming': message.isStreaming }]">
         <div class="message-content">
-          <div class="message-text">{{ message.content }}</div>
+          <div class="message-text">
+            {{ message.content }}
+            <span v-if="message.isStreaming" class="typing-cursor">|</span>
+          </div>
           <div class="message-time">{{ message.timestamp }}</div>
         </div>
+      </div>
+
+      <!-- Loading dots -->
+      <div v-if="isProcessing && !isAnyMessageStreaming" class="loading-dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
       </div>
     </div>
     <div class="chat-input">
@@ -27,8 +41,9 @@
         @keypress.enter.prevent="sendMessage"
         placeholder="Type your message..."
         class="message-input"
+        :disabled="isProcessing"
       />
-      <button @click="sendMessage" class="send-button">
+      <button @click="sendMessage" class="send-button" :disabled="isProcessing">
         <i class="fas fa-paper-plane"></i>
       </button>
     </div>
@@ -43,10 +58,16 @@ export default {
       default: null
     }
   },
+  computed: {
+    isAnyMessageStreaming() {
+      return this.messages.some(msg => msg.isStreaming);
+    }
+  },
   data() {
     return {
       messages: [],
-      newMessage: ''
+      newMessage: '',
+      isProcessing: false
     }
   },
   methods: {
@@ -59,19 +80,25 @@ export default {
         content: this.newMessage,
         timestamp: new Date().toLocaleTimeString()
       }
-      this.messages.push(userMessage)
-      this.newMessage = ''
+      this.messages.push(userMessage);
+      const userInput = this.newMessage;
+      this.newMessage = '';
+      
+      this.isProcessing = true;
+      this.scrollToBottom()
       
       // Call the backend API with the session ID
       try {
+        this.isProcessing = true
+        console.log("sessionId",this.sessionId);
         const response = await fetch('http://0.0.0.0:8000/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            session_id: this.sessionId,
-            message: userMessage.content
+            session_id: "test",
+            message: userInput
           })
         });
         
@@ -80,20 +107,62 @@ export default {
         }
         
         const data = await response.json();
-        
-        // Add assistant's response to the chat
-        this.addMessage({
+        const assistantMessage = {
           role: 'assistant',
-          content: data.message,
-          timestamp: new Date().toLocaleTimeString()
-        });
+          content: '',
+          timestamp: new Date().toLocaleTimeString(),
+          isStreaming: true
+        };
+        this.messages.push(assistantMessage);
+        this.isProcessing = false;
+        this.scrollToBottom();
+        
+        // Get the last message (which is our assistant's message)
+        const lastMessageIndex = this.messages.length - 1;
+        
+        // Split the response into words
+        const words = data.answer.split(' ');
+        let currentText = '';
+        
+        // Add words one by one with a small delay
+        for (let i = 0; i < words.length; i++) {
+          // Add a space between words, but not before the first word
+          currentText += (i > 0 ? ' ' : '') + words[i];
+          
+          // Update the message content
+          this.$set(this.messages, lastMessageIndex, {
+            ...this.messages[lastMessageIndex],
+            content: currentText
+          });
+          
+          // Scroll to bottom after each update
+          this.scrollToBottom();
+          
+          // Small delay between words (adjust timing as needed)
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
       } catch (error) {
         console.error('Error sending message:', error);
-        this.addMessage({
+        // Update the last message with the error
+        const lastMessageIndex = this.messages.length - 1;
+        this.$set(this.messages, lastMessageIndex, {
           role: 'assistant',
           content: 'Sorry, I encountered an error. Please try again.',
-          timestamp: new Date().toLocaleTimeString()
+          timestamp: new Date().toLocaleTimeString(),
+          isError: true
         });
+      } finally {
+        // Mark streaming as complete
+        const lastMessageIndex = this.messages.length - 1;
+        if (this.messages[lastMessageIndex]) {
+          this.$set(this.messages, lastMessageIndex, {
+            ...this.messages[lastMessageIndex],
+            isStreaming: false
+          });
+        }
+        this.isProcessing = false;
+        this.scrollToBottom();
       }
     },
     addMessage(message) {
@@ -145,6 +214,12 @@ export default {
   border-bottom: 1px solid #4a5568;
 }
 
+.chat-title {
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 500;
+}
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -159,6 +234,11 @@ export default {
   border-radius: 12px;
   font-size: 12px;
   line-height: 1.4;
+}
+
+.message-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .user-message {
@@ -225,5 +305,64 @@ export default {
 
 .send-button i {
   font-size: 14px;
+}
+
+.typing-cursor {
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10px 15px;
+  margin: 2px 0;
+  padding-left: 5px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  margin: 0 4px;
+  background-color: #a0aec0;
+  border-radius: 50%;
+  display: inline-block;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { 
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+  40% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.message.assistant-message {
+  position: relative;
+  min-height: 30px;
 }
 </style>
