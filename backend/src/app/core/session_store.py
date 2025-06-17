@@ -42,6 +42,9 @@ class SessionStore:
     def get_last_msg_types(self, session_id: str) -> Optional[List[str]]:
         return self.metadata.get(session_id, UpdatedSessionMetadata()).last_msg_types
         
+    def has_session(self, session_id: str) -> bool:
+        return session_id in self.telemetry
+        
     def add_message(self, session_id: str, role: str, content: str) -> None:
         """Add a message to the conversation history for a session."""
         if session_id not in self.conversation_history:

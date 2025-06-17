@@ -16,9 +16,14 @@
       <div v-for="(message, index) in messages" 
            :key="index"
            v-if="message.role === 'user' || message.content || message.isStreaming"
-           :class="['message', 
-                   message.role === 'user' ? 'user-message' : 'assistant-message',
-                   { 'streaming': message.isStreaming }]">
+           :class="[
+            'message',
+            message.role === 'user' ? 'user-message' : 'assistant-message',
+            { 
+              'streaming': isStreaming && index === messages.length - 1,
+              'processing': message.isProcessing
+            }
+          ]">
         <div class="message-content">
           <div class="message-text">
             {{ message.content }}
@@ -38,13 +43,17 @@
     <div class="chat-input">
       <input 
         v-model="newMessage" 
-        @keypress.enter.prevent="sendMessage"
-        placeholder="Type your message..."
+        @keyup.enter="sendMessage"
+        :disabled="isProcessing || !isFileUploaded"
+        :placeholder="isFileUploaded ? 'Type your message...' : 'Please upload a file first...'"
         class="message-input"
-        :disabled="isProcessing"
       />
-      <button @click="sendMessage" class="send-button" :disabled="isProcessing">
-        <i class="fas fa-paper-plane"></i>
+      <button 
+        @click="sendMessage" 
+        :disabled="!newMessage.trim() || isProcessing || !isFileUploaded"
+        :title="!isFileUploaded ? 'Please upload a file first' : ''"
+      >
+        Send
       </button>
     </div>
   </div>
@@ -66,9 +75,14 @@ export default {
   data() {
     return {
       messages: [],
-      newMessage: '',
-      isProcessing: false
-    }
+      newMessage: "",
+      isProcessing: false,
+      sessionId: null,
+      isFileUploaded: false,  // Track if file is uploaded
+      isStreaming: false,
+      currentStreamingMessage: "",
+      currentStreamingIndex: 0,
+    };
   },
   methods: {
     async sendMessage() {
@@ -85,7 +99,7 @@ export default {
       this.newMessage = '';
       
       this.isProcessing = true;
-      this.scrollToBottom()
+      this.scrollToBottom();
       
       // Call the backend API with the session ID
       try {
@@ -97,7 +111,7 @@ export default {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            session_id: "test",
+            session_id: this.sessionId,
             message: userInput
           })
         });
@@ -180,11 +194,7 @@ export default {
   },
   watch: {
     sessionId(newVal) {
-      if (newVal) {
-        // If we have a new session ID, we might want to load any previous messages
-        // or do other session-specific initialization here
-        console.log('New session ID:', newVal);
-      }
+      this.isFileUploaded = !!newVal;
     }
   },
   mounted() {
@@ -237,7 +247,7 @@ export default {
 }
 
 .message-text {
-  font-size: 0.95rem;
+  white-space: 0.95rem;
   line-height: 1.5;
 }
 
@@ -253,6 +263,16 @@ export default {
   background-color: #4a5568;
   color: white;
   border-bottom-left-radius: 4px;
+}
+
+.message.processing {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.message-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .message-content {

@@ -225,6 +225,7 @@ export default {
         },
         onFileUploaded(data) {
             // Emit the event up to the parent component (Home.vue)
+            console.log('[Sidebar] re-emitting', data)
             this.$emit('file-uploaded', data);
         },
         onUploadError(error) {

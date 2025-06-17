@@ -27,18 +27,26 @@ app.add_middleware(
 async def upload(file: UploadFile = File(...)):
     if not file.filename.endswith(".bin"):
         raise HTTPException(400, "Only .bin logs supported.")
-    # raw = await file.read()
-    # data = TelemetryParser.parse(raw)
+    print("reading file")
+    raw = await file.read()
+    print("parsing file")
+    data = TelemetryParser.parse(raw)
+    print("parsing done")
     session_id = str(uuid.uuid4())
-    #store.add_session("test", data)
+    store.add_session(session_id, data)
+    print("session added")
     return UploadResponse(session_id=session_id)
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
-    # router = IntentRouterAgent("test", store)
-    # answer = router.route(req.message)
-    time.sleep(5)
-    return ChatResponse(answer="The maximum ground speed recorded across the telemetry slices was **0.9 m/s**. This speed indicates a steady movement during the flight, with other readings showing values like **0.795 m/s** and **0.769 m/s** at different timestamps. Most of the other ground speed values were **0.0 m/s**, suggesting periods of stationary or very slow movement.\n\nIf you need further details or specific timestamps related to these speeds, just let me know!")
+    if not store.has_session(req.session_id):
+        raise HTTPException(
+            status_code=400,
+            detail="No file has been uploaded for this session. Please upload a file first."
+        )
+    router = IntentRouterAgent(req.session_id, store)
+    answer = router.route(req.message)
+    return ChatResponse(answer=answer)
 
 
 @app.get("/hello")

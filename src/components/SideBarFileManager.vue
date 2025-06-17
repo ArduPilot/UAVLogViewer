@@ -225,19 +225,26 @@ export default {
                 }
                 
                 const data = await response.json();
-                
+                console.log("Upload chatbot file", data);
                 // Emit event with session ID and message
-                this.$emit('file-uploaded', {
-                    sessionId: data.session_id,
-                    message: data.message
-                });
+                const payload = {
+                    message: data.message,  // Show this in chat
+                    role: 'assistant',
+                    timestamp: new Date().toLocaleTimeString(),
+                    sessionId: data.session_id
+                };
+                // Emit locally (for Sidebar)
+                this.$emit('file-uploaded', payload);
+                // ALSO broadcast globally so Home.vue can still receive even if this component is unmounted
+                this.$root.$emit('file-uploaded', payload);
                 
             } catch (error) {
                 console.error('Error uploading to API:', error);
-                // Optionally show an error message to the user
-                this.$emit('upload-error', {
-                    message: 'Failed to process file with AI. Please try again.'
-                });
+                const errorPayload = { message: 'Failed to process file with AI. Please try again.' };
+                this.$emit('upload-error', errorPayload);
+                this.$root.$emit('upload-error', errorPayload);
+            } finally {
+                console.log("Upload chatbot file finally");
             }
         },
         fixData (message) {

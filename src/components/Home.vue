@@ -75,6 +75,10 @@ export default {
     name: 'Home',
     created () {
         this.$eventHub.$on('messagesDoneLoading', this.extractFlightData)
+        // Also listen for global file-uploaded in case sidebar re-emit fails
+        this.$root.$on('file-uploaded', this.onFileUploaded)
+        this.$root.$on('upload-error', this.onUploadError)
+
         this.state.messages = {}
         this.state.timeAttitude = []
         this.state.timeAttitudeQ = []
@@ -238,7 +242,12 @@ export default {
             }
         },
         onFileUploaded(data) {
-            console.log('File uploaded successfully:', data);
+            console.log('Home.vue - File uploaded event received:', data);
+            if (!data) {
+                console.error('Home.vue - Received empty data in onFileUploaded');
+                return;
+            }
+            
             // Show success toast
             this.$bvToast.toast('File uploaded successfully!', {
                 title: 'Success',
@@ -249,6 +258,7 @@ export default {
             
             // Add the API response message to the chat
             if (data.message && this.$refs.chat) {
+                console.log('Home.vue - Adding message to chat:', data.message);
                 this.$refs.chat.addMessage({
                     content: data.message,
                     role: 'assistant',
