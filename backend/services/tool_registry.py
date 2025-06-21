@@ -209,6 +209,9 @@ class ToolRegistry:
             DocumentationFetchTool,
         )
 
+        # Doc semantic search tool
+        from services.doc_tools import ArduDocSearchTool
+
         # Core tools that work with session metadata
         core_tools = [
             FlightSummaryTool(
@@ -221,6 +224,10 @@ class ToolRegistry:
             # New tool for column discovery
             TableInfoTool(self.session_id, self.sqlite_manager, self.duckdb_manager),
             DocumentationFetchTool(
+                self.session_id, self.sqlite_manager, self.duckdb_manager
+            ),
+            # Semantic documentation search
+            ArduDocSearchTool(
                 self.session_id, self.sqlite_manager, self.duckdb_manager
             ),
         ]

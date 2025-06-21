@@ -586,6 +586,9 @@ class DuckDBManager:
             for sql in tables_sql:
                 self._conn.execute(sql)
 
+            # Setup ArduPilot documentation search infrastructure
+            self._setup_doc_search_tables()
+
             # Create indexes for performance
             tables = [
                 "gps_telemetry",
@@ -612,6 +615,35 @@ class DuckDBManager:
         except Exception as e:
             logger.error(f"Failed to create DuckDB tables: {e}")
             raise
+
+    def _setup_doc_search_tables(self):
+        """Setup ArduPilot documentation search tables and VSS extension."""
+        try:
+            # Install and load VSS extension (idempotent operations)
+            self._conn.execute("INSTALL vss")
+            self._conn.execute("LOAD vss")
+            logger.debug("VSS extension loaded for documentation search")
+
+            # Create doc_chunks table for ArduPilot documentation
+            self._conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS doc_chunks (
+                    id INTEGER PRIMARY KEY,
+                    content_hash VARCHAR UNIQUE,
+                    source VARCHAR NOT NULL,
+                    heading VARCHAR,
+                    text VARCHAR NOT NULL,
+                    embedding FLOAT[384]
+                )
+                """
+            )
+
+            logger.info("ArduPilot documentation search infrastructure initialized")
+        except Exception as e:
+            # Log warning but don't fail the entire initialization
+            # This allows the system to work even if VSS extension is unavailable
+            logger.warning(f"Failed to setup documentation search: {e}")
+            logger.warning("Documentation search features will be unavailable")
 
     def get_connection(self) -> DuckDBPyConnection:
         """Get DuckDB connection."""

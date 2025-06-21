@@ -10,6 +10,9 @@ from typing import Optional
 from uuid import UUID, uuid4
 import json
 
+# Silence HuggingFace tokenizers warning in multi-process environment
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
 # Load environment variables from .env file
 from dotenv import load_dotenv
 
@@ -394,6 +397,17 @@ if DEBUG_MODE:
             logger.error(f"Error checking LLM status: {e}")
             return {"error": "Failed to check LLM status", "detail": str(e)}
 
+    @app.get("/debug/documentation-status")
+    async def debug_documentation_status():
+        """Check ArduPilot documentation system status for debugging."""
+        try:
+            from services.doc_initialization import get_documentation_status
+
+            return get_documentation_status()
+        except Exception as e:
+            logger.error(f"Error checking documentation status: {e}")
+            return {"error": "Failed to check documentation status", "detail": str(e)}
+
 
 @app.get("/sessions", response_model=SessionListResponse)
 async def list_sessions(limit: Optional[int] = None):
@@ -435,6 +449,22 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
         raise
+
+    # Initialize ArduPilot documentation system
+    try:
+        from services.doc_initialization import initialize_documentation_system
+
+        doc_success = await initialize_documentation_system()
+        if doc_success:
+            logger.info("ArduPilot documentation system initialized successfully")
+        else:
+            logger.warning(
+                "ArduPilot documentation system initialization failed - search may not work"
+            )
+            # Don't fail startup - the system can work without docs
+    except Exception as e:
+        logger.error(f"Failed to initialize documentation system: {e}")
+        # Don't fail startup - just log the error
 
     # Initialize LLM client
     try:

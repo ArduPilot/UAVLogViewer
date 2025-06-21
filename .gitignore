@@ -90,6 +90,7 @@ __pycache__/.env
 
 # Backend data (entire directory)
 backend/data/
+data/docs/
 
 # Runtime uploads (never commit user files)
 backend/uploads/

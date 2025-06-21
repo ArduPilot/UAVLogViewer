@@ -79,7 +79,12 @@ Analysis Approach:
 - When data is insufficient, clearly state limitations
 - Provide specific numeric values when available
 - Explain technical terms in accessible language
-- Suggest follow-up analysis when relevant"""
+- Suggest follow-up analysis when relevant
+
+Documentation Support:
+- You may consult the official ArduPilot documentation via the `search_ardu_doc` tool whenever relevant
+- Use this tool to look up meanings of log messages, troubleshooting guidance, or technical explanations
+- Note: Documentation coverage is limited to selected ArduPilot pages; not every topic is available"""
 
 
 def _format_flight_context(flight_metrics: Dict[str, Any]) -> str:
@@ -308,7 +313,12 @@ Response Guidelines:
 - When data is missing, say "I don't have that data" or "This information is not available"
 - Use clear, technical but accessible language
 - For technical terms, provide brief explanations
-- If needed, ask the user to provide more information"""
+- If needed, ask the user to provide more information
+
+Documentation Support:
+- You may consult the official ArduPilot documentation via the `search_ardu_doc` tool whenever relevant
+- Use this tool to look up meanings of log messages, troubleshooting guidance, or technical explanations
+- Note: Documentation coverage is limited to selected ArduPilot pages; not every topic is available"""
 
 
 def _get_no_session_instructions() -> str:
@@ -473,5 +483,7 @@ def _get_usage_instructions() -> str:
 
         3. If you follow the mapping and still cannot find the requested data, clearly state that the information is unavailable.
 
-        4. If you need to know the meaning of a specific log column or message, use **fetch_url_content(offset,max_chars,as_text?)** to retrieve parts of the official ArduPilot documentation. Search within the returned text for the relevant keyword. Paginate by increasing `offset` until `has_more` becomes false.
+        4. For log message meanings or troubleshooting guidance, use **search_ardu_doc(query, k=3)** to search the embedded ArduPilot documentation. This covers log messages, vibration analysis, and troubleshooting guides with semantic search.
+
+        5. If the embedded documentation doesn't have relevant information, you can fall back to **fetch_url_content(offset,max_chars,as_text?)** to retrieve parts of the broader ArduPilot documentation. Search within the returned text for the relevant keyword. Paginate by increasing `offset` until `has_more` becomes false.
     """

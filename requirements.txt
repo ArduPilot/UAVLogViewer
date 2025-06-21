@@ -12,5 +12,13 @@ numpy
 pandas
 openai>=1.30.0
 
+# Documentation scraping and processing
+requests>=2.25.0
+beautifulsoup4>=4.9.0
+html-to-markdown>=1.0.0
+
+# Vector embeddings and similarity search
+sentence-transformers>=2.2.0
+
 # Development and debugging
 rich 

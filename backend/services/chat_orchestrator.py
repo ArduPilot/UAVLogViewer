@@ -598,6 +598,8 @@ class ChatOrchestrator:
                 • **list_table_columns** (message_type) → array of column names  
                 • **query_telemetry** (message_type, columns, …) → rows of raw data  
                     (Use the table guide above.)  
+                • **search_ardu_doc** (query, k=3) → semantic search in ArduPilot documentation  
+                    (Coverage limited to log messages, vibration analysis, troubleshooting guides)
 
                 If you need to know whether a particular field exists or how many rows there are, you *must* call one of the discovery tools before querying.  
 
@@ -640,7 +642,8 @@ class ChatOrchestrator:
 
 GUIDELINES:
 - Use tools to gather specific data for your analysis
-- If you need clarification on what a column or log message means, call **fetch_url_content** to read the ArduPilot log-message documentation and search within it.
+- For log message meanings or troubleshooting guidance, use **search_ardu_doc** to search the embedded ArduPilot documentation
+- If documentation search doesn't find relevant information, you can fall back to **fetch_url_content** for broader ArduPilot documentation
 - Multiple tool calls are allowed for comprehensive analysis
 - Always verify data availability before making claims
 - If you can't find specific data, explain what's missing
