@@ -4,9 +4,9 @@ import json
 from datetime import datetime
 import os
 from dotenv import load_dotenv
-from pydantic import BaseModel
 import logging
 
+from models import Message, FlightData, AgentResponse
 from agents.query_classifier_agent import QueryClassifierAgent
 from agents.sql_query_agent import SQLQueryAgent
 from agents.data_analysis_agent import DataAnalysisAgent
@@ -24,19 +24,6 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-
-class Message(BaseModel):
-    role: str
-    content: str
-
-class FlightData(BaseModel):
-    data: Dict[str, Any]
-
-class AgentResponse(BaseModel):
-    message: str
-    sessionId: str
-    error: Optional[str] = None
-
 
 class AgentOrchestrator:
     """Orchestrates multiple AI agents for comprehensive flight data analysis."""
@@ -82,7 +69,7 @@ class AgentOrchestrator:
                     session_id,
                     message,
                     db_schema,
-                    conversation,
+                    conversation, 
                     self.flight_db
                 )
             elif classification == 'ANALYSIS':
@@ -91,7 +78,8 @@ class AgentOrchestrator:
                 response = self.data_analysis_agent.analyze(
                     message,
                     self.flight_db,
-                    session_id
+                    session_id,
+                    conversation
                 )
             else:
                 response = "I can help you with questions about the UAV's flight data. Ask me something like 'What was the average altitude during the flight?'."

@@ -5,7 +5,9 @@ import os
 from dotenv import load_dotenv
 from tools.flight_data_db import FlightDataDB
 import pandas as pd
-from pydantic import BaseModel
+from models import Message, FlightData, AgentResponse
+from openai.types.chat import ChatCompletionMessageParam
+from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 # Configure logging
 logging.basicConfig(
@@ -20,18 +22,6 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-
-class Message(BaseModel):
-    role: str
-    content: str
-
-class FlightData(BaseModel):
-    data: Dict[str, Any]
-
-class AgentResponse(BaseModel):
-    message: str
-    sessionId: str
-    error: Optional[str] = None
 
 class DataExtractionAgent:
     def __init__(self):
@@ -87,8 +77,30 @@ class DataExtractionAgent:
         else:
             return ""
 
+    def _generate_sql_query(self, question: str, schema: Dict[str, Any], conversation_history: List[Message]) -> str:
+        """Generates a SQL query based on the user's question and the schema."""
+        messages: List[ChatCompletionMessageParam] = [
+                ChatCompletionSystemMessageParam(role="system", content=self.system_prompt),
+                ChatCompletionSystemMessageParam(role="system", content=f"Available tables and their schemas:\n{schema}"),
+                *[msg.to_openai_message() for msg in conversation_history],
+                ChatCompletionUserMessageParam(role="user", content=f"Generate a SQL query to extract data for analysis based on this request: {question}")
+            ]
+            
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.2,
+            max_tokens=1024
+        )
+        generated_sql_query = response.choices[0].message.content
+        if generated_sql_query is None:
+            raise Exception("No content received from OpenAI API")
+        generated_sql_query = generated_sql_query.strip()
+        sql_query = self._extract_sql_query(generated_sql_query)
+        return sql_query
+
     # TODO: Move DataExtractionAgent upwards in the agent hierarchy to be the first agent to be called 
-    def extract_data(self,query: str, flight_db: FlightDataDB, session_id: str):
+    def extract_data(self,query: str, flight_db: FlightDataDB, session_id: str, conversation_history: List[Message]):
 
         """Extracts relevant data from the database for analysis based on the user's query.
         
@@ -107,21 +119,7 @@ class DataExtractionAgent:
             logger.info(f"Extracting data")
 
             # Generate SQL query
-            messages = [
-                {"role": "system", "content": self.system_prompt},
-                {"role": "system", "content": f"Available tables and their schemas:\n{db_schema}"},
-                {"role": "user", "content": f"Generate a SQL query to extract data for analysis based on this request: {query}"}
-            ]
-            
-            response = client.chat.completions.create(
-                model="gpt-4",
-                messages=messages,
-                temperature=0.3,
-                max_tokens=500
-            )
-            
-            generated_sql_query = response.choices[0].message.content.strip()
-            sql_query = self._extract_sql_query(generated_sql_query)
+            sql_query = self._generate_sql_query(query, db_schema, conversation_history)
             
             # Validate query with retries
             RETRY_LIMIT = 3
@@ -129,7 +127,7 @@ class DataExtractionAgent:
             while not self._validate_query(sql_query):
                 logger.warning(f"Invalid query generated (attempt {retry_count + 1}/{RETRY_LIMIT}): {sql_query}")
                 conversation_history.append(Message(role="assistant", content=f"Error: Generated query contains forbidden operations. Only SELECT queries are allowed. Please try again."))
-                sql_query = self._generate_sql_query(question, schema, conversation_history)
+                sql_query = self._generate_sql_query(query, db_schema, conversation_history)
                 retry_count += 1
                 if retry_count >= RETRY_LIMIT:
                     logger.error("Failed to generate valid query after maximum retries")
@@ -137,7 +135,7 @@ class DataExtractionAgent:
 
             # Execute query and return DataFrame
             result_df = flight_db.query(session_id, sql_query)
-            return result_df, sql_query
+            return (result_df, sql_query)
             
         except Exception as e:
             logger.error(f"Error in DataExtractionAgent: {str(e)}")
@@ -173,9 +171,9 @@ class CodeGenerationAgent:
         3. Wrap the snippet in a single ```python code fence (no extra prose).
         """
 
-        messages = [
-            {"role": "system", "content": "You are a Python data-analysis expert who writes clean, efficient code. Solve the given problem with optimal scikit-learn operations. Be concise and focused. Your response must contain ONLY a properly-closed ```python code block with no explanations before or after. Ensure your solution is correct, handles edge cases, and follows best practices for data analysis."},
-            {"role": "user", "content": prompt}
+        messages: List[ChatCompletionMessageParam] = [
+            ChatCompletionSystemMessageParam(role="system", content="You are a Python data-analysis expert who writes clean, efficient code. Solve the given problem with optimal scikit-learn operations. Be concise and focused. Your response must contain ONLY a properly-closed ```python code block with no explanations before or after. Ensure your solution is correct, handles edge cases, and follows best practices for data analysis."),
+            ChatCompletionUserMessageParam(role="user", content=prompt)
         ]
 
         response = client.chat.completions.create(
@@ -186,6 +184,8 @@ class CodeGenerationAgent:
         )
 
         full_response = response.choices[0].message.content
+        if full_response is None:
+            raise Exception("No content received from OpenAI API")
         code = self._extract_first_code_block(full_response)
         return code, ""
         
@@ -257,14 +257,17 @@ class ReasoningAgent:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are an expert UAV flight data analyst with deep knowledge of flight dynamics, performance metrics, and operational insights."},
-                {"role": "user", "content": prompt}
+                ChatCompletionSystemMessageParam(role="system", content="You are an expert UAV flight data analyst with deep knowledge of flight dynamics, performance metrics, and operational insights."),
+                ChatCompletionUserMessageParam(role="user", content=prompt)
             ],
             temperature=0.4,
             max_tokens=1024
         )
 
-        return response.choices[0].message.content.strip()
+        response_content = response.choices[0].message.content
+        if response_content is None:
+            raise Exception("No content received from OpenAI API")
+        return response_content.strip()
 
 class DataAnalysisAgent:
     def __init__(self):
@@ -272,9 +275,9 @@ class DataAnalysisAgent:
         self.code_generation_agent = CodeGenerationAgent()
         self.reasoning_agent = ReasoningAgent()
 
-    def analyze(self, query: str, flight_db: FlightDataDB, session_id: str):
+    def analyze(self, query: str, flight_db: FlightDataDB, session_id: str, conversation_history: List[Message]):
         """Analyzes the data and returns the result."""
-        df, sql_query = self.data_extraction_agent.extract_data(query, flight_db, session_id)
+        df, sql_query = self.data_extraction_agent.extract_data(query, flight_db, session_id, conversation_history)
         code, _ = self.code_generation_agent.generate_code(query, df)
         result = self.code_generation_agent.execute_code(code, df)
 

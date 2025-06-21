@@ -3,10 +3,11 @@ import json
 from datetime import datetime
 import os
 from dotenv import load_dotenv
-from pydantic import BaseModel
 import logging
 from tools.flight_data_db import FlightDataDB
 from typing import Dict, List, Any, Optional
+from models import Message, FlightData, AgentResponse
+from openai.types.chat import ChatCompletionMessageParam, ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 
 # Configure logging
 logging.basicConfig(
@@ -22,19 +23,6 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-
-class Message(BaseModel):
-    role: str
-    content: str
-
-class FlightData(BaseModel):
-    data: Dict[str, Any]
-
-class AgentResponse(BaseModel):
-    message: str
-    sessionId: str
-    error: Optional[str] = None
-
 
 class QueryClassifierAgent:
     """Classifies user queries to determine which agent should handle them."""
@@ -65,9 +53,9 @@ class QueryClassifierAgent:
         """Classifies the query and returns either 'SQL' or 'ANALYSIS'."""
         try:
             logger.info(f"\n\n\n\n\nClassifying query: {query}\n\n\n")
-            messages = [
-                {"role": "system", "content": self.system_prompt},
-                {"role": "user", "content": f"Classify this query: {query}"}
+            messages: List[ChatCompletionMessageParam] = [
+                ChatCompletionSystemMessageParam(role="system", content=self.system_prompt),
+                ChatCompletionUserMessageParam(role="user", content=f"Classify this query: {query}")
             ]
             
             response = client.chat.completions.create(
@@ -77,7 +65,10 @@ class QueryClassifierAgent:
                 max_tokens=10
             )
             
-            classification = response.choices[0].message.content.strip().upper()
+            classification = response.choices[0].message.content
+            if classification is None:
+                raise Exception("No content received from OpenAI API")
+            classification = classification.strip().upper()
             logger.info(f"Query classified as: {classification}")
             
             if classification not in ['SQL', 'ANALYSIS']:
