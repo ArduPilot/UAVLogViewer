@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import os
 import logging
 from pathlib import Path
+import pandas as pd
 
 # Configure logging
 logging.basicConfig(
@@ -60,6 +61,15 @@ class FlightDataDB:
             raise DatabaseConnectionError(f"Failed to get database connection: {str(e)}")
 
     def _infer_duckdb_type(self, sample: Any) -> str:
+        """
+        Infers the DuckDB type for a given sample value.
+
+        Args:
+            sample (Any): The sample value to infer the type of.
+
+        Returns:
+            str: The DuckDB type for the sample value.
+        """
         try:
             if isinstance(sample, int):
                 return "BIGINT"
@@ -83,7 +93,18 @@ class FlightDataDB:
             logger.error(f"Error inferring DuckDB type: {str(e)}")
             raise DataValidationError(f"Failed to infer data type: {str(e)}")
 
-    def _create_table_for_message(self, session_id: str, msg_name: str, fields: List[str], sample_row: Dict[str, Any]):
+    def _create_table_for_message(self, session_id: str, msg_name: str, fields: List[str], sample_row: Dict[str, Any]) -> None:
+        """
+        Creates a table for a given message in the database.
+
+        Args:
+            session_id (str): The session ID to create the table for.
+            msg_name (str): The name of the message to create the table for.
+            fields (List[str]): The fields to create the table for.
+            sample_row (Dict[str, Any]): The sample row to use to infer the types of the fields.
+
+        """
+
         if not all([session_id, msg_name, fields, sample_row]):
             raise DataValidationError("Missing required parameters for table creation")
         
@@ -119,7 +140,13 @@ class FlightDataDB:
             logger.error(f"Error creating table for message {msg_name}: {str(e)}")
             raise FlightDataDBError(f"Failed to create table: {str(e)}")
 
-    def _get_message_description(self, msg_name: str):
+    def _get_message_description(self, msg_name: str) -> Optional[str]:
+        """
+        Gets the description of a given message from the knowledge base.
+
+        Args:
+            msg_name (str): The name of the message to get the description of.
+        """
         if not msg_name or not isinstance(msg_name, str):
             raise DataValidationError("Invalid msg_name: must be a non-empty string")
         
@@ -146,7 +173,15 @@ class FlightDataDB:
             logger.error(f"Error getting message description for {msg_name}: {str(e)}")
             raise FlightDataDBError(f"Failed to get message description: {str(e)}")
 
-    def store_flight_data(self, session_id: str, parsed_json: Dict[str, Dict[str, List[Any]]], start_time: Optional[datetime] = None):
+    def store_flight_data(self, session_id: str, parsed_json: Dict[str, Dict[str, List[Any]]], start_time: Optional[datetime] = None) -> None:
+        """
+        Stores flight data in the database.
+
+        Args:
+            session_id (str): The session ID to store the flight data for.
+            parsed_json (Dict[str, Dict[str, List[Any]]]): The parsed JSON data to store.
+            start_time (Optional[datetime]): The start time of the flight data.
+        """
         if not session_id or not isinstance(session_id, str):
             raise DataValidationError("Invalid session_id: must be a non-empty string")
         if not parsed_json or not isinstance(parsed_json, dict):
@@ -238,7 +273,17 @@ class FlightDataDB:
             logger.error(f"Error storing flight data: {str(e)}")
             raise FlightDataDBError(f"Failed to store flight data: {str(e)}")
 
-    def query(self, session_id: str, sql: str):
+    def query(self, session_id: str, sql: str) -> pd.DataFrame:
+        """
+        Executes a SQL query on the database.
+
+        Args:
+            session_id (str): The session ID to execute the query on.
+            sql (str): The SQL query to execute.
+
+        Returns:
+            pd.DataFrame: The result of the query.
+        """
         if not session_id or not isinstance(session_id, str):
             raise DataValidationError("Invalid session_id: must be a non-empty string")
         if not sql or not isinstance(sql, str):
@@ -254,7 +299,13 @@ class FlightDataDB:
             logger.error(f"Error executing query: {str(e)}")
             raise FlightDataDBError(f"Query execution failed: {str(e)}")
 
-    def get_database_information(self, session_id: str):
+    def get_database_information(self, session_id: str) -> Dict[str, Dict[str, Any]]:
+        """
+        Gets the database information for a given session.
+
+        Args:
+            session_id (str): The session ID to get the database information for.
+        """
         if not session_id or not isinstance(session_id, str):
             raise DataValidationError("Invalid session_id: must be a non-empty string")
         
