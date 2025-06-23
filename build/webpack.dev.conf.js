@@ -29,12 +29,29 @@ const devWebpackConfig = merge(baseWebpackConfig, {
   },
   // cheap-module-eval-source-map is faster for development
   devtool: config.dev.devtool,
+   watchOptions: {
+    ignored: /node_modules/,  // never watch node_modules
+    poll: 1000                // fallback to polling (optional)
+  },
 
   stats: {
     children: true,
   },
   // these devServer options should be customized in /config/index.js
   devServer: {
+     watchFiles: {
+    // only watch your app files, not node_modules
+    paths: [
+      path.resolve(__dirname, '../src/**/*'),
+      path.resolve(__dirname, '../static/**/*'),
+      path.resolve(__dirname, '../index.html')
+    ],
+    options: {
+      ignored: /node_modules/,
+      usePolling: true,
+      interval: 1000
+    }
+  },
     client: {
       overlay: config.dev.errorOverlay
         ? { warnings: false, errors: true }

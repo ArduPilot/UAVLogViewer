@@ -11,18 +11,10 @@ module.exports = {
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
     proxyTable: {
-    "/upload/*":{
-        target:"http://localhost:8001/upload",
-        secure:"false"
-    },
-    "/eniro/*":{
-        target:"http://localhost:8001/eniro",
-        secure:"false"
-    },
-      "/uploaded/*":{
-        target:"http://localhost:8001/uploaded",
-        secure:"false"
-      },
+      '/api': {
+        target: 'http://127.0.0.1:8001',
+        changeOrigin: true
+      }
     },
 
     // Various Dev Server settings
@@ -36,7 +28,7 @@ module.exports = {
     // Use Eslint Loader?
     // If true, your code will be linted during bundling and
     // linting errors and warnings will be shown in the console.
-    useEslint: true,
+    useEslint: false,
     // If true, eslint errors and warnings will also be shown in the error overlay
     // in the browser.
     showEslintErrorsInOverlay: false,

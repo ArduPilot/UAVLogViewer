@@ -5,7 +5,9 @@ const config = require('../config')
 const webpack = require('webpack')
 const vueLoaderConfig = require('./vue-loader.conf')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+const Dotenv = require('dotenv-webpack')
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+
 
 // The path to the Cesium source code
 
@@ -112,6 +114,7 @@ module.exports = {
       https: require.resolve("https-browserify"),
       http: require.resolve("stream-http"),
       zlib: require.resolve("browserify-zlib"),
+      vm: require.resolve('vm-browserify'),
     },
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
