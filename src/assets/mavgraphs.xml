@@ -529,5 +529,54 @@ If PIDR.I has a constant positive value then it means the aircraft is trimmed to
   <expression>lowpass(IMU.AccZ,0,0.9) lowpass(IMU2.AccZ,1,0.9) lowpass(IMU3.AccZ,2,0.9)</expression>
   <expression>lowpass(IMU.AccZ,0,0.9) lowpass(IMU2.AccZ,1,0.9)</expression>
  </graph>
+
+<graph name='Rover/Steering Tuning'>
+  <description></description>
+  <expression>STER.TurnRate STER.DesTurnRate</expression>
+ </graph>
+
+<graph name='Rover/Speed Tuning'>
+  <description></description>
+  <expression>THR.Speed THR.DesSpeed</expression>
+ </graph>
+
+ <graph name='PSC/PSC Vel'>
+  <description></description>
+  <expression>sqrt(PSCN.DVN**2+PSCE.DVE**2) sqrt(PSCN.VN**2+PSCE.VE**2)</expression>
+ </graph>
+
+ <graph name='PSC/PSC Vel NE'>
+  <description></description>
+  <expression>PSCN.VN PSCN.DVN PSCN.TVN PSCE.VE PSCE.DVE PSCE.TVE</expression>
+ </graph>
+
+ <graph name='PSC/PSC Pos NE'>
+  <description></description>
+  <expression>PSCN.TPN PSCN.PN PSCE.TPE PSCE.PE</expression>
+ </graph>
+
+ <graph name='Sensors/Wheel Encoders'>
+  <description></description>
+  <expression>WENC.Dist0 WENC.Dist1</expression>
+ </graph>
  
+ <graph name='Sensors/Vision/Visual Position'>
+  <description></description>
+  <expression>VISP.PX VISP.PY VISP.PZ</expression>
+ </graph>
+
+<graph name='Sensors/Vision/Visual Velocity'>
+  <description></description>
+  <expression>VISV.VX VISV.VY VISV.VZ</expression>
+ </graph>
+
+ <graph name='Rover/Speed and Battery'>
+  <description></description>
+  <expression>THR.Speed BAT.Curr:2 BAT.Volt:2</expression>
+ </graph>
+ 
+ <graph name='Rover/Speed and Throttle'>
+  <description></description>
+  <expression>THR.Speed THR.ThrOut:2</expression>
+ </graph>
 </graphs>
