@@ -82,9 +82,7 @@ export default {
                 'FMT',
                 'PARM',
                 'MSG',
-                'CMD',
                 'MODE',
-                'ORGN',
                 'FMTU',
                 'UNIT',
                 'MULT'
