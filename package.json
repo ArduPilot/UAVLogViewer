@@ -32,7 +32,7 @@
     "eslint-config-standard": "^16.0.3",
     "eslint-loader": "^4.0.2",
     "eslint-webpack-plugin": "^3.2.0",
-    "fast-xml-parser": "^3.21.1",
+    "fast-xml-parser": "^4.2.4",
     "file-saver": "^2.0.5",
     "git-revision-webpack-plugin": "^3.0.6",
     "html-minifier": "^4.0.0",
