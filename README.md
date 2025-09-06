@@ -14,6 +14,9 @@ git submodule update --init --recursive
 # install dependencies
 npm install
 
+# enter Cesium token
+export VUE_APP_CESIUM_TOKEN=<your token>
+
 # serve with hot reload at localhost:8080
 npm run dev
 
