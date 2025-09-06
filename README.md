@@ -8,6 +8,9 @@
 ## Build Setup
 
 ``` bash
+# initialize submodules
+git submodule update --init --recursive
+
 # install dependencies
 npm install
 
