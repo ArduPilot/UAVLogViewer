@@ -30,7 +30,11 @@
                         :title="messageDocs[key.split('[')[0]] ? messageDocs[key.split('[')[0]].doc : ''"
                     >
                         <a class="section">{{key}} <span v-if="messageTypes[key].isArray">{{"[...]"}}</span>
-                            <i class="expand fas fa-caret-down"></i></a>
+                            <i class="expand fas fa-caret-down"></i>
+                            <span class="description">
+                              {{ messageDocs[key.split('[')[0]] ? messageDocs[key.split('[')[0]].doc : '' }}
+                            </span>
+                        </a>
                     </div>
                 </li>
                 <b-collapse :id="'type' + key" v-bind:key="key+'1'">
@@ -44,6 +48,9 @@
                             <a> {{item.name}}
                                 <span v-if="item.units!=='?' && item.units!==''"> ({{item.units}})</span>
                             </a>
+                            <span class="description">
+                              {{ messageDocs[key] ? messageDocs[key][item.name.split('[')[0]] : '' }}
+                            </span>
 
                             <a @click="$eventHub.$emit('togglePlot', field.name)" v-if="isPlotted(key,item.name)">
                                 <i class="remove-icon fas fa-trash" title="Remove data"></i>
@@ -56,6 +63,7 @@
     </div>
 </template>
 <script>
+import { isArray } from 'underscore'
 import { store } from './Globals.js'
 import TreeMenu from './widgets/TreeMenu.vue'
 import fastXmlParser from 'fast-xml-parser'
@@ -167,6 +175,9 @@ export default {
                 const igraphs = result.loggermessagefile
                 for (const graph of igraphs.logformat) {
                     logDocs[graph['@_name']] = { doc: graph.description }
+                    if (!isArray(graph.fields.field)) {
+                        continue
+                    }
                     for (const field of graph.fields.field) {
                         logDocs[graph['@_name']][field['@_name']] = field.description
                     }
@@ -425,6 +436,17 @@ export default {
        a {
         padding: 2px 60px 2px 55px !important;
        }
+    }
+
+    span.description {
+      opacity: 70%;
+      font-size: 80%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      display: inline-block;
+      max-width: 180px;
+      vertical-align: top;
     }
 
 </style>
