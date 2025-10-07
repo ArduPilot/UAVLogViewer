@@ -176,6 +176,7 @@ export class MavlinkParser {
             }
         }
         instance.messages[name] = mergedData
+        try { console.log('[tlog] message', name, 'len', (mergedData.time_boot_ms && mergedData.time_boot_ms.length) || 0) } catch (e) {}
         self.postMessage({ messages: instance.messages })
     }
 

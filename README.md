@@ -57,3 +57,37 @@ docker run -e VUE_APP_CESIUM_TOKEN=<Your cesium ion token> -it -p 8080:8080 -v $
 # changes should automatically be applied to the viewer
 
 ```
+
+## Run Frontend with Backend (Local Dev)
+
+In one terminal, start the backend:
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+In another terminal, start the web app and point it at the backend:
+
+```bash
+export VUE_APP_CESIUM_TOKEN=<your token>
+export VUE_APP_BACKEND_URL=http://localhost:8000
+npm run dev
+```
+
+Validate the backend is up:
+
+```bash
+curl http://localhost:8000/api/health
+```
+
+Optional: bootstrap a session (send a compact summary) before chatting:
+
+```bash
+curl -X POST http://localhost:8000/api/session/bootstrap \
+  -H 'Content-Type: application/json' \
+  -d '{"summary": {"meta": {"duration_s": 1100}}}'
+```

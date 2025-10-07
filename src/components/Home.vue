@@ -35,6 +35,7 @@
                         <CesiumViewer ref="cesiumViewer"/>
                     </div>
                 </div>
+                <ChatShell/>
             </main>
 
         </div>
@@ -51,6 +52,7 @@ import ParamViewer from '@/components/widgets/ParamViewer.vue'
 import MessageViewer from '@/components/widgets/MessageViewer.vue'
 import DeviceIDViewer from '@/components/widgets/DeviceIDViewer.vue'
 import AttitudeViewer from '@/components/widgets/AttitudeWidget.vue'
+import ChatShell from '@/components/ChatShell.vue'
 import { store } from '@/components/Globals.js'
 import { AtomSpinner } from 'epic-spinners'
 import { Color } from 'cesium'
@@ -61,6 +63,8 @@ import { DjiDataExtractor } from '../tools/djiDataExtractor'
 import MagFitTool from '@/components/widgets/MagFitTool.vue'
 import EkfHelperTool from '@/components/widgets/EkfHelperTool.vue'
 import Vue from 'vue'
+import { buildAutoSummary } from '@/services/summary'
+import { bootstrapSession } from '@/services/chat'
 
 export default {
     name: 'Home',
@@ -82,6 +86,19 @@ export default {
         }
     },
     methods: {
+        async autoBootstrapIfPossible () {
+            try {
+                const summary = buildAutoSummary(this.state)
+                try { console.log('[bootstrap] summary:', JSON.stringify(summary)) } catch (e) {}
+                const res = await bootstrapSession(summary)
+                store.chatSessionId = res.session_id
+                store.showChat = true
+                try { console.log('[bootstrap] session_id:', store.chatSessionId) } catch (e) {}
+            } catch (e) {
+                // ignore if messages are incomplete
+                try { console.warn('[bootstrap] failed:', e && e.message) } catch (err) {}
+            }
+        },
         extractFlightData () {
             if (this.dataExtractor === null) {
                 if (this.state.logType === 'tlog') {
@@ -196,16 +213,17 @@ export default {
 
             this.state.processStatus = 'Processed!'
             this.state.processDone = true
-            // Change to plot view after 2 seconds so the Processed status is readable
             setTimeout(() => { this.$eventHub.$emit('set-selected', 'plot') }, 2000)
 
-            // Only set showMap to true if it is available and was previously unavailable
             if (!this.state.mapAvailable) {
                 this.state.mapAvailable = this.state.currentTrajectory.length > 0
                 if (this.state.mapAvailable) {
                     this.state.showMap = true
                 }
             }
+
+            // Auto-bootstrap a summary once messages are ready
+            this.autoBootstrapIfPossible()
         },
 
         generateColorMMap () {
@@ -215,16 +233,12 @@ export default {
                 format: 'rgbaString',
                 alpha: 1
             }
-            // colormap used on legend.
             this.state.cssColors = colormap(colorMapOptions)
 
-            // colormap used on Cesium
             colorMapOptions.format = 'float'
             this.state.colors = []
-            // this.translucentColors = []
             for (const rgba of colormap(colorMapOptions)) {
                 this.state.colors.push(new Color(rgba[0], rgba[1], rgba[2]))
-                // this.translucentColors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2], 0.1))
             }
         }
     },
@@ -239,7 +253,8 @@ export default {
         DeviceIDViewer,
         AttitudeViewer,
         MagFitTool,
-        EkfHelperTool
+        EkfHelperTool,
+        ChatShell
     },
     computed: {
         mapOk () {

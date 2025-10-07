@@ -64,5 +64,8 @@ export const store = {
     commit: _COMMIT_.slice(0, 6),
     /* global _BUILDDATE_ */
     buildDate: _BUILDDATE_,
-    childPlots: []
+    childPlots: [],
+    // Chat state
+    showChat: false,
+    chatSessionId: ''
 }
