@@ -26,14 +26,17 @@ RUN git submodule update
 # Run the update-browserslist-db as suggested in the warning
 RUN npx update-browserslist-db@latest
 
-# Change ownership of the app directory to the non-root user
 RUN chown -R nodeuser:nodeuser /usr/src/app
-
+RUN chmod +x /usr/src/app/docker-entrypoint.sh
 # Switch to non-root user
 USER nodeuser
+# Precompile production assets
+RUN npm run build
+
 
 # Configure git to trust the mounted directory
 RUN git config --global --add safe.directory /usr/src/app
 
 EXPOSE 8080
-CMD [ "npm", "run", "dev" ]
+ENTRYPOINT ["/usr/src/app/docker-entrypoint.sh"]
+CMD [ "npm", "start" ]

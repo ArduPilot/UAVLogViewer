@@ -85,8 +85,12 @@ import {
     isPointInPolygon
 } from './cesiumExtra/boundingPolygon.js'
 
-// Set Cesium token from environment variable
-Ion.defaultAccessToken = process.env.VUE_APP_CESIUM_TOKEN || ''
+// Set Cesium token from runtime config injected by runtime-config.js
+const runtimeConfig = (typeof window !== 'undefined' && window.__APP_CONFIG__) || {}
+const cesiumToken = typeof runtimeConfig.VUE_APP_CESIUM_TOKEN === 'string'
+    ? runtimeConfig.VUE_APP_CESIUM_TOKEN.trim()
+    : ''
+Ion.defaultAccessToken = cesiumToken
 
 const colorCoderMode = new ColorCoderMode(store)
 const colorCoderRange = new ColorCoderRange(store)
@@ -264,7 +268,7 @@ export default {
                         shadows: true,
                         // eslint-disable-next-line
                         baseLayer: new ImageryLayer.fromProviderAsync(
-                            IonImageryProvider.fromAssetId(3954)
+                            IonImageryProvider.fromAssetId(3)
                         ),
                         imageryProviderViewModels: imageryProviders,
                         orderIndependentTranslucency: false,

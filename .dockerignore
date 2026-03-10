@@ -1,2 +1,7 @@
 node_modules
+dist
 npm-debug.log
+.github
+.idea
+test
+Dockerfile
