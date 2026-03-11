@@ -5,6 +5,13 @@
  This is a Javascript based log viewer for Mavlink telemetry and dataflash logs.
  [Live demo here](http://plot.ardupilot.org).
 
+## prebuilt Docker
+
+To run the prebuilt Docker image, simply run the following command. Make sure to replace `<Your cesium ion token>` with your actual Cesium ion token. You can obtain a Cesium ion token by signing up for a free account at [Cesium ion](https://cesium.com/ion/). More information can be found [here](https://cesium.com/learn/ion/cesium-ion-access-tokens/)
+
+``` bash
+docker run -e VUE_APP_CESIUM_TOKEN=<Your cesium ion token> -p 8080:8080 -d ghcr.io/ardupilot/uavlogviewer:latest
+```
 ## local Build Setup
 
 ``` bash
@@ -23,6 +30,7 @@ npm run dev
 # build for production with minification
 npm run build
 
+# run production build locally
 npm start
 
 # run unit tests
@@ -35,16 +43,6 @@ npm run e2e
 npm test
 ```
 
-## prebuilt Docker
-
-run the prebuilt docker image:
-
-``` bash
-docker run -e VUE_APP_CESIUM_TOKEN=<Your cesium ion token> -p 8080:8080 -d ghcr.io/ardupilot/uavlogviewer:latest
-
-```
-
-or build the docker file locally:
 
 ## build local Docker image
 
