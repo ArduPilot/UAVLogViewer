@@ -484,8 +484,8 @@ export default {
         addPlots (plots) {
             this.state.plotLoading = true
             const requested = new Set()
-            const RE = /[A-Z][A-Z0-9_]+(\[[0-9]\])?\.[a-zA-Z0-9]+/g
-            const RE2 = /[A-Z][A-Z0-9_]+(\[[0-9]\])/g
+            const RE = /[A-Za-z][A-Za-z0-9_]+(\[[0-9]\])?\.[a-zA-Z0-9_]+/g
+            const RE2 = /[A-Za-z][A-Za-z0-9_]+(\[[0-9]\])/g
             for (const plot of plots) {
                 const expression = plot[0]
                 // ensure we have the data
@@ -608,7 +608,7 @@ export default {
             return names.join(', ')
         },
         findMessagesInExpression (expression) {
-            const RE = /(?<message>[A-Z][A-Z0-9_]+(\[[A-Za-z0-9_.]+\])?)(\.(?<field>[A-Za-z0-9_]+))?/g
+            const RE = /(?<message>[A-Za-z][A-Za-z0-9_]+(\[[A-Za-z0-9_.]+\])?)(\.(?<field>[A-Za-z0-9_]+))?/g
             const match = []
             for (const m of expression.matchAll(RE)) {
                 match.push([m.groups.message, m.groups.field])
@@ -783,6 +783,12 @@ export default {
                 console.log('no expressions to plot')
                 return
             }
+            try { return this._plotInner() } catch (e) {
+                console.error('Plot error:', e)
+                this.state.plotLoading = false
+            }
+        },
+        _plotInner () {
             plotOptions.title = this.state.file
             const _this = this
             const datasets = []

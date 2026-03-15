@@ -19,6 +19,7 @@
     "@babel/register": "^7.22.5",
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
     "@fortawesome/vue-fontawesome": "^2.0.10",
+    "@foxglove/ulog": "^2.3.2",
     "assert": "^2.0.0",
     "bootstrap-vue": "^2.22.0",
     "browserify-zlib": "^0.2.0",

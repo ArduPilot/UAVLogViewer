@@ -3,6 +3,7 @@
 const mavparser = require('./mavlinkParser')
 const DataflashParser = require('./JsDataflashParser/parser').default
 const DjiParser = require('./djiParser').default
+const UlogParser = require('./ulogParser').default
 
 let parser
 self.addEventListener('message', async function (event) {
@@ -15,6 +16,9 @@ self.addEventListener('message', async function (event) {
             parser.processData(data)
         } else if (event.data.isDji) {
             parser = new DjiParser()
+            await parser.processData(data)
+        } else if (event.data.isUlog) {
+            parser = new UlogParser()
             await parser.processData(data)
         } else {
             parser = new DataflashParser(true)
