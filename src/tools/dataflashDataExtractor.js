@@ -73,6 +73,10 @@ export class DataflashDataExtractor {
         const attitudes = {}
         if (source in messages) {
             const attitudeMsgs = messages[source]
+            try {
+                const len = attitudeMsgs.time_boot_ms && attitudeMsgs.time_boot_ms.length
+                console.log('[df] attitude source', source, 'len', len)
+            } catch (e) {}
             for (const i in attitudeMsgs.time_boot_ms) {
                 attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] =
                     [
@@ -136,6 +140,7 @@ export class DataflashDataExtractor {
         let modes = []
         if ('MODE' in messages) {
             const msgs = messages.MODE
+            try { console.log('[df] MODE len', msgs.time_boot_ms && msgs.time_boot_ms.length) } catch (e) {}
             modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
             for (const i in msgs.time_boot_ms) {
                 if (i !== 0 && (msgs.asText[i] !== modes[modes.length - 1][1]) && msgs.asText[i] !== null) {
@@ -143,6 +148,7 @@ export class DataflashDataExtractor {
                 }
             }
         }
+        try { console.log('[df] modes count', modes.length) } catch (e) {}
         return modes
     }
 
@@ -327,6 +333,7 @@ export class DataflashDataExtractor {
         if ('GPS[1]' in messages) {
             candidates.push('GPS[1]')
         }
+        try { console.log('[df] traj sources', candidates) } catch (e) {}
         return candidates
     }
 
@@ -338,6 +345,7 @@ export class DataflashDataExtractor {
             const timeTrajectory = {}
             let startAltitude = null
             const gpsData = messages.POS
+            try { console.log('[df] POS len', gpsData.time_boot_ms && gpsData.time_boot_ms.length) } catch (e) {}
             let start = 0
             for (const i in gpsData.time_boot_ms) {
                 const delta = gpsData.time_boot_ms[i] - start
@@ -371,12 +379,14 @@ export class DataflashDataExtractor {
                     timeTrajectory: timeTrajectory
                 }
             }
+            try { console.log('[df] POS traj len', trajectory.length) } catch (e) {}
         }
         if ('AHR2' in messages && source === 'AHR2') {
             const trajectory = []
             const timeTrajectory = {}
             let startAltitude = null
             const gpsData = messages.AHR2
+            try { console.log('[df] AHR2 len', gpsData.time_boot_ms && gpsData.time_boot_ms.length) } catch (e) {}
             let start = 0
             for (const i in gpsData.time_boot_ms) {
                 const delta = gpsData.time_boot_ms[i] - start
@@ -410,6 +420,7 @@ export class DataflashDataExtractor {
                     timeTrajectory: timeTrajectory
                 }
             }
+            try { console.log('[df] AHR2 traj len', trajectory.length) } catch (e) {}
         }
         for (const gpsSource of ['GPS', 'GPS[0]', 'GPS[1]']) {
             if (gpsSource in messages && source === gpsSource) {
@@ -417,6 +428,10 @@ export class DataflashDataExtractor {
                 const timeTrajectory = {}
                 let startAltitude = null
                 const gpsData = messages[gpsSource]
+                try {
+                    const len = gpsData.time_boot_ms && gpsData.time_boot_ms.length
+                    console.log('[df]', gpsSource, 'len', len)
+                } catch (e) {}
                 let start = 0
                 for (const i in gpsData.time_boot_ms) {
                     const delta = gpsData.time_boot_ms[i] - start
@@ -450,6 +465,7 @@ export class DataflashDataExtractor {
                         timeTrajectory: timeTrajectory
                     }
                 }
+                try { console.log('[df]', gpsSource, 'traj len', trajectory.length) } catch (e) {}
             }
         }
         return ret

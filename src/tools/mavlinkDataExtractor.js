@@ -45,6 +45,7 @@ export class MavlinkDataExtractor {
         let modes = []
         if ('HEARTBEAT' in messages) {
             const msgs = messages.HEARTBEAT
+            try { console.log('[mavlink] HEARTBEAT len:', msgs.time_boot_ms && msgs.time_boot_ms.length) } catch (e) {}
             modes = [[msgs.time_boot_ms[0], msgs.asText[0]]]
             for (const i in msgs.time_boot_ms) {
                 if (validGCSs.includes(msgs.type[i])) {
@@ -57,6 +58,7 @@ export class MavlinkDataExtractor {
                 }
             }
         }
+        try { console.log('[mavlink] flight modes:', modes.length) } catch (e) {}
         return modes
     }
 
@@ -133,6 +135,7 @@ export class MavlinkDataExtractor {
         if ('AHRS3' in messages) {
             sources.push('AHRS3')
         }
+        try { console.log('[mavlink] trajectory sources:', sources) } catch (e) {}
         return sources
     }
 
@@ -143,6 +146,10 @@ export class MavlinkDataExtractor {
             const timeTrajectory = {}
             let startAltitude = null
             const gpsData = messages.GLOBAL_POSITION_INT
+            try {
+                const len = gpsData.time_boot_ms && gpsData.time_boot_ms.length
+                console.log('[mavlink] GLOBAL_POSITION_INT len:', len)
+            } catch (e) {}
             for (const i in gpsData.time_boot_ms) {
                 if (gpsData.lat[i] !== 0) {
                     if (startAltitude === null) {
@@ -170,12 +177,17 @@ export class MavlinkDataExtractor {
                     timeTrajectory: timeTrajectory
                 }
             }
+            try { console.log('[mavlink] GLOBAL_POSITION_INT traj len:', trajectory.length) } catch (e) {}
         }
         if ('GPS_RAW_INT' in messages && source === 'GPS_RAW_INT') {
             const trajectory = []
             const timeTrajectory = {}
             let startAltitude = null
             const gpsData = messages.GPS_RAW_INT
+            try {
+                const len = gpsData.time_boot_ms && gpsData.time_boot_ms.length
+                console.log('[mavlink] GPS_RAW_INT len:', len)
+            } catch (e) {}
             for (const i in gpsData.time_boot_ms) {
                 if (gpsData.lat[i] !== 0) {
                     if (startAltitude === null) {
@@ -203,6 +215,7 @@ export class MavlinkDataExtractor {
                     timeTrajectory: timeTrajectory
                 }
             }
+            try { console.log('[mavlink] GPS_RAW_INT traj len:', trajectory.length) } catch (e) {}
         }
         if ('AHRS2' in messages && source === 'AHRS2') {
             const trajectory = []
