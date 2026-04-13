@@ -50,7 +50,9 @@ or build the docker file locally:
 docker build -t <your username>/uavlogviewer .
 
 # Run Docker Image
-docker run -e VUE_APP_CESIUM_TOKEN=<Your cesium ion token> -it -p 8080:8080 -v ${PWD}:/usr/src/app <your username>/uavlogviewer
+docker run -e VUE_APP_CESIUM_TOKEN=<Your cesium ion token> \
+  -e VUE_APP_MAPTILER_KEY=<Your maptiler key> \
+  -it -p 8080:8080 -v ${PWD}:/usr/src/app <your username>/uavlogviewer
 
 # Navigate to localhost:8080 in your web browser
 
