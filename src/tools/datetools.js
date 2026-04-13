@@ -19,12 +19,13 @@ function leapSecondsTAI (year, month) {
 
 export default function extractStartTime (msgs) {
     for (const i in msgs.time_boot_ms) {
-        if (msgs.GWk[i] > 1000) { // lousy validation
+        if (msgs.GWk[i] > 2000) { // lousy validation
             const weeks = msgs.GWk[i]
             const ms = msgs.GMS[i]
             let d = new Date((315964800.0 + ((60 * 60 * 24 * 7) * weeks) + ms / 1000.0) * 1000.0)
             // adjusting for leap seconds
             d = new Date(d.getTime() - leapSecondsGPS(d.getUTCFullYear(), d.getUTCMonth() + 1) * 1000)
+            console.log(d)
             return d
         }
     }
