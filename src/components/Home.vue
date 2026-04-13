@@ -58,6 +58,7 @@ import colormap from 'colormap'
 import { DataflashDataExtractor } from '../tools/dataflashDataExtractor'
 import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
 import { DjiDataExtractor } from '../tools/djiDataExtractor'
+import { PX4DataExtractor } from '../tools/px4DataExtractor'
 import MagFitTool from '@/components/widgets/MagFitTool.vue'
 import EkfHelperTool from '@/components/widgets/EkfHelperTool.vue'
 import Vue from 'vue'
@@ -88,6 +89,8 @@ export default {
                     this.dataExtractor = MavlinkDataExtractor
                 } else if (this.state.logType === 'dji') {
                     this.dataExtractor = DjiDataExtractor
+                } else if (this.state.logType === 'ulog') {
+                    this.dataExtractor = PX4DataExtractor
                 } else {
                     this.dataExtractor = DataflashDataExtractor
                 }
@@ -151,7 +154,10 @@ export default {
                 this.state.timeAttitude = this.dataExtractor.extractAttitude(this.state.messages, source)
             }
 
-            const list = Object.keys(this.state.timeAttitude)
+            let list = Object.keys(this.state.timeAttitude)
+            if (list.length === 0) {
+                list = Object.keys(this.state.timeAttitudeQ)
+            }
             this.state.lastTime = parseInt(list[list.length - 1])
 
             this.state.trajectorySources = this.dataExtractor.extractTrajectorySources(this.state.messages)
@@ -172,9 +178,21 @@ export default {
             try {
                 if (this.state.messages?.GPS?.time_boot_ms) {
                     this.state.metadata = { startTime: this.dataExtractor.extractStartTime(this.state.messages.GPS) }
-                } else {
+                } else if (this.state.messages?.['GPS[0]']?.time_boot_ms) {
                     this.state.metadata = {
                         startTime: this.dataExtractor.extractStartTime(this.state.messages['GPS[0]'])
+                    }
+                } else if (this.state.messages?.vehicle_gps_position?.time_boot_ms) {
+                    this.state.metadata = {
+                        startTime: this.dataExtractor.extractStartTime(this.state.messages.vehicle_gps_position)
+                    }
+                } else if (this.state.messages?.vehicle_global_position?.time_boot_ms) {
+                    this.state.metadata = {
+                        startTime: this.dataExtractor.extractStartTime(this.state.messages.vehicle_global_position)
+                    }
+                } else if (this.state.messages?.sensor_gps?.time_boot_ms) {
+                    this.state.metadata = {
+                        startTime: this.dataExtractor.extractStartTime(this.state.messages.sensor_gps)
                     }
                 }
             } catch (error) {

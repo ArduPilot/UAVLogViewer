@@ -86,3 +86,20 @@ export const modeMappingSub = {
     19: 'MANUAL',
     20: 'MOTOR_DETECT'
 }
+export const modeMappingPX4 = {
+    0: 'Manual',
+    1: 'Altitude',
+    2: 'Position',
+    3: 'Mission',
+    4: 'Hold',
+    5: 'Return',
+    10: 'Acro',
+    12: 'Descend',
+    14: 'Offboard',
+    15: 'Stabilized',
+    17: 'Takeoff',
+    18: 'Land',
+    19: 'Follow Target',
+    20: 'Precision Land',
+    21: 'Orbit'
+}

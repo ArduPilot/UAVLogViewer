@@ -71,6 +71,7 @@ import { store } from './Globals.js'
 import { DataflashDataExtractor } from '../tools/dataflashDataExtractor'
 import { MavlinkDataExtractor } from '../tools/mavlinkDataExtractor'
 import { DjiDataExtractor } from '../tools/djiDataExtractor'
+import { PX4DataExtractor } from '../tools/px4DataExtractor'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import CesiumSettingsWidget from './widgets/CesiumSettingsWidget.vue'
 import ColorCoderMode from './cesiumExtra/colorCoderMode.js'
@@ -143,7 +144,13 @@ export default {
                 if (this.state.isOnline) {
                     this.viewer = this.createViewer(true)
                     if (this.state.vehicle !== 'boat') {
-                        this.viewer.terrainProvider = await createWorldTerrainAsync()
+                        try {
+                            this.viewer.terrainProvider = await createWorldTerrainAsync()
+                            this._hasWorldTerrain = true
+                        } catch (e) {
+                            console.warn('Failed to load Cesium terrain, using default:', e)
+                            this._hasWorldTerrain = false
+                        }
                     }
                 } else {
                     this.viewer = this.createViewer(false)
@@ -227,9 +234,10 @@ export default {
                 this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
             }
 
-            if (this.state.vehicle !== 'boat' && this.state.isOnline) {
+            if (this.state.vehicle !== 'boat' && this.state.isOnline && this._hasWorldTerrain) {
                 const promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.correctedTrajectory)
                 promise.then(async (result) => { await this.setup2(result) })
+                    .catch(async () => { await this.setup2(this.correctedTrajectory) })
             } else {
                 this.setup2(this.correctedTrajectory)
             }
@@ -1368,6 +1376,8 @@ export default {
                 } else if (this.state.logType === 'dji') {
                     console.log('Using DJI extractor')
                     dataExtractor = DjiDataExtractor
+                } else if (this.state.logType === 'ulog') {
+                    dataExtractor = PX4DataExtractor
                 } else {
                     dataExtractor = DataflashDataExtractor
                 }
@@ -1380,6 +1390,8 @@ export default {
                 let dataExtractor = null
                 if (this.state.logType === 'tlog') {
                     dataExtractor = MavlinkDataExtractor
+                } else if (this.state.logType === 'ulog') {
+                    dataExtractor = PX4DataExtractor
                 } else {
                     dataExtractor = DataflashDataExtractor
                 }
