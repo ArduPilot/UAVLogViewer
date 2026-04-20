@@ -1,5 +1,9 @@
 <template>
     <div id='vuewrapper' style="height: 100%;">
+        <div v-if="showCesiumTokenWarning" class="global-token-warning">
+            Warning: Cesium token is not configured. 3D map imagery and terrain may not load.
+            Configure it by setting VUE_APP_CESIUM_TOKEN in the environment.
+        </div>
         <template v-if="state.mapLoading || state.plotLoading">
             <div id="waiting">
                 <atom-spinner
@@ -61,6 +65,11 @@ import { DjiDataExtractor } from '../tools/djiDataExtractor'
 import MagFitTool from '@/components/widgets/MagFitTool.vue'
 import EkfHelperTool from '@/components/widgets/EkfHelperTool.vue'
 import Vue from 'vue'
+
+const runtimeConfig = (typeof window !== 'undefined' && window.__APP_CONFIG__) || {}
+const cesiumToken = typeof runtimeConfig.VUE_APP_CESIUM_TOKEN === 'string'
+    ? runtimeConfig.VUE_APP_CESIUM_TOKEN.trim()
+    : ''
 
 export default {
     name: 'Home',
@@ -242,6 +251,9 @@ export default {
         EkfHelperTool
     },
     computed: {
+        showCesiumTokenWarning () {
+            return !cesiumToken
+        },
         mapOk () {
             return (this.state.flightModeChanges !== undefined &&
                     this.state.currentTrajectory !== undefined &&
@@ -267,6 +279,21 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+
+    .global-token-warning {
+        position: fixed;
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        z-index: 1200;
+        padding: 10px 12px;
+        border: 1px solid #f2b000;
+        border-radius: 4px;
+        background: rgba(44, 33, 10, 0.95);
+        color: #ffd75e;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 12px;
+    }
 
     .nav-side-menu ul :not(collapsed) .arrow:before,
     .nav-side-menu li :not(collapsed) .arrow:before {

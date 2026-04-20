@@ -5,14 +5,15 @@
   "author": "Willian Galvani <williangalvani@gmail.com>",
   "private": true,
   "scripts": {
-    "dev": "node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js --host 0.0.0.0 --progress --config build/webpack.dev.conf.js",
-    "start": "npm run dev",
+    "dev": "node scripts/generate-runtime-config.js &&node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js --host 0.0.0.0 --progress --config build/webpack.dev.conf.js",
+    "start": "node scripts/generate-runtime-config.js && serve -s dist -l 8080",
+    "start:dev": "npm run dev",
     "unit": "jest --config test/unit/jest.conf.js --coverage",
     "e2e": "node test/e2e/runner.js",
     "test": "npm run unit && npm run e2e",
     "lint": "eslint --fix --ext .js,.vue src test/unit test/e2e/specs",
     "lint:fix": "eslint --fix --ext .js,.vue src",
-    "build": "node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js --config build/webpack.prod.conf.js",
+    "build": "node scripts/generate-runtime-config.js &&node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js --config build/webpack.prod.conf.js",
     "postinstall": "patch-package"
   },
   "dependencies": {
@@ -55,7 +56,8 @@
     "vue-flight-indicators": "^0.1.1",
     "vue-router": "^3.5.4",
     "vue-simple-suggest": "^1.11.2",
-    "webpack-eslint-plugin": "^1.2.0"
+    "webpack-eslint-plugin": "^1.2.0",
+    "serve": "^14.2.5"
   },
   "devDependencies": {
     "@babel/core": "^7.22.5",
