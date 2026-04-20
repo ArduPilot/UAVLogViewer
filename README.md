@@ -43,6 +43,17 @@ npm run e2e
 npm test
 ```
 
+## deployment of static files to a server
+To build a static version of the application and deploy it to a server, you can use the following commands. Make sure to replace `<your token>` with your actual Cesium ion token. The built files will be located in the `dist` directory, which you can then upload to your server.
+``` bash
+git submodule update --init --recursive
+
+npm install
+
+export VUE_APP_CESIUM_TOKEN=<your token>
+
+npm run build
+```
 
 ## build local Docker image
 
