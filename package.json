@@ -113,7 +113,7 @@
     "sass-loader": "^13.3.2",
     "selenium-server": "^3.141.59",
     "semver": "^5.7.1",
-    "shelljs": "^0.7.8",
+    "shelljs": "^0.8.5",
     "style-loader": "^0.21.0",
     "url-loader": "^4.1.1",
     "vue-jest": "^3.0.7",
