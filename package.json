@@ -5,7 +5,7 @@
   "author": "Willian Galvani <williangalvani@gmail.com>",
   "private": true,
   "scripts": {
-    "dev": "node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js --host 0.0.0.0 --progress --config build/webpack.dev.conf.js",
+    "dev": "node scripts/generate-runtime-config.js &&node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js --host 0.0.0.0 --progress --config build/webpack.dev.conf.js",
     "start": "node scripts/generate-runtime-config.js && serve -s dist -l 8080",
     "start:dev": "npm run dev",
     "unit": "jest --config test/unit/jest.conf.js --coverage",
@@ -13,7 +13,7 @@
     "test": "npm run unit && npm run e2e",
     "lint": "eslint --fix --ext .js,.vue src test/unit test/e2e/specs",
     "lint:fix": "eslint --fix --ext .js,.vue src",
-    "build": "node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js --config build/webpack.prod.conf.js",
+    "build": "node scripts/generate-runtime-config.js &&node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js --config build/webpack.prod.conf.js",
     "postinstall": "patch-package"
   },
   "dependencies": {
