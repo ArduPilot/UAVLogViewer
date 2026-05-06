@@ -275,9 +275,10 @@ export default {
                         shadows: true,
                         // eslint-disable-next-line
                         baseLayer: new ImageryLayer.fromProviderAsync(
-                            IonImageryProvider.fromAssetId(3)
+                            IonImageryProvider.fromAssetId(3954)
                         ),
                         imageryProviderViewModels: imageryProviders,
+                        selectedImageryProviderViewModel: this.sentinelProvider,
                         orderIndependentTranslucency: false,
                         useBrowserRecommendedResolution: false
                     }
@@ -341,7 +342,7 @@ export default {
                 iconUrl: '/Widgets/Images/ImageryProviders/sentinel-2.png',
                 tooltip: 'Sentinel 2 Imagery',
                 creationFunction: function () {
-                    return ImageryLayer.fromProviderAsync(IonImageryProvider.fromAssetId(3812))
+                    return ImageryLayer.fromProviderAsync(IonImageryProvider.fromAssetId(3954))
                 }
             })
             imageryProviders.push(this.sentinelProvider)
