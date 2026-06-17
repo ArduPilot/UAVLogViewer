@@ -1,9 +1,5 @@
 <template>
     <div id='vuewrapper' style="height: 100%;">
-        <div v-if="showCesiumTokenWarning" class="global-token-warning">
-            Warning: Cesium token is not configured. 3D map imagery and terrain may not load.
-            Configure it by setting VUE_APP_CESIUM_TOKEN in the environment.
-        </div>
         <template v-if="(state.mapLoading && !state.mapError) || state.plotLoading">
             <div id="waiting">
                 <atom-spinner
@@ -81,11 +77,6 @@ import { DjiDataExtractor } from '../tools/djiDataExtractor'
 import MagFitTool from '@/components/widgets/MagFitTool.vue'
 import EkfHelperTool from '@/components/widgets/EkfHelperTool.vue'
 import Vue from 'vue'
-
-const runtimeConfig = (typeof window !== 'undefined' && window.__APP_CONFIG__) || {}
-const cesiumToken = typeof runtimeConfig.VUE_APP_CESIUM_TOKEN === 'string'
-    ? runtimeConfig.VUE_APP_CESIUM_TOKEN.trim()
-    : ''
 
 export default {
     name: 'Home',
@@ -267,9 +258,6 @@ export default {
         EkfHelperTool
     },
     computed: {
-        showCesiumTokenWarning () {
-            return !cesiumToken
-        },
         mapOk () {
             return (this.state.flightModeChanges !== undefined &&
                     this.state.currentTrajectory !== undefined &&

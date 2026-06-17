@@ -23,6 +23,11 @@ module.exports = {
         target:"http://localhost:8001/uploaded",
         secure:"false"
       },
+      "/quantized/*":{
+        target:"https://plot.ardupilot.org",
+        changeOrigin:true,
+        secure:true
+      },
     },
 
     // Various Dev Server settings
