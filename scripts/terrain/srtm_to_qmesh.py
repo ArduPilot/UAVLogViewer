@@ -363,6 +363,12 @@ def select_cells(args, all_cells):
 
 
 def main():
+    # Bound GDAL memory so parallel workers don't accumulate unbounded block/VSI
+    # cache reading from the all-cells VRT. Set in the parent; inherited by forked
+    # workers (must be set before the first GDAL open in build_vrt).
+    os.environ.setdefault('GDAL_CACHEMAX', '128')              # MB block cache / proc
+    os.environ.setdefault('GDAL_MAX_DATASET_POOL_SIZE', '64')  # open /vsizip sources
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--srtm-dir', required=True, help='dir of *.hgt.zip (recursive)')
@@ -392,6 +398,14 @@ def main():
     ap.add_argument('--coarse-max-zoom', type=int, default=8,
                     help='use --coarse-dem for zoom <= this (default 8)')
     ap.add_argument('--jobs', type=int, default=os.cpu_count())
+    ap.add_argument('--max-tasks-per-child', type=int, default=0,
+                    help='recycle each worker after this many chunks (0 = never; '
+                         'default). Avoid: a worker that errors on teardown can wedge '
+                         'the pool. Bound memory with the GDAL caps below instead.')
+    ap.add_argument('--start-index', type=int, default=0,
+                    help='skip the first N tiles of the sorted worklist (resume)')
+    ap.add_argument('--no-layer-json', action='store_true',
+                    help='do not write layer.json (preserve hand-managed availability)')
     args = ap.parse_args()
 
     maxzoom = args.max_zoom if args.max_zoom is not None \
@@ -413,17 +427,27 @@ def main():
 
     tiles, per_level = build_worklist(cells, args.min_zoom, maxzoom, clip)
     tiles = sorted(tiles)
+    offset = max(0, args.start_index)
+    if offset:
+        tiles = tiles[offset:]
+        print('resume: skipping first %d tiles' % offset, flush=True)
     print('tiles to consider: %d' % len(tiles), flush=True)
 
-    write_layer_json(args.out, maxzoom, per_level, args.min_zoom)  # up-front (resume-safe)
+    if not args.no_layer_json:
+        write_layer_json(args.out, maxzoom, per_level, args.min_zoom)  # up-front (resume-safe)
 
     t0 = time.time()
     counts = {'ok': 0, 'skip': 0, 'empty': 0}
     done = 0
+    total = len(tiles) + offset
+    pool_kw = {}
+    if args.max_tasks_per_child > 0:
+        pool_kw['max_tasks_per_child'] = args.max_tasks_per_child
     with ProcessPoolExecutor(max_workers=args.jobs, initializer=_init_worker,
                              initargs=(vrt_path, args.out, args.max_error,
                                        args.tile_px, args.force, args.coarse_dem,
-                                       args.coarse_max_zoom, args.grid)) as ex:
+                                       args.coarse_max_zoom, args.grid),
+                             **pool_kw) as ex:
         for res in ex.map(render_tile, tiles, chunksize=16):
             counts[res] = counts.get(res, 0) + 1
             done += 1
@@ -431,7 +455,7 @@ def main():
                 dt = time.time() - t0
                 rate = done / dt if dt else 0
                 print('  %d/%d  ok=%d skip=%d empty=%d  %.0f tiles/s'
-                      % (done, len(tiles), counts['ok'], counts['skip'],
+                      % (done + offset, total, counts['ok'], counts['skip'],
                          counts['empty'], rate), flush=True)
     print('done in %.1fs: %s' % (time.time() - t0, counts))
     print('layer.json + tiles in %s' % args.out)
