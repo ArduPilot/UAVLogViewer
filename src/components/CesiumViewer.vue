@@ -21,14 +21,11 @@
 
 <script>
 import {
-    Ion,
     Color,
     ProviderViewModel,
     UrlTemplateImageryProvider,
-    Viewer, createWorldTerrainAsync,
+    Viewer, CesiumTerrainProvider,
     PointPrimitiveCollection,
-    ImageryLayer,
-    IonImageryProvider,
     Entity,
     ScreenSpaceEventHandler,
     ScreenSpaceEventType,
@@ -84,12 +81,13 @@ import {
     isPointInPolygon
 } from './cesiumExtra/boundingPolygon.js'
 
-// Set Cesium token from runtime config injected by runtime-config.js
-const runtimeConfig = (typeof window !== 'undefined' && window.__APP_CONFIG__) || {}
-const cesiumToken = typeof runtimeConfig.VUE_APP_CESIUM_TOKEN === 'string'
-    ? runtimeConfig.VUE_APP_CESIUM_TOKEN.trim()
-    : ''
-Ion.defaultAccessToken = cesiumToken
+// Self-hosted terrain + non-ion imagery: no Cesium ion token required.
+// Default imagery is keyless Esri World Imagery (reliable, no key / domain / rate limits).
+const ESRI_WORLD_IMAGERY_URL =
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+const ESRI_CREDIT = 'Imagery © Esri, Maxar, Earthstar Geographics'
+const MAPTILER_SATELLITE_URL =
+    'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=o3JREHNnXex8WSPPm2BU'
 
 const colorCoderMode = new ColorCoderMode(store)
 const colorCoderRange = new ColorCoderRange(store)
@@ -148,7 +146,13 @@ export default {
                     if (this.state.isOnline) {
                         this.viewer = this.createViewer(true)
                         if (this.state.vehicle !== 'boat') {
-                            this.viewer.terrainProvider = await createWorldTerrainAsync()
+                            try {
+                                // Self-hosted ArduPilot SRTM terrain (same origin), replaces ion.
+                                this.viewer.terrainProvider = await CesiumTerrainProvider.fromUrl('/quantized/')
+                            } catch (e) {
+                                // Fall back to the ellipsoid so the 3D view still works.
+                                console.warn('quantized terrain unavailable, using ellipsoid:', e)
+                            }
                         }
                     } else {
                         this.viewer = this.createViewer(false)
@@ -236,6 +240,7 @@ export default {
                 if (this.state.vehicle !== 'boat' && this.state.isOnline && this.correctedTrajectory.length > 0) {
                     const promise = sampleTerrainMostDetailed(this.viewer.terrainProvider, this.correctedTrajectory)
                     promise.then(async (result) => { await this.setup2(result) })
+                        .catch(() => this.setup2(this.correctedTrajectory))
                 } else {
                     this.setup2(this.correctedTrajectory)
                 }
@@ -266,6 +271,7 @@ export default {
                     'cesiumContainer',
                     {
                         homeButton: false,
+                        geocoder: false,
                         timeline: true,
                         animation: true,
                         requestRenderMode: true,
@@ -273,12 +279,11 @@ export default {
                         scene3DOnly: false,
                         selectionIndicator: false,
                         shadows: true,
-                        // eslint-disable-next-line
-                        baseLayer: new ImageryLayer.fromProviderAsync(
-                            IonImageryProvider.fromAssetId(3954)
-                        ),
+                        // No ion: custom keyless imagery list, and an empty terrain list so
+                        // the base layer picker can't fall back to ion's Cesium World Terrain.
                         imageryProviderViewModels: imageryProviders,
-                        selectedImageryProviderViewModel: this.sentinelProvider,
+                        selectedImageryProviderViewModel: this.esriProvider,
+                        terrainProviderViewModels: [],
                         orderIndependentTranslucency: false,
                         useBrowserRecommendedResolution: false
                     }
@@ -306,11 +311,22 @@ export default {
         },
 
         createAdditionalProviders () {
-            /*
-            *  Creates and returns the providers for viewing the Eniro, Statkart, and OpenSeaMap map layers
-            * */
-            // const imageryProviders = createDefaultImageryProviderViewModels()
+            // Base layer picker options. All keyless / non-ion. Esri satellite is the
+            // default (this.esriProvider); StatKart, MapTiler, Eniro and OpenSeaMap follow.
             const imageryProviders = []
+            this.esriProvider = new ProviderViewModel({
+                name: 'Satellite (Esri)',
+                iconUrl: require('../assets/maptiler.png').default,
+                tooltip: 'Esri World Imagery (satellite)',
+                creationFunction: function () {
+                    return new UrlTemplateImageryProvider({
+                        url: ESRI_WORLD_IMAGERY_URL,
+                        maximumLevel: 19,
+                        credit: ESRI_CREDIT
+                    })
+                }
+            })
+            imageryProviders.push(this.esriProvider)
             imageryProviders.push(new ProviderViewModel({
                 name: 'StatKart',
                 iconUrl: require('../assets/statkart.jpg').default,
@@ -328,31 +344,19 @@ export default {
                 tooltip: 'Maptiler satellite imagery http://maptiler.com/',
                 creationFunction: function () {
                     return new UrlTemplateImageryProvider({
-                        url: 'https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=o3JREHNnXex8WSPPm2BU',
+                        url: MAPTILER_SATELLITE_URL,
                         minimumLevel: 0,
                         maximumLevel: 20,
                         credit: 'https://www.maptiler.com/copyright'
                     })
                 }
-            })
-            )
-            // save this one so it can be referenced when creating the cesium viewer
-            this.sentinelProvider = new ProviderViewModel({
-                name: 'Sentinel 2',
-                iconUrl: '/Widgets/Images/ImageryProviders/sentinel-2.png',
-                tooltip: 'Sentinel 2 Imagery',
-                creationFunction: function () {
-                    return ImageryLayer.fromProviderAsync(IonImageryProvider.fromAssetId(3954))
-                }
-            })
-            imageryProviders.push(this.sentinelProvider)
+            }))
             imageryProviders.push(new ProviderViewModel({
                 name: 'Eniro',
                 iconUrl: require('../assets/eniro.png').default,
                 tooltip: 'Eniro aerial imagery \nhttp://map.eniro.com/',
                 creationFunction: function () {
                     return new UrlTemplateImageryProvider({
-                        // url: 'http://map.eniro.com/geowebcache/service/tms1.0.0/map/{z}/{x}/{reverseY}.png',
                         url: '/eniro/{z}/{x}/{reverseY}.png',
                         credit: 'Map tiles by Eniro.'
                     })
@@ -373,7 +377,7 @@ export default {
                             credit: 'Map tiles by OpenStreetMap.'
                         }),
                         new UrlTemplateImageryProvider({
-                            url: 'http://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
+                            url: 'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',
                             credit: 'Map tiles by OpenSeaMap.'
                         })
                     ]
@@ -381,6 +385,7 @@ export default {
             }))
             return imageryProviders
         },
+
         async setup2 (updatedPositions) {
             try {
                 /*
@@ -476,7 +481,7 @@ export default {
             } else {
                 const promise = sampleTerrainMostDetailed(this.viewer.terrainProvider,
                     [position])
-                promise.then(update)
+                promise.then(update).catch(() => {})
             }
         },
         addCloseButton () {
@@ -1223,7 +1228,7 @@ export default {
             if (this.state.vehicle !== 'boat') {
                 sampleTerrainMostDetailed(this.viewer.terrainProvider, cesiumPoints, true).then((finalPoints) => {
                     this.plotMissionPoints(finalPoints, cesiumPointsOrig, points)
-                })
+                }).catch(() => this.plotMissionPoints(cesiumPointsOrig, cesiumPointsOrig, points))
             } else {
                 this.plotMissionPoints(cesiumPointsOrig, cesiumPointsOrig, points)
             }
