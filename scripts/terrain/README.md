@@ -59,7 +59,30 @@ Area selection (mutually exclusive): `--cell S36E149 [...]`, `--bbox W S E N`, o
 (oceans skipped). Other flags: `--srtm-res {1,3}` (default 3), `--max-zoom`
 (default 13 for res 1, 11 for res 3), `--min-zoom` (>0 merges into existing availability
 for incremental upgrades), `--grid` (default 65), `--max-error` (adaptive path only),
-`--force` (rebuild existing tiles), `--jobs` (default = CPU count).
+`--force` (rebuild existing tiles), `--jobs` (default = CPU count),
+`--max-tasks-per-child` (recycle each worker after N chunks; default 400),
+`--start-index N` (skip the first N sorted tiles, to resume mid-run),
+`--no-layer-json` (don't write `layer.json`, e.g. when availability is hand-managed).
+
+## Memory / long runs
+
+Workers read windows from a single VRT mosaicking *all* SRTM cells, so GDAL would
+otherwise accumulate block + `/vsizip` cache unbounded as high-zoom tiles march across
+the globe (seen growing to ~2 GB/worker over hours). The fix is to cap GDAL in the parent
+(inherited by forked workers): `GDAL_CACHEMAX` (block cache) and
+`GDAL_MAX_DATASET_POOL_SIZE` (open `/vsizip` sources). On a small box also keep `--jobs`
+modest (each worker needs ~0.5 GB).
+
+`--max-tasks-per-child` (recycle workers) is **off by default and best left off**: if a
+worker errors while tearing down its open dataset, the result it was computing is never
+returned and `ProcessPoolExecutor.map` deadlocks the whole run. The GDAL caps bound memory
+without needing recycling. If you must reclaim more, prefer restarting the process in
+batches via `--start-index` (a full exit frees everything cleanly).
+
+Tile writes are atomic (temp file + `os.replace`), so the build is **kill-safe** — a `.terrain`
+file is never half-written. To resume after a kill: sweep stray `*.tmp*` files, then re-run
+with `--start-index` set just below the last logged counter (with `--force`, since the tiles
+already exist on disk).
 
 ## Serving (nginx)
 
