@@ -253,11 +253,29 @@ def render_tile(zxy):
 
 # ---------------------------------------------------------------- work list
 
-def build_worklist(cells, minzoom, maxzoom, clip=None):
-    """Cell-driven tile set: only tiles intersecting an existing cell (oceans skipped).
-    Levels minzoom..maxzoom. If clip=[W,S,E,N], tiles are restricted to that bbox."""
-    tiles = set()
-    per_level = {}
+# Pack a tile (z, x, y) into one int64: (z<<40)|(x<<20)|y. This sorts lexicographically
+# as (z, x, y) — identical order to a Python tuple sort — but a packed numpy array costs
+# ~8 bytes/tile vs ~370 for a set of (z,x,y) tuples, so a 12M-tile worklist is ~100 MB
+# instead of ~4.6 GB. 20 bits each for x and y are lossless through z=19 (x_max =
+# 2^(z+1)-1 = 2^20-1 at z=19); main() rejects --max-zoom > 19 to avoid silent overflow.
+_KEY_ZSH = 40
+_KEY_XSH = 20
+_KEY_MASK = (1 << 20) - 1
+
+
+def _decode_key(k):
+    k = int(k)
+    return k >> _KEY_ZSH, (k >> _KEY_XSH) & _KEY_MASK, k & _KEY_MASK
+
+
+def build_worklist(cells, minzoom, maxzoom, clip=None, want_levels=True):
+    """Cell-driven tile set: only tiles intersecting an existing cell (oceans skipped),
+    levels minzoom..maxzoom, optionally clipped to clip=[W,S,E,N].
+
+    Returns (keys, per_level). `keys` is a deduped, sorted int64 numpy array of packed
+    (z, x, y) tile keys. `per_level` (dict z -> list of (x, y), for layer.json
+    availability) is built only when want_levels — skip it for --no-layer-json runs."""
+    parts = []
     for (la, lo, _zp) in cells:
         w, s, e, n = lo, la, lo + 1, la + 1
         if clip:
@@ -267,12 +285,26 @@ def build_worklist(cells, minzoom, maxzoom, clip=None):
                 continue
         for z in range(minzoom, maxzoom + 1):
             x0, x1, y0, y1 = tile_range_for_bbox(z, w, s, e, n)
-            lvl = per_level.setdefault(z, set())
-            for x in range(x0, x1 + 1):
-                for yy in range(y0, y1 + 1):
-                    tiles.add((z, x, yy))
-                    lvl.add((x, yy))
-    return tiles, per_level
+            if x1 < x0 or y1 < y0:
+                continue
+            xs = np.arange(x0, x1 + 1, dtype=np.int64)
+            ys = np.arange(y0, y1 + 1, dtype=np.int64)
+            parts.append(((np.int64(z) << _KEY_ZSH)
+                          | (xs[:, None] << _KEY_XSH)
+                          | ys[None, :]).ravel())
+    if not parts:
+        return np.empty(0, dtype=np.int64), ({} if want_levels else None)
+    keys = np.unique(np.concatenate(parts))   # dedup shared cell-edge tiles + sort
+    per_level = None
+    if want_levels:
+        per_level = {}
+        zz = keys >> _KEY_ZSH
+        xx = (keys >> _KEY_XSH) & _KEY_MASK
+        yy = keys & _KEY_MASK
+        for z in range(minzoom, maxzoom + 1):
+            m = zz == z
+            per_level[z] = list(zip(xx[m].tolist(), yy[m].tolist()))
+    return keys, per_level
 
 
 def availability(per_level, maxzoom):
@@ -410,6 +442,8 @@ def main():
 
     maxzoom = args.max_zoom if args.max_zoom is not None \
         else DEFAULT_MAXZOOM[args.srtm_res]
+    if maxzoom > 19:
+        sys.exit('packed worklist key supports --max-zoom <= 19 (x/y use 20 bits each)')
 
     all_cells = find_cells(args.srtm_dir)
     if not all_cells:
@@ -425,21 +459,23 @@ def main():
     vrt_path = os.path.join(args.out, '_source.vrt')
     build_vrt(cells, vrt_path)
 
-    tiles, per_level = build_worklist(cells, args.min_zoom, maxzoom, clip)
-    tiles = sorted(tiles)
-    offset = max(0, args.start_index)
+    keys, per_level = build_worklist(cells, args.min_zoom, maxzoom, clip,
+                                     want_levels=not args.no_layer_json)
+    total = len(keys)
+    offset = min(max(0, args.start_index), total)
     if offset:
-        tiles = tiles[offset:]
         print('resume: skipping first %d tiles' % offset, flush=True)
-    print('tiles to consider: %d' % len(tiles), flush=True)
+    print('tiles to consider: %d' % (total - offset), flush=True)
 
     if not args.no_layer_json:
         write_layer_json(args.out, maxzoom, per_level, args.min_zoom)  # up-front (resume-safe)
+    per_level = None  # availability written; not needed during rendering
 
     t0 = time.time()
     counts = {'ok': 0, 'skip': 0, 'empty': 0}
     done = 0
-    total = len(tiles) + offset
+    remaining = total - offset
+    batch_sz = 100000
     pool_kw = {}
     if args.max_tasks_per_child > 0:
         pool_kw['max_tasks_per_child'] = args.max_tasks_per_child
@@ -448,15 +484,20 @@ def main():
                                        args.tile_px, args.force, args.coarse_dem,
                                        args.coarse_max_zoom, args.grid),
                              **pool_kw) as ex:
-        for res in ex.map(render_tile, tiles, chunksize=16):
-            counts[res] = counts.get(res, 0) + 1
-            done += 1
-            if done % 500 == 0 or done == len(tiles):
-                dt = time.time() - t0
-                rate = done / dt if dt else 0
-                print('  %d/%d  ok=%d skip=%d empty=%d  %.0f tiles/s'
-                      % (done + offset, total, counts['ok'], counts['skip'],
-                         counts['empty'], rate), flush=True)
+        # Feed the pool in batches: ProcessPoolExecutor.map submits its whole iterable
+        # eagerly, so mapping all 12M tiles at once would re-materialise the worklist as
+        # futures. Decoding one batch of keys at a time keeps the parent's memory flat.
+        for b0 in range(offset, total, batch_sz):
+            batch = [_decode_key(k) for k in keys[b0:b0 + batch_sz].tolist()]
+            for res in ex.map(render_tile, batch, chunksize=16):
+                counts[res] = counts.get(res, 0) + 1
+                done += 1
+                if done % 500 == 0 or done == remaining:
+                    dt = time.time() - t0
+                    rate = done / dt if dt else 0
+                    print('  %d/%d  ok=%d skip=%d empty=%d  %.0f tiles/s'
+                          % (done + offset, total, counts['ok'], counts['skip'],
+                             counts['empty'], rate), flush=True)
     print('done in %.1fs: %s' % (time.time() - t0, counts))
     print('layer.json + tiles in %s' % args.out)
 
