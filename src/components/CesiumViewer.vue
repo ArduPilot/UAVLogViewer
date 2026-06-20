@@ -394,10 +394,16 @@ export default {
                 if (!updatedPositions || updatedPositions.length === 0) {
                     throw new Error('No GPS trajectory available in this log file.')
                 }
+                // Terrain height sampled per trajectory point (same order as the points);
+                // processTrajectory uses it to clamp the rendered track to the ground.
+                this.terrainHeights = updatedPositions.map(p => p.height)
                 this.state.trajectorySource = this.state.trajectorySources[0]
                 this.loadTrajectory(this.state.trajectorySource)
+                // Trajectory altitude is absolute AMSL (orthometric); our self-hosted terrain is
+                // raw SRTM (also orthometric), so Cesium renders both with the same geoid offset
+                // and the vehicle sits at the right height above the visible ground. No terrain
+                // offset is added. (This would be wrong against ellipsoidal terrain, e.g. ion.)
                 this.state.heightOffset = 0
-                this.state.heightOffset = updatedPositions[0].height
                 this.processTrajectory(this.state.currentTrajectory)
                 this.addModel()
                 this.updateAndPlotTrajectory()
@@ -782,6 +788,17 @@ export default {
         processTrajectory () {
             this.correctedTrajectory = []
             this.points = this.state.trajectories[this.state.trajectorySource].trajectory
+            // Clamp the rendered track to the terrain surface so it never disappears below the
+            // opaque ground (pre-GPS-lock samples whose AMSL is under the local terrain). Terrain
+            // heights were sampled per point in setup2; points above terrain keep their true AMSL.
+            // Done here (not just setup2) because loadTrajectory re-extracts points asynchronously.
+            if (this.terrainHeights && this.terrainHeights.length === this.points.length) {
+                for (let i = 0; i < this.points.length; i++) {
+                    if (this.terrainHeights[i] > this.points[i][2]) {
+                        this.points[i][2] = this.terrainHeights[i]
+                    }
+                }
+            }
             for (const pos of this.points) {
                 this.correctedTrajectory.push(Cartographic.fromDegrees(pos[0], pos[1], pos[2]))
             }
