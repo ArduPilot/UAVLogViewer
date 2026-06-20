@@ -353,14 +353,14 @@ export class DataflashDataExtractor {
                         [
                             gpsData.Lng[i] / 1e7,
                             gpsData.Lat[i] / 1e7,
-                            gpsData.Alt[i] - startAltitude,
+                            gpsData.Alt[i],
                             gpsData.time_boot_ms[i]
                         ]
                     )
                     timeTrajectory[gpsData.time_boot_ms[i]] = [
                         gpsData.Lng[i] / 1e7,
                         gpsData.Lat[i] / 1e7,
-                        (gpsData.Alt[i] - startAltitude) / 1000,
+                        gpsData.Alt[i],
                         gpsData.time_boot_ms[i]]
                 }
             }
@@ -392,14 +392,14 @@ export class DataflashDataExtractor {
                         [
                             gpsData.Lng[i] * 1e-7,
                             gpsData.Lat[i] * 1e-7,
-                            gpsData.Alt[i] - startAltitude,
+                            gpsData.Alt[i],
                             gpsData.time_boot_ms[i]
                         ]
                     )
                     timeTrajectory[gpsData.time_boot_ms[i]] = [
                         gpsData.Lng[i] * 1e-7,
                         gpsData.Lat[i] * 1e-7,
-                        (gpsData.Alt[i] - startAltitude) / 1000,
+                        gpsData.Alt[i],
                         gpsData.time_boot_ms[i]]
                 }
             }
@@ -432,14 +432,14 @@ export class DataflashDataExtractor {
                             [
                                 gpsData.Lng[i] / 1e7,
                                 gpsData.Lat[i] / 1e7,
-                                gpsData.Alt[i] - startAltitude,
+                                gpsData.Alt[i],
                                 gpsData.time_boot_ms[i]
                             ]
                         )
                         timeTrajectory[gpsData.time_boot_ms[i]] = [
                             gpsData.Lng[i] / 1e7,
                             gpsData.Lat[i] / 1e7,
-                            gpsData.Alt[i] - startAltitude,
+                            gpsData.Alt[i],
                             gpsData.time_boot_ms[i]]
                     }
                 }

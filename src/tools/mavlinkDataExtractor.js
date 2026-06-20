@@ -152,14 +152,14 @@ export class MavlinkDataExtractor {
                         [
                             gpsData.lon[i],
                             gpsData.lat[i],
-                            gpsData.relative_alt[i] - startAltitude,
+                            gpsData.alt[i] / 1000,
                             gpsData.time_boot_ms[i]
                         ]
                     )
                     timeTrajectory[gpsData.time_boot_ms[i]] = [
                         gpsData.lon[i],
                         gpsData.lat[i],
-                        gpsData.relative_alt[i],
+                        gpsData.alt[i] / 1000,
                         gpsData.time_boot_ms[i]]
                 }
             }
@@ -185,7 +185,7 @@ export class MavlinkDataExtractor {
                         [
                             gpsData.lon[i] * 1e-7,
                             gpsData.lat[i] * 1e-7,
-                            gpsData.alt[i] / 1000 - startAltitude,
+                            gpsData.alt[i] / 1000,
                             gpsData.time_boot_ms[i]
                         ]
                     )
@@ -218,7 +218,7 @@ export class MavlinkDataExtractor {
                         [
                             gpsData.lng[i] * 1e-7,
                             gpsData.lat[i] * 1e-7,
-                            gpsData.altitude[i] - startAltitude,
+                            gpsData.altitude[i],
                             gpsData.time_boot_ms[i]
                         ]
                     )
@@ -251,7 +251,7 @@ export class MavlinkDataExtractor {
                         [
                             gpsData.lng[i] * 1e-7,
                             gpsData.lat[i] * 1e-7,
-                            gpsData.altitude[i] - startAltitude,
+                            gpsData.altitude[i],
                             gpsData.time_boot_ms[i]
                         ]
                     )

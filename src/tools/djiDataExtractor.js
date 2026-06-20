@@ -106,14 +106,14 @@ export class DjiDataExtractor {
                         [
                             gpsData.longitude[i],
                             gpsData.latitude[i],
-                            gpsData.altitude[i] - startAltitude,
+                            gpsData.altitude[i],
                             gpsData.time_boot_ms[i]
                         ]
                     )
                     timeTrajectory[gpsData.time_boot_ms[i]] = [
                         gpsData.longitude[i],
                         gpsData.latitude[i],
-                        (gpsData.altitude[i] - startAltitude) / 1000,
+                        gpsData.altitude[i],
                         gpsData.time_boot_ms[i]]
                 }
             }
