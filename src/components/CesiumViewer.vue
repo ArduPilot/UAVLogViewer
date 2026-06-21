@@ -42,6 +42,7 @@ import {
     Cartesian3,
     Cartesian2,
     SampledProperty,
+    BoundingSphere,
     LabelStyle,
     SampledPositionProperty,
     Transforms,
@@ -666,31 +667,27 @@ export default {
             }
         },
         fitTrajectoryBounds () {
-            // Frame the flight's lat/lon box so it fills ~2/3 of the view, never zooming in
-            // tighter than a 100 m-wide view (so a hover/stationary flight stays visible).
+            // Frame the flight so it fills ~2/3 of the view, never zooming tighter than a ~100 m
+            // view (so a hover/stationary flight stays visible). Use a 3D bounding sphere of the
+            // actual track positions so the view accounts for terrain elevation (framing a 2D
+            // rectangle puts the camera at ellipsoid height 0 and ends up below high terrain).
             if (!this.points || this.points.length === 0) {
                 this.viewer.flyTo(this.viewer.entities)
                 return
             }
-            let west = Infinity; let east = -Infinity; let south = Infinity; let north = -Infinity
+            const cartesians = []
             for (const p of this.points) {
-                if (p[0] < west) west = p[0]
-                if (p[0] > east) east = p[0]
-                if (p[1] < south) south = p[1]
-                if (p[1] > north) north = p[1]
+                if (isFinite(p[0]) && isFinite(p[1]) && isFinite(p[2])) {
+                    cartesians.push(Cartesian3.fromDegrees(p[0], p[1], p[2]))
+                }
             }
-            if (!isFinite(west)) {
+            if (cartesians.length === 0) {
                 return
             }
-            const cx = (west + east) / 2
-            const cy = (south + north) / 2
-            const cosLat = Math.max(0.01, Math.cos(cy * Math.PI / 180))
-            const minM = 100 // never show a view narrower than 100 m
-            const pad = 1.5 // flight fills ~2/3 of the view
-            const halfWDeg = Math.max((east - west) / 2 * pad, minM / 2 / (111320 * cosLat))
-            const halfHDeg = Math.max((north - south) / 2 * pad, minM / 2 / 111320)
-            const rect = Rectangle.fromDegrees(cx - halfWDeg, cy - halfHDeg, cx + halfWDeg, cy + halfHDeg)
-            this.viewer.camera.flyTo({ destination: rect, duration: 1.5 })
+            const sphere = BoundingSphere.fromPoints(cartesians)
+            // x1.5 -> flight fills ~2/3 of the view; floor radius 50 m -> view never under ~100 m
+            sphere.radius = Math.max(sphere.radius * 1.5, 50)
+            this.viewer.camera.flyToBoundingSphere(sphere, { duration: 1.5 })
         },
         updateScaleBar () {
             // Traditional map scale bar (bottom-right): measure the ground distance spanned by
