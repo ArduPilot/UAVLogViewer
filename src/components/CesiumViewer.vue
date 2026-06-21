@@ -1340,12 +1340,33 @@ export default {
         },
 
         plotMissionPoints (finalPoints, cesiumPointsOrig, points) {
-            // now check if we really want terrain height
+            // Resolve each waypoint's height per its MAV_FRAME (a mission can mix frames):
+            //   GLOBAL (0) / GLOBAL_INT (5)                -> alt is absolute AMSL
+            //   GLOBAL_RELATIVE_ALT (3) / _INT (6)         -> alt is above home
+            //   GLOBAL_TERRAIN_ALT (10) / _INT (11)        -> alt is above terrain
+            // finalPoints[i].height is the sampled terrain; cesiumPointsOrig[i].height is the
+            // raw alt. Our terrain is orthometric (same datum as AMSL), so absolute alt renders
+            // at the right height above the visible ground (geoid cancels) just like the track.
+            // Home altitude (AMSL) for relative frames is the home waypoint (seq 0).
+            let homeAlt = 0
+            for (let i = 0; i < points.length; i++) {
+                if (points[i][5] === 0) {
+                    homeAlt = points[i][2]
+                    break
+                }
+            }
             for (let i = 0; i < cesiumPointsOrig.length; i++) {
-                if (points[i][6] === 10) {
-                    finalPoints[i].height += points[i][2]
+                const frame = points[i][6]
+                const alt = points[i][2]
+                if (frame === 10 || frame === 11) {
+                    finalPoints[i].height += alt
+                } else if (frame === 3 || frame === 6) {
+                    finalPoints[i].height = homeAlt + alt
                 } else {
-                    finalPoints[i].height = cesiumPointsOrig[i].height
+                    // GLOBAL/absolute. Use the raw alt directly: cesiumPointsOrig shares its
+                    // Cartographic objects with the terrain-sampled array, so its height has
+                    // been overwritten with terrain.
+                    finalPoints[i].height = alt
                 }
             }
 
