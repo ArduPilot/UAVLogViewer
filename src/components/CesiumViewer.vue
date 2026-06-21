@@ -16,6 +16,10 @@
             <CesiumSettingsWidget />
         </div>
         <div id="cesiumContainer"></div>
+        <div id="distanceLegend" v-show="scaleBarLabel">
+            <div class="distanceLegendLabel">{{ scaleBarLabel }}</div>
+            <div class="distanceLegendBar" :style="{ width: scaleBarWidth + 'px' }"></div>
+        </div>
     </div>
 </template>
 
@@ -46,6 +50,7 @@ import {
     TimeIntervalCollection,
     HeadingPitchRoll,
     Ellipsoid,
+    EllipsoidGeodesic,
     Quaternion,
     defined,
     NearFarScalar,
@@ -111,7 +116,9 @@ export default {
             startTimeMs: 0,
             lastEmitted: 0,
             colorCoder: null,
-            selectedColorCoder: 'Mode'
+            selectedColorCoder: 'Mode',
+            scaleBarLabel: '',
+            scaleBarWidth: 0
         }
     },
     components: {
@@ -167,6 +174,7 @@ export default {
                     this.viewer.scene.globe.enableLighting = true
                     this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
                     this.viewer.scene.postRender.addEventListener(this.onFrameUpdate)
+                    this.viewer.camera.moveEnd.addEventListener(this.updateScaleBar)
                     this.viewer.scene.morphComplete.addEventListener(
                         () => {
                             this.viewer.zoomTo(this.viewer.entities)
@@ -321,7 +329,10 @@ export default {
                 creationFunction: function () {
                     return new UrlTemplateImageryProvider({
                         url: ESRI_WORLD_IMAGERY_URL,
-                        maximumLevel: 19,
+                        // Esri World Imagery has near-global coverage to z18; z19+ is spotty
+                        // (returns "Map data not yet available" tiles in rural areas). Cap at 18
+                        // so Cesium upsamples instead of showing those placeholders.
+                        maximumLevel: 18,
                         credit: ESRI_CREDIT
                     })
                 }
@@ -414,12 +425,15 @@ export default {
 
                 // TODO: Find a better way to know that cesium finished loading
                 setTimeout(() => { this.state.mapLoading = false }, 2000)
-                this.state.cameraType = 'follow'
+                // Default to a framed top-down view of the flight (not vehicle-follow, which
+                // frames a point and ends up too wide to find the flight). Follow is available
+                // via the centre-vehicle button.
+                this.state.cameraType = 'free'
                 this.changeCamera()
                 setTimeout(this.updateTimelineColors, 500)
                 setInterval(this.updateGlobeOpacity, 1000)
                 setTimeout(() => {
-                    this.viewer.flyTo(this.viewer.entities)
+                    this.fitTrajectoryBounds()
                 }, 1000)
             } catch (e) {
                 console.error('Error in Cesium setup2:', e)
@@ -564,7 +578,9 @@ export default {
             closeButton = document.getElementById('cesium-fit-button')
             closeButton.addEventListener('click', () => {
                 this.$nextTick(() => {
-                    this.viewer.flyTo(this.viewer.entities)
+                    this.state.cameraType = 'free'
+                    this.changeCamera()
+                    this.fitTrajectoryBounds()
                 })
             })
         },
@@ -590,7 +606,8 @@ export default {
             closeButton = document.getElementById('cesium-center-vehicle-button')
             closeButton.addEventListener('click', () => {
                 this.$nextTick(() => {
-                    this.viewer.flyTo(this.model)
+                    this.state.cameraType = 'follow'
+                    this.changeCamera()
                 })
             })
         },
@@ -647,6 +664,77 @@ export default {
             } else {
                 this.viewer.trackedEntity = undefined
             }
+        },
+        fitTrajectoryBounds () {
+            // Frame the flight's lat/lon box so it fills ~2/3 of the view, never zooming in
+            // tighter than a 100 m-wide view (so a hover/stationary flight stays visible).
+            if (!this.points || this.points.length === 0) {
+                this.viewer.flyTo(this.viewer.entities)
+                return
+            }
+            let west = Infinity; let east = -Infinity; let south = Infinity; let north = -Infinity
+            for (const p of this.points) {
+                if (p[0] < west) west = p[0]
+                if (p[0] > east) east = p[0]
+                if (p[1] < south) south = p[1]
+                if (p[1] > north) north = p[1]
+            }
+            if (!isFinite(west)) {
+                return
+            }
+            const cx = (west + east) / 2
+            const cy = (south + north) / 2
+            const cosLat = Math.max(0.01, Math.cos(cy * Math.PI / 180))
+            const minM = 100 // never show a view narrower than 100 m
+            const pad = 1.5 // flight fills ~2/3 of the view
+            const halfWDeg = Math.max((east - west) / 2 * pad, minM / 2 / (111320 * cosLat))
+            const halfHDeg = Math.max((north - south) / 2 * pad, minM / 2 / 111320)
+            const rect = Rectangle.fromDegrees(cx - halfWDeg, cy - halfHDeg, cx + halfWDeg, cy + halfHDeg)
+            this.viewer.camera.flyTo({ destination: rect, duration: 1.5 })
+        },
+        updateScaleBar () {
+            // Traditional map scale bar (bottom-right): measure the ground distance spanned by
+            // one pixel at the bottom-centre of the view and pick a round value for the bar.
+            if (!this.viewer) {
+                return
+            }
+            const scene = this.viewer.scene
+            const width = scene.canvas.clientWidth
+            const height = scene.canvas.clientHeight
+            const globe = scene.globe
+            const left = scene.camera.getPickRay(new Cartesian2((width / 2) | 0, height - 1))
+            const right = scene.camera.getPickRay(new Cartesian2(1 + ((width / 2) | 0), height - 1))
+            const leftPos = left && globe.pick(left, scene)
+            const rightPos = right && globe.pick(right, scene)
+            if (!defined(leftPos) || !defined(rightPos)) {
+                this.scaleBarLabel = ''
+                return
+            }
+            const lc = globe.ellipsoid.cartesianToCartographic(leftPos)
+            const rc = globe.ellipsoid.cartesianToCartographic(rightPos)
+            this._geodesic = this._geodesic || new EllipsoidGeodesic()
+            this._geodesic.setEndPoints(lc, rc)
+            const pixelDistance = this._geodesic.surfaceDistance
+            if (!(pixelDistance > 0)) {
+                this.scaleBarLabel = ''
+                return
+            }
+            const steps = [1, 2, 3, 5, 10, 20, 30, 50, 100, 200, 300, 500, 1000, 2000, 3000, 5000,
+                10000, 20000, 30000, 50000, 100000, 200000, 300000, 500000, 1000000, 2000000, 5000000]
+            const maxBarPx = 120
+            let distance
+            for (let i = steps.length - 1; i >= 0; i--) {
+                if (steps[i] / pixelDistance < maxBarPx) {
+                    distance = steps[i]
+                    break
+                }
+            }
+            if (distance === undefined) {
+                this.scaleBarLabel = ''
+                return
+            }
+            this.scaleBarWidth = Math.round(distance / pixelDistance)
+            this.scaleBarLabel = distance >= 1000 ? (distance / 1000) + ' km' : distance + ' m'
         },
         onAnimationChange (isAnimating) {
             this.$eventHub.$emit('animation-changed', isAnimating)
@@ -1559,6 +1647,34 @@ export default {
         height: 100%;
     }
 
+    #distanceLegend {
+        position: absolute;
+        bottom: 34px;
+        right: 10px;
+        z-index: 5;
+        color: #fff;
+        font-size: 11px;
+        font-family: sans-serif;
+        text-align: center;
+        text-shadow: 0 0 3px #000, 0 0 3px #000;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    #distanceLegend .distanceLegendLabel {
+        margin-bottom: 1px;
+    }
+
+    #distanceLegend .distanceLegendBar {
+        height: 5px;
+        min-width: 2px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid #fff;
+        border-top: none;
+        box-sizing: border-box;
+    }
+
     #loadingOverlay h1 {
         text-align: center;
         position: relative;
@@ -1601,6 +1717,7 @@ export default {
     #wrapper {
         width: 100%;
         height: 100%;
+        position: relative;
     }
 
     .mode {
