@@ -31,12 +31,26 @@
         <!-- Trajectory Source -->
         <div>
             <label> Trajectory Source</label>
-            <select class="cesium-button" v-model="state.trajectorySource" style="display: block;">
-                <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
-                <option v-for="item in state.trajectorySources" :key="item">
-                    {{item}}
-                </option>
-            </select>
+            <div class="traj-source-row">
+                <select class="cesium-button traj-source-select" v-model="state.trajectorySource">
+                    <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
+                    <option v-for="item in state.trajectorySources" :key="item">
+                        {{item}}
+                    </option>
+                </select>
+                <button class="traj-icon-button" title="Compare another source" @click="addComparison">+</button>
+            </div>
+            <div class="traj-source-row" v-for="(src, idx) in state.comparisonTrajectories" :key="'cmp' + idx">
+                <span class="traj-color-swatch" :style="{ backgroundColor: comparisonColor(idx) }"></span>
+                <select class="cesium-button traj-source-select" :value="src"
+                        @change="updateComparison(idx, $event.target.value)">
+                    <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
+                    <option v-for="item in state.trajectorySources" :key="item">
+                        {{item}}
+                    </option>
+                </select>
+                <button class="traj-icon-button" title="Remove comparison" @click="removeComparison(idx)">✕</button>
+            </div>
         </div>
         <!-- Attitude Source -->
         <div>
@@ -71,6 +85,23 @@ export default {
     methods: {
         toggleSettings () {
             this.isSettingsVisible = !this.isSettingsVisible
+        },
+        comparisonColor (idx) {
+            const colors = this.state.comparisonTrajectoryColors
+            return colors[idx % colors.length]
+        },
+        addComparison () {
+            // Default the new row to the first source not already shown.
+            const used = new Set([this.state.trajectorySource, ...this.state.comparisonTrajectories])
+            const next = this.state.trajectorySources.find(s => !used.has(s)) ||
+                this.state.trajectorySources[0] || ''
+            this.state.comparisonTrajectories.push(next)
+        },
+        removeComparison (idx) {
+            this.state.comparisonTrajectories.splice(idx, 1)
+        },
+        updateComparison (idx, value) {
+            this.$set(this.state.comparisonTrajectories, idx, value)
         }
     },
     computed: {
@@ -117,5 +148,43 @@ export default {
     max-height: 400px; /* Estimate the maximum height of your content; you may need to adjust this */
     overflow: hidden; /* To hide the content that exceeds the max-height */
     font: bold 12px sans-serif;
+}
+
+.traj-source-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.traj-source-select {
+    flex: 1;
+    display: block;
+}
+
+.traj-icon-button {
+    background: #303336;
+    border: 1px solid #444;
+    color: #edffff;
+    border-radius: 4px;
+    width: 22px;
+    height: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
+.traj-icon-button:hover {
+    background: #665a4f;
+}
+
+.traj-color-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid #fff;
+    flex: 0 0 auto;
 }
 </style>

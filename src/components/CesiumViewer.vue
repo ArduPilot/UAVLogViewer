@@ -54,6 +54,7 @@ import {
     EllipsoidGeodesic,
     Quaternion,
     defined,
+    ColorBlendMode,
     NearFarScalar,
     SingleTileImageryProvider,
     Rectangle,
@@ -419,6 +420,7 @@ export default {
                 this.processTrajectory(this.state.currentTrajectory)
                 this.addModel()
                 this.updateAndPlotTrajectory()
+                this.plotComparisonTrajectories()
                 await this.plotMission(this.state.mission)
                 this.plotFences(this.state.fences)
                 document.addEventListener('setzoom', this.onTimelineZoom)
@@ -1208,6 +1210,8 @@ export default {
                 }
             }
 
+            // Reused by the comparison-trajectory vehicles (position differs, orientation shared).
+            this.sampledOrientation = sampledOrientation
             // Add airplane model with interpolated position and orientation
             this.model = this.viewer.entities.add({
                 availability: new TimeIntervalCollection([new TimeInterval({
@@ -1487,20 +1491,120 @@ export default {
             }
             return require('../assets/plane.glb').default
         },
+        getDataExtractor () {
+            if (this.state.logType === 'tlog') {
+                return MavlinkDataExtractor
+            } else if (this.state.logType === 'dji') {
+                return DjiDataExtractor
+            }
+            return DataflashDataExtractor
+        },
         loadTrajectory (source) {
             this.waitForMessages([source]).then(() => {
-                let dataExtractor = null
-                if (this.state.logType === 'tlog') {
-                    dataExtractor = MavlinkDataExtractor
-                } else if (this.state.logType === 'dji') {
-                    console.log('Using DJI extractor')
-                    dataExtractor = DjiDataExtractor
-                } else {
-                    dataExtractor = DataflashDataExtractor
-                }
+                const dataExtractor = this.getDataExtractor()
                 this.state.trajectories = dataExtractor.extractTrajectory(this.state.messages, source)
                 this.processTrajectory()
             })
+        },
+        async plotComparisonTrajectories () {
+            if (!this.viewer) {
+                return
+            }
+            // Remove the previously drawn comparison overlays and their vehicles.
+            if (this.comparisonPrimitives) {
+                for (const primitive of this.comparisonPrimitives) {
+                    this.viewer.scene.primitives.remove(primitive)
+                }
+            }
+            this.comparisonPrimitives = []
+            if (this.comparisonModels) {
+                for (const model of this.comparisonModels) {
+                    this.viewer.entities.remove(model)
+                }
+            }
+            this.comparisonModels = []
+            const sources = this.state.comparisonTrajectories || []
+            if (sources.length === 0 || !this.showTrajectory) {
+                this.viewer.scene.requestRender()
+                return
+            }
+            const dataExtractor = this.getDataExtractor()
+            const isBoat = this.state.vehicle === 'boat'
+            const colors = this.state.comparisonTrajectoryColors
+            for (let idx = 0; idx < sources.length; idx++) {
+                const source = sources[idx]
+                if (!source) {
+                    continue
+                }
+                try {
+                    await this.waitForMessages([source])
+                } catch (e) {
+                    console.warn('comparison trajectory source unavailable:', source, e)
+                    continue
+                }
+                const trajectories = dataExtractor.extractTrajectory(this.state.messages, source)
+                if (!trajectories[source]) {
+                    continue
+                }
+                const points = trajectories[source].trajectory
+                const positions = []
+                const sampledPos = new SampledPositionProperty()
+                for (const pos of points) {
+                    const cartesian = Cartesian3.fromDegrees(
+                        pos[0],
+                        pos[1],
+                        isBoat ? 0.1 : pos[2] + this.heightOffset
+                    )
+                    positions.push(cartesian)
+                    if (this.start !== undefined && this.startTimeMs !== undefined) {
+                        const time = JulianDate.addSeconds(
+                            this.start, (pos[3] - this.startTimeMs) / 1000, new JulianDate())
+                        sampledPos.addSample(time, cartesian)
+                    }
+                }
+                if (positions.length < 2) {
+                    continue
+                }
+                const color = Color.fromCssColorString(colors[idx % colors.length])
+                const primitive = new Primitive({
+                    geometryInstances: new GeometryInstance({
+                        geometry: new PolylineGeometry({
+                            positions: positions,
+                            width: 3.0
+                        }),
+                        attributes: {
+                            color: ColorGeometryInstanceAttribute.fromColor(color)
+                        }
+                    }),
+                    appearance: new PolylineColorAppearance()
+                })
+                this.viewer.scene.primitives.add(primitive)
+                this.comparisonPrimitives.push(primitive)
+
+                // Vehicle that flies the comparison track on the shared clock, tinted with the
+                // source's color so it can be told apart from the primary vehicle. Lets you read
+                // each source's position at the same instant in time.
+                if (this.start !== undefined && this.stop !== undefined) {
+                    const comparisonModel = this.viewer.entities.add({
+                        availability: new TimeIntervalCollection([new TimeInterval({
+                            start: this.start,
+                            stop: this.stop
+                        })]),
+                        position: sampledPos,
+                        orientation: this.sampledOrientation,
+                        model: {
+                            uri: this.getVehicleModel(),
+                            minimumPixelSize: 15,
+                            scale: this.modelScale / 10,
+                            color: color,
+                            colorBlendMode: ColorBlendMode.MIX,
+                            colorBlendAmount: 0.7
+                        }
+                    })
+                    this.comparisonModels.push(comparisonModel)
+                }
+            }
+            this.viewer.scene.requestRender()
         },
         loadAttitude (source) {
             this.waitForMessages([source]).then(() => {
@@ -1591,6 +1695,9 @@ export default {
         trajectorySource () {
             return this.state.trajectorySource
         },
+        comparisonTrajectories () {
+            return this.state.comparisonTrajectories
+        },
         attitudeSource () {
             return this.state.attitudeSource
         },
@@ -1603,6 +1710,11 @@ export default {
             const value = parseFloat(scale)
             if (!isNaN(value)) {
                 this.model.model.scale = value / 10
+                if (this.comparisonModels) {
+                    for (const model of this.comparisonModels) {
+                        model.model.scale = value / 10
+                    }
+                }
                 this.viewer.scene.requestRender()
             }
         },
@@ -1612,6 +1724,7 @@ export default {
                 this.updateAndPlotTrajectory()
                 this.processTrajectory()
                 this.addModel()
+                this.plotComparisonTrajectories()
                 this.viewer.scene.requestRender()
             }
         },
@@ -1641,6 +1754,7 @@ export default {
         },
         showTrajectory () {
             this.updateAndPlotTrajectory()
+            this.plotComparisonTrajectories()
         },
         showClickableTrajectory () {
             this.updateVisibility()
@@ -1650,6 +1764,12 @@ export default {
         },
         trajectorySource () {
             this.loadTrajectory(this.state.trajectorySource)
+        },
+        comparisonTrajectories: {
+            handler () {
+                this.plotComparisonTrajectories()
+            },
+            deep: true
         },
         attitudeSource () {
             this.loadAttitude(this.state.attitudeSource)
