@@ -18,7 +18,7 @@ self.addEventListener('message', async function (event) {
             await parser.processData(data)
         } else {
             parser = new DataflashParser(true)
-            parser.processData(data, ['CMD', 'MSG', 'FILE', 'MODE', 'AHR2', 'ATT', 'GPS', 'POS',
+            parser.processData(data, ['CMD', 'MSG', 'FILE', 'MODE', 'AHR2', 'ATT', 'GPS', 'POS', 'SIM',
                 'XKQ1', 'XKQ', 'NKQ1', 'NKQ2', 'XKQ2', 'PARM', 'MSG', 'STAT', 'EV', 'XKF4', 'FNCE'])
         }
 
