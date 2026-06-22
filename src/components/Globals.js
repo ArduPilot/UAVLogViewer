@@ -45,6 +45,10 @@ export const store = {
     showClickableTrajectory: false,
     showTrajectory: true,
     trajectorySources: [],
+    // Extra trajectory sources overlaid for comparison with the primary one.
+    comparisonTrajectories: [],
+    // Solid colors used (by index) to draw the comparison trajectory overlays.
+    comparisonTrajectoryColors: ['#00ffff', '#ff00ff', '#ffff00', '#ff8000', '#00ff80', '#8000ff'],
     attitudeSources: {},
     attitudeSource: null,
     showWaypoints: true,
