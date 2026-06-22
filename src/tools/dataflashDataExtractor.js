@@ -318,6 +318,9 @@ export class DataflashDataExtractor {
         if ('AHR2' in messages) {
             candidates.push('AHR2')
         }
+        if ('SIM' in messages) {
+            candidates.push('SIM')
+        }
         if ('GPS' in messages) {
             candidates.push('GPS')
         }
@@ -405,6 +408,45 @@ export class DataflashDataExtractor {
             }
             if (trajectory.length) {
                 ret.AHR2 = {
+                    startAltitude: startAltitude,
+                    trajectory: trajectory,
+                    timeTrajectory: timeTrajectory
+                }
+            }
+        }
+        if ('SIM' in messages && source === 'SIM') {
+            const trajectory = []
+            const timeTrajectory = {}
+            let startAltitude = null
+            const gpsData = messages.SIM
+            let start = 0
+            for (const i in gpsData.time_boot_ms) {
+                const delta = gpsData.time_boot_ms[i] - start
+                if (delta < 200) {
+                    continue
+                }
+                start = gpsData.time_boot_ms[i]
+                if (gpsData.Lat[i] !== 0) {
+                    if (startAltitude === null) {
+                        startAltitude = gpsData.Alt[i]
+                    }
+                    trajectory.push(
+                        [
+                            gpsData.Lng[i] * 1e-7,
+                            gpsData.Lat[i] * 1e-7,
+                            gpsData.Alt[i],
+                            gpsData.time_boot_ms[i]
+                        ]
+                    )
+                    timeTrajectory[gpsData.time_boot_ms[i]] = [
+                        gpsData.Lng[i] * 1e-7,
+                        gpsData.Lat[i] * 1e-7,
+                        gpsData.Alt[i],
+                        gpsData.time_boot_ms[i]]
+                }
+            }
+            if (trajectory.length) {
+                ret.SIM = {
                     startAltitude: startAltitude,
                     trajectory: trajectory,
                     timeTrajectory: timeTrajectory
