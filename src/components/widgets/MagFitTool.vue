@@ -102,6 +102,16 @@
                       :disabled="diffCompassA === diffCompassB"
                       @click="plotNewHeadingDiff(diffCompassA, diffCompassB)">Plot heading diff (fitted)</button>
             </div>
+            <div class="section" v-if="processing">
+              <h6>Optimizer fitness</h6>
+              <svg class="fitness-chart" :width="chartWidth" :height="chartHeight">
+                <polyline :points="fitnessPoints" fill="none" stroke="#2E3F54" stroke-width="1.5"/>
+              </svg>
+              <div class="chart-caption">
+                gen {{ fitnessHistory.length }} / {{ maxGenerations }}
+                <span v-if="bestFitness !== null">&middot; best {{ bestFitness.toFixed(1) }}</span>
+              </div>
+            </div>
             <div class="section" v-if="newCorrections.length > 0 || this.processing">
               <h6>New</h6>
               <table class="results">
@@ -156,7 +166,7 @@ const COMPASS_MESSAGE_CANDIDATES = [
 ]
 
 // eslint-disable-next-line
-async function geneticOptimizer(f, xStart, bounds, { populationSize = 100, mutationRate = 0.01, maxGenerations = 100, mutationSize = 0.05 } = {}) {
+async function geneticOptimizer(f, xStart, bounds, { populationSize = 100, mutationRate = 0.01, maxGenerations = 100, mutationSize = 0.05, onProgress = null } = {}) {
     // eslint-disable-next-line
     let population = Array(populationSize - 1).fill().map(() => bounds.map(bound => Math.random() * (bound[1] - bound[0]) + bound[0]))
     population.push(xStart)
@@ -165,6 +175,9 @@ async function geneticOptimizer(f, xStart, bounds, { populationSize = 100, mutat
         const scores = population.map(f)
         const minScore = Math.min(...scores)
         const maxScore = Math.max(...scores)
+        if (onProgress) {
+            onProgress(minScore, generation, maxGenerations)
+        }
         const fitness = scores.map(score => (maxScore - score) / (maxScore - minScore))
         const totalFitness = fitness.reduce((a, b) => a + b, 0)
         const probs = fitness.map(fit => fit / totalFitness)
@@ -245,6 +258,10 @@ export default {
             newCorrections: [],
             processing: false,
             processingInstance: null,
+            fitnessHistory: [],
+            maxGenerations: 100,
+            chartWidth: 240,
+            chartHeight: 70,
             fitnesses: {},
             userLat: 0,
             userLon: 0,
@@ -612,7 +629,6 @@ export default {
             }
 
             ret /= data.magX.length
-            console.log(ret)
             return ret
         },
 
@@ -648,6 +664,7 @@ export default {
             }
             this.processing = true
             this.processingInstance = instance
+            this.fitnessHistory = []
             try {
                 const data = this.compassDataAugmentedWithATT[instance]
                 const oldCorrections = this.compassOffsets[instance]
@@ -665,7 +682,13 @@ export default {
 
                 console.log('optimizing')
                 const result = await geneticOptimizer(
-                    (corrections) => this.wmmError(corrections, data), optimizationParams, bounds
+                    (corrections) => this.wmmError(corrections, data),
+                    optimizationParams,
+                    bounds,
+                    {
+                        maxGenerations: this.maxGenerations,
+                        onProgress: (score) => { this.fitnessHistory.push(score) }
+                    }
                 )
                 console.log('Optimization result: ', result)
                 const c = Object.assign({}, oldCorrections)
@@ -778,6 +801,29 @@ export default {
         }
     },
     computed: {
+        bestFitness () {
+            const n = this.fitnessHistory.length
+            return n ? this.fitnessHistory[n - 1] : null
+        },
+        fitnessPoints () {
+            // build the SVG polyline for the live optimizer fitness chart
+            const history = this.fitnessHistory
+            const n = history.length
+            if (n === 0) {
+                return ''
+            }
+            const pad = 3
+            const w = this.chartWidth
+            const h = this.chartHeight
+            const min = Math.min(...history)
+            const max = Math.max(...history)
+            const range = max - min || 1
+            return history.map((value, i) => {
+                const x = n === 1 ? w / 2 : pad + (i / (n - 1)) * (w - 2 * pad)
+                const y = pad + (1 - (value - min) / range) * (h - 2 * pad)
+                return `${x.toFixed(1)},${y.toFixed(1)}`
+            }).join(' ')
+        },
         fitnessesPreCalibration () {
             const ret = []
             for (const instance in this.compassDataAugmentedWithATT) {
@@ -1045,6 +1091,16 @@ export default {
     .hint {
       color: #9a6700;
       font-style: italic;
+    }
+    .fitness-chart {
+      display: block;
+      background: #f3f5f8;
+      border: 1px solid #d2d6dc;
+      border-radius: 3px;
+    }
+    .chart-caption {
+      margin-top: 3px;
+      color: #4b5563;
     }
     button {
       white-space: nowrap;
