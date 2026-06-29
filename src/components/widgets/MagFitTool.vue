@@ -23,6 +23,15 @@
                 <td>Lon</td><td>
                   <input type="text" v-model="userLon" size="10"/></td>
               </tr>
+              <tr v-if="!GpsPosition">
+                <td></td><td>
+                  <button @click="getLocationFromIp()" :disabled="fetchingLocation">
+                    {{ fetchingLocation ? 'Locating...' : 'Get from IP' }}
+                  </button></td>
+              </tr>
+              <tr v-if="!GpsPosition && locationError">
+                <td></td><td style="color: #b00;">{{ locationError }}</td>
+              </tr>
               <tr>
                 <td>Earth Field</td><td>{{ printEarthField }}</td>
               </tr>
@@ -217,6 +226,8 @@ export default {
             fitnesses: {},
             userLat: 0,
             userLon: 0,
+            fetchingLocation: false,
+            locationError: null,
             diffCompassA: 0,
             diffCompassB: 1
         }
@@ -296,6 +307,38 @@ export default {
         },
         setup () {
             this.loadRequiredData()
+        },
+        async getLocationFromIp () {
+            // fetch approximate coordinates from a geo-IP service when the log
+            // has no position. Used to estimate the earth's magnetic field.
+            this.fetchingLocation = true
+            this.locationError = null
+            const sources = [
+                'https://ipapi.co/json/',
+                'https://ipwho.is/'
+            ]
+            for (const url of sources) {
+                try {
+                    const response = await fetch(url)
+                    if (!response.ok) {
+                        continue
+                    }
+                    const data = await response.json()
+                    // both services expose latitude/longitude as numbers
+                    const lat = Number(data.latitude)
+                    const lon = Number(data.longitude)
+                    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+                        this.userLat = lat
+                        this.userLon = lon
+                        this.fetchingLocation = false
+                        return
+                    }
+                } catch (error) {
+                    console.log('geo-ip lookup failed for', url, error)
+                }
+            }
+            this.locationError = 'Could not determine location from IP'
+            this.fetchingLocation = false
         },
         loadedMessages () {
             return Object.keys(this.state.messages)
