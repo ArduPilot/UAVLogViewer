@@ -55,7 +55,7 @@
                       <td>{{ value.offsets.z.toFixed(2) }}</td>
                       <td>{{ value.scaling.toFixed(2) }}</td>
                       <td>{{ fitnessesPreCalibration[index].toFixed(0)}}</td>
-                      <td><button v-on:click="fitWmm(index)"> Fit </button></td>
+                      <td><button :disabled="processing" v-on:click="fitWmm(index)"> Fit </button></td>
                       <td><button v-if="value?.offsets" @click="plotOldRaw(index)">Plot Raw</button></td>
                       <td><button v-if="value?.offsets" @click="plotOldHeading(index)">Plot Heading</button></td>
 
@@ -217,10 +217,8 @@ export default {
             maxOffset: 1000,
             maxScale: 1.01,
             minScale: 0.99,
-            optimizingData: null,
             compassData: [],
             compassMessageNames: [],
-            oldCorrections: [],
             newCorrections: [],
             processing: false,
             fitnesses: {},
@@ -553,9 +551,8 @@ export default {
             return ret
         },
 
-        wmmError (corrections) {
+        wmmError (corrections, data) {
             // console.log(corrections)
-            const data = Object.assign({}, this.optimizingData)
             const corr = {}
             corr.offsets = new Vector3(corrections[0], corrections[1], corrections[2])
             corr.scaling = corrections[3]
@@ -619,86 +616,96 @@ export default {
             return mag
         },
         async fitWmm (instance) {
+            // the optimizer is async (it yields between generations), so refuse
+            // to start a second fit while one is running. Concurrent fits would
+            // otherwise interleave and corrupt each other's results.
+            if (this.processing) {
+                return
+            }
             this.processing = true
-            const data = this.compassDataAugmentedWithATT[instance]
-            this.optimizingData = data
-            this.oldCorrections = this.compassOffsets[instance]
-            const corr = Object.assign({}, this.oldCorrections)
-            const optimizationParams = [corr.offsets.x, corr.offsets.y, corr.offsets.z, corr.scaling]
+            try {
+                const data = this.compassDataAugmentedWithATT[instance]
+                const oldCorrections = this.compassOffsets[instance]
+                const corr = Object.assign({}, oldCorrections)
+                const optimizationParams = [corr.offsets.x, corr.offsets.y, corr.offsets.z, corr.scaling]
 
-            const ofs = this.maxOffset
-            const bounds = [
-                [-ofs, ofs],
-                [-ofs, ofs],
-                [-ofs, ofs],
-                [this.minScale, this.maxScale]
-            ]
-            console.log(bounds)
+                const ofs = this.maxOffset
+                const bounds = [
+                    [-ofs, ofs],
+                    [-ofs, ofs],
+                    [-ofs, ofs],
+                    [this.minScale, this.maxScale]
+                ]
+                console.log(bounds)
 
-            console.log('optimizing')
-            const result = await geneticOptimizer(this.wmmError, optimizationParams, bounds)
-            console.log('Optimization result: ', result)
-            const c = Object.assign({}, this.oldCorrections)
-            c.offsets = new Vector3(result[0], result[1], result[2])
-            c.scaling = result[3]
-            c.diag = new Vector3(1.0, 1.0, 1.0)
-            c.offdiag = new Vector3(0.0, 0.0, 0.0)
-            c.cmot = new Vector3(0.0, 0.0, 0.0)
-            // use $set so Vue detects the array index change (reactivity)
-            this.$set(this.newCorrections, instance, c)
+                console.log('optimizing')
+                const result = await geneticOptimizer(
+                    (corrections) => this.wmmError(corrections, data), optimizationParams, bounds
+                )
+                console.log('Optimization result: ', result)
+                const c = Object.assign({}, oldCorrections)
+                c.offsets = new Vector3(result[0], result[1], result[2])
+                c.scaling = result[3]
+                c.diag = new Vector3(1.0, 1.0, 1.0)
+                c.offdiag = new Vector3(0.0, 0.0, 0.0)
+                c.cmot = new Vector3(0.0, 0.0, 0.0)
+                // use $set so Vue detects the array index change (reactivity)
+                this.$set(this.newCorrections, instance, c)
 
-            const newMessage = {
-                // eslint-disable-next-line camelcase
-                time_boot_ms: [],
-                MagX: [],
-                MagY: [],
-                MagZ: []
-            }
-            for (const i in this.compassDataAugmentedWithATT[instance].time) {
-                const msg = this.compassDataAugmentedWithATT[instance]
-                newMessage.time_boot_ms.push(msg.time[i])
-                const mag = this.correct(({
-                    x: msg.magX[i],
-                    y: msg.magY[i],
-                    z: msg.magZ[i]
-                }), null, c)
-                newMessage.MagX.push(mag.x)
-                newMessage.MagY.push(mag.y)
-                newMessage.MagZ.push(mag.z)
-            }
-            this.state.messages['MAGFIT' + instance] = newMessage
-            const newtype = {
-                expressions: [
-                    'MagX',
-                    'MagY',
-                    'MagZ'
+                const newMessage = {
+                    // eslint-disable-next-line camelcase
+                    time_boot_ms: [],
+                    MagX: [],
+                    MagY: [],
+                    MagZ: []
+                }
+                for (const i in this.compassDataAugmentedWithATT[instance].time) {
+                    const msg = this.compassDataAugmentedWithATT[instance]
+                    newMessage.time_boot_ms.push(msg.time[i])
+                    const mag = this.correct(({
+                        x: msg.magX[i],
+                        y: msg.magY[i],
+                        z: msg.magZ[i]
+                    }), null, c)
+                    newMessage.MagX.push(mag.x)
+                    newMessage.MagY.push(mag.y)
+                    newMessage.MagZ.push(mag.z)
+                }
+                this.state.messages['MAGFIT' + instance] = newMessage
+                const newtype = {
+                    expressions: [
+                        'MagX',
+                        'MagY',
+                        'MagZ'
 
-                ],
-                units: null,
-                multipliers: null,
-                complexFields: {
-                    magX: {
-                        name: 'MagX',
-                        units: '?',
-                        multiplier: 1
-                    },
-                    magY: {
-                        name: 'MagY',
-                        units: '?',
-                        multiplier: 1
-                    },
-                    magZ: {
-                        name: 'MagZ',
-                        units: '?',
-                        multiplier: 1
+                    ],
+                    units: null,
+                    multipliers: null,
+                    complexFields: {
+                        magX: {
+                            name: 'MagX',
+                            units: '?',
+                            multiplier: 1
+                        },
+                        magY: {
+                            name: 'MagY',
+                            units: '?',
+                            multiplier: 1
+                        },
+                        magZ: {
+                            name: 'MagZ',
+                            units: '?',
+                            multiplier: 1
+                        }
                     }
                 }
+                const availableMessages = this.state.messageTypes
+                availableMessages['MAGFIT' + instance] = newtype
+                this.$eventHub.$emit('messageTypes', availableMessages)
+                return c
+            } finally {
+                this.processing = false
             }
-            const availableMessages = this.state.messageTypes
-            availableMessages['MAGFIT' + instance] = newtype
-            this.$eventHub.$emit('messageTypes', availableMessages)
-            this.processing = false
-            return c
         },
         getCompassData () {
             const data = []
