@@ -591,7 +591,7 @@ export default {
 
                 ],
                 units: null,
-                multipiers: null,
+                multipliers: null,
                 complexFields: {
                     magX: {
                         name: 'MagX',
