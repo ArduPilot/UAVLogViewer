@@ -1,6 +1,6 @@
 <template>
     <div :id="getDivName()"
-         v-bind:style='{width:  width + "px", height: height + "px", top: top + "px", left: left + "px" }'>
+         v-bind:style='{ top: top + "px", left: left + "px" }'>
         <div id='paneContent'>
             <span style="float: right; margin: 3px; cursor: pointer;" @click="close()"> X </span>
             <h5>Mag Fit Tool</h5>
@@ -206,8 +206,8 @@ export default {
         return {
             name: 'MagFitTool',
             state: store,
-            width: 471,
-            height: 563,
+            width: 580,
+            height: 680,
             left: 432,
             top: 12,
             forceRecompute: 0,
@@ -906,11 +906,30 @@ export default {
     div.section {
       border: 1px solid #ccc;
       width: fit-content;
+      max-width: 100%;
       padding: 5px;
+      margin-bottom: 6px;
+      box-sizing: border-box;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    th, td {
+      white-space: nowrap;
     }
     td {
       padding: 2px;
       padding-left: 6px;
+    }
+    button {
+      white-space: nowrap;
+      padding: 1px 6px;
+      margin: 1px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    select {
+      cursor: pointer;
     }
     .input {
       margin: 5px;
@@ -919,9 +938,9 @@ export default {
       display: block;
     }
     div #paneMagFitTool {
-        padding: 15px;
-        min-width: 220px;
-        min-height: 150px;
+        padding: 10px;
+        width: max-content;
+        height: auto;
         position: absolute;
         background: rgba(253, 254, 255, 0.856);
         color: #141924;
@@ -932,24 +951,6 @@ export default {
         box-shadow: 9px 9px 3px -6px rgba(26, 26, 26, 0.699);
         border-radius: 5px;
         user-select: none;
-    }
-
-    div #paneMagFitTool::before {
-        content: '\25e2';
-        color: #ffffff;
-        background-color: rgb(38, 53, 71);
-        position: absolute;
-        bottom: -1px;
-        right: 0;
-        width: 17px;
-        height: 21px;
-        padding: 2px 3px;
-        border-radius: 10px 0px 1px 0px;
-        box-sizing: border-box;
-        align-items: center;
-        justify-content: center;
-        font-size: 10px;
-        cursor: se-resize;
     }
 
      div #paneMagFitTool::after {
@@ -970,8 +971,8 @@ export default {
     }
 
     div#paneContent {
-        height: 100%;
-        overflow: auto;
+        height: auto;
+        overflow: visible;
         -webkit-user-select: none; /* Chrome all / Safari all */
         -moz-user-select: none; /* Firefox all */
         -ms-user-select: none; /* IE 10+ */
