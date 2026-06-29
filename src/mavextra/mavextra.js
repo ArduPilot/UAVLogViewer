@@ -329,3 +329,5 @@ window.expected_mag = function (GPS, ATT, rollAdjust = 0, pitchAdjust = 0, yawAd
     const field = rot.transposed().times(window.earth_field)
     return field
 }
+
+window.abs = Math.abs
