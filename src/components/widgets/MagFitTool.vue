@@ -55,6 +55,28 @@
               <i v-else class="fas fa-spinner fa-spin">
               </i>
             </div>
+            <div class="section" v-if="compassMessageNames.length >= 2">
+              <h6>Consistency</h6>
+              <div>
+                Compare
+                <select v-model.number="diffCompassA">
+                  <option v-for="(name, index) in compassMessageNames" :key="'a' + index" :value="index">
+                    {{ index }}
+                  </option>
+                </select>
+                vs
+                <select v-model.number="diffCompassB">
+                  <option v-for="(name, index) in compassMessageNames" :key="'b' + index" :value="index">
+                    {{ index }}
+                  </option>
+                </select>
+              </div>
+              <button :disabled="diffCompassA === diffCompassB"
+                      @click="plotOldHeadingDiff(diffCompassA, diffCompassB)">Plot heading diff (raw)</button>
+              <button v-if="newCorrections[diffCompassA] && newCorrections[diffCompassB]"
+                      :disabled="diffCompassA === diffCompassB"
+                      @click="plotNewHeadingDiff(diffCompassA, diffCompassB)">Plot heading diff (fitted)</button>
+            </div>
             <div class="section" v-if="newCorrections.length > 0 || this.processing">
               <h6>New</h6>
               <table>
@@ -90,6 +112,16 @@ import { baseWidget } from './baseWidget'
 import { Vector3 } from '../../mavextra/vector3'
 import { Matrix3 } from '../../mavextra/matrix3'
 import { saveAs } from 'file-saver'
+
+// Candidate compass message keys, in priority order. Covers tlogs (RAW_IMU,
+// SCALED_IMU*), modern dataflash instanced messages (MAG[0..2]) and older
+// dataflash logs (MAG, MAG2, MAG3). compassData and compassMessageNames are
+// both derived from this list so their indices stay aligned.
+const COMPASS_MESSAGE_CANDIDATES = [
+    'RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3',
+    'MAG[0]', 'MAG[1]', 'MAG[2]',
+    'MAG', 'MAG2', 'MAG3'
+]
 
 // eslint-disable-next-line
 async function geneticOptimizer(f, xStart, bounds, { populationSize = 100, mutationRate = 0.01, maxGenerations = 100, mutationSize = 0.05 } = {}) {
@@ -178,12 +210,15 @@ export default {
             minScale: 0.99,
             optimizingData: null,
             compassData: [],
+            compassMessageNames: [],
             oldCorrections: [],
             newCorrections: [],
             processing: false,
             fitnesses: {},
             userLat: 0,
-            userLon: 0
+            userLon: 0,
+            diffCompassA: 0,
+            diffCompassB: 1
         }
     },
     methods: {
@@ -307,6 +342,12 @@ export default {
         },
         computeData () {
             this.compassData = this.getCompassData()
+            // state.messages keys are added non-reactively as types stream in, so
+            // derive the names here (after the data is loaded) instead of in a
+            // computed that would never recompute.
+            this.compassMessageNames = COMPASS_MESSAGE_CANDIDATES.filter(
+                message => this.state.messages[message]
+            )
         },
         removeOffsets (data, offsets) {
             /* remove all corrections to get raw sensor data */
@@ -618,9 +659,7 @@ export default {
         },
         getCompassData () {
             const data = []
-            for (const message of [
-                'RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3', 'MAG[0]', 'MAG[1]', 'MAG[2]', 'MAG', 'MAG2'
-            ]) {
+            for (const message of COMPASS_MESSAGE_CANDIDATES) {
                 if (this.state.messages[message]) {
                     data.push(this.state.messages[message])
                 } else {
@@ -628,6 +667,28 @@ export default {
                 }
             }
             return data
+        },
+        headingDiffExpression (compass0, compass1) {
+            // build an angle_diff() expression comparing the headings of two compasses
+            const headingFunction = this.isTlog ? 'mag_heading' : 'mag_heading_df'
+            const attitudeMessage = this.isTlog ? 'ATTITUDE' : 'ATT'
+            const h0 = `${headingFunction}(${compass0}, ${attitudeMessage})`
+            const h1 = `${headingFunction}(${compass1}, ${attitudeMessage})`
+            return `abs(angle_diff(${h0}, ${h1}))`
+        },
+        plotOldHeadingDiff (i, j) {
+            this.state.plotOn = true
+            this.$nextTick(() => {
+                const expression = this.headingDiffExpression(this.compassMessageNames[i], this.compassMessageNames[j])
+                this.$eventHub.$emit('togglePlot', expression, 1)
+            })
+        },
+        plotNewHeadingDiff (i, j) {
+            this.state.plotOn = true
+            this.$nextTick(() => {
+                const expression = this.headingDiffExpression('MAGFIT' + i, 'MAGFIT' + j)
+                this.$eventHub.$emit('togglePlot', expression, 1)
+            })
         }
     },
     computed: {
@@ -758,15 +819,6 @@ export default {
         },
         isTlog () {
             return this.state.logType === 'tlog'
-        },
-        compassMessageNames () {
-            const names = []
-            for (const message of ['RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3', 'MAG[0]', 'MAG[1]', 'MAG[2]']) {
-                if (this.state.messages[message]) {
-                    names.push(message)
-                }
-            }
-            return names
         },
         attitudeMessages () {
             if ('ATT' in this.state.messages) {
