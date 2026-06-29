@@ -198,23 +198,42 @@ export class DataflashDataExtractor {
         const fences = []
         let tempFences = []
         let lastCount = -1
+        let lastType = -1
         if ('FNCE' in messages) {
             console.log(messages.FNCE)
             const cmdMsgs = messages.FNCE
+            const hasType = cmdMsgs.Type !== undefined
             for (const i in cmdMsgs.time_boot_ms) {
                 if (cmdMsgs.Lat[i] !== 0) {
                     let lat = cmdMsgs.Lat[i]
                     let lon = cmdMsgs.Lng[i]
-                    if (lastCount !== cmdMsgs.Count[i] || cmdMsgs.Radius[i] > 0) {
+                    const type = hasType ? cmdMsgs.Type[i] : -1
+                    // Start a new fence group when the polygon vertex count changes,
+                    // when a circle (Radius > 0) is encountered, or when the fence
+                    // Type changes (e.g. an inclusion polygon followed by an exclusion
+                    // polygon with the same vertex count).
+                    if (lastCount !== cmdMsgs.Count[i] || cmdMsgs.Radius[i] > 0 ||
+                        (hasType && lastType !== type)) {
                         if (tempFences.length > 0) {
                             fences.push(tempFences)
                         }
                         tempFences = []
                         lastCount = cmdMsgs.Count[i]
+                        lastType = type
                     }
                     if (Math.abs(lat) > 180) {
                         lat = lat / 10e6
                         lon = lon / 10e6
+                    }
+                    // Tag the fence group with its type so the viewer can colour
+                    // inclusion vs exclusion fences. FNCE.Type holds ArduPilot's
+                    // AC_PolyFenceType enum:
+                    //   98 POLYGON_INCLUSION, 97 POLYGON_EXCLUSION,
+                    //   96 CIRCLE_EXCLUSION_INT, 95 RETURN_POINT,
+                    //   94 CIRCLE_INCLUSION_INT, 93 CIRCLE_EXCLUSION,
+                    //   92 CIRCLE_INCLUSION.
+                    if (hasType) {
+                        tempFences.exclusion = (type === 97 || type === 93 || type === 96)
                     }
                     tempFences.push([lon, lat, cmdMsgs.Radius[i]])
                 }

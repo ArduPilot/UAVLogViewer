@@ -1410,7 +1410,7 @@ export default {
 
             // Fence ceiling height (metres above terrain). ArduPilot's FENCE_ALT_MAX,
             // falling back to a sensible default when the param isn't logged.
-            let fenceAltMax = 100
+            let fenceAltMax = 120
             try {
                 const v = this.state.params && this.state.params.values
                     ? this.state.params.values.FENCE_ALT_MAX
@@ -1420,27 +1420,24 @@ export default {
                 }
             } catch (e) { /* use default */ }
 
-            // Build each fence as a closed ring of lon/lat vertices. Circular fences
-            // (single point + radius) are tessellated into a polygon.
-            const fenceRings = []
+            // Build fence descriptors. Circular fences (single point + radius) become
+            // closed cylinders; polygon fences become walls (a closed vertical tube).
+            const fenceItems = []
             for (const fence of fencesList) {
+                // Exclusion fences are tagged by the extractor; everything else is
+                // treated as an inclusion fence.
+                const exclusion = fence.exclusion === true
                 if (fence.length === 1) {
                     if (fence[0][2] === 0) {
                         continue
                     }
                     const pos = fence[0]
-                    const radius = pos[2]
-                    const segments = 128
-                    const metersPerDegLat = 111320.0
-                    const metersPerDegLon = 111320.0 * Math.cos(pos[1] * Math.PI / 180.0)
-                    const ring = []
-                    for (let i = 0; i <= segments; i++) {
-                        const theta = (i / segments) * 2 * Math.PI
-                        const lon = pos[0] + (radius * Math.cos(theta)) / metersPerDegLon
-                        const lat = pos[1] + (radius * Math.sin(theta)) / metersPerDegLat
-                        ring.push(Cartographic.fromDegrees(lon, lat))
-                    }
-                    fenceRings.push(ring)
+                    fenceItems.push({
+                        type: 'circle',
+                        center: Cartographic.fromDegrees(pos[0], pos[1]),
+                        radius: pos[2],
+                        exclusion
+                    })
                 } else {
                     const ring = []
                     for (const pos of fence) {
@@ -1451,21 +1448,25 @@ export default {
                     }
                     // close the polygon
                     ring.push(Cartographic.fromDegrees(fence[0][0], fence[0][1]))
-                    fenceRings.push(ring)
+                    fenceItems.push({ type: 'polygon', ring, exclusion })
                 }
             }
 
-            if (fenceRings.length === 0) {
+            if (fenceItems.length === 0) {
                 return
             }
 
-            // Sample terrain so the wall bottom sits on the ground. Walls are regular
-            // (non-classification) geometry, so they depth-test normally and render
-            // correctly in Firefox, unlike clampToGround / terrain-classified fills.
+            // Sample terrain so each fence sits on the ground. Walls and cylinders are
+            // regular (non-classification) geometry, so they depth-test normally and
+            // render correctly in Firefox, unlike clampToGround / terrain-classified fills.
             const allPoints = []
-            for (const ring of fenceRings) {
-                for (const p of ring) {
-                    allPoints.push(p)
+            for (const f of fenceItems) {
+                if (f.type === 'circle') {
+                    allPoints.push(f.center)
+                } else {
+                    for (const p of f.ring) {
+                        allPoints.push(p)
+                    }
                 }
             }
             let sampledPoints = allPoints
@@ -1479,11 +1480,28 @@ export default {
             }
 
             let idx = 0
-            for (const ring of fenceRings) {
+            for (const f of fenceItems) {
+                // Inclusion fences green, exclusion fences red.
+                const color = f.exclusion ? Color.RED : Color.LIME
+                if (f.type === 'circle') {
+                    const sp = sampledPoints[idx++]
+                    const ground = sp.height || 0
+                    this.fences.push(this.viewer.entities.add({
+                        position: Cartesian3.fromRadians(
+                            sp.longitude, sp.latitude, ground + fenceAltMax / 2),
+                        cylinder: {
+                            length: fenceAltMax,
+                            topRadius: f.radius,
+                            bottomRadius: f.radius,
+                            material: color.withAlpha(0.3)
+                        }
+                    }))
+                    continue
+                }
                 const positions = []
                 const minimumHeights = []
                 const maximumHeights = []
-                for (let i = 0; i < ring.length; i++) {
+                for (let i = 0; i < f.ring.length; i++) {
                     const sp = sampledPoints[idx++]
                     const ground = sp.height || 0
                     minimumHeights.push(ground)
@@ -1496,10 +1514,8 @@ export default {
                         positions,
                         minimumHeights,
                         maximumHeights,
-                        material: Color.ORANGE.withAlpha(0.3),
-                        outline: true,
-                        outlineColor: Color.ORANGE,
-                        outlineWidth: 2
+                        material: color.withAlpha(0.3),
+                        outline: false
                     }
                 }))
             }
