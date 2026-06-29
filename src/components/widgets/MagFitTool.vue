@@ -2,8 +2,10 @@
     <div :id="getDivName()"
          v-bind:style='{ top: top + "px", left: left + "px" }'>
         <div id='paneContent'>
-            <span style="float: right; margin: 3px; cursor: pointer;" @click="close()"> X </span>
-            <h5>Mag Fit Tool</h5>
+            <div class="header">
+              <h5>Mag Fit Tool</h5>
+              <span class="close-btn" @click="close()" title="Close">&times;</span>
+            </div>
             <div class="section">
               <h6>Location</h6>
             <table>
@@ -39,7 +41,7 @@
             </div>
             <div class="section">
               <h6>Compasses</h6>
-              <table v-if="Object.keys(compassOffsets).length">
+              <table v-if="Object.keys(compassOffsets).length" class="results">
                   <tr>
                       <th>Compass</th>
                       <th>ofsx</th>
@@ -47,6 +49,7 @@
                       <th>ofsz</th>
                       <th>scale</th>
                       <th>Fitness</th>
+                      <th colspan="3"></th>
                   </tr>
                   <tr :key="'param' + index" v-for="(value, index) in compassOffsets">
                     <td> {{ index }} </td>
@@ -55,10 +58,18 @@
                       <td>{{ value.offsets.z.toFixed(2) }}</td>
                       <td>{{ value.scaling.toFixed(2) }}</td>
                       <td>{{ fitnessesPreCalibration[index].toFixed(0)}}</td>
-                      <td><button :disabled="processing" v-on:click="fitWmm(index)"> Fit </button></td>
-                      <td><button v-if="value?.offsets" @click="plotOldRaw(index)">Plot Raw</button></td>
-                      <td><button v-if="value?.offsets" @click="plotOldHeading(index)">Plot Heading</button></td>
-
+                      <td class="actions">
+                        <button :disabled="processing" v-on:click="fitWmm(index)">
+                          <i v-if="processing && processingInstance === index" class="fas fa-spinner fa-spin"></i>
+                          <span v-else>Fit</span>
+                        </button>
+                      </td>
+                      <td class="actions">
+                        <button v-if="value?.offsets" @click="plotOldRaw(index)">Plot Raw</button>
+                      </td>
+                      <td class="actions">
+                        <button v-if="value?.offsets" @click="plotOldHeading(index)">Plot Heading</button>
+                      </td>
                   </tr>
               </table>
               <i v-else class="fas fa-spinner fa-spin">
@@ -66,7 +77,7 @@
             </div>
             <div class="section" v-if="compassMessageNames.length >= 2">
               <h6>Consistency</h6>
-              <div>
+              <div style="margin-bottom: 6px;">
                 Compare
                 <select v-model.number="diffCompassA">
                   <option v-for="(name, index) in compassMessageNames" :key="'a' + index" :value="index">
@@ -88,7 +99,7 @@
             </div>
             <div class="section" v-if="newCorrections.length > 0 || this.processing">
               <h6>New</h6>
-              <table>
+              <table class="results">
                   <tr>
                       <th>Compass</th>
                       <th>ofsx</th>
@@ -96,6 +107,7 @@
                       <th>ofsz</th>
                       <th>scale</th>
                       <th>fitness</th>
+                      <th colspan="2"></th>
                   </tr>
                   <tr :key="'param' + index" v-for="(value, index) in newCorrections">
                     <td> {{ index }} </td>
@@ -103,13 +115,19 @@
                       <td>{{ value?.offsets?.y?.toFixed(2) }}</td>
                       <td>{{ value?.offsets?.z?.toFixed(2) }}</td>
                       <td>{{ value?.scaling?.toFixed(2) }}</td>
-                      <td>{{ fitnessesPostCalibration[index]?.toFixed(0) ?? '--'  }}</td>
-                      <td><button v-if="value?.offsets" @click="plotRaw(index)">Plot Raw</button></td>
-                      <td><button v-if="value?.offsets" @click="plotNewHeading(index)">Plot Heading</button></td>
+                      <td :class="fitnessClass(index)">{{ fitnessesPostCalibration[index]?.toFixed(0) ?? '--'  }}</td>
+                      <td class="actions">
+                        <button v-if="value?.offsets" @click="plotRaw(index)">Plot Raw</button>
+                      </td>
+                      <td class="actions">
+                        <button v-if="value?.offsets" @click="plotNewHeading(index)">Plot Heading</button>
+                      </td>
                   </tr>
               </table>
-              <i v-if="processing" class="fas fa-spinner fa-spin"></i>
-              <button v-if="!processing" @click="downloadParams()"> Download Params file</button>
+              <div class="section-footer">
+                <span v-if="processing"><i class="fas fa-spinner fa-spin"></i> Fitting...</span>
+                <button v-else @click="downloadParams()">Download Params file</button>
+              </div>
           </div>
         </div>
     </div>
@@ -221,6 +239,7 @@ export default {
             compassMessageNames: [],
             newCorrections: [],
             processing: false,
+            processingInstance: null,
             fitnesses: {},
             userLat: 0,
             userLon: 0,
@@ -623,6 +642,7 @@ export default {
                 return
             }
             this.processing = true
+            this.processingInstance = instance
             try {
                 const data = this.compassDataAugmentedWithATT[instance]
                 const oldCorrections = this.compassOffsets[instance]
@@ -705,6 +725,7 @@ export default {
                 return c
             } finally {
                 this.processing = false
+                this.processingInstance = null
             }
         },
         getCompassData () {
@@ -739,6 +760,16 @@ export default {
                 const expression = this.headingDiffExpression('MAGFIT' + i, 'MAGFIT' + j)
                 this.$eventHub.$emit('togglePlot', expression, 1)
             })
+        },
+        fitnessClass (index) {
+            // colour the post-fit fitness green/red depending on whether the fit
+            // improved (lowered) the error compared to the original calibration
+            const post = this.fitnessesPostCalibration[index]
+            const pre = this.fitnessesPreCalibration[index]
+            if (post == null || pre == null) {
+                return ''
+            }
+            return post <= pre ? 'fitness-better' : 'fitness-worse'
         }
     },
     computed: {
@@ -910,13 +941,45 @@ export default {
 </script>
 
 <style scoped>
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 0 8px 0;
+      padding-left: 16px;
+    }
+    h5 {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+    h6 {
+      margin: 0 0 6px 0;
+      padding-bottom: 3px;
+      border-bottom: 1px solid #d2d6dc;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      color: #2E3F54;
+    }
+    .close-btn {
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 0 4px;
+      color: #6b7280;
+    }
+    .close-btn:hover {
+      color: #b00;
+    }
     div.section {
-      border: 1px solid #ccc;
+      border: 1px solid #d2d6dc;
+      border-radius: 4px;
       width: fit-content;
       max-width: 100%;
-      padding: 5px;
-      margin-bottom: 6px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
       box-sizing: border-box;
+      background: rgba(255, 255, 255, 0.45);
     }
     table {
       border-collapse: collapse;
@@ -928,14 +991,72 @@ export default {
       padding: 2px;
       padding-left: 6px;
     }
+    table.results th,
+    table.results td {
+      padding: 3px 8px;
+      text-align: right;
+    }
+    table.results th {
+      border-bottom: 1px solid #d2d6dc;
+      font-weight: 700;
+      color: #4b5563;
+    }
+    table.results th:first-child,
+    table.results td:first-child {
+      text-align: center;
+    }
+    table.results td.actions {
+      text-align: center;
+      padding: 2px 3px;
+    }
+    .fitness-better {
+      color: #1a7f37;
+      font-weight: 700;
+    }
+    .fitness-worse {
+      color: #b00;
+      font-weight: 700;
+    }
+    .section-footer {
+      margin-top: 6px;
+    }
     button {
       white-space: nowrap;
-      padding: 1px 6px;
+      padding: 3px 8px;
       margin: 1px;
       font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #fff;
+      background: #2E3F54;
+      border: none;
+      border-radius: 3px;
       cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    button:hover:not(:disabled) {
+      background: #3f5573;
+    }
+    button:disabled {
+      background: #b8c0cc;
+      cursor: not-allowed;
+    }
+    input[type="text"] {
+      border: 1px solid #aab;
+      border-radius: 3px;
+      padding: 2px 5px;
+      font-size: 11px;
+    }
+    input[type="text"]:disabled {
+      background: #eef0f3;
+      color: #555;
     }
     select {
+      border: 1px solid #aab;
+      border-radius: 3px;
+      padding: 1px 3px;
+      font-size: 11px;
+      background: #fff;
       cursor: pointer;
     }
     .input {
