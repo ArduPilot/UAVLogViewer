@@ -315,10 +315,11 @@ export default {
                 new Vector3(offsets.offdiag.x, offsets.diag.y, offsets.offdiag.z),
                 new Vector3(offsets.offdiag.y, offsets.offdiag.z, offsets.diag.z)
             )
-            try {
-                correctionMatrix = correctionMatrix.invert()
-            } catch (error) {
-                console.log(error)
+            // Matrix3.invert() returns null (it does not throw) for a singular
+            // matrix, so guard against that to avoid a null dereference below.
+            correctionMatrix = correctionMatrix.invert()
+            if (correctionMatrix === null) {
+                console.log('singular correction matrix, cannot remove offsets')
                 return false
             }
 
