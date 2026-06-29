@@ -559,9 +559,8 @@ export default {
             c.diag = new Vector3(1.0, 1.0, 1.0)
             c.offdiag = new Vector3(0.0, 0.0, 0.0)
             c.cmot = new Vector3(0.0, 0.0, 0.0)
-            this.newCorrections[instance] = c
-            // trigger reactivity
-            this.$set(this.newCorrections, this.newCorrections, null)
+            // use $set so Vue detects the array index change (reactivity)
+            this.$set(this.newCorrections, instance, c)
 
             const newMessage = {
                 // eslint-disable-next-line camelcase
