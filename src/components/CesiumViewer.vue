@@ -1405,49 +1405,105 @@ export default {
                 })
             }
         },
-        plotFences (fencesList) {
+        async plotFences (fencesList) {
             this.fences = []
+
+            // Fence ceiling height (metres above terrain). ArduPilot's FENCE_ALT_MAX,
+            // falling back to a sensible default when the param isn't logged.
+            let fenceAltMax = 100
+            try {
+                const v = this.state.params && this.state.params.values
+                    ? this.state.params.values.FENCE_ALT_MAX
+                    : undefined
+                if (v !== undefined && v !== null && !isNaN(v) && v > 0) {
+                    fenceAltMax = v
+                }
+            } catch (e) { /* use default */ }
+
+            // Build each fence as a closed ring of lon/lat vertices. Circular fences
+            // (single point + radius) are tessellated into a polygon.
+            const fenceRings = []
             for (const fence of fencesList) {
-                const cesiumPoints = []
                 if (fence.length === 1) {
                     if (fence[0][2] === 0) {
                         continue
                     }
                     const pos = fence[0]
-                    this.fences.push(this.viewer.entities.add({
-                        position: Cartesian3.fromDegrees(pos[0], pos[1]),
-                        ellipse: {
-                            semiMinorAxis: pos[2],
-                            semiMajorAxis: pos[2],
-                            material: Color.ORANGE.withAlpha(0.5)
-                        }
-                    }))
-                    continue
+                    const radius = pos[2]
+                    const segments = 128
+                    const metersPerDegLat = 111320.0
+                    const metersPerDegLon = 111320.0 * Math.cos(pos[1] * Math.PI / 180.0)
+                    const ring = []
+                    for (let i = 0; i <= segments; i++) {
+                        const theta = (i / segments) * 2 * Math.PI
+                        const lon = pos[0] + (radius * Math.cos(theta)) / metersPerDegLon
+                        const lat = pos[1] + (radius * Math.sin(theta)) / metersPerDegLat
+                        ring.push(Cartographic.fromDegrees(lon, lat))
+                    }
+                    fenceRings.push(ring)
+                } else {
+                    const ring = []
+                    for (const pos of fence) {
+                        ring.push(Cartographic.fromDegrees(pos[0], pos[1]))
+                    }
+                    if (ring.length === 0) {
+                        continue
+                    }
+                    // close the polygon
+                    ring.push(Cartographic.fromDegrees(fence[0][0], fence[0][1]))
+                    fenceRings.push(ring)
                 }
-                for (const pos of fence) {
-                    const position = Cartesian3.fromDegrees(pos[0], pos[1])
-                    cesiumPoints.push(position)
-                }
-                // we need to close the polygon
-                if (cesiumPoints.length === 0) {
-                    continue
-                }
-                const lastPos = fence[0]
-                cesiumPoints.push(Cartesian3.fromDegrees(lastPos[0], lastPos[1]))
+            }
 
-                // Add polyline representing the path under the points
+            if (fenceRings.length === 0) {
+                return
+            }
+
+            // Sample terrain so the wall bottom sits on the ground. Walls are regular
+            // (non-classification) geometry, so they depth-test normally and render
+            // correctly in Firefox, unlike clampToGround / terrain-classified fills.
+            const allPoints = []
+            for (const ring of fenceRings) {
+                for (const p of ring) {
+                    allPoints.push(p)
+                }
+            }
+            let sampledPoints = allPoints
+            if (this.state.vehicle !== 'boat') {
+                try {
+                    sampledPoints = await sampleTerrainMostDetailed(
+                        this.viewer.terrainProvider, allPoints, true)
+                } catch (e) {
+                    sampledPoints = allPoints
+                }
+            }
+
+            let idx = 0
+            for (const ring of fenceRings) {
+                const positions = []
+                const minimumHeights = []
+                const maximumHeights = []
+                for (let i = 0; i < ring.length; i++) {
+                    const sp = sampledPoints[idx++]
+                    const ground = sp.height || 0
+                    minimumHeights.push(ground)
+                    maximumHeights.push(ground + fenceAltMax)
+                    positions.push(Cartesian3.fromRadians(
+                        sp.longitude, sp.latitude, ground + fenceAltMax))
+                }
                 this.fences.push(this.viewer.entities.add({
-                    polyline: {
-                        positions: cesiumPoints,
-                        width: 1,
-                        clampToGround: true,
-                        material: new PolylineDashMaterialProperty({
-                            color: Color.ORANGE,
-                            dashLength: 8.0
-                        })
+                    wall: {
+                        positions,
+                        minimumHeights,
+                        maximumHeights,
+                        material: Color.ORANGE.withAlpha(0.3),
+                        outline: true,
+                        outlineColor: Color.ORANGE,
+                        outlineWidth: 2
                     }
                 }))
             }
+            this.viewer.scene.requestRender()
         },
 
         getModeColor (time) {
