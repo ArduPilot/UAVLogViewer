@@ -14,7 +14,7 @@
         <MessageViewer  @close="state.showMessages = false" v-if="state.showMessages"></MessageViewer>
         <DeviceIDViewer @close="state.showDeviceIDs = false" v-if="state.showDeviceIDs"></DeviceIDViewer>
         <AttitudeViewer @close="state.showAttitude = false" v-if="state.showAttitude"></AttitudeViewer>
-        <MagFitTool     @close="state.showMagfit = false" v-if="state.showMagfit"></MagFitTool>
+        <MagFitTool     :resizeable="false" @close="state.showMagfit = false" v-if="state.showMagfit"></MagFitTool>
         <EkfHelperTool  @close="state.showEkfHelper = false" v-if="state.showEkfHelper"></EkfHelperTool>
         <div class="container-fluid" style="height: 100%; overflow: hidden;">
 
