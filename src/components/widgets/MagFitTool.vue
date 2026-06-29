@@ -34,6 +34,9 @@
               <tr v-if="!GpsPosition && locationError">
                 <td></td><td style="color: #b00;">{{ locationError }}</td>
               </tr>
+              <tr v-if="!positionValid">
+                <td></td><td class="hint">Enter lat/lon to enable fitting</td>
+              </tr>
               <tr>
                 <td>Earth Field</td><td>{{ printEarthField }}</td>
               </tr>
@@ -59,7 +62,9 @@
                       <td>{{ value.scaling.toFixed(2) }}</td>
                       <td>{{ fitnessesPreCalibration[index].toFixed(0)}}</td>
                       <td class="actions">
-                        <button :disabled="processing" v-on:click="fitWmm(index)">
+                        <button :disabled="processing || !positionValid"
+                                :title="positionValid ? '' : 'Enter a latitude and longitude first'"
+                                v-on:click="fitWmm(index)">
                           <i v-if="processing && processingInstance === index" class="fas fa-spinner fa-spin"></i>
                           <span v-else>Fit</span>
                         </button>
@@ -638,7 +643,7 @@ export default {
             // the optimizer is async (it yields between generations), so refuse
             // to start a second fit while one is running. Concurrent fits would
             // otherwise interleave and corrupt each other's results.
-            if (this.processing) {
+            if (this.processing || !this.positionValid) {
                 return
             }
             this.processing = true
@@ -801,6 +806,23 @@ export default {
                 lat: this.userLat,
                 lon: this.userLon
             }
+        },
+        positionValid () {
+            // a fit needs a location to compute the expected earth field. Either
+            // the log has GPS, or the user must have entered valid lat/lon.
+            if (this.GpsPosition) {
+                return true
+            }
+            const lat = parseFloat(this.userLat)
+            const lon = parseFloat(this.userLon)
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                return false
+            }
+            if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                return false
+            }
+            // treat the untouched (0, 0) default as "not entered yet"
+            return !(lat === 0 && lon === 0)
         },
         // next three come from mavextra.js
         intensity () {
@@ -1019,6 +1041,10 @@ export default {
     }
     .section-footer {
       margin-top: 6px;
+    }
+    .hint {
+      color: #9a6700;
+      font-style: italic;
     }
     button {
       white-space: nowrap;
