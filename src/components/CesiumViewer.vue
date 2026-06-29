@@ -879,7 +879,10 @@ export default {
             // opaque ground (pre-GPS-lock samples whose AMSL is under the local terrain). Terrain
             // heights were sampled per point in setup2; points above terrain keep their true AMSL.
             // Done here (not just setup2) because loadTrajectory re-extracts points asynchronously.
-            if (this.terrainHeights && this.terrainHeights.length === this.points.length) {
+            // Submarines operate below the surface, so their true track is legitimately under the
+            // terrain/water datum; clamping would flatten the whole dive onto the ground.
+            if (this.state.vehicle !== 'submarine' &&
+                this.terrainHeights && this.terrainHeights.length === this.points.length) {
                 for (let i = 0; i < this.points.length; i++) {
                     if (this.terrainHeights[i] > this.points[i][2]) {
                         this.points[i][2] = this.terrainHeights[i]
