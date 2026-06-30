@@ -133,6 +133,7 @@ export default {
         this.model = null // Vehicle model
         this.waypoints = null // Autopilot Waypoints
         this.trajectory = null // GPS trajectory (in degrees)
+        this.fences = [] // Geo-fence entities
         this.correctedTrajectory = [] // GPS trajectory (Cartographic array)
 
         // Link time with plot updates
@@ -1406,6 +1407,14 @@ export default {
             }
         },
         async plotFences (fencesList) {
+            // Remove any previously plotted fences so re-plotting (e.g. when state.fences
+            // is populated after this component has already run setup) doesn't leave
+            // orphaned entities behind.
+            if (this.fences) {
+                for (const f of this.fences) {
+                    this.viewer.entities.remove(f)
+                }
+            }
             this.fences = []
 
             // Fence ceiling height (metres above terrain). ArduPilot's FENCE_ALT_MAX,
@@ -1456,9 +1465,8 @@ export default {
                 return
             }
 
-            // Sample terrain so each fence sits on the ground. Walls and cylinders are
-            // regular (non-classification) geometry, so they depth-test normally and
-            // render correctly in Firefox, unlike clampToGround / terrain-classified fills.
+            // Sample terrain so each fence's base sits on the ground rather than at
+            // ellipsoid height 0.
             const allPoints = []
             for (const f of fenceItems) {
                 if (f.type === 'circle') {
@@ -1836,6 +1844,14 @@ export default {
         },
         showWaypoints () {
             this.updateVisibility()
+        },
+        'state.fences' () {
+            // Fences are extracted asynchronously and may be populated after this
+            // component has already run its initial setup (timing differs per browser),
+            // so re-plot whenever the fence list changes.
+            if (this.viewer != null) {
+                this.plotFences(this.state.fences)
+            }
         },
         trajectorySource () {
             this.loadTrajectory(this.state.trajectorySource)
