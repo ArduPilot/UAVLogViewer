@@ -166,7 +166,8 @@ export default {
                 require('../assets/logmetadata/plane.xml'),
                 require('../assets/logmetadata/copter.xml'),
                 require('../assets/logmetadata/tracker.xml'),
-                require('../assets/logmetadata/rover.xml')
+                require('../assets/logmetadata/rover.xml'),
+                require('../assets/logmetadata/sub.xml')
             ]
             for (const contents of files) {
                 const result = fastXmlParser.parse(contents.default, { ignoreAttributes: false })

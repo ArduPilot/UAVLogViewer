@@ -57,6 +57,141 @@
       </field>
     </fields>
   </logformat>
+  <logformat name="AERG">
+    <description>Aeron PLX GNSS status and accuracy (GPS_PARA + EXTD_GNSS)</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup</description>
+      </field>
+      <field name="GMS" units="" type="uint32_t">
+        <description>Time of week</description>
+      </field>
+      <field name="GWk" units="" type="uint16_t">
+        <description>GPS week</description>
+      </field>
+      <field name="NSat" units="" type="uint16_t">
+        <description>Satellites in view</description>
+      </field>
+      <field name="FixT" units="" type="uint8_t">
+        <description>GPS fix type as reported to AP_GPS</description>
+      </field>
+      <field name="Jam" units="" type="uint8_t">
+        <description>Jamming detection level (1=none,2=warn,3=critical)</description>
+      </field>
+      <field name="Spf" units="" type="uint8_t">
+        <description>Spoofing detection level (1=none,2=warn,3=critical)</description>
+      </field>
+      <field name="HPA" units="" type="float">
+        <description>Horizontal position accuracy</description>
+      </field>
+      <field name="VPA" units="" type="float">
+        <description>Vertical position accuracy</description>
+      </field>
+      <field name="HVA" units="" type="float">
+        <description>Horizontal velocity accuracy</description>
+      </field>
+      <field name="HDOP" units="" type="float">
+        <description>Horizontal dilution of precision</description>
+      </field>
+      <field name="VDOP" units="" type="float">
+        <description>Vertical dilution of precision</description>
+      </field>
+    </fields>
+  </logformat>
+  <logformat name="AERN">
+    <description>Aeron PLX fused navigation solution (NAV_PARA1)</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup</description>
+      </field>
+      <field name="Epoch" units="s" type="uint32_t">
+        <description>Unix epoch seconds at sample time</description>
+      </field>
+      <field name="Lat" units="deglatitude" type="double">
+        <description>Latitude</description>
+      </field>
+      <field name="Lng" units="deglongitude" type="double">
+        <description>Longitude</description>
+      </field>
+      <field name="Alt" units="m" type="float">
+        <description>Height above WGS84 ellipsoid</description>
+      </field>
+      <field name="VN" units="m/s" type="float">
+        <description>Velocity north</description>
+      </field>
+      <field name="VE" units="m/s" type="float">
+        <description>Velocity east</description>
+      </field>
+      <field name="VD" units="m/s" type="float">
+        <description>Velocity down</description>
+      </field>
+      <field name="Crs" units="degheading" type="float">
+        <description>Course over ground</description>
+      </field>
+      <field name="Roll" units="rad" type="float">
+        <description>Roll angle</description>
+      </field>
+      <field name="Pitch" units="rad" type="float">
+        <description>Pitch angle</description>
+      </field>
+      <field name="Yaw" units="rad" type="float">
+        <description>Yaw angle</description>
+      </field>
+      <field name="InsSt" units="" type="uint32_t">
+        <description>PLX INS filter-source status word</description>
+      </field>
+      <field name="HwSt" units="" type="uint32_t">
+        <description>PLX hardware status word</description>
+      </field>
+    </fields>
+  </logformat>
+  <logformat name="AERS">
+    <description>Aeron PLX raw sensor data (SENS_PARA)</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup</description>
+      </field>
+      <field name="Temp" units="degC" type="float">
+        <description>Sensor temperature</description>
+      </field>
+      <field name="GX" units="deg/s" type="float">
+        <description>Gyro X</description>
+      </field>
+      <field name="GY" units="deg/s" type="float">
+        <description>Gyro Y</description>
+      </field>
+      <field name="GZ" units="deg/s" type="float">
+        <description>Gyro Z</description>
+      </field>
+      <field name="AX" units="m/s/s" type="float">
+        <description>Accel X</description>
+      </field>
+      <field name="AY" units="m/s/s" type="float">
+        <description>Accel Y</description>
+      </field>
+      <field name="AZ" units="m/s/s" type="float">
+        <description>Accel Z</description>
+      </field>
+      <field name="MX" units="mGauss" type="float">
+        <description>Mag X</description>
+      </field>
+      <field name="MY" units="mGauss" type="float">
+        <description>Mag Y</description>
+      </field>
+      <field name="MZ" units="mGauss" type="float">
+        <description>Mag Z</description>
+      </field>
+      <field name="Pres" units="Pa" type="float">
+        <description>Barometric pressure</description>
+      </field>
+      <field name="BTmp" units="degC" type="float">
+        <description>Barometer temperature</description>
+      </field>
+      <field name="BAlt" units="m" type="float">
+        <description>Barometric altitude</description>
+      </field>
+    </fields>
+  </logformat>
   <logformat name="AHR2">
     <description>Backup AHRS data</description>
     <fields>
@@ -326,9 +461,6 @@
       <field name="ArmChecks" units="" type="uint32_t">
         <description>arming bitmask at time of arming</description>
         <bitmask name="AP_Arming::Check">
-          <bit name="ALL">
-            <value>1</value>
-          </bit>
           <bit name="BARO">
             <value>2</value>
           </bit>
@@ -388,6 +520,9 @@
           </bit>
           <bit name="OSD">
             <value>1048576</value>
+          </bit>
+          <bit name="CHECK_LAST">
+            <value>2097152</value>
           </bit>
         </bitmask>
       </field>
@@ -587,7 +722,7 @@
         <description>innovation test ratio</description>
       </field>
       <field name="Pri" units="" type="uint8_t">
-        <description>True if sensor is the primary sensor</description>
+        <description>Primary instance number. If equal to I then this sensor is primary sensor</description>
       </field>
     </fields>
   </logformat>
@@ -698,6 +833,15 @@
       </field>
       <field name="PDScZ" units="" type="float">
         <description>PD scale Z</description>
+      </field>
+      <field name="IScX" units="" type="float">
+        <description>I scale X</description>
+      </field>
+      <field name="IScY" units="" type="float">
+        <description>I scale Y</description>
+      </field>
+      <field name="IScZ" units="" type="float">
+        <description>I scale Z</description>
       </field>
     </fields>
   </logformat>
@@ -1231,9 +1375,9 @@
             <value>162</value>
             <description>FFT notch tuning function</description>
           </element>
-          <element name="MOUNT_LOCK">
+          <element name="MOUNT_YAW_LOCK">
             <value>163</value>
-            <description>Mount yaw lock vs follow</description>
+            <description>Mount earth frame yaw lock forced on all axes, for all mounts</description>
           </element>
           <element name="LOG_PAUSE">
             <value>164</value>
@@ -1318,6 +1462,18 @@
           <element name="SYSTEMID">
             <value>184</value>
             <description>system ID as an aux switch</description>
+          </element>
+          <element name="MOUNT_RP_LOCK">
+            <value>185</value>
+            <description>mount lock modes for roll and pitch axes, for all mounts that support it</description>
+          </element>
+          <element name="MOUNT_POI_LOCK">
+            <value>186</value>
+            <description>Lock mount target to current ROI seen and switch mount to GPS Targeting mode</description>
+          </element>
+          <element name="EKF_RESET">
+            <value>187</value>
+            <description>trigger full EKF bootstrap reset</description>
           </element>
           <element name="ROLL">
             <value>201</value>
@@ -1780,13 +1936,13 @@
       <field name="GPSAlt" units="m" type="int32_t * 100">
         <description>altitude as reported by GPS</description>
       </field>
-      <field name="R" units="deg" type="int16_t * 100">
+      <field name="R" units="deg" type="float">
         <description>current vehicle roll</description>
       </field>
-      <field name="P" units="deg" type="int16_t * 100">
+      <field name="P" units="deg" type="float">
         <description>current vehicle pitch</description>
       </field>
-      <field name="Y" units="deg" type="uint16_t * 100">
+      <field name="Y" units="deg" type="float">
         <description>current vehicle yaw</description>
       </field>
     </fields>
@@ -1861,6 +2017,35 @@
       </field>
       <field name="B7" units="" type="uint8_t">
         <description>byte 7</description>
+      </field>
+    </fields>
+  </logformat>
+  <logformat name="CANH">
+    <description>DroneCAN heartbeat status</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup</description>
+      </field>
+      <field name="Driver" units="" type="uint8_t">
+        <description>Driver index</description>
+      </field>
+      <field name="NodeId" units="instance" type="uint8_t">
+        <description>Node ID</description>
+      </field>
+      <field name="UpTime" units="s" type="uint32_t">
+        <description>Time since node startup</description>
+      </field>
+      <field name="Health" units="" type="uint8_t">
+        <description>0:Ok, 1:Warning, 2:Error, 3:Critical</description>
+      </field>
+      <field name="Mode" units="" type="uint8_t">
+        <description>0:Operational, 1:Initialization, 2:Maintenance, 3:Software update, 7:Offline</description>
+      </field>
+      <field name="SubMode" units="" type="uint8_t">
+        <description>Expected to be 0</description>
+      </field>
+      <field name="VendorCode" units="" type="uint16_t">
+        <description>vendor specific code. In AP_Periph this is available memory in bytes.</description>
       </field>
     </fields>
   </logformat>
@@ -1998,6 +2183,29 @@
       </field>
     </fields>
   </logformat>
+  <logformat name="CSCU">
+    <description>Generic DroneCAN circuit status</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup</description>
+      </field>
+      <field name="I" units="instance" type="uint8_t">
+        <description>driver index</description>
+      </field>
+      <field name="Id" units="" type="uint16_t">
+        <description>circuit id</description>
+      </field>
+      <field name="V" units="V" type="float">
+        <description>Voltage</description>
+      </field>
+      <field name="A" units="A" type="float">
+        <description>Current</description>
+      </field>
+      <field name="Err" units="" type="uint8_t">
+        <description>error flags</description>
+      </field>
+    </fields>
+  </logformat>
   <logformat name="CSRV">
     <description>Servo feedback data</description>
     <fields>
@@ -2068,6 +2276,9 @@
       </field>
       <field name="VWD" units="m/s" type="float">
         <description>wind velocity, Up-to-Down component</description>
+      </field>
+      <field name="SAs" units="m/s" type="float">
+        <description>synthetic (equivalent) airspeed</description>
       </field>
     </fields>
   </logformat>
@@ -3181,7 +3392,10 @@
         <description>Vehicle estimated longitude (degrees * 1E7)</description>
       </field>
       <field name="AltE" units="cm" type="int32_t">
-        <description>Vehicle estimated absolute altitude (centimeters)</description>
+        <description>Vehicle estimated altitude (centimeters)</description>
+      </field>
+      <field name="FrmE" units="" type="int8_t">
+        <description>Vehicle estimated altitude Frame</description>
       </field>
     </fields>
   </logformat>
@@ -3404,11 +3618,11 @@
   <logformat name="GPA">
     <description>GPS accuracy information</description>
     <fields>
-      <field name="I" units="μs" type="uint64_t">
-        <description>GPS instance number</description>
-      </field>
-      <field name="TimeUS" units="instance" type="uint8_t">
+      <field name="TimeUS" units="μs" type="uint64_t">
         <description>Time since system startup</description>
+      </field>
+      <field name="I" units="instance" type="uint8_t">
+        <description>GPS instance number</description>
       </field>
       <field name="VDop" units="" type="uint16_t * 100">
         <description>vertical dilution of precision</description>
@@ -3456,34 +3670,42 @@
       </field>
       <field name="Status" units="" type="uint8_t">
         <description>GPS Fix type; 2D fix, 3D fix etc.</description>
-        <enum name="AP_GPS::GPS_Status">
+        <enum name="AP_GPS_FixType">
           <element name="NO_GPS">
             <value>0</value>
             <description>No GPS connected/detected</description>
           </element>
-          <element name="NO_FIX">
+          <element name="NONE">
             <value>1</value>
             <description>Receiving valid GPS messages but no lock</description>
           </element>
-          <element name="GPS_OK_FIX_2D">
+          <element name="FIX_2D">
             <value>2</value>
             <description>Receiving valid messages and 2D lock</description>
           </element>
-          <element name="GPS_OK_FIX_3D">
+          <element name="FIX_3D">
             <value>3</value>
             <description>Receiving valid messages and 3D lock</description>
           </element>
-          <element name="GPS_OK_FIX_3D_DGPS">
+          <element name="DGPS">
             <value>4</value>
             <description>Receiving valid messages and 3D lock with differential improvements</description>
           </element>
-          <element name="GPS_OK_FIX_3D_RTK_FLOAT">
+          <element name="RTK_FLOAT">
             <value>5</value>
             <description>Receiving valid messages and 3D RTK Float</description>
           </element>
-          <element name="GPS_OK_FIX_3D_RTK_FIXED">
+          <element name="RTK_FIXED">
             <value>6</value>
             <description>Receiving valid messages and 3D RTK Fixed</description>
+          </element>
+          <element name="STATIC">
+            <value>7</value>
+            <description>Receiving valid messages and static fixed, typically used for base stations</description>
+          </element>
+          <element name="PPP">
+            <value>8</value>
+            <description>Receiving valid messages and improved with PPP</description>
           </element>
         </enum>
       </field>
@@ -3659,6 +3881,169 @@
       </field>
     </fields>
   </logformat>
+  <logformat name="GSLH">
+    <description>GSOF70 LLH with MSL Altitude</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup [µs]</description>
+      </field>
+      <field name="Lat" units="deglatitude" type="double">
+        <description>Latitude [deg]</description>
+      </field>
+      <field name="Lng" units="deglongitude" type="double">
+        <description>Longitude [deg]</description>
+      </field>
+      <field name="AltMSL" units="m" type="double">
+        <description>Altitude above mean sea level [m]</description>
+      </field>
+      <field name="Model" units="" type="char[64]">
+        <description>Geoid model used (null-terminated string)</description>
+      </field>
+    </fields>
+  </logformat>
+  <logformat name="GSN1">
+    <description>GSOF49 Full INS Navigation Solution 1</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup [us]</description>
+      </field>
+      <field name="GpsWk" units="" type="uint16_t">
+        <description>GPS week number since Jan 1980</description>
+      </field>
+      <field name="GpsTs" units="ms" type="uint32_t">
+        <description>GPS time of week [ms]</description>
+      </field>
+      <field name="ImuStat" units="" type="uint8_t">
+        <description>IMU alignment status (enum)</description>
+      </field>
+      <field name="GStat" units="" type="uint8_t">
+        <description>GNSS status (enum)</description>
+      </field>
+      <field name="Lat" units="deglatitude" type="double">
+        <description>Latitude [degrees]</description>
+      </field>
+      <field name="Lng" units="deglongitude" type="double">
+        <description>Longitude [degrees]</description>
+      </field>
+      <field name="Alt" units="m" type="double">
+        <description>Altitude in ITRF 2020 [meters]</description>
+      </field>
+      <field name="VN" units="m/s" type="float">
+        <description>Velocity North [m/s]</description>
+      </field>
+      <field name="VE" units="m/s" type="float">
+        <description>Velocity East [m/s]</description>
+      </field>
+      <field name="VD" units="m/s" type="float">
+        <description>Velocity Down [m/s]</description>
+      </field>
+      <field name="Spd" units="m/s" type="float">
+        <description>3D Speed [m/s]</description>
+      </field>
+    </fields>
+  </logformat>
+  <logformat name="GSN2">
+    <description>GSOF49 Full INS Navigation Solution 2</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup [us]</description>
+      </field>
+      <field name="Roll" units="deg" type="double">
+        <description>Roll [degrees]</description>
+      </field>
+      <field name="Pitch" units="deg" type="double">
+        <description>Pitch [degrees]</description>
+      </field>
+      <field name="Heading" units="degheading" type="double">
+        <description>Heading [degrees]</description>
+      </field>
+      <field name="Track" units="deg" type="double">
+        <description>Track angle [degrees]</description>
+      </field>
+      <field name="RateX" units="deg/s" type="float">
+        <description>Angular rate X [deg/s]</description>
+      </field>
+      <field name="RateY" units="deg/s" type="float">
+        <description>Angular rate Y [deg/s]</description>
+      </field>
+      <field name="RateZ" units="rad/s" type="float">
+        <description>Angular rate Z [m/s]</description>
+      </field>
+      <field name="AccX" units="m/s/s" type="float">
+        <description>Acceleration X [m/s^2]</description>
+      </field>
+      <field name="AccY" units="m/s/s" type="float">
+        <description>Acceleration Y [m/s^2]</description>
+      </field>
+      <field name="AccZ" units="m/s/s" type="float">
+        <description>Acceleration Z [m/s^2]</description>
+      </field>
+    </fields>
+  </logformat>
+  <logformat name="GSPT">
+    <description>GSOF1 GPS Position Time Metadata</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>GPS Time since system startup [us]</description>
+      </field>
+      <field name="TOWms" units="ms" type="uint32_t">
+        <description>GPS Time of week [ms]</description>
+      </field>
+      <field name="Week" units="" type="uint16_t">
+        <description>GPS week number</description>
+      </field>
+      <field name="Sats" units="satellites" type="uint8_t">
+        <description>Number of satellites</description>
+      </field>
+      <field name="Flags1" units="" type="uint8_t">
+        <description>Positioning flags byte 1</description>
+      </field>
+      <field name="Flags2" units="" type="uint8_t">
+        <description>Positioning flags byte 2</description>
+      </field>
+      <field name="InitNum" units="" type="uint8_t">
+        <description>Initialization count</description>
+      </field>
+    </fields>
+  </logformat>
+  <logformat name="GSR1">
+    <description>GSOF50 INS Solution RMS Values 1</description>
+    <fields>
+      <field name="TUS" units="μs" type="uint64_t">
+        <description>Time since system startup [us]</description>
+      </field>
+      <field name="GpsTMs" units="ms" type="uint32_t">
+        <description>GPS time of week [ms]</description>
+      </field>
+      <field name="PUN" units="m" type="float">
+        <description>North Position uncertainty RMS [m]</description>
+      </field>
+      <field name="PUE" units="m" type="float">
+        <description>East Position uncertainty RMS [m]</description>
+      </field>
+      <field name="PUD" units="m" type="float">
+        <description>Down Position uncertainty RMS [m]</description>
+      </field>
+      <field name="VUN" units="m/s" type="float">
+        <description>North Velocity uncertainty RMS [m/s]</description>
+      </field>
+      <field name="VUE" units="m/s" type="float">
+        <description>East Velocity uncertainty RMS [m/s]</description>
+      </field>
+      <field name="VUD" units="m/s" type="float">
+        <description>Down Velocity uncertainty RMS [m/s]</description>
+      </field>
+      <field name="RollU" units="deg" type="float">
+        <description>Roll RMS uncertainty [deg]</description>
+      </field>
+      <field name="PitchU" units="deg" type="float">
+        <description>Pitch RMS uncertainty[deg]</description>
+      </field>
+      <field name="YawU" units="deg" type="float">
+        <description>Yaw RMS uncertainty[deg]</description>
+      </field>
+    </fields>
+  </logformat>
   <logformat name="GUIP">
     <description>Guided mode target information</description>
     <fields>
@@ -3737,11 +4122,11 @@
   <logformat name="HRSC">
     <description>Helicopter related messages </description>
     <fields>
-      <field name="I" units="μs" type="uint64_t">
-        <description>Instance, 0=Main, 1=Tail</description>
-      </field>
-      <field name="TimeUS" units="instance" type="uint8_t">
+      <field name="TimeUS" units="μs" type="uint64_t">
         <description>Time since system startup</description>
+      </field>
+      <field name="I" units="instance" type="uint8_t">
+        <description>Instance, 0=Main, 1=Tail</description>
       </field>
       <field name="DRRPM" units="" type="float">
         <description>Desired rotor speed</description>
@@ -3757,9 +4142,6 @@
       </field>
       <field name="Ramp" units="" type="float">
         <description>throttle ramp up</description>
-      </field>
-      <field name="Stat" units="" type="uint8_t">
-        <description>RSC state</description>
       </field>
     </fields>
   </logformat>
@@ -4844,6 +5226,9 @@
       <field name="I" units="instance" type="uint8_t">
         <description>Instance number</description>
       </field>
+      <field name="Mode" units="" type="uint8_t">
+        <description>Mount mode</description>
+      </field>
       <field name="DRoll" units="deg" type="float">
         <description>Desired roll</description>
       </field>
@@ -5131,6 +5516,12 @@
       <field name="TimeUS" units="μs" type="uint64_t">
         <description>Time since system startup</description>
       </field>
+      <field name="ID" units="" type="uint8_t">
+        <description>identifier for chunks making up a message</description>
+      </field>
+      <field name="Seq" units="" type="uint8_t">
+        <description>chunk sequence number within message identified by ID</description>
+      </field>
       <field name="Message" units="" type="char[64]">
         <description>message text</description>
       </field>
@@ -5388,6 +5779,40 @@
       </field>
       <field name="FS" units="" type="uint16_t">
         <description>Filter fault status</description>
+        <bitmask name="NavFilterFaultBit">
+          <bit name="BAD_QUATERNION">
+            <value>1</value>
+            <description>0 - quaternion attitude estimate is NaN</description>
+          </bit>
+          <bit name="BAD_VELOCITY">
+            <value>2</value>
+            <description>1 - velocity estimate is NaN</description>
+          </bit>
+          <bit name="BAD_XMAG">
+            <value>4</value>
+            <description>2 - X magnetometer measurement is bad</description>
+          </bit>
+          <bit name="BAD_YMAG">
+            <value>8</value>
+            <description>3 - Y magnetometer measurement is bad</description>
+          </bit>
+          <bit name="BAD_ZMAG">
+            <value>16</value>
+            <description>4 - Z magnetometer measurement is bad</description>
+          </bit>
+          <bit name="BAD_AIRSPEED">
+            <value>32</value>
+            <description>5 - airspeed measurement is bad</description>
+          </bit>
+          <bit name="BAD_SIDESLIP">
+            <value>64</value>
+            <description>6 - synthetic sideslip measurement is bad</description>
+          </bit>
+          <bit name="NOT_INITIALISED">
+            <value>128</value>
+            <description>7 - filter states have not been initialised</description>
+          </bit>
+        </bitmask>
       </field>
       <field name="TS" units="" type="uint8_t">
         <description>Filter timeout status bitmask (0:position measurement, 1:velocity measurement, 2:height measurement, 3:magnetometer measurement, 4:airspeed measurement)</description>
@@ -5712,6 +6137,20 @@
       </field>
       <field name="Value" units="" type="float">
         <description>Value of float</description>
+      </field>
+    </fields>
+  </logformat>
+  <logformat name="NVI">
+    <description>Named Value Int messages; messages sent to GCS via NAMED_VALUE_INT</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup</description>
+      </field>
+      <field name="Name" units="instance" type="char[16]">
+        <description>Name of int</description>
+      </field>
+      <field name="Value" units="" type="float">
+        <description>Value of int</description>
       </field>
     </fields>
   </logformat>
@@ -6273,6 +6712,65 @@
       </field>
     </fields>
   </logformat>
+  <logformat name="PIDW">
+    <description>Proportional/Integral/Derivative gain values for wheel rate</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup</description>
+      </field>
+      <field name="Tar" units="" type="float">
+        <description>desired value</description>
+      </field>
+      <field name="Act" units="" type="float">
+        <description>achieved value</description>
+      </field>
+      <field name="Err" units="" type="float">
+        <description>error between target and achieved</description>
+      </field>
+      <field name="P" units="" type="float">
+        <description>proportional part of PID</description>
+      </field>
+      <field name="I" units="" type="float">
+        <description>integral part of PID</description>
+      </field>
+      <field name="D" units="" type="float">
+        <description>derivative part of PID</description>
+      </field>
+      <field name="FF" units="" type="float">
+        <description>controller feed-forward portion of response</description>
+      </field>
+      <field name="DFF" units="" type="float">
+        <description>controller derivative feed-forward portion of response</description>
+      </field>
+      <field name="Dmod" units="" type="float">
+        <description>scaler applied to D gain to reduce limit cycling</description>
+      </field>
+      <field name="SRate" units="" type="float">
+        <description>slew rate used in slew limiter</description>
+      </field>
+      <field name="Flags" units="" type="uint8_t">
+        <description>bitmask of PID state flags</description>
+        <bitmask name="log_PID_Flags">
+          <bit name="LIMIT">
+            <value>1</value>
+            <description>true if the output is saturated, I term anti windup is active</description>
+          </bit>
+          <bit name="PD_SUM_LIMIT">
+            <value>2</value>
+            <description>true if the PD sum limit is active</description>
+          </bit>
+          <bit name="RESET">
+            <value>4</value>
+            <description>true if the controller was reset</description>
+          </bit>
+          <bit name="I_TERM_SET">
+            <value>8</value>
+            <description>true if the I term has been set externally including reseting to 0</description>
+          </bit>
+        </bitmask>
+      </field>
+    </fields>
+  </logformat>
   <logformat name="PIDY">
     <description>Proportional/Integral/Derivative gain values for Yaw rate</description>
     <fields>
@@ -6400,7 +6898,10 @@
       <field name="Load" units="d%" type="uint16_t">
         <description>System processor load</description>
       </field>
-      <field name="InE" units="" type="uint16_t">
+      <field name="ErrL" units="" type="uint16_t">
+        <description>Internal error line number; last line number on which a internal error was detected</description>
+      </field>
+      <field name="InE" units="" type="uint32_t">
         <description>Internal error mask; which internal errors have been detected</description>
         <bitmask name="AP_InternalError::error_t">
           <bit name="logger_mapfailure">
@@ -6497,9 +6998,6 @@
             <value>1073741824</value>
           </bit>
         </bitmask>
-      </field>
-      <field name="ErrL" units="" type="uint32_t">
-        <description>Internal error line number; last line number on which a internal error was detected</description>
       </field>
       <field name="ErC" units="" type="uint32_t">
         <description>Internal error count; how many internal errors have been detected</description>
@@ -6997,7 +7495,7 @@
       <field name="Lng" units="deglongitude" type="int32_t latitude/longitude">
         <description>longitude of rally point</description>
       </field>
-      <field name="Alt" units="cm" type="int16_t">
+      <field name="Alt" units="m" type="int16_t">
         <description>altitude of rally point</description>
       </field>
       <field name="Flags" units="" type="uint8_t">
@@ -7060,14 +7558,14 @@
       <field name="POut" units="" type="float">
         <description>normalized output for Pitch</description>
       </field>
+      <field name="YDes" units="deg/s" type="float">
+        <description>vehicle desired yaw rate</description>
+      </field>
       <field name="Y" units="deg/s" type="float">
         <description>achieved vehicle yaw rate</description>
       </field>
-      <field name="YOut" units="deg/s" type="float">
+      <field name="YOut" units="" type="float">
         <description>normalized output for Yaw</description>
-      </field>
-      <field name="YDes" units="" type="float">
-        <description>vehicle desired yaw rate</description>
       </field>
       <field name="ADes" units="cm/s/s" type="float">
         <description>desired vehicle vertical acceleration</description>
@@ -7087,16 +7585,16 @@
     <description>Replay Data Beacon Header</description>
     <fields>
       <field name="PX" units="" type="float">
-        <description>zero, unused</description>
+        <description>beacon system estimated vehicle position, North</description>
       </field>
       <field name="PY" units="" type="float">
-        <description>zero, unused</description>
+        <description>beacon system estimated vehicle position, East</description>
       </field>
       <field name="PZ" units="" type="float">
-        <description>zero, unused</description>
+        <description>beacon system estimated vehicle position, Down</description>
       </field>
       <field name="AE" units="" type="float">
-        <description>zero, unused</description>
+        <description>beacon system estimated vehicle position accuracy</description>
       </field>
       <field name="OLat" units="" type="int32_t">
         <description>origin latitude</description>
@@ -7172,16 +7670,16 @@
         <description>data timestamp</description>
       </field>
       <field name="OX" units="" type="float">
-        <description>zero, unused</description>
+        <description>pos-offset-X</description>
       </field>
       <field name="OY" units="" type="float">
-        <description>zero, unused</description>
+        <description>pos-offset-Y</description>
       </field>
       <field name="OZ" units="" type="float">
-        <description>zero, unused</description>
+        <description>pos-offset-Z</description>
       </field>
       <field name="D" units="" type="uint16_t">
-        <description>zero, unused</description>
+        <description>delay in body odometry data</description>
       </field>
     </fields>
   </logformat>
@@ -7285,6 +7783,10 @@
           <bit name="IN_RC_FAILSAFE">
             <value>2</value>
             <description>true if the system is current in RC failsafe</description>
+          </bit>
+          <bit name="RC_PROTOCOL_FAILSAFE">
+            <value>4</value>
+            <description>true if the RC Protocol library is indicating the RC receiver is indicating failsafe via its protocol</description>
           </bit>
         </bitmask>
       </field>
@@ -7629,6 +8131,20 @@
       </field>
     </fields>
   </logformat>
+  <logformat name="RF">
+    <description>RealFlight mode messages</description>
+    <fields>
+      <field name="TimeUS" units="" type="uint64_t">
+        <description>Time since system startup</description>
+      </field>
+      <field name="Dt" units="" type="double">
+        <description>delta time between this frame and the previous frame</description>
+      </field>
+      <field name="Fps" units="" type="uint32_t">
+        <description>frames-per-second implied by the current delta time</description>
+      </field>
+    </fields>
+  </logformat>
   <logformat name="RFND">
     <description>Rangefinder sensor information</description>
     <fields>
@@ -7818,6 +8334,9 @@
       </field>
       <field name="Quality" units="%" type="int8_t">
         <description>Signal quality. -1 means invalid, 0 is no signal, 100 is perfect signal</description>
+      </field>
+      <field name="Temp" units="degC" type="float">
+        <description>Temperature of the fluid (air or water) the rangefinder measures through, not the sensor internal temperature</description>
       </field>
     </fields>
   </logformat>
@@ -8132,6 +8651,20 @@
       </field>
     </fields>
   </logformat>
+  <logformat name="RISJ">
+    <description>Replay Inertial Sensor instance metadata (low-rate, only logged when changed)</description>
+    <fields>
+      <field name="GBL" units="" type="float">
+        <description>gyro bias limit (rad/s) for the EKF gyro bias state clamp</description>
+      </field>
+      <field name="GBI" units="" type="float">
+        <description>initial gyro bias 1-sigma uncertainty (deg/s)</description>
+      </field>
+      <field name="I" units="instance" type="uint8_t">
+        <description>IMU instance</description>
+      </field>
+    </fields>
+  </logformat>
   <logformat name="RMGH">
     <description>Replay Data Magnetometer Header</description>
     <fields>
@@ -8354,16 +8887,30 @@
     </fields>
   </logformat>
   <logformat name="RTC">
-    <description>Information about RTC clock resets</description>
+    <description>RTC (Unix time) information</description>
     <fields>
       <field name="TimeUS" units="μs" type="uint64_t">
         <description>Time since system startup</description>
       </field>
-      <field name="old_utc" units="μs" type="uint64_t">
-        <description>old time</description>
+      <field name="Epoch" units="μs" type="uint64_t">
+        <description>current unix epoch time*1000000 (ie. microseconds since Jan 1 1970)</description>
       </field>
-      <field name="new_utc" units="μs" type="uint64_t">
-        <description>new time</description>
+      <field name="SourceType" units="" type="uint8_t">
+        <description>source of RTC data</description>
+        <enum name="AP_RTC::source_type">
+          <element name="SOURCE_GPS">
+            <value>0</value>
+          </element>
+          <element name="SOURCE_MAVLINK_SYSTEM_TIME">
+            <value>1</value>
+          </element>
+          <element name="SOURCE_HW">
+            <value>2</value>
+          </element>
+          <element name="SOURCE_NONE">
+            <value>3</value>
+          </element>
+        </enum>
       </field>
     </fields>
   </logformat>
@@ -8589,23 +9136,6 @@
       </field>
       <field name="az" units="" type="float">
         <description>z-axis acceleration</description>
-      </field>
-    </fields>
-  </logformat>
-  <logformat name="SBLM">
-    <description>Simulated Blimp Rotational Accelerations</description>
-    <fields>
-      <field name="TimeUS" units="" type="uint64_t">
-        <description>Time since system startup</description>
-      </field>
-      <field name="RAx" units="" type="float">
-        <description>acceleration around X axis</description>
-      </field>
-      <field name="RAy" units="" type="float">
-        <description>acceleration around Y axis</description>
-      </field>
-      <field name="RAz" units="" type="float">
-        <description>acceleration around Z axis</description>
       </field>
     </fields>
   </logformat>
@@ -9254,6 +9784,20 @@
       </field>
     </fields>
   </logformat>
+  <logformat name="SPOL">
+    <description>Spool state logging</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup</description>
+      </field>
+      <field name="Spl" units="" type="uint8_t">
+        <description>Motors spool state</description>
+      </field>
+      <field name="SplDes" units="" type="uint8_t">
+        <description>Desired motors spool state</description>
+      </field>
+    </fields>
+  </logformat>
   <logformat name="SRT1">
     <description>Simulated Blimp Rotational forces</description>
     <fields>
@@ -9629,13 +10173,13 @@
       <field name="GPSAlt" units="m" type="int32_t * 100">
         <description>altitude as reported by GPS</description>
       </field>
-      <field name="R" units="deg" type="int16_t * 100">
+      <field name="R" units="deg" type="float">
         <description>current vehicle roll</description>
       </field>
-      <field name="P" units="deg" type="int16_t * 100">
+      <field name="P" units="deg" type="float">
         <description>current vehicle pitch</description>
       </field>
-      <field name="Y" units="deg" type="uint16_t * 100">
+      <field name="Y" units="deg" type="float">
         <description>current vehicle yaw</description>
       </field>
     </fields>
@@ -9970,9 +10514,6 @@
           <element name="HAL_BOARD_SUBTYPE_LINUX_NAVIO">
             <value>1003</value>
           </element>
-          <element name="HAL_BOARD_SUBTYPE_LINUX_ZYNQ">
-            <value>1004</value>
-          </element>
           <element name="HAL_BOARD_SUBTYPE_LINUX_BBBMINI">
             <value>1005</value>
           </element>
@@ -10003,14 +10544,8 @@
           <element name="HAL_BOARD_SUBTYPE_LINUX_BLUE">
             <value>1018</value>
           </element>
-          <element name="HAL_BOARD_SUBTYPE_LINUX_OCPOC_ZYNQ">
-            <value>1019</value>
-          </element>
           <element name="HAL_BOARD_SUBTYPE_LINUX_EDGE">
             <value>1020</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_LINUX_RST_ZYNQ">
-            <value>1021</value>
           </element>
           <element name="HAL_BOARD_SUBTYPE_LINUX_POCKET">
             <value>1022</value>
@@ -10033,44 +10568,14 @@
           <element name="HAL_BOARD_SUBTYPE_LINUX_POCKET2">
             <value>1028</value>
           </element>
-          <element name="HAL_BOARD_SUBTYPE_CHIBIOS_FMUV3">
-            <value>5001</value>
+          <element name="HAL_BOARD_SUBTYPE_LINUX_T3_GEM_O1">
+            <value>1029</value>
           </element>
-          <element name="HAL_BOARD_SUBTYPE_CHIBIOS_GENERIC">
-            <value>5009</value>
+          <element name="HAL_BOARD_SUBTYPE_LINUX_RSAXVC_V1">
+            <value>1030</value>
           </element>
-          <element name="HAL_BOARD_SUBTYPE_CHIBIOS_FMUV5">
-            <value>5013</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_ESP32_DIY">
-            <value>6001</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_ESP32_ICARUS">
-            <value>6002</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_ESP32_BUZZ">
-            <value>6003</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_ESP32_EMPTY">
-            <value>6004</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_ESP32_TOMTE76">
-            <value>6005</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_ESP32_NICK">
-            <value>6006</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_ESP32_S3DEVKIT">
-            <value>6007</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_ESP32_S3EMPTY">
-            <value>6008</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_ESP32_S3M5STAMPFLY">
-            <value>6009</value>
-          </element>
-          <element name="HAL_BOARD_SUBTYPE_ESP32_IMU_MODULE_V11">
-            <value>6010</value>
+          <element name="HAL_BOARD_SUBTYPE_LINUX_RPI">
+            <value>1031</value>
           </element>
         </enum>
       </field>
@@ -10817,6 +11322,40 @@
       </field>
       <field name="FS" units="" type="uint16_t">
         <description>Filter fault status</description>
+        <bitmask name="NavFilterFaultBit">
+          <bit name="BAD_QUATERNION">
+            <value>1</value>
+            <description>0 - quaternion attitude estimate is NaN</description>
+          </bit>
+          <bit name="BAD_VELOCITY">
+            <value>2</value>
+            <description>1 - velocity estimate is NaN</description>
+          </bit>
+          <bit name="BAD_XMAG">
+            <value>4</value>
+            <description>2 - X magnetometer measurement is bad</description>
+          </bit>
+          <bit name="BAD_YMAG">
+            <value>8</value>
+            <description>3 - Y magnetometer measurement is bad</description>
+          </bit>
+          <bit name="BAD_ZMAG">
+            <value>16</value>
+            <description>4 - Z magnetometer measurement is bad</description>
+          </bit>
+          <bit name="BAD_AIRSPEED">
+            <value>32</value>
+            <description>5 - airspeed measurement is bad</description>
+          </bit>
+          <bit name="BAD_SIDESLIP">
+            <value>64</value>
+            <description>6 - synthetic sideslip measurement is bad</description>
+          </bit>
+          <bit name="NOT_INITIALISED">
+            <value>128</value>
+            <description>7 - filter states have not been initialised</description>
+          </bit>
+        </bitmask>
       </field>
       <field name="TS" units="" type="uint8_t">
         <description>Filter timeout status bitmask (0:position measurement, 1:velocity measurement, 2:height measurement, 3:magnetometer measurement, 4:airspeed measurement, 5:drag measurement)</description>
@@ -10934,7 +11473,7 @@
       <field name="HAGL" units="m" type="int16_t * 100">
         <description>Height above ground level</description>
       </field>
-      <field name="offset" units="UNKNOWN" type="int16_t * 100">
+      <field name="TOfs" units="UNKNOWN" type="int16_t * 100">
         <description>Estimated vertical position of the terrain relative to the nav filter zero datum</description>
       </field>
       <field name="RI" units="UNKNOWN" type="int16_t * 100">
@@ -10954,6 +11493,35 @@
       </field>
       <field name="ePos" units="m" type="float">
         <description>Magnitude of position error</description>
+      </field>
+      <field name="BOf" units="m" type="float">
+        <description>Barometer offset subtracted from raw baro measurement when fusing baro height</description>
+      </field>
+    </fields>
+  </logformat>
+  <logformat name="XKFA">
+    <description>EKF3 AGL Kalman Filter state (optionally used in Optical Flow scaling)</description>
+    <fields>
+      <field name="TimeUS" units="μs" type="uint64_t">
+        <description>Time since system startup</description>
+      </field>
+      <field name="C" units="instance" type="uint8_t">
+        <description>EKF3 core this data is for</description>
+      </field>
+      <field name="HAgl" units="m" type="float">
+        <description>AGL height estimate</description>
+      </field>
+      <field name="VAgl" units="m/s" type="float">
+        <description>AGL velocity estimate</description>
+      </field>
+      <field name="HAglStd" units="m" type="float">
+        <description>Std-dev of AGL height estimate</description>
+      </field>
+      <field name="VAglStd" units="m/s" type="float">
+        <description>Std-dev of AGL velocity estimate</description>
+      </field>
+      <field name="Valid" units="" type="uint8_t">
+        <description>1 when rangefinder has been fused within the last 5s</description>
       </field>
     </fields>
   </logformat>
