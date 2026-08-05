@@ -41,7 +41,7 @@
                     <template v-for="item in messageTypes[key].complexFields">
                         <li @click="toggle(key, item.name)"
                             class="field"
-                            :title="messageDocs[key] ? messageDocs[key][item.name] : ''"
+                            :title="fieldDoc(key, item.name)"
                             v-bind:key="key+'.'+item.name"
                             v-if="isPlottable(key,item.name)
                                 && item.name.toLowerCase().indexOf(filter.toLowerCase()) !== -1">
@@ -49,7 +49,7 @@
                                 <span v-if="item.units!=='?' && item.units!==''"> ({{item.units}})</span>
                             </a>
                             <span class="description">
-                              {{ messageDocs[key] ? messageDocs[key][item.name.split('[')[0]] : '' }}
+                              {{ fieldDoc(key, item.name) }}
                             </span>
 
                             <a @click="$eventHub.$emit('togglePlot', field.name)" v-if="isPlotted(key,item.name)">
@@ -215,6 +215,12 @@ export default {
             }
             this.messageTypes = newMessages
             this.$set(this.state, 'messageTypes', newMessages)
+        },
+        fieldDoc (msgtype, field) {
+            // Message types can carry an instance suffix (e.g. GPYW[1]) which the
+            // metadata is not keyed by, so strip it before looking the docs up.
+            const docs = this.messageDocs[msgtype.split('[')[0]]
+            return docs ? docs[field.split('[')[0]] || '' : ''
         },
         isPlotted (message, field) {
             const fullname = message + '.' + field
