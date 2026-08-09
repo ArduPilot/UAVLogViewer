@@ -29,6 +29,39 @@ python3 -m venv .venv
 pip install -r requirements.txt   # rasterio wheel bundles GDAL; no apt needed
 ```
 
+## Regional USGS 3DEP 1 m package
+
+`terrain_to_qmesh.py` is the internal preparation path for a bounded Map3D
+operational area. It queries The National Map, rejects newer project tiles that
+contain no data for the requested area, downloads the newest usable GeoTIFF,
+records the API response, source CRS, file size, and SHA-256, then builds the
+regional quantized-mesh levels. Source elevation values are preserved; the tool
+records USGS NAVD88 metadata but does not perform a vertical conversion.
+
+```bash
+./terrain_to_qmesh.py --usgs-1m \
+    --bbox -105.2755 39.9945 -105.2745 39.9955 \
+    --min-zoom 13 --max-zoom 18 \
+    --out /data/terrain/site-name --jobs 4
+```
+
+By default the tool expands the bounding box into the same per-level footprint
+used by Map3D's fine radius of two tiles and coarser ring width of one. The
+prepared source bounds and exact tile counts are recorded in `region.json`.
+Use `--fine-radius` and `--lod-ring` only when Map3D uses matching values.
+
+The output contains `region.json`, `terrain/layer.json`, `_source.tif`, the downloaded
+source GeoTIFFs under `sources/`, and `terrain/{z}/{x}/{y}.terrain`. A `.incomplete`
+marker remains if preparation fails or is interrupted; `layer.json` is written
+only after all advertised terrain tiles exist. The tool refuses a requested
+area with substantial no-data coverage rather than publishing zero-height
+terrain.
+
+For an already-downloaded DEM, replace `--usgs-1m` with
+`--source-raster /path/to/dem.tif` and provide `--elevation-reference` if the
+source reference is known. Projected rasters are reprojected offline; Map3D is
+not expected to do GIS work at runtime.
+
 ## Build (two steps for a whole-world / large run)
 
 Low zooms read many cells at once, so for anything large first bake a **coarse global DEM**

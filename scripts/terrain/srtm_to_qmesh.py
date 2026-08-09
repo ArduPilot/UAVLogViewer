@@ -180,6 +180,8 @@ def render_tile(zxy):
     # Low zoom reads the coarse global DEM (cheap, has overviews); high zoom reads
     # full-res SRTM (each tile then covers only ~1 cell, so the window is bounded).
     ds = _DS_COARSE if (_DS_COARSE is not None and z <= _COARSE_MAXZ) else _DS
+    if ds is None:
+        raise RuntimeError('terrain worker has no open DEM')
     west, south, east, north = tile_bounds(z, x, y)
 
     if _GRID > 0:
@@ -194,14 +196,21 @@ def render_tile(zxy):
         # data extent (coverage edges); interior tiles read directly (~12x faster).
         db = ds.bounds
         inside = ew >= db.left and es >= db.bottom and ee <= db.right and en <= db.top
-        arr = ds.read(1, window=from_bounds(ew, es, ee, en, ds.transform),
-                      out_shape=(g, g), resampling=Resampling.bilinear,
-                      boundless=not inside, fill_value=0).astype(np.float32)
-        arr[arr < -1000.0] = 0.0
+        sampled = ds.read(
+            1, window=from_bounds(ew, es, ee, en, ds.transform),
+            out_shape=(g, g), resampling=Resampling.bilinear,
+            boundless=not inside, masked=True)
+        if np.ma.getmaskarray(sampled).any():
+            return 'empty'
+        arr = np.asarray(sampled.data, dtype=np.float32)
+        if not np.isfinite(arr).all():
+            return 'empty'
         rr, cc = np.mgrid[0:g, 0:g]
         lon = west + cc.ravel() * sx
         lat = north - rr.ravel() * sy
-        pos = np.column_stack([lon, lat, arr.ravel()]).astype(np.float32)
+        # Keep geographic coordinates in float64. At zoom 18/19, float32
+        # longitude can collapse adjacent vertices and produce zero normals.
+        pos = np.column_stack([lon, lat, arr.ravel()])
         idx = _GRID_IDX
     else:
         # Adaptive Delatin mesh, with the read clamped to the data extent so low-zoom
@@ -211,6 +220,8 @@ def render_tile(zxy):
         isb, itn = max(south, db.bottom), min(north, db.top)
         if ie <= iw or itn <= isb:
             return 'empty'  # tile doesn't overlap any source data
+        if iw > west or ie < east or isb > south or itn < north:
+            return 'empty'  # do not publish a partially covered tile
         resx, resy = ds.res
         ow = max(2, min(int(round((east - west) / resx)) + 1, _TILE_PX))
         oh = max(2, min(int(round((north - south) / resy)) + 1, _TILE_PX))
@@ -226,10 +237,15 @@ def render_tile(zxy):
         be = west + cx1 / (ow - 1) * (east - west)
         bn = north - ry0 / (oh - 1) * (north - south)
         bs = north - ry1 / (oh - 1) * (north - south)
-        sub = ds.read(1, window=from_bounds(bw, bs, be, bn, ds.transform),
-                      out_shape=(sh, sw), resampling=Resampling.bilinear,
-                      boundless=True, fill_value=0).astype(np.float32)
-        sub[sub < -1000.0] = 0.0
+        sampled = ds.read(
+            1, window=from_bounds(bw, bs, be, bn, ds.transform),
+            out_shape=(sh, sw), resampling=Resampling.bilinear,
+            boundless=False, masked=True)
+        if np.ma.getmaskarray(sampled).any():
+            return 'empty'
+        sub = np.asarray(sampled.data, dtype=np.float32)
+        if not np.isfinite(sub).all():
+            return 'empty'
         arr[ry0:ry0 + sh, cx0:cx0 + sw] = sub
         tin = Delatin(arr, max_error=_MAX_ERROR)
         verts, tris = tin.vertices, tin.triangles
@@ -238,7 +254,7 @@ def render_tile(zxy):
         W, H = ow, oh
         lon = west + verts[:, 0] / (W - 1) * (east - west)
         lat = north - verts[:, 1] / (H - 1) * (north - south)
-        pos = np.column_stack([lon, lat, verts[:, 2]]).astype(np.float32)
+        pos = np.column_stack([lon, lat, verts[:, 2]])
         idx = tris.astype(np.uint32)
     ext = VertexNormalsExtension(indices=idx, positions=pos)
     buf = io.BytesIO()
@@ -261,6 +277,10 @@ def render_tile(zxy):
 _KEY_ZSH = 40
 _KEY_XSH = 20
 _KEY_MASK = (1 << 20) - 1
+
+
+def pack_key(z, x, y):
+    return (int(z) << _KEY_ZSH) | (int(x) << _KEY_XSH) | int(y)
 
 
 def _decode_key(k):
@@ -307,6 +327,34 @@ def build_worklist(cells, minzoom, maxzoom, clip=None, want_levels=True):
     return keys, per_level
 
 
+def build_worklist_for_bbox(bbox, minzoom, maxzoom, want_levels=True):
+    """Build the sorted tile set for one geographic bbox without SRTM cells."""
+    w, s, e, n = bbox
+    parts = []
+    for z in range(minzoom, maxzoom + 1):
+        x0, x1, y0, y1 = tile_range_for_bbox(z, w, s, e, n)
+        if x1 < x0 or y1 < y0:
+            continue
+        xs = np.arange(x0, x1 + 1, dtype=np.int64)
+        ys = np.arange(y0, y1 + 1, dtype=np.int64)
+        parts.append(((np.int64(z) << _KEY_ZSH)
+                      | (xs[:, None] << _KEY_XSH)
+                      | ys[None, :]).ravel())
+    if not parts:
+        return np.empty(0, dtype=np.int64), ({} if want_levels else None)
+    keys = np.concatenate(parts)
+    per_level = None
+    if want_levels:
+        per_level = {}
+        zz = keys >> _KEY_ZSH
+        xx = (keys >> _KEY_XSH) & _KEY_MASK
+        yy = keys & _KEY_MASK
+        for z in range(minzoom, maxzoom + 1):
+            mask = zz == z
+            per_level[z] = list(zip(xx[mask].tolist(), yy[mask].tolist()))
+    return keys, per_level
+
+
 def availability(per_level, maxzoom):
     """Row-merge each level's (x,y) tiles into rectangles for layer.json."""
     out = []
@@ -328,15 +376,17 @@ def availability(per_level, maxzoom):
     return out
 
 
-def write_layer_json(out_dir, maxzoom, per_level, min_zoom):
-    """Write layer.json. For an upgrade run (min_zoom > 0) availability is merged into
-    the existing tileset so the base levels are kept (Cesium ORs the rectangle lists).
-    A full run (min_zoom == 0) writes fresh availability so it never advertises stale
-    tiles from a previous build."""
+def write_layer_json(out_dir, maxzoom, per_level, min_zoom, bounds=None,
+                     output_minzoom=None, metadata=None, merge_existing=True):
+    """Write layer.json.
+
+    SRTM upgrade runs merge existing availability. Regional packages pass
+    merge_existing=False so a rebuild cannot advertise stale tiles.
+    """
     path = os.path.join(out_dir, 'layer.json')
     new_avail = availability(per_level, maxzoom)
     old_avail, old_max = [], -1
-    if min_zoom > 0 and os.path.exists(path):
+    if merge_existing and min_zoom > 0 and os.path.exists(path):
         try:
             old = json.load(open(path))
             old_avail = old.get('available', [])
@@ -352,12 +402,18 @@ def write_layer_json(out_dir, maxzoom, per_level, min_zoom):
     layer = {
         'tilejson': '2.1.0', 'format': 'quantized-mesh-1.0', 'version': '1.0.0',
         'scheme': 'tms', 'projection': 'EPSG:4326',
-        'bounds': [-180, -90, 180, 90], 'minzoom': 0, 'maxzoom': final_max,
+        'bounds': list(bounds) if bounds is not None else [-180, -90, 180, 90],
+        'minzoom': 0 if output_minzoom is None else output_minzoom,
+        'maxzoom': final_max,
         'tiles': ['{z}/{x}/{y}.terrain'], 'extensions': ['octvertexnormals'],
         'available': merged,
     }
-    with open(path, 'w') as f:
+    if metadata is not None:
+        layer['metadata'] = metadata
+    tmp = path + '.tmp'
+    with open(tmp, 'w') as f:
         json.dump(layer, f)
+    os.replace(tmp, path)
 
 
 # ---------------------------------------------------------------- main
