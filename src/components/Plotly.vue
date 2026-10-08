@@ -10,7 +10,7 @@ import { faWindowRestore } from "@fortawesome/free-solid-svg-icons";
 import Vue from "vue";
 import { isNumber } from "underscore";
 
-const Color = require("color");
+import Color from "color";
 
 const timeformat = ":02,2f";
 let annotationsEvents = [];

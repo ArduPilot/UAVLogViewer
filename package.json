@@ -1,11 +1,12 @@
 {
     "name": "tlogviewer",
     "version": "1.0.0",
+    "type": "module",
     "description": "A js viewer for mavlink telemetry logs",
     "author": "Willian Galvani <williangalvani@gmail.com>",
     "private": true,
     "scripts": {
-        "dev": "node scripts/generate-runtime-config.js &&node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js --host 0.0.0.0 --progress --config build/webpack.dev.conf.js",
+        "dev": "node scripts/generate-runtime-config.js && cross-env NODE_ENV=development node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js --host 0.0.0.0 --progress --config build/webpack.dev.conf.js",
         "start": "node scripts/generate-runtime-config.js && serve -s dist -l 8080",
         "start:dev": "npm run dev",
         "unit": "jest --config test/unit/jest.conf.js --coverage",
@@ -15,7 +16,7 @@
         "lint:fix": "eslint --fix --ext .js,.vue src",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "build": "node scripts/generate-runtime-config.js &&node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js --config build/webpack.prod.conf.js",
+        "build": "node scripts/generate-runtime-config.js && cross-env NODE_ENV=production node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js --config build/webpack.prod.conf.js",
         "postinstall": "patch-package"
     },
     "dependencies": {

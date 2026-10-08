@@ -1,157 +1,171 @@
 "use strict";
-const path = require("path");
-const utils = require("./utils");
-const config = require("../config");
-const webpack = require("webpack");
-const vueLoaderConfig = require("./vue-loader.conf");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
-const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+import { join, resolve as _resolve } from "node:path";
+import { assetsPath } from "./utils.js";
+import { dev, build } from "../config/index.js";
+import vueLoaderConfig from "./vue-loader.conf.js";
+import { createRequire } from "node:module";
+import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
+import eslintFriendlyFormatter from "eslint-friendly-formatter";
+
+const require = createRequire(import.meta.url);
 
 // The path to the Cesium source code
 
-function resolve(dir) {
-    return path.join(__dirname, "..", dir);
+function resolveDir(dir) {
+    return join(import.meta.dirname, "..", dir);
 }
 
 const createLintingRule = () => ({
     test: /\.(js|vue)$/,
     loader: "eslint-loader",
     enforce: "pre",
-    include: [resolve("src"), resolve("test")],
+    include: [resolveDir("src"), resolveDir("test")],
     options: {
-        formatter: require("eslint-friendly-formatter"),
-        emitWarning: !config.dev.showEslintErrorsInOverlay,
+        formatter: eslintFriendlyFormatter,
+        emitWarning: !dev.showEslintErrorsInOverlay,
         emitError: true,
         failOnError: true,
         failOnWarning: true,
     },
 });
 
-module.exports = {
-    context: path.resolve(__dirname, "../"),
-    entry: {
-        app: "./src/main.js",
-    },
-    output: {
-        path: config.build.assetsRoot,
-        filename: "[name].js",
-        publicPath:
-            process.env.NODE_ENV === "production"
-                ? config.build.assetsPublicPath
-                : config.dev.assetsPublicPath,
-        sourcePrefix: " ",
-        globalObject: "self",
-    },
-
-    module: {
-        rules: [
-            ...(config.dev.useEslint ? [createLintingRule()] : []),
-            {
-                test: /\.worker\.js$/,
-                use: { loader: "worker-loader" },
+export const context = _resolve(import.meta.dirname, "../");
+export const entry = {
+    app: "./src/main.js",
+};
+export const output = {
+    path: build.assetsRoot,
+    filename: "[name].js",
+    publicPath:
+        process.env.NODE_ENV === "production"
+            ? build.assetsPublicPath
+            : dev.assetsPublicPath,
+    sourcePrefix: " ",
+    globalObject: "self",
+};
+export const module = {
+    rules: [
+        // "type": "module" makes webpack require file extensions in imports;
+        // keep resolving extensionless imports like "./foo" and "../libs/mavlink"
+        {
+            test: /.m?js$/,
+            resolve: { fullySpecified: false },
+        },
+        ...(dev.useEslint ? [createLintingRule()] : []),
+        {
+            test: /\.worker\.js$/,
+            use: { loader: "worker-loader" },
+        },
+        {
+            test: /\.xml$/,
+            use: { loader: "raw-loader" },
+        },
+        {
+            test: /\.vue$/,
+            loader: "vue-loader",
+            options: vueLoaderConfig,
+        },
+        {
+            test: /\.js$/,
+            loader: "babel-loader",
+            include: [
+                resolveDir("src"),
+                resolveDir("test"),
+                resolveDir("node_modules/webpack-dev-server/client"),
+                resolveDir("node_modules/mavlink_common_v1.0/parsers"),
+            ],
+        },
+        {
+            test: /\.(png|jpe?g|gif)(\?.*)?$/,
+            loader: "url-loader",
+            options: {
+                limit: 10000,
+                name: assetsPath("img/[name].[hash:7].[ext]"),
             },
-            {
-                test: /\.xml$/,
-                use: { loader: "raw-loader" },
-            },
-            {
-                test: /\.vue$/,
-                loader: "vue-loader",
-                options: vueLoaderConfig,
-            },
-            {
-                test: /\.js$/,
-                loader: "babel-loader",
-                include: [
-                    resolve("src"),
-                    resolve("test"),
-                    resolve("node_modules/webpack-dev-server/client"),
-                    resolve("node_modules/mavlink_common_v1.0/parsers"),
-                ],
-            },
-            {
-                test: /\.(png|jpe?g|gif)(\?.*)?$/,
-                loader: "url-loader",
-                options: {
-                    limit: 10000,
-                    name: utils.assetsPath("img/[name].[hash:7].[ext]"),
-                },
-            },
-            {
-                test: /\.(svg)$/i,
-                use: [
-                    {
-                        loader: "file-loader",
-                        options: {
-                            esModule: false,
-                        },
+        },
+        {
+            test: /\.(svg)$/i,
+            use: [
+                {
+                    loader: "file-loader",
+                    options: {
+                        esModule: false,
                     },
-                ],
-            },
-            {
-                test: /\.(mp4|webm|ogg|mp3|wav|flac|aac|glb|tlog)(\?.*)?$/,
-                loader: "url-loader",
-                options: {
-                    limit: 10000,
-                    name: utils.assetsPath("media/[name].[hash:7].[ext]"),
                 },
-            },
-            {
-                test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
-                loader: "url-loader",
-                options: {
-                    limit: 10000,
-                    name: utils.assetsPath("fonts/[name].[hash:7].[ext]"),
-                },
-            },
-        ],
-    },
-    resolve: {
-        fallback: {
-            // make sure you `npm install path-browserify` to use this
-            crypto: require.resolve("crypto-browserify"),
-            buffer: require.resolve("buffer/"),
-            assert: require.resolve("assert/"),
-            stream: require.resolve("stream-browserify"),
-            url: require.resolve("url/"),
-            https: require.resolve("https-browserify"),
-            http: require.resolve("stream-http"),
-            zlib: require.resolve("browserify-zlib"),
+            ],
         },
-        alias: {
-            vue$: "vue/dist/vue.esm.js",
-            "@": resolve("src"),
-        },
-    },
-    node: {},
-    optimization: {
-        concatenateModules: false,
-        splitChunks: {
-            chunks: "all",
-            minSize: 30000,
-            maxSize: 300000,
-            minChunks: 1,
-            maxAsyncRequests: 6,
-            maxInitialRequests: 4,
-            automaticNameDelimiter: "~",
-            cacheGroups: {
-                vendors: {
-                    test: /[\\/]node_modules[\\/]/,
-                    priority: -10,
-                },
-                default: {
-                    minChunks: 2,
-                    priority: -20,
-                    reuseExistingChunk: true,
-                },
+        {
+            test: /\.(mp4|webm|ogg|mp3|wav|flac|aac|glb|tlog)(\?.*)?$/,
+            loader: "url-loader",
+            options: {
+                limit: 10000,
+                name: assetsPath("media/[name].[hash:7].[ext]"),
             },
         },
-        moduleIds: "deterministic", //Added this to retain hash of vendor chunks.
-        runtimeChunk: "single",
-        minimizer: [
-            // For webpack@5 you can use the `...` syntax to extend existing minimizers (i.e. `terser-webpack-plugin`), uncomment the next line
-            `...`,
-            new CssMinimizerPlugin(),
-        ],
+        {
+            test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
+            loader: "url-loader",
+            options: {
+                limit: 10000,
+                name: assetsPath("fonts/[name].[hash:7].[ext]"),
+            },
+        },
+    ],
+};
+export const resolve = {
+    fallback: {
+        // make sure you `npm install path-browserify` to use this
+        crypto: require.resolve("crypto-browserify"),
+        buffer: require.resolve("buffer/"),
+        assert: require.resolve("assert/"),
+        stream: require.resolve("stream-browserify"),
+        url: require.resolve("url/"),
+        https: require.resolve("https-browserify"),
+        http: require.resolve("stream-http"),
+        zlib: require.resolve("browserify-zlib"),
     },
+    alias: {
+        vue$: "vue/dist/vue.esm.js",
+        "@": resolveDir("src"),
+    },
+};
+export const node = {};
+export const optimization = {
+    concatenateModules: false,
+    splitChunks: {
+        chunks: "all",
+        minSize: 30000,
+        maxSize: 300000,
+        minChunks: 1,
+        maxAsyncRequests: 6,
+        maxInitialRequests: 4,
+        automaticNameDelimiter: "~",
+        cacheGroups: {
+            vendors: {
+                test: /[\\/]node_modules[\\/]/,
+                priority: -10,
+            },
+            default: {
+                minChunks: 2,
+                priority: -20,
+                reuseExistingChunk: true,
+            },
+        },
+    },
+    moduleIds: "deterministic", //Added this to retain hash of vendor chunks.
+    runtimeChunk: "single",
+    minimizer: [
+        // For webpack@5 you can use the `...` syntax to extend existing minimizers (i.e. `terser-webpack-plugin`), uncomment the next line
+        `...`,
+        new CssMinimizerPlugin(),
+    ],
+};
+export default {
+    context,
+    entry,
+    output,
+    module,
+    resolve,
+    node,
+    optimization,
 };

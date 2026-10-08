@@ -1,18 +1,18 @@
 "use strict";
-const utils = require("./utils");
-const config = require("../config");
+import { cssLoaders } from "./utils.js";
+import { build, dev } from "../config/index.js";
 const isProduction = process.env.NODE_ENV === "production";
 const sourceMapEnabled = isProduction
-    ? config.build.productionSourceMap
-    : config.dev.cssSourceMap;
+    ? build.productionSourceMap
+    : dev.cssSourceMap;
 
-module.exports = {
-    loaders: utils.cssLoaders({
+export default {
+    loaders: cssLoaders({
         sourceMap: sourceMapEnabled,
         extract: isProduction,
     }),
     cssSourceMap: sourceMapEnabled,
-    cacheBusting: config.dev.cacheBusting,
+    cacheBusting: dev.cacheBusting,
     // Vue 2.7's template compiler calls prettier.format() synchronously to beautify
     // dev render functions; with prettier 3 that returns a Promise and breaks the build
     prettify: false,

@@ -2,21 +2,22 @@
 
 process.env.NODE_ENV = "development";
 
-const utils = require("./utils");
-const webpack = require("webpack");
-const config = require("../config");
-const { merge } = require("webpack-merge");
-const path = require("path");
-const baseWebpackConfig = require("./webpack.base.conf");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const portfinder = require("portfinder");
-const { VueLoaderPlugin } = require("vue-loader");
+import { styleLoaders } from "./utils.js";
+import webpack from "webpack";
+import { dev } from "../config/index.js";
+import devEnv from "../config/dev.env.js";
+import { merge } from "webpack-merge";
+import { posix, resolve as _resolve } from "node:path";
+import baseWebpackConfig from "./webpack.base.conf.js";
+import CopyWebpackPlugin from "copy-webpack-plugin";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import { getPort } from "portfinder";
+import { VueLoaderPlugin } from "vue-loader";
 const cesiumSource = "node_modules/cesium/Source";
 const cesiumWorkers = "../Build/Cesium/Workers";
-const GitRevisionPlugin = require("git-revision-webpack-plugin");
+import GitRevisionPlugin from "git-revision-webpack-plugin";
 const gitRevisionPlugin = new GitRevisionPlugin();
-const ESLintPlugin = require("eslint-webpack-plugin");
+import ESLintPlugin from "eslint-webpack-plugin";
 
 const HOST = "0.0.0.0";
 const PORT = process.env.PORT && Number(process.env.PORT);
@@ -24,13 +25,13 @@ const PORT = process.env.PORT && Number(process.env.PORT);
 const devWebpackConfig = merge(baseWebpackConfig, {
     mode: "development",
     module: {
-        rules: utils.styleLoaders({
-            sourceMap: config.dev.cssSourceMap,
+        rules: styleLoaders({
+            sourceMap: dev.cssSourceMap,
             usePostCSS: true,
         }),
     },
     // cheap-module-eval-source-map is faster for development
-    devtool: config.dev.devtool,
+    devtool: dev.devtool,
 
     stats: {
         children: true,
@@ -38,7 +39,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     // these devServer options should be customized in /config/index.js
     devServer: {
         client: {
-            overlay: config.dev.errorOverlay
+            overlay: dev.errorOverlay
                 ? { warnings: false, errors: true }
                 : false,
             logging: "warn",
@@ -47,26 +48,23 @@ const devWebpackConfig = merge(baseWebpackConfig, {
             rewrites: [
                 {
                     from: /.*/,
-                    to: path.posix.join(
-                        config.dev.assetsPublicPath,
-                        "index.html",
-                    ),
+                    to: posix.join(dev.assetsPublicPath, "index.html"),
                 },
             ],
         },
         hot: true,
         static: "./",
         compress: true,
-        host: HOST || config.dev.host,
-        port: PORT || config.dev.port,
-        open: config.dev.autoOpenBrowser,
+        host: HOST || dev.host,
+        port: PORT || dev.port,
+        open: dev.autoOpenBrowser,
         // publicPath: config.dev.assetsPublicPath,
-        proxy: config.dev.proxyTable,
+        proxy: dev.proxyTable,
     },
     plugins: [
         new ESLintPlugin({ fix: true }),
         new webpack.DefinePlugin({
-            "process.env": require("../config/dev.env"),
+            "process.env": devEnv,
             _COMMIT_: JSON.stringify(gitRevisionPlugin.commithash()),
             _BUILDDATE_: JSON.stringify(new Date().toString()),
         }),
@@ -82,13 +80,13 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         new CopyWebpackPlugin({
             patterns: [
                 {
-                    from: path.resolve(cesiumSource, cesiumWorkers),
+                    from: _resolve(cesiumSource, cesiumWorkers),
                     to: "Workers",
                 },
-                { from: path.resolve(cesiumSource, "Assets"), to: "Assets" },
-                { from: path.resolve(cesiumSource, "Widgets"), to: "Widgets" },
+                { from: _resolve(cesiumSource, "Assets"), to: "Assets" },
+                { from: _resolve(cesiumSource, "Widgets"), to: "Widgets" },
                 {
-                    from: path.resolve(cesiumSource, "ThirdParty/Workers"),
+                    from: _resolve(cesiumSource, "ThirdParty/Workers"),
                     to: "ThirdParty/Workers",
                 },
             ],
@@ -104,9 +102,8 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     ],
 });
 
-module.exports = new Promise((resolve, reject) => {
-    portfinder.basePort = process.env.PORT || config.dev.port;
-    portfinder.getPort((err, port) => {
+export default new Promise((resolve, reject) => {
+    getPort({ port: PORT || dev.port }, (err, port) => {
         if (err) {
             reject(err);
         } else {

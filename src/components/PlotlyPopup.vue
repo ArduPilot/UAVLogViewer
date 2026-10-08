@@ -9,7 +9,7 @@ import Plotly from "plotly.js";
 import { store } from "./Globals.js";
 import * as d3 from "d3";
 
-const Color = require("color");
+import Color from "color";
 
 const timeformat = ":02,2f";
 let annotationsEvents = [];

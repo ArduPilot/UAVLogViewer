@@ -2,42 +2,42 @@
 
 process.env.NODE_ENV = "production";
 
-const path = require("path");
-const utils = require("./utils");
-const webpack = require("webpack");
-const config = require("../config");
-const { merge } = require("webpack-merge");
-const baseWebpackConfig = require("./webpack.base.conf");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+import { join } from "node:path";
+import { styleLoaders, assetsPath } from "./utils.js";
+import webpack from "webpack";
+import { build } from "../config/index.js";
+import { merge } from "webpack-merge";
+import baseWebpackConfig from "./webpack.base.conf.js";
+import CopyWebpackPlugin from "copy-webpack-plugin";
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
 const cesiumSource = "node_modules/cesium/Source";
 const cesiumWorkers = "node_modules/cesium/Build/Cesium/Workers";
-const TerserPlugin = require("terser-webpack-plugin");
-const { VueLoaderPlugin } = require("vue-loader");
-const CompressionPlugin = require("compression-webpack-plugin");
-const GitRevisionPlugin = require("git-revision-webpack-plugin");
+import TerserPlugin from "terser-webpack-plugin";
+import { VueLoaderPlugin } from "vue-loader";
+import CompressionPlugin from "compression-webpack-plugin";
+import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
+import GitRevisionPlugin from "git-revision-webpack-plugin";
+import prodEnv from "../config/prod.env.js";
+import testEnv from "../config/test.env.js";
 const gitRevisionPlugin = new GitRevisionPlugin();
 
-const env =
-    process.env.NODE_ENV === "testing"
-        ? require("../config/test.env")
-        : require("../config/prod.env");
+const env = process.env.NODE_ENV === "testing" ? testEnv : prodEnv;
 
 const webpackConfig = merge(baseWebpackConfig, {
     mode: "production",
     module: {
-        rules: utils.styleLoaders({
-            sourceMap: config.build.productionSourceMap,
+        rules: styleLoaders({
+            sourceMap: build.productionSourceMap,
             extract: true,
             usePostCSS: true,
         }),
     },
-    devtool: config.build.productionSourceMap ? config.build.devtool : false,
+    devtool: build.productionSourceMap ? build.devtool : false,
     output: {
-        path: config.build.assetsRoot,
-        filename: utils.assetsPath("js/[name].[chunkhash].js"),
-        chunkFilename: utils.assetsPath("js/[id].[chunkhash].js"),
+        path: build.assetsRoot,
+        filename: assetsPath("js/[name].[chunkhash].js"),
+        chunkFilename: assetsPath("js/[id].[chunkhash].js"),
     },
     plugins: [
         new CompressionPlugin(),
@@ -60,7 +60,7 @@ const webpackConfig = merge(baseWebpackConfig, {
         new VueLoaderPlugin(),
         // extract css into its own file
         new MiniCssExtractPlugin({
-            filename: utils.assetsPath("css/[name].[contenthash].css"),
+            filename: assetsPath("css/[name].[contenthash].css"),
         }),
         new webpack.ProvidePlugin({
             Buffer: ["buffer", "Buffer"],
@@ -70,9 +70,7 @@ const webpackConfig = merge(baseWebpackConfig, {
         // see https://github.com/ampedandwired/html-webpack-plugin
         new HtmlWebpackPlugin({
             filename:
-                process.env.NODE_ENV === "testing"
-                    ? "index.html"
-                    : config.build.index,
+                process.env.NODE_ENV === "testing" ? "index.html" : build.index,
             template: "index.html",
             inject: true,
             minify: {
@@ -88,8 +86,8 @@ const webpackConfig = merge(baseWebpackConfig, {
         new CopyWebpackPlugin({
             patterns: [
                 { from: "runtime-config.js", to: "runtime-config.js" },
-                { from: path.join(cesiumSource, "Assets"), to: "Assets" },
-                { from: path.join(cesiumSource, "Widgets"), to: "Widgets" },
+                { from: join(cesiumSource, "Assets"), to: "Assets" },
+                { from: join(cesiumSource, "Widgets"), to: "Widgets" },
                 { from: cesiumWorkers, to: "Workers" },
                 // {from: path.join(cesiumSource, 'ThirdParty'), to: 'ThirdParty'},
                 // {from: path.join(cesiumSource, '../Build/Cesium/ThirdParty/Workers'), to: 'ThirdParty/Workers', force: true},
@@ -99,15 +97,15 @@ const webpackConfig = merge(baseWebpackConfig, {
     ],
 });
 
-if (config.build.productionGzip) {
-    const CompressionWebpackPlugin = require("compression-webpack-plugin");
-
+if (build.productionGzip) {
     webpackConfig.plugins.push(
-        new CompressionWebpackPlugin({
+        new CompressionPlugin({
             asset: "[path].gz[query]",
             algorithm: "gzip",
             test: new RegExp(
-                "\\.(" + config.build.productionGzipExtensions.join("|") + ")$",
+                String.raw`\.(` +
+                    build.productionGzipExtensions.join("|") +
+                    ")$",
             ),
             threshold: 10240,
             minRatio: 0.8,
@@ -115,10 +113,8 @@ if (config.build.productionGzip) {
     );
 }
 
-if (config.build.bundleAnalyzerReport) {
-    const BundleAnalyzerPlugin =
-        require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+if (build.bundleAnalyzerReport) {
     webpackConfig.plugins.push(new BundleAnalyzerPlugin());
 }
 
-module.exports = webpackConfig;
+export default webpackConfig;

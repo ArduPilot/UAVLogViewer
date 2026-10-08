@@ -10,8 +10,7 @@ import {
     modeMappingSub,
     modeMappingTracker,
 } from "./modeMaps";
-
-const Buffer = require("buffer/").Buffer;
+import { Buffer } from "buffer/";
 
 const vehicles = {
     1: "airplane", // Fixed wing aircraft.

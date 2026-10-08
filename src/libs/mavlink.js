@@ -39,15 +39,13 @@ Note: this file has been auto-generated. DO NOT EDIT
 /* eslint-disable */
 
 import _, { map } from "underscore";
-
-const Uint64BE = require("int64-buffer").Uint64BE;
-const jspack = require("jspack").jspack;
-//const _ = require('underscore')
-const events = require("events");
-const util = require("util");
-
-var Long = require("long");
-var Buffer = require("buffer").Buffer; // required in react - no impact in node
+import { Uint64BE } from "int64-buffer";
+import { jspack } from "jspack";
+import events from "events";
+import util from "util";
+import Long from "long";
+import { Buffer } from "buffer"; // required in react - no impact in node
+import crypto from "crypto";
 // Add a convenience method to Buffer
 Buffer.prototype.toByteArray = function () {
     return Array.prototype.slice.call(this, 0);
@@ -161,7 +159,6 @@ mavlink20.message.prototype.set = function (args, verbose) {
 
 // trying to be the same-ish as the python function of the same name
 mavlink20.message.prototype.sign_packet = function (mav) {
-    var crypto = require("crypto");
     var h = crypto.createHash("sha256");
 
     //mav.signing.timestamp is a 48bit number, or 6 bytes.
@@ -26766,7 +26763,6 @@ MAVLink20Processor.prototype.check_signature = function (
     //   h = hashlib.new('sha256')
     //   h.update(this.signing.secret_key)
     //   h.update(msgbuf[:-6])
-    var crypto = require("crypto");
     var h = crypto.createHash("sha256");
 
     // just the last 6 of 13 available are the actual sig . ie excluding the linkid(1) and timestamp(6)

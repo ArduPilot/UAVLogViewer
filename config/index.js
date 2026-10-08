@@ -2,95 +2,98 @@
 // Template version: 1.3.1
 // see http://vuejs-templates.github.io/webpack for documentation.
 
-const path = require("path");
+import { fileURLToPath } from "node:url";
 
-module.exports = {
-    dev: {
-        // Paths
-        assetsSubDirectory: "static",
-        assetsPublicPath: "/",
-        proxyTable: {
-            "/upload/*": {
-                target: "http://localhost:8001/upload",
-                secure: "false",
-            },
-            "/eniro/*": {
-                target: "http://localhost:8001/eniro",
-                secure: "false",
-            },
-            "/uploaded/*": {
-                target: "http://localhost:8001/uploaded",
-                secure: "false",
-            },
-            "/quantized/*": {
-                target: "https://plot.ardupilot.org",
-                changeOrigin: true,
-                secure: true,
-            },
+const fromHere = (relativePath) =>
+    fileURLToPath(new URL(relativePath, import.meta.url));
+
+export const dev = {
+    // Paths
+    assetsSubDirectory: "static",
+    assetsPublicPath: "/",
+    proxyTable: {
+        "/upload/*": {
+            target: "http://localhost:8001/upload",
+            secure: "false",
         },
-
-        // Various Dev Server settings
-        host: "localhost", // can be overwritten by process.env.HOST
-        port: 8080, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
-        autoOpenBrowser: false,
-        errorOverlay: true,
-        notifyOnErrors: true,
-        poll: false, // https://webpack.js.org/configuration/dev-server/#devserver-watchoptions-
-
-        // Use Eslint Loader?
-        // If true, your code will be linted during bundling and
-        // linting errors and warnings will be shown in the console.
-        useEslint: true,
-        // If true, eslint errors and warnings will also be shown in the error overlay
-        // in the browser.
-        showEslintErrorsInOverlay: false,
-        stats: {
-            errors: true,
-            warnings: true,
+        "/eniro/*": {
+            target: "http://localhost:8001/eniro",
+            secure: "false",
         },
-        /**
-         * Source Maps
-         */
-
-        // https://webpack.js.org/configuration/devtool/#development
-        devtool: "eval",
-
-        // If you have problems debugging vue-files in devtools,
-        // set this to false - it *may* help
-        // https://vue-loader.vuejs.org/en/options.html#cachebusting
-        cacheBusting: true,
-
-        cssSourceMap: true,
+        "/uploaded/*": {
+            target: "http://localhost:8001/uploaded",
+            secure: "false",
+        },
+        "/quantized/*": {
+            target: "https://plot.ardupilot.org",
+            changeOrigin: true,
+            secure: true,
+        },
     },
 
-    build: {
-        // Template for index.html
-        index: path.resolve(__dirname, "../dist/index.html"),
+    // Various Dev Server settings
+    host: "localhost", // can be overwritten by process.env.HOST
+    port: 8080, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
+    autoOpenBrowser: false,
+    errorOverlay: true,
+    notifyOnErrors: true,
+    poll: false, // https://webpack.js.org/configuration/dev-server/#devserver-watchoptions-
 
-        // Paths
-        assetsRoot: path.resolve(__dirname, "../dist"),
-        assetsSubDirectory: "static",
-        assetsPublicPath: "./",
-
-        /**
-         * Source Maps
-         */
-
-        productionSourceMap: false,
-        // https://webpack.js.org/configuration/devtool/#production
-        devtool: "eval-source-map",
-
-        // Gzip off by default as many popular static hosts such as
-        // Surge or Netlify already gzip all static assets for you.
-        // Before setting to `true`, make sure to:
-        // npm install --save-dev compression-webpack-plugin
-        productionGzip: false,
-        productionGzipExtensions: ["js", "css"],
-
-        // Run the build command with an extra argument to
-        // View the bundle analyzer report after build finishes:
-        // `npm run build --report`
-        // Set to `true` or `false` to always turn it on or off
-        bundleAnalyzerReport: process.env.npm_config_report,
+    // Use Eslint Loader?
+    // If true, your code will be linted during bundling and
+    // linting errors and warnings will be shown in the console.
+    useEslint: true,
+    // If true, eslint errors and warnings will also be shown in the error overlay
+    // in the browser.
+    showEslintErrorsInOverlay: false,
+    stats: {
+        errors: true,
+        warnings: true,
     },
+    /**
+     * Source Maps
+     */
+
+    // https://webpack.js.org/configuration/devtool/#development
+    devtool: "eval",
+
+    // If you have problems debugging vue-files in devtools,
+    // set this to false - it *may* help
+    // https://vue-loader.vuejs.org/en/options.html#cachebusting
+    cacheBusting: true,
+
+    cssSourceMap: true,
 };
+
+export const build = {
+    // Template for index.html
+    index: fromHere("../dist/index.html"),
+
+    // Paths
+    assetsRoot: fromHere("../dist"),
+    assetsSubDirectory: "static",
+    assetsPublicPath: "./",
+
+    /**
+     * Source Maps
+     */
+
+    productionSourceMap: false,
+    // https://webpack.js.org/configuration/devtool/#production
+    devtool: "eval-source-map",
+
+    // Gzip off by default as many popular static hosts such as
+    // Surge or Netlify already gzip all static assets for you.
+    // Before setting to `true`, make sure to:
+    // npm install --save-dev compression-webpack-plugin
+    productionGzip: false,
+    productionGzipExtensions: ["js", "css"],
+
+    // Run the build command with an extra argument to
+    // View the bundle analyzer report after build finishes:
+    // `npm run build --report`
+    // Set to `true` or `false` to always turn it on or off
+    bundleAnalyzerReport: process.env.npm_config_report,
+};
+
+export default { dev, build };

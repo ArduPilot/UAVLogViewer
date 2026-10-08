@@ -1,8 +1,8 @@
 // Worker.js
 // import MavlinkParser from 'mavlinkParser'
-const mavparser = require("./mavlinkParser");
-const DataflashParser = require("./JsDataflashParser/parser").default;
-const DjiParser = require("./djiParser").default;
+import { MavlinkParser } from "./mavlinkParser";
+import DataflashParser from "./JsDataflashParser/parser";
+import DjiParser from "./djiParser";
 
 let parser;
 self.addEventListener("message", async function (event) {
@@ -11,7 +11,7 @@ self.addEventListener("message", async function (event) {
     } else if (event.data.action === "parse") {
         const data = event.data.file;
         if (event.data.isTlog) {
-            parser = new mavparser.MavlinkParser();
+            parser = new MavlinkParser();
             parser.processData(data);
         } else if (event.data.isDji) {
             parser = new DjiParser();
