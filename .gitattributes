@@ -1,3 +1,13 @@
+# Normalize line endings to LF in the repository and working tree
+* text=auto eol=lf
+
 # Files used inside Linux containers must keep LF line endings
 *.sh text eol=lf
 Dockerfile text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.gif binary
+*.glb binary
+*.tlog binary
