@@ -66,7 +66,7 @@ for incremental upgrades), `--grid` (default 65), `--max-error` (adaptive path o
 
 ## Memory / long runs
 
-Workers read windows from a single VRT mosaicking *all* SRTM cells, so GDAL would
+Workers read windows from a single VRT mosaicking _all_ SRTM cells, so GDAL would
 otherwise accumulate block + `/vsizip` cache unbounded as high-zoom tiles march across
 the globe (seen growing to ~2 GB/worker over hours). The fix is to cap GDAL in the parent
 (inherited by forked workers): `GDAL_CACHEMAX` (block cache) and
@@ -119,4 +119,7 @@ written gzip-compressed.
   ellipsoid).
 - `/vsizip` re-reads the zip per tile; pre-unzipping cells to `.hgt` speeds up an I/O-bound
   world build.
+
+```
+
 ```

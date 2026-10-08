@@ -1,119 +1,173 @@
 <template>
-  <div class="cesium-settings-defaultContainer">
-    <div @click="toggleSettings" class="gear-icon">⚙</div>
+    <div class="cesium-settings-defaultContainer">
+        <div @click="toggleSettings" class="gear-icon">⚙</div>
         <div v-show="isSettingsVisible" class="cesium-settings-display">
-          <label>Camera</label>
+            <label>Camera</label>
             <select class="cesium-button" v-model="state.cameraType">
                 <option value="free">Free</option>
                 <option value="follow">Follow</option>
             </select>
-        <!-- CHECKBOXES -->
-        <div>
-            <label><input type="checkbox" v-model="state.showWaypoints">
-            Waypoints</label>
-            <label><input type="checkbox" v-model="state.showTrajectory">
-            Trajectory</label>
-        </div>
-        <!-- WINGSPAN -->
-        <div>
-            <label>Wingspan
-                <input class="wingspan-text" size="5" type="text" v-model="state.modelScale">
-                (m)
-            </label>
-        </div>
-        <!-- ALTITUDE OFFSET -->
-        <div>
-            <label> Altitude Offset
-                <input class="wingspan-text" size="5" type="number" v-model="state.heightOffset">
-                (m)
-            </label>
-        </div>
-        <!-- Trajectory Source -->
-        <div>
-            <label> Trajectory Source</label>
-            <div class="traj-source-row">
-                <select class="cesium-button traj-source-select" v-model="state.trajectorySource">
+            <!-- CHECKBOXES -->
+            <div>
+                <label
+                    ><input type="checkbox" v-model="state.showWaypoints" />
+                    Waypoints</label
+                >
+                <label
+                    ><input type="checkbox" v-model="state.showTrajectory" />
+                    Trajectory</label
+                >
+            </div>
+            <!-- WINGSPAN -->
+            <div>
+                <label
+                    >Wingspan
+                    <input
+                        class="wingspan-text"
+                        size="5"
+                        type="text"
+                        v-model="state.modelScale"
+                    />
+                    (m)
+                </label>
+            </div>
+            <!-- ALTITUDE OFFSET -->
+            <div>
+                <label>
+                    Altitude Offset
+                    <input
+                        class="wingspan-text"
+                        size="5"
+                        type="number"
+                        v-model="state.heightOffset"
+                    />
+                    (m)
+                </label>
+            </div>
+            <!-- Trajectory Source -->
+            <div>
+                <label> Trajectory Source</label>
+                <div class="traj-source-row">
+                    <select
+                        class="cesium-button traj-source-select"
+                        v-model="state.trajectorySource"
+                    >
+                        <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
+                        <option
+                            v-for="item in state.trajectorySources"
+                            :key="item"
+                        >
+                            {{ item }}
+                        </option>
+                    </select>
+                    <button
+                        class="traj-icon-button"
+                        title="Compare another source"
+                        @click="addComparison"
+                    >
+                        +
+                    </button>
+                </div>
+                <div
+                    class="traj-source-row"
+                    v-for="(src, idx) in state.comparisonTrajectories"
+                    :key="'cmp' + idx"
+                >
+                    <span
+                        class="traj-color-swatch"
+                        :style="{ backgroundColor: comparisonColor(idx) }"
+                    ></span>
+                    <select
+                        class="cesium-button traj-source-select"
+                        :value="src"
+                        @change="updateComparison(idx, $event.target.value)"
+                    >
+                        <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
+                        <option
+                            v-for="item in state.trajectorySources"
+                            :key="item"
+                        >
+                            {{ item }}
+                        </option>
+                    </select>
+                    <button
+                        class="traj-icon-button"
+                        title="Remove comparison"
+                        @click="removeComparison(idx)"
+                    >
+                        ✕
+                    </button>
+                </div>
+            </div>
+            <!-- Attitude Source -->
+            <div>
+                <label> Attitude Source</label>
+                <select class="cesium-button" v-model="state.attitudeSource">
                     <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
-                    <option v-for="item in state.trajectorySources" :key="item">
-                        {{item}}
+                    <option v-for="item in attitudeSources" :key="item">
+                        {{ item }}
                     </option>
                 </select>
-                <button class="traj-icon-button" title="Compare another source" @click="addComparison">+</button>
-            </div>
-            <div class="traj-source-row" v-for="(src, idx) in state.comparisonTrajectories" :key="'cmp' + idx">
-                <span class="traj-color-swatch" :style="{ backgroundColor: comparisonColor(idx) }"></span>
-                <select class="cesium-button traj-source-select" :value="src"
-                        @change="updateComparison(idx, $event.target.value)">
-                    <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
-                    <option v-for="item in state.trajectorySources" :key="item">
-                        {{item}}
-                    </option>
-                </select>
-                <button class="traj-icon-button" title="Remove comparison" @click="removeComparison(idx)">✕</button>
             </div>
         </div>
-        <!-- Attitude Source -->
-        <div>
-            <label> Attitude Source</label>
-            <select class="cesium-button" v-model="state.attitudeSource">
-                <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
-                <option v-for="item in attitudeSources" :key="item">
-                    {{item}}
-                </option>
-            </select>
-        </div>
-      </div>
-  </div>
+    </div>
 </template>
 
 <script>
-import { store } from '../Globals.js'
+import { store } from "../Globals.js";
 
 export default {
-    name: 'CesiumSettingsWidget',
+    name: "CesiumSettingsWidget",
     props: {
         snappable: { type: Boolean, default: false },
         fixedAspectRatio: { type: Boolean, default: false },
-        aspectRatio: { type: Number, default: 2 }
+        aspectRatio: { type: Number, default: 2 },
     },
-    data () {
+    data() {
         return {
             state: store,
-            isSettingsVisible: false
-        }
+            isSettingsVisible: false,
+        };
     },
     methods: {
-        toggleSettings () {
-            this.isSettingsVisible = !this.isSettingsVisible
+        toggleSettings() {
+            this.isSettingsVisible = !this.isSettingsVisible;
         },
-        comparisonColor (idx) {
-            const colors = this.state.comparisonTrajectoryColors
-            return colors[idx % colors.length]
+        comparisonColor(idx) {
+            const colors = this.state.comparisonTrajectoryColors;
+            return colors[idx % colors.length];
         },
-        addComparison () {
+        addComparison() {
             // Default the new row to the first source not already shown.
-            const used = new Set([this.state.trajectorySource, ...this.state.comparisonTrajectories])
-            const next = this.state.trajectorySources.find(s => !used.has(s)) ||
-                this.state.trajectorySources[0] || ''
-            this.state.comparisonTrajectories.push(next)
+            const used = new Set([
+                this.state.trajectorySource,
+                ...this.state.comparisonTrajectories,
+            ]);
+            const next =
+                this.state.trajectorySources.find((s) => !used.has(s)) ||
+                this.state.trajectorySources[0] ||
+                "";
+            this.state.comparisonTrajectories.push(next);
         },
-        removeComparison (idx) {
-            this.state.comparisonTrajectories.splice(idx, 1)
+        removeComparison(idx) {
+            this.state.comparisonTrajectories.splice(idx, 1);
         },
-        updateComparison (idx, value) {
-            this.$set(this.state.comparisonTrajectories, idx, value)
-        }
+        updateComparison(idx, value) {
+            this.$set(this.state.comparisonTrajectories, idx, value);
+        },
     },
     computed: {
-        attitudeSources () {
-            return [...this.state.attitudeSources.quaternions, ...this.state.attitudeSources.eulers]
-        }
-    }
-}
+        attitudeSources() {
+            return [
+                ...this.state.attitudeSources.quaternions,
+                ...this.state.attitudeSources.eulers,
+            ];
+        },
+    },
+};
 </script>
 
 <style scoped>
-
 /* Gear Icon styling */
 .gear-icon {
     cursor: pointer;

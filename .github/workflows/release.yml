@@ -1,12 +1,11 @@
 on:
-  push:
-    # Sequence of patterns matched against refs/tags
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+    push:
+        # Sequence of patterns matched against refs/tags
+        tags:
+            - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
     build:
-
         runs-on: ubuntu-latest
 
         strategy:
@@ -16,7 +15,7 @@ jobs:
         steps:
             - uses: actions/checkout@v2
               with:
-                submodules: true
+                  submodules: true
             - uses: actions/cache@v1
               with:
                   path: ~/.npm
@@ -35,5 +34,5 @@ jobs:
             - name: Upload Release
               uses: ncipollo/release-action@v1
               with:
-                artifacts: "logviewer.tar.gz"
-                token: ${{ secrets.GITHUB_TOKEN }}
+                  artifacts: "logviewer.tar.gz"
+                  token: ${{ secrets.GITHUB_TOKEN }}

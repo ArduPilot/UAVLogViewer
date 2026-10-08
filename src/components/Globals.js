@@ -1,14 +1,14 @@
-import '../mavextra/mavextra'
-import '../mavextra/mymavextra'
+import "../mavextra/mavextra";
+import "../mavextra/mymavextra";
 
 export const store = {
     // currentTrajectory: [],
-    trajectorySource: '',
+    trajectorySource: "",
     trajectories: {},
     timeTrajectory: {},
     timeAttitude: {},
     timeAttitudeQ: {},
-    logType: '',
+    logType: "",
     defaultParams: {},
     showParams: false,
     showRadio: false,
@@ -30,7 +30,7 @@ export const store = {
     currentTime: false,
     processDone: false,
     plotOn: false,
-    processStatus: 'Pre-processing...',
+    processStatus: "Pre-processing...",
     processPercentage: -1,
     mapLoading: false,
     mapError: null,
@@ -48,26 +48,34 @@ export const store = {
     // Extra trajectory sources overlaid for comparison with the primary one.
     comparisonTrajectories: [],
     // Solid colors used (by index) to draw the comparison trajectory overlays.
-    comparisonTrajectoryColors: ['#00ffff', '#ff00ff', '#ffff00', '#ff8000', '#00ff80', '#8000ff'],
+    comparisonTrajectoryColors: [
+        "#00ffff",
+        "#ff00ff",
+        "#ffff00",
+        "#ff8000",
+        "#00ff80",
+        "#8000ff",
+    ],
     attitudeSources: {},
     attitudeSource: null,
     showWaypoints: true,
-    cameraType: 'follow',
+    cameraType: "follow",
     expressions: [], // holds message name
     expressionErrors: [],
     plotCache: {},
     allAxis: [0, 1, 2, 3, 4, 5],
     allColors: [
-        '#1f77b4',
-        '#ff7f0e',
-        '#2ca02c',
-        '#d62728',
-        '#9467BD',
-        '#8C564B'],
-    radioMode: '2',
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c",
+        "#d62728",
+        "#9467BD",
+        "#8C564B",
+    ],
+    radioMode: "2",
     /* global _COMMIT_ */
     commit: _COMMIT_.slice(0, 6),
     /* global _BUILDDATE_ */
     buildDate: _BUILDDATE_,
-    childPlots: []
-}
+    childPlots: [],
+};
