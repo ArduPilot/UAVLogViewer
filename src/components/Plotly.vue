@@ -159,6 +159,21 @@ const plotOptions = {
     },
 };
 
+// ?ranges=x0,x1,y0,y1,... sets the x axis range, then each y axis's
+const RANGE_AXES = ["xaxis", "yaxis", "yaxis2", "yaxis3", "yaxis4"];
+function applyUrlRanges(param) {
+    const ranges = param.split(",").map((value) => Number.parseFloat(value));
+    RANGE_AXES.forEach((axis, k) => {
+        // the x axis always (split gives at least one value), a y axis when both values are there
+        if (k === 0 || ranges.length >= 2 * k + 2) {
+            plotOptions[axis].range = [ranges[2 * k], ranges[2 * k + 1]];
+        }
+    });
+}
+
+// instanced messages (TYPE[n]) in an expression; these are loaded on demand
+const INSTANCE_RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\[\d\]/g;
+
 export default {
     data() {
         return {
@@ -236,25 +251,7 @@ export default {
         this.gd = d3.select("#line").node();
         this.$nextTick(() => {
             if (this.$route.query.ranges) {
-                const ranges = [];
-                for (const field of this.$route.query.ranges.split(",")) {
-                    ranges.push(Number.parseFloat(field));
-                }
-                if (ranges.length > 0) {
-                    plotOptions.xaxis.range = [ranges[0], ranges[1]];
-                }
-                if (ranges.length >= 4) {
-                    plotOptions.yaxis.range = [ranges[2], ranges[3]];
-                }
-                if (ranges.length >= 6) {
-                    plotOptions.yaxis2.range = [ranges[4], ranges[5]];
-                }
-                if (ranges.length >= 8) {
-                    plotOptions.yaxis3.range = [ranges[6], ranges[7]];
-                }
-                if (ranges.length >= 10) {
-                    plotOptions.yaxis4.range = [ranges[8], ranges[9]];
-                }
+                applyUrlRanges(this.$route.query.ranges);
             }
             if (this.$route.query.plots) {
                 for (const field of this.$route.query.plots.split(",")) {
@@ -525,30 +522,29 @@ export default {
             };
         },
 
-        addPlots(plots) {
-            this.state.plotLoading = true;
+        // instanced messages the plots need that are not loaded yet (ATT, GPS... come with the log)
+        missingInstances(plots) {
             const requested = new Set();
-            const RE2 = /(?<!\.)\b[A-Z][A-Z0-9_]+\[\d\]/g;
             for (const plot of plots) {
-                const expression = plot[0];
-                // ensure we have the data (only match messages with array index)
-                // not match ATT, GPS
-                const messages = expression.match(RE2);
-                if (messages !== null) {
-                    for (const message of messages) {
-                        if (!(message in this.state.messages)) {
-                            if (requested.has(message)) {
-                                continue;
-                            }
-                            console.log("missing message type: " + message);
-                            requested.add(message);
-                        }
+                for (const message of plot[0].match(INSTANCE_RE) ?? []) {
+                    if (
+                        !(message in this.state.messages) &&
+                        !requested.has(message)
+                    ) {
+                        console.log("missing message type: " + message);
+                        requested.add(message);
                     }
                 }
             }
-            if ([...requested].length > 0) {
-                console.log([...requested]);
-                this.waitForMessages([...requested])
+            return [...requested];
+        },
+
+        addPlots(plots) {
+            this.state.plotLoading = true;
+            const requested = this.missingInstances(plots);
+            if (requested.length > 0) {
+                console.log(requested);
+                this.waitForMessages(requested)
                     .then(() => {
                         this.addPlots(plots);
                     })
@@ -561,10 +557,10 @@ export default {
             const newplots = [];
             for (const plot of plots) {
                 const expression = plot[0];
-                const axis = plot[1];
-                const color = plot[2];
                 if (!this.isPlotted(expression)) {
-                    newplots.push(this.createNewField(expression, axis, color));
+                    newplots.push(
+                        this.createNewField(expression, plot[1], plot[2]),
+                    );
                 }
             }
             this.state.expressions.push(...newplots);
@@ -697,6 +693,60 @@ export default {
         messagesAreAvailable(messages) {
             return messages.every((message) => message in this.state.messages);
         },
+        // time axis of an expression: its first message's, or the attitude's when it has none
+        expressionTimes(messages) {
+            if (messages.length > 0) {
+                return this.state.messages[messages[0]].time_boot_ms;
+            }
+            try {
+                return this.state.messages.ATT.time_boot_ms;
+            } catch {
+                try {
+                    return this.state.messages.ATTITUDE.time_boot_ms;
+                } catch {
+                    return this.state.messages.osd.time_boot_ms;
+                }
+            }
+        },
+        // the expression with each message name replaced by a[i], its row at each time
+        compileExpression(expression, messages) {
+            let body = expression;
+            for (const field in messages) {
+                if (Number.isNaN(Number(field))) {
+                    break;
+                }
+                // first looks for fields in the expression
+                if (body.includes(`${messages[field]}.`)) {
+                    body = body.replaceAll(
+                        `${messages[field]}.`,
+                        "a[" + field + "].",
+                    );
+                    continue;
+                }
+                // fallback to replacing message name instead
+                body = body.replaceAll(
+                    `${messages[field]}`,
+                    "a[" + field + "]",
+                );
+            }
+            return body;
+        },
+        // each message's sample at (or just after) the time; timeIndexes move forward in place
+        rowsAt(messages, timeIndexes, time) {
+            const vals = [];
+            for (const fieldIndex in timeIndexes) {
+                const data = this.state.messages[messages[fieldIndex]];
+                while (data.time_boot_ms[timeIndexes[fieldIndex]] < time) {
+                    timeIndexes[fieldIndex] += 1;
+                }
+                const newobj = {};
+                for (const key of Object.keys(data)) {
+                    newobj[key] = data[key][timeIndexes[fieldIndex]];
+                }
+                vals.push(newobj);
+            }
+            return vals;
+        },
         evaluateExpression(expression1) {
             const start = new Date();
             if (expression1 in this.state.plotCache) {
@@ -704,53 +754,19 @@ export default {
                 return this.state.plotCache[expression1];
             }
             console.log("MISS! evaluating : " + expression1);
-            let fields = this.findMessagesInExpression(expression1).map(
+            const messages = this.findMessagesInExpression(expression1).map(
                 (field) => field[0],
             );
-            console.log(fields);
-            fields = fields === null ? [] : fields;
-            const messages = fields.length === 0 ? [] : fields;
-            // use time of first message for now
-            let x;
-            if (messages.length > 0) {
-                if (this.state.messages[messages[0]] === undefined) {
-                    console.log("ERROR: message " + messages[0] + " not found");
-                    return { error: "message " + messages[0] + " not found" };
-                }
-                x = this.state.messages[messages[0]].time_boot_ms;
-            } else {
-                try {
-                    x = this.state.messages.ATT.time_boot_ms;
-                } catch {
-                    try {
-                        x = this.state.messages.ATTITUDE.time_boot_ms;
-                    } catch {
-                        x = this.state.messages.osd.time_boot_ms;
-                    }
-                }
+            console.log(messages);
+            if (
+                messages.length > 0 &&
+                this.state.messages[messages[0]] === undefined
+            ) {
+                console.log("ERROR: message " + messages[0] + " not found");
+                return { error: "message " + messages[0] + " not found" };
             }
-            // used to find the corresponding time indexes between messages
-            const timeIndexes = new Array(fields.length).fill(0);
-            const y = [];
-            let expression = expression1;
-            for (const field in fields) {
-                if (Number.isNaN(Number(field))) {
-                    break;
-                }
-                // first looks for fields in the expression
-                if (expression.includes(`${fields[field]}.`)) {
-                    expression = expression.replaceAll(
-                        `${fields[field]}.`,
-                        "a[" + field + "].",
-                    );
-                    continue;
-                }
-                // fallback to replacing message name instead
-                expression = expression.replaceAll(
-                    `${fields[field]}`,
-                    "a[" + field + "]",
-                );
-            }
+            const x = this.expressionTimes(messages);
+            const expression = this.compileExpression(expression1, messages);
             let f;
             try {
                 f = new Function("a", "return " + expression);
@@ -759,41 +775,26 @@ export default {
             }
             // lowpass()/delta() keep state between samples: start from a clean state
             globalThis.resetFilterState();
+            // used to find the corresponding time indexes between messages
+            const timeIndexes = new Array(messages.length).fill(0);
+            const y = [];
             for (const time of x) {
-                const vals = [];
-                for (const fieldIndex in timeIndexes) {
-                    // array of indexes, one for each field
-                    while (
-                        this.state.messages[messages[fieldIndex]].time_boot_ms[
-                            timeIndexes[fieldIndex]
-                        ] < time
-                    ) {
-                        timeIndexes[fieldIndex] += 1;
-                    }
-                    const newobj = {};
-                    for (const key of Object.keys(
-                        this.state.messages[messages[fieldIndex]],
-                    )) {
-                        newobj[key] =
-                            this.state.messages[messages[fieldIndex]][key][
-                                timeIndexes[fieldIndex]
-                            ];
-                    }
-                    vals.push(newobj);
-                }
+                const vals = this.rowsAt(messages, timeIndexes, time);
+                let val;
                 try {
-                    const val = f(vals);
-                    if (!isNumber(val)) {
-                        console.log(val);
-                        throw new Error(
-                            "Expression does not result in a number",
-                        );
-                    } else if (val !== null) {
-                        y.push(val);
-                    }
+                    val = f(vals);
                 } catch (e) {
                     return { error: e };
                 }
+                if (!isNumber(val)) {
+                    console.log(val);
+                    return {
+                        error: new Error(
+                            "Expression does not result in a number",
+                        ),
+                    };
+                }
+                y.push(val);
             }
             console.log("evaluated " + expression);
             const data = this.addGaps({
@@ -801,7 +802,6 @@ export default {
                 y,
             });
             Vue.set(this.state.plotCache, expression1, data);
-            // this.state.plotCache[expression1] = data
             console.log("Evaluation took " + (Date.now() - start) + "ms");
             this.cleanupCache();
             return data;
@@ -835,6 +835,77 @@ export default {
             }
             return newData;
         },
+        // false (and the first error recorded) when an expression can't be plotted
+        expressionsArePlottable() {
+            const errors = [];
+            for (const expression of this.state.expressions) {
+                const [canplot, error] = this.expressionCanBePlotted(
+                    expression,
+                    false,
+                );
+                if (!canplot) {
+                    errors.push(error);
+                    this.state.expressionErrors = errors;
+                    return false;
+                }
+                errors.push(null);
+            }
+            return true;
+        },
+        // Plotly trace of an expression; also records its error and titles its y axis
+        traceFor(expression) {
+            let data = this.evaluateExpression(expression.name);
+            if ("error" in data) {
+                this.state.expressionErrors.push(data.error);
+                data = { x: 0, y: 0 };
+            } else {
+                this.state.expressionErrors.push(null);
+            }
+            console.log(data);
+            const marker = data.isSwissCheese
+                ? {
+                      size: 5,
+                      symbol: "cross-thin",
+                      color: expression.color,
+                      line: {
+                          color: expression.color,
+                          width: 1,
+                      },
+                  }
+                : { size: 4, color: expression.color };
+            const trace = {
+                name: expression.name,
+                // type: 'scattergl',
+                mode: data.isSwissCheese ? "lines+markers" : "lines",
+                x: data.x,
+                y: data.y,
+                yaxis: "y" + (expression.axis + 1),
+                line: {
+                    color: expression.color,
+                    width: 1.5,
+                },
+                marker,
+            };
+            this.setAxisTitle(expression);
+            return trace;
+        },
+        setAxisTitle(expression) {
+            const axisname =
+                expression.axis > 0 ? "yaxis" + (expression.axis + 1) : "yaxis";
+            if (expression.axis <= 6) {
+                plotOptions[axisname].title = {
+                    text: this.getAxisTitle(expression.axis),
+                    font: {
+                        color: expression.color,
+                    },
+                };
+                plotOptions[axisname].tickfont.color = expression.color;
+                /* if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
+                     plotOptions[axisname].title.text +=
+                        ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
+                } */
+            }
+        },
         plot() {
             console.log("plot()");
             if (this.state.expressions.length === 0) {
@@ -844,33 +915,16 @@ export default {
                 return;
             }
             plotOptions.title = this.state.file;
-
-            const datasets = [];
             this.state.expressionErrors = [];
-            const errors = [];
-
-            for (const expression of this.state.expressions) {
-                const [canplot, error] = this.expressionCanBePlotted(
-                    expression,
-                    false,
-                );
-                if (!canplot) {
-                    errors.push(error);
-                    this.state.expressionErrors = errors;
-                    return;
-                }
-                errors.push(null);
+            if (!this.expressionsArePlottable()) {
+                return;
             }
 
-            let messages = [];
-            for (const expression of this.state.expressions) {
-                messages = [
-                    ...messages,
-                    ...this.findMessagesInExpression(expression.name).map(
-                        (message) => message[0],
-                    ),
-                ];
-            }
+            const messages = this.state.expressions.flatMap((expression) =>
+                this.findMessagesInExpression(expression.name).map(
+                    (message) => message[0],
+                ),
+            );
             if (!this.messagesAreAvailable(messages)) {
                 this.waitForMessages(messages)
                     .then(this.plot)
@@ -880,64 +934,9 @@ export default {
                     });
             }
 
-            for (const expression of this.state.expressions) {
-                let data = this.evaluateExpression(expression.name);
-                if ("error" in data) {
-                    this.state.expressionErrors.push(data.error);
-                    data = { x: 0, y: 0 };
-                } else {
-                    this.state.expressionErrors.push(null);
-                }
-                console.log(data);
-                const mode = data.isSwissCheese ? "lines+markers" : "lines";
-
-                const regularMarker = {
-                    size: 4,
-                    color: expression.color,
-                };
-
-                const crossMarker = {
-                    size: 5,
-                    symbol: "cross-thin",
-                    color: expression.color,
-                    line: {
-                        color: expression.color,
-                        width: 1,
-                    },
-                };
-                const marker = data.isSwissCheese ? crossMarker : regularMarker;
-                datasets.push({
-                    name: expression.name,
-                    // type: 'scattergl',
-                    mode,
-                    x: data.x,
-                    y: data.y,
-                    yaxis: "y" + (expression.axis + 1),
-                    line: {
-                        color: expression.color,
-                        width: 1.5,
-                    },
-                    marker,
-                });
-                const axisname =
-                    expression.axis > 0
-                        ? "yaxis" + (expression.axis + 1)
-                        : "yaxis";
-
-                if (expression.axis <= 6) {
-                    plotOptions[axisname].title = {
-                        text: this.getAxisTitle(expression.axis),
-                        font: {
-                            color: expression.color,
-                        },
-                    };
-                    plotOptions[axisname].tickfont.color = expression.color;
-                    /* if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
-                         plotOptions[axisname].title.text +=
-                            ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
-                    } */
-                }
-            }
+            const datasets = this.state.expressions.map((expression) =>
+                this.traceFor(expression),
+            );
             let start = new Date();
             console.log("starting plotting itself...");
 
@@ -985,6 +984,11 @@ export default {
 
             this.state.plotLoading = false;
 
+            this.addCursorLine();
+            console.log("layout done in " + (Date.now() - start) + "ms");
+        },
+        // vertical line on the plot background that follows the time cursor
+        addCursorLine() {
             const bglayer = document.getElementsByClassName("bglayer")[0];
             const rect = bglayer.childNodes[0];
             this.cursor = document.createElementNS(
@@ -1004,7 +1008,6 @@ export default {
             this.cursor.setAttribute("stroke-width", 1);
             this.cursor.setAttribute("stroke", "black");
             bglayer.append(this.cursor);
-            console.log("layout done in " + (Date.now() - start) + "ms");
         },
         setCursorTime(time) {
             console.log("master got hover event at " + time + "ms");

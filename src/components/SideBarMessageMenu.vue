@@ -115,6 +115,34 @@ import trackerDocs from "../assets/logmetadata/tracker.xml";
 import roverDocs from "../assets/logmetadata/rover.xml";
 import subDocs from "../assets/logmetadata/sub.xml";
 
+// "MSG.field:2" goes on the second axis
+function presetFields(expression) {
+    return expression
+        .split(" ")
+        .map((exp) =>
+            exp.includes(":") ? [exp.replace(":2", ""), 1] : [exp, 0],
+        );
+}
+
+// presets keyed "Folder/Sub/Name" as nested objects, for the tree menu
+function presetTree(presets) {
+    const tree = {};
+    for (const [key, value] of Object.entries(presets)) {
+        let current = tree;
+        const fields = key.trim().split("/");
+        const lastField = fields.pop();
+        for (const field of fields) {
+            if (!(field in current)) {
+                console.log("overwriting " + field);
+                current[field] = {};
+            }
+            current = current[field];
+        }
+        current[lastField] = value;
+    }
+    return tree;
+}
+
 export default {
     name: "MessageMenu",
     components: { TreeMenu },
@@ -186,59 +214,18 @@ export default {
         },
         availableMessagePresets() {
             const dict = {};
-            // do it for default messages
+            // built-in presets only when the log has all of their fields
             for (const [key, value] of Object.entries(this.messagePresets)) {
-                let missing = false;
-                let color = 0;
-                for (const field of value) {
-                    // If all of the expressions match, add this and move on
-                    if (field[0] === "") {
-                        continue;
-                    }
-                    missing = missing || !this.isAvailable(field);
-                    if (!missing) {
-                        if (key in dict) {
-                            dict[key].messages.push([...field, color++]);
-                        } else {
-                            dict[key] = { messages: [[...field, color++]] };
-                        }
-                    }
-                }
-                if (missing) {
+                const fields = value.filter((field) => field[0] !== "");
+                if (!this.addPresetFields(dict, key, fields)) {
                     delete dict[key];
                 }
             }
-            // And again for user presets
+            // user presets keep the fields before the first one the log doesn't have
             for (const [key, value] of Object.entries(this.userPresets)) {
-                let missing = false;
-                let color = 0;
-                for (const field of value) {
-                    // If all of the expressions match, add this and move on
-                    missing = missing || !this.isAvailable(field);
-                    if (!missing) {
-                        if (key in dict) {
-                            dict[key].messages.push([...field, color++]);
-                        } else {
-                            dict[key] = { messages: [[...field, color++]] };
-                        }
-                    }
-                }
+                this.addPresetFields(dict, key, value);
             }
-            const newDict = {};
-            for (const [key, value] of Object.entries(dict)) {
-                let current = newDict;
-                const fields = key.trim().split("/");
-                const lastField = fields.pop();
-                for (const field of fields) {
-                    if (!(field in current)) {
-                        console.log("overwriting " + field);
-                        current[field] = {};
-                    }
-                    current = current[field];
-                }
-                current[lastField] = value;
-            }
-            return newDict;
+            return presetTree(dict);
         },
     },
     created() {
@@ -252,6 +239,19 @@ export default {
         this.$eventHub.$off("messageTypes");
     },
     methods: {
+        // adds the fields (each with a color index) to dict[key] up to the first one
+        // the log doesn't have; false if there was such a field
+        addPresetFields(dict, key, fields) {
+            let color = 0;
+            for (const field of fields) {
+                if (!this.isAvailable(field)) {
+                    return false;
+                }
+                dict[key] ??= { messages: [] };
+                dict[key].messages.push([...field, color++]);
+            }
+            return true;
+        },
         loadXmlPresets() {
             const graphs = {};
             const files = [mavgraphs, mavgraphs2, ekfGraphs, ekf3Graphs];
@@ -259,27 +259,15 @@ export default {
                 const result = fastXmlParser.parse(contents, {
                     ignoreAttributes: false,
                 });
-                const igraphs = result.graphs;
-                for (const graph of igraphs.graph) {
-                    let i = "";
+                for (const graph of result.graphs.graph) {
                     const name = graph["@_name"];
-                    if (!Array.isArray(graph.expression)) {
-                        graph.expression = [graph.expression];
-                    }
-                    for (const expression of graph.expression) {
-                        const fields = [];
-                        for (let exp of expression.split(" ")) {
-                            if (exp.includes(":")) {
-                                exp = exp.replace(":2", "");
-                                fields.push([exp, 1]);
-                            } else {
-                                fields.push([exp, 0]);
-                            }
-                        }
-                        graphs[name + i] = fields;
-                        // graphs with several expressions share a name: pad it so each keeps its own key
-                        i += " ";
-                    }
+                    const expressions = Array.isArray(graph.expression)
+                        ? graph.expression
+                        : [graph.expression];
+                    // graphs with several expressions share a name: pad it so each keeps its own key
+                    expressions.forEach((expression, i) => {
+                        graphs[name + " ".repeat(i)] = presetFields(expression);
+                    });
                 }
             }
             return graphs;
