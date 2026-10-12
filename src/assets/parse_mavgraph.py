@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import re
 
 def format_expression(plot):
-    msgformat = "[a-zA-Z]\w+\.\w+"
+    msgformat = r"[a-zA-Z]\w+\.\w+"
     msg = re.findall(msgformat, plot)
     if len(msg) == 0:
         return ""
