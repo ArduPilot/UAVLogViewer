@@ -119,7 +119,3 @@ written gzip-compressed.
   ellipsoid).
 - `/vsizip` re-reads the zip per tile; pre-unzipping cells to `.hgt` speeds up an I/O-bound
   world build.
-
-```
-
-```
