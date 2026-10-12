@@ -103,6 +103,11 @@ export function firstFreeColor(state) {
     );
 }
 
+// Remove every plotted expression (the plot panel redraws or closes through its watcher)
+export function clearExpressions(state) {
+    state.expressions.splice(0);
+}
+
 export function resetLogState() {
     Object.assign(store, {
         mapAvailable: false,

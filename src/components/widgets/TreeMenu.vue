@@ -58,7 +58,7 @@
 </template>
 
 <script>
-import { store } from "../Globals.js";
+import { store, clearExpressions } from "../Globals.js";
 import Collapse from "../ui/Collapse.vue";
 
 export default {
@@ -103,7 +103,7 @@ export default {
             this.$eventHub.$emit("presetsChanged");
         },
         openPreset(preset) {
-            this.$eventHub.$emit("clearPlot");
+            clearExpressions(this.state);
             this.state.plotOn = true;
             this.$nextTick(function () {
                 const msgs = [];

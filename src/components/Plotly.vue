@@ -272,7 +272,6 @@ export default {
         this.$eventHub.$on("togglePlot", this.togglePlot);
         this.$eventHub.$on("addPlots", this.addPlots);
         this.$eventHub.$on("plot", this.plot);
-        this.$eventHub.$on("clearPlot", this.clearPlot);
     },
     beforeDestroy() {
         this.$eventHub.$off("cesium-time-changed", this.setCursorTime);
@@ -282,7 +281,6 @@ export default {
         this.$eventHub.$off("togglePlot", this.togglePlot);
         this.$eventHub.$off("addPlots", this.addPlots);
         this.$eventHub.$off("plot", this.plot);
-        this.$eventHub.$off("clearPlot", this.clearPlot);
         clearInterval(this.interval);
         clearTimeout(this.plotTimer);
     },
@@ -591,12 +589,6 @@ export default {
                 this.state.plotOn = false;
             }
             this.onRangeChanged();
-        },
-        clearPlot() {
-            while (this.state.expressions.length) {
-                this.state.expressions.pop();
-            }
-            this.state.expressions.lenght = 0;
         },
         resetAxis(index) {
             // Resets the Y axis so that the next plot autoranges

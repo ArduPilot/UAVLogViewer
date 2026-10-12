@@ -84,7 +84,7 @@
                 <button
                     v-if="state.expressions.length > 0"
                     class="save-preset"
-                    @click="$eventHub.$emit('clearPlot')"
+                    @click="clearExpressions(state)"
                 >
                     <i class="fa fa-ban" aria-hidden="true"></i>
                     clear
@@ -114,7 +114,12 @@
     </div>
 </template>
 <script>
-import { store, firstFreeAxis, firstFreeColor } from "./Globals.js";
+import {
+    store,
+    firstFreeAxis,
+    firstFreeColor,
+    clearExpressions,
+} from "./Globals.js";
 import ExpressionEditor from "./ExpressionEditor.vue";
 import Collapse from "./ui/Collapse.vue";
 import Modal from "./ui/Modal.vue";
@@ -161,6 +166,7 @@ export default {
         },
     },
     methods: {
+        clearExpressions,
         createNewExpression() {
             this.state.plotOn = true;
             this.$nextTick(() => {
