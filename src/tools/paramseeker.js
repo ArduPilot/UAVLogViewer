@@ -1,4 +1,4 @@
-import Vue from "vue";
+import { eventHub } from "../eventHub.js";
 
 export class ParamSeeker {
     // ..and an (optional) custom class constructor. If one is
@@ -35,10 +35,7 @@ export class ParamSeeker {
             this.currentIndex -= 1;
         }
         if (this.currentIndex !== indexBefore) {
-            if (Vue.prototype.$eventHub !== undefined) {
-                // this is undefined when running unit tests
-                Vue.prototype.$eventHub.$emit("paramsUpdated");
-            }
+            eventHub.$emit("paramsUpdated");
         }
         return this;
     }

@@ -436,7 +436,6 @@ export default {
         this.state.mapLoading = false;
         // remove only this component's listeners (plots and widgets listen to hoveredTime too)
         this.$eventHub.$off("hoveredTime", this.showAttitude);
-        this.$eventHub.$off("rangeChanged", this.onRangeChanged);
         document.removeEventListener("setzoom", this.onTimelineZoom);
         clearInterval(this.globeOpacityInterval);
         // free the WebGL context (browsers only allow a few at a time)
@@ -863,7 +862,6 @@ export default {
                 }
                 this.plotFences(this.state.fences);
                 document.addEventListener("setzoom", this.onTimelineZoom);
-                this.$eventHub.$on("rangeChanged", this.onRangeChanged);
 
                 try {
                     await this.waitForCesiumReady();

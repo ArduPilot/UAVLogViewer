@@ -266,11 +266,14 @@ export default {
         this.$eventHub.$on("clearPlot", this.clearPlot);
     },
     beforeDestroy() {
-        this.$eventHub.$off("animation-changed");
-        this.$eventHub.$off("cesium-time-changed");
-        this.$eventHub.$off("addPlots");
-        this.$eventHub.$off("hidePlot");
-        this.$eventHub.$off("togglePlot");
+        this.$eventHub.$off("cesium-time-changed", this.setCursorTime);
+        this.$eventHub.$off("hoveredTime", this.setCursorTime);
+        this.$eventHub.$off("force-resize-plotly", this.resize);
+        this.$eventHub.$off("child-zoomed", this.onTimeRangeChanged);
+        this.$eventHub.$off("togglePlot", this.togglePlot);
+        this.$eventHub.$off("addPlots", this.addPlots);
+        this.$eventHub.$off("plot", this.plot);
+        this.$eventHub.$off("clearPlot", this.clearPlot);
         clearInterval(this.interval);
     },
     methods: {

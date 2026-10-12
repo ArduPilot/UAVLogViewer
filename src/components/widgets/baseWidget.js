@@ -26,6 +26,9 @@ export const baseWidget = {
         close() {
             this.$emit("close");
         },
+        onParamsUpdated() {
+            this.forceRecompute += 1;
+        },
         getDivName() {
             return "pane" + this.name;
         },
@@ -156,8 +159,9 @@ export const baseWidget = {
         // $elem.addEventListener('moved', (e) => $elem.innerHTML = 'moved')
         // $elem.addEventListener('resized', (e) => $elem.innerHTML = 'resized')
         this.setup();
-        this.$eventHub.$on("paramsUpdated", () => {
-            this.forceRecompute += 1;
-        });
+        this.$eventHub.$on("paramsUpdated", this.onParamsUpdated);
+    },
+    beforeDestroy() {
+        this.$eventHub.$off("paramsUpdated", this.onParamsUpdated);
     },
 };

@@ -216,6 +216,9 @@ export default {
     created() {
         this.$eventHub.$on("set-selected", this.setSelected);
     },
+    beforeDestroy() {
+        this.$eventHub.$off("set-selected", this.setSelected);
+    },
     methods: {
         setSelected(selected) {
             this.selected = selected;

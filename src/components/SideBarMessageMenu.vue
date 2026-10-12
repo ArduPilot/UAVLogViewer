@@ -236,7 +236,8 @@ export default {
         this.loadLocalPresets();
     },
     beforeDestroy() {
-        this.$eventHub.$off("messageTypes");
+        this.$eventHub.$off("messageTypes", this.handleMessageTypes);
+        this.$eventHub.$off("presetsChanged", this.loadLocalPresets);
     },
     methods: {
         // adds the fields (each with a color index) to dict[key] up to the first one

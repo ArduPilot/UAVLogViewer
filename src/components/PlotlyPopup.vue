@@ -68,7 +68,6 @@ export default {
             plotOptions: {},
             flightModeChanges: [],
             externalTimeRange: null,
-            $eventHub: null,
             cursor: null,
         };
     },
@@ -150,11 +149,12 @@ export default {
             this.setTimeRange(timeRange);
         };
         globalThis.setEventHub = (eventHub) => {
-            this.$eventHub = eventHub;
-            this.$eventHub.$on("cesium-time-changed", this.setCursorTime);
-            this.$eventHub.$on("hoveredTime", this.setCursorTime);
-            this.$eventHub.$on("child-zoomed", this.setTimeRange);
-            this.$eventHub.$on("force-resize-plotly", this.resize);
+            this.parentHub = eventHub;
+            this.listenToParent("$on");
+            // beforeDestroy does not run when the popup window closes
+            window.addEventListener("pagehide", () =>
+                this.listenToParent("$off"),
+            );
         };
         const WIDTH_IN_PERCENT_OF_PARENT = 90;
         d3.select("#line")
@@ -168,11 +168,23 @@ export default {
         this.gd = d3.select("#line").node();
     },
     beforeDestroy() {
-        this.$eventHub.$off("animation-changed");
-        this.$eventHub.$off("cesium-time-changed");
+        this.listenToParent("$off");
         clearInterval(this.interval);
     },
     methods: {
+        // events between this window and the main one go through the main window's bus
+        hub() {
+            return this.parentHub ?? this.$eventHub;
+        },
+        listenToParent(method) {
+            if (!this.parentHub) {
+                return;
+            }
+            this.parentHub[method]("cesium-time-changed", this.setCursorTime);
+            this.parentHub[method]("hoveredTime", this.setCursorTime);
+            this.parentHub[method]("child-zoomed", this.setTimeRange);
+            this.parentHub[method]("force-resize-plotly", this.resize);
+        },
         setTimeRange(timeRange) {
             this.externalTimeRange = timeRange;
         },
@@ -240,7 +252,7 @@ export default {
         },
         waitForMessages(messages) {
             for (const message of messages) {
-                this.$eventHub.$emit("loadType", message);
+                this.hub().$emit("loadType", message);
             }
             let interval;
             let counter = 0;
@@ -273,21 +285,21 @@ export default {
                 // this.$router.push({query: query})
                 if (event["xaxis.range"]) {
                     this.setTimeRange(event["xaxis.range"]);
-                    this.$eventHub.$emit("child-zoomed", this.timeRange);
+                    this.hub().$emit("child-zoomed", this.timeRange);
                 }
                 if (event["xaxis.range[0]"]) {
                     this.setTimeRange([
                         event["xaxis.range[0]"],
                         event["xaxis.range[1]"],
                     ]);
-                    this.$eventHub.$emit("child-zoomed", this.timeRange);
+                    this.hub().$emit("child-zoomed", this.timeRange);
                 }
                 if (event["xaxis.autorange"]) {
                     this.setTimeRange([
                         this.gd.layout.xaxis.range[0],
                         this.gd.layout.xaxis.range[1],
                     ]);
-                    this.$eventHub.$emit("child-zoomed", this.timeRange);
+                    this.hub().$emit("child-zoomed", this.timeRange);
                 }
             }
         },
@@ -352,7 +364,7 @@ export default {
                 const infotext = data.points.map(function (d) {
                     return d.x;
                 });
-                this.$eventHub.$emit("hoveredTime", infotext[0]);
+                this.hub().$emit("hoveredTime", infotext[0]);
                 this.setCursorTime(infotext[0]);
             });
 

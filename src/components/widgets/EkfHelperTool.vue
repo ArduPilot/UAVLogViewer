@@ -107,6 +107,10 @@ export default {
         this.$eventHub.$on("cesium-time-changed", this.setTime);
         this.$eventHub.$on("hoveredTime", this.setTime);
     },
+    beforeDestroy() {
+        this.$eventHub.$off("cesium-time-changed", this.setTime);
+        this.$eventHub.$off("hoveredTime", this.setTime);
+    },
     methods: {
         setTime(time) {
             this.cursorTime = time;

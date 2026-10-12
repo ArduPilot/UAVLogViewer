@@ -106,6 +106,11 @@ export default {
             return this.height * (69 / 150);
         },
     },
+    beforeDestroy() {
+        this.closed = true;
+        this.$eventHub.$off("cesium-time-changed", this.setTime);
+        this.$eventHub.$off("hoveredTime", this.setTime);
+    },
     methods: {
         waitForMessage(fieldname) {
             this.$eventHub.$emit("loadType", fieldname.split(".")[0]);
@@ -190,6 +195,9 @@ export default {
                         msg.chan4_raw[i],
                     ]);
                 }
+                if (_this.closed) {
+                    return;
+                }
                 _this.interpolated = new Interpolator(x, y);
                 _this.$eventHub.$on("cesium-time-changed", _this.setTime);
             });
@@ -200,6 +208,9 @@ export default {
                 const msg = _this.state.messages.RCIN;
                 for (const i in msg.time_boot_ms) {
                     y.push([msg.C1[i], msg.C2[i], msg.C3[i], msg.C4[i]]);
+                }
+                if (_this.closed) {
+                    return;
                 }
                 _this.interpolated = new Interpolator(x, y);
                 _this.$eventHub.$on("cesium-time-changed", _this.setTime);

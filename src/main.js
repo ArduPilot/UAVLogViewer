@@ -3,6 +3,7 @@
 import Vue from "vue";
 import App from "./App.vue";
 import router from "./router";
+import { eventHub } from "./eventHub.js";
 
 // Importing Bootstrap Vue
 import BootstrapVue from "bootstrap-vue";
@@ -19,7 +20,7 @@ Vue.use(BootstrapVue);
 
 Vue.config.productionTip = false;
 
-Vue.prototype.$eventHub = new Vue(); // Global event bus
+Vue.prototype.$eventHub = eventHub;
 
 new Vue({
     router,

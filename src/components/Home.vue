@@ -181,6 +181,7 @@ export default {
     },
     created() {
         this.$eventHub.$on("messagesDoneLoading", this.extractFlightData);
+        this.$eventHub.$on("cesium-time-changed", this.seekParams);
         this.state.messages = {};
         this.state.timeAttitude = [];
         this.state.timeAttitudeQ = [];
@@ -190,7 +191,8 @@ export default {
         });
     },
     beforeDestroy() {
-        this.$eventHub.$off("messages");
+        this.$eventHub.$off("messagesDoneLoading", this.extractFlightData);
+        this.$eventHub.$off("cesium-time-changed", this.seekParams);
     },
     methods: {
         extractFlightData() {
@@ -266,6 +268,11 @@ export default {
             Vue.delete(this.state.messages, "CMD");
         },
 
+        // parameter values at the playback time
+        seekParams(time) {
+            this.state.params?.seek(time);
+        },
+
         extractVehicleAndParams() {
             this.state.vehicle = this.dataExtractor.extractVehicleType(
                 this.state.messages,
@@ -279,9 +286,6 @@ export default {
                         this.dataExtractor.extractDefaultParams(
                             this.state.messages,
                         );
-                    this.$eventHub.$on("cesium-time-changed", (time) => {
-                        this.state.params.seek(time);
-                    });
                 }
             }
             if (this.state.vehicle === "quadcopter") {
