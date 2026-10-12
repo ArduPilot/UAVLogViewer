@@ -26,6 +26,7 @@
 // Attitude indicator (artificial horizon), adapted from the Attitude and Wrapper components of
 // vue-flight-indicators 0.1.1 by Uğur Cibaroğlu, https://github.com/uCibar/vue-flight-indicators,
 // licensed under the GNU GPL v3 like this app. That package only works with Vue 2.
+// Change: the ground is green (#3A9A3A, darker stop #2A732A) instead of brown.
 
 const PITCH_BOUND = 30;
 

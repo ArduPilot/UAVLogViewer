@@ -13,7 +13,7 @@
 </filter>
 <g id="Layer_2">
 	<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="200.667" y1="349.9331" x2="200.667" y2="50.3999">
-		<stop  offset="0.4999" style="stop-color:#503723"/>
+		<stop  offset="0.4999" style="stop-color:#3A9A3A"/>
 		<stop  offset="0.5001" style="stop-color:#558EBB"/>
 	</linearGradient>
 	<path fill="url(#SVGID_2_)" filter="url(#AI_Shadow_1)" d="M200.667,50.4C117.953,50.4,50.9,117.453,50.9,200.167
