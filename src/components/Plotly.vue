@@ -773,6 +773,8 @@ export default {
             } catch (e) {
                 return { error: e };
             }
+            // lowpass()/delta() keep state between samples: start from a clean state
+            globalThis.resetFilterState();
             for (const time of x) {
                 const vals = [];
                 for (const fieldIndex in timeIndexes) {

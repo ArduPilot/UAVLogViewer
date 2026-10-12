@@ -22,18 +22,16 @@ globalThis.getParam = function (name, default_) {
     return globalThis.params[name];
 };
 
-// calculate barometric altitude
+// calculate barometric altitude (as pymavlink: the ground values default to the parameters)
 globalThis.altitude = function (SCALED_PRESSURE, groundPressure, groundTemp) {
     if (groundPressure === undefined) {
         if (!("GND_ABS_PRESS" in globalThis.params)) {
             return 0;
         }
+        groundPressure = globalThis.params.GND_ABS_PRESS;
     }
-    groundPressure = globalThis.params.GND_ABS_PRESS;
     if (groundTemp === undefined) {
-        if ("GND_ABS_PRESS" in globalThis.params) {
-            groundTemp = globalThis.params.GND_TEMP;
-        }
+        groundTemp = globalThis.getParam("GND_TEMP", 0);
     }
     const scaling = groundPressure / (SCALED_PRESSURE.press_abs * 100);
     const temp = groundTemp + 273.15;
@@ -43,12 +41,12 @@ globalThis.altitude = function (SCALED_PRESSURE, groundPressure, groundTemp) {
 globalThis.altitude2 = function (SCALED_PRESSURE, groundPressure, groundTemp) {
     // calculate barometric altitude'
     if (groundPressure == null) {
-        if (globalThis.params.GND_ABS_PRESS === null) {
+        if (!("GND_ABS_PRESS" in globalThis.params)) {
             return 0;
         }
+        groundPressure = globalThis.getParam("GND_ABS_PRESS", 1);
     }
-    groundPressure = globalThis.getParam("GND_ABS_PRESS", 1);
-    if (groundTemp === null) {
+    if (groundTemp == null) {
         groundTemp = globalThis.getParam("GND_TEMP", 0);
     }
     const scaling = (SCALED_PRESSURE.press_abs * 100) / groundPressure;
@@ -152,25 +150,30 @@ globalThis.mag_field_df = function (MAG, ofs) {
 
 globalThis.sqrt = Math.sqrt;
 
-globalThis.lastLowpass = null;
+// pymavlink's lowpass(variable, key, factor), with one filter state per key. The
+// lowpass(variable, factor) shorthand keeps one state per factor.
+globalThis.lastLowpass = {};
 globalThis.lowpass = function (variable, key, factor) {
-    if (!Number.isNaN(Number(key))) {
+    if (factor === undefined) {
         factor = key;
+        key = `factor ${factor}`;
     }
-    if (
-        globalThis.lastLowpass === null ||
-        Number.isNaN(Number(globalThis.lastLowpass))
-    ) {
-        globalThis.lastLowpass = variable;
-    } else {
-        globalThis.lastLowpass =
-            factor * globalThis.lastLowpass + (1 - factor) * variable;
-    }
-    const ret = globalThis.lastLowpass;
-    return ret;
+    const last = globalThis.lastLowpass[key];
+    const value =
+        last === undefined || Number.isNaN(Number(last))
+            ? variable
+            : factor * last + (1 - factor) * variable;
+    globalThis.lastLowpass[key] = value;
+    return value;
 };
 
 globalThis.lastDelta = {};
+
+// Filters keep state between samples: start each plotted expression from a clean state
+globalThis.resetFilterState = function () {
+    globalThis.lastLowpass = {};
+    globalThis.lastDelta = {};
+};
 
 globalThis.delta = function (variable, key) {
     let ret = 0;
