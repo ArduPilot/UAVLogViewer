@@ -107,15 +107,8 @@ export const module = {
 };
 export const resolve = {
     fallback: {
-        // make sure you `npm install path-browserify` to use this
-        crypto: require.resolve("crypto-browserify"),
+        // the MAVLink binding and parser use Node's Buffer
         buffer: require.resolve("buffer/"),
-        assert: require.resolve("assert/"),
-        stream: require.resolve("stream-browserify"),
-        url: require.resolve("url/"),
-        https: require.resolve("https-browserify"),
-        http: require.resolve("stream-http"),
-        zlib: require.resolve("browserify-zlib"),
     },
     alias: {
         vue$: "vue/dist/vue.esm.js",

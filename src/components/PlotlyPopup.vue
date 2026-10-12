@@ -5,9 +5,9 @@
 </template>
 
 <script>
-import Plotly from "plotly.js";
+// only the scatter trace is used: the core build includes it
+import Plotly from "plotly.js/lib/core";
 import { store } from "./Globals.js";
-import * as d3 from "d3";
 
 import Color from "color";
 
@@ -156,16 +156,7 @@ export default {
                 this.listenToParent("$off"),
             );
         };
-        const WIDTH_IN_PERCENT_OF_PARENT = 90;
-        d3.select("#line")
-            .append("div")
-            .style({
-                width: "100%",
-                "margin-left": (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + "%",
-                height: "100%",
-            });
-
-        this.gd = d3.select("#line").node();
+        this.gd = this.$refs.line;
     },
     beforeDestroy() {
         this.listenToParent("$off");

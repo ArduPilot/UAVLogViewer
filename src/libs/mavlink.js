@@ -15,7 +15,11 @@ import { jspack } from "jspack";
 import events from "events";
 import Long from "long";
 import { Buffer } from "buffer"; // required in react - no impact in node
-import crypto from "crypto";
+// The viewer only reads logs: packet signing (sign_packet, check_signature) is never enabled,
+// and its crypto import would bring crypto-browserify into the bundles.
+const noSigning = () => {
+    throw new Error("MAVLink packet signing is not supported");
+};
 // Add a convenience method to Buffer
 Buffer.prototype.toByteArray = function () {
     return Array.prototype.slice.call(this, 0);
@@ -132,7 +136,7 @@ mavlink20.message = class {
     }
     // trying to be the same-ish as the python function of the same name
     sign_packet(mav) {
-        var h = crypto.createHash("sha256");
+        var h = noSigning();
 
         //mav.signing.timestamp is a 48bit number, or 6 bytes.
         // due to js not being able to shift numbers  more than 32, we'll use this instead..
@@ -28061,7 +28065,7 @@ class MAVLink20Processor extends events.EventEmitter {
         //   h = hashlib.new('sha256')
         //   h.update(this.signing.secret_key)
         //   h.update(msgbuf[:-6])
-        var h = crypto.createHash("sha256");
+        var h = noSigning();
 
         // just the last 6 of 13 available are the actual sig . ie excluding the linkid(1) and timestamp(6)
         var sigpart = msgbuf.slice(-6);

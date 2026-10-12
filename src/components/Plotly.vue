@@ -3,9 +3,9 @@
 </template>
 
 <script>
-import Plotly from "plotly.js";
+// only the scatter trace is used: the core build includes it
+import Plotly from "plotly.js/lib/core";
 import { store, firstFreeAxis, firstFreeColor } from "./Globals.js";
-import * as d3 from "d3";
 import { faWindowRestore } from "@fortawesome/free-solid-svg-icons";
 import Vue from "vue";
 import { isNumber } from "underscore";
@@ -248,16 +248,7 @@ export default {
         this.zoomInterval = null;
     },
     mounted() {
-        const WIDTH_IN_PERCENT_OF_PARENT = 90;
-        d3.select("#line")
-            .append("div")
-            .style({
-                width: "100%",
-                "margin-left": (100 - WIDTH_IN_PERCENT_OF_PARENT) / 2 + "%",
-                height: "100%",
-            });
-
-        this.gd = d3.select("#line").node();
+        this.gd = this.$refs.line;
         this.$nextTick(() => {
             if (this.$route.query.ranges) {
                 applyUrlRanges(this.$route.query.ranges);
