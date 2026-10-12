@@ -6,8 +6,6 @@ globalThis.named = (NAMED_VALUE_FLOAT, key) => {
     }
     return null;
 };
-
-// eslint-disable-next-line camelcase
 globalThis.angle_diff = (angle1, angle2) => {
     let ret = angle1 - angle2;
     if (ret > 180) {
@@ -18,8 +16,6 @@ globalThis.angle_diff = (angle1, angle2) => {
     }
     return ret;
 };
-
-// eslint-disable-next-line camelcase
 globalThis.wrap_360 = (angle) => {
     let ret = angle;
     if (ret > 360) {
@@ -30,8 +26,6 @@ globalThis.wrap_360 = (angle) => {
     }
     return ret;
 };
-
-// eslint-disable-next-line camelcase
 globalThis.wrap_180 = (angle) => {
     let ret = angle;
     if (ret > 180) {

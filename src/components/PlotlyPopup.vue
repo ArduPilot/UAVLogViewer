@@ -301,16 +301,12 @@ export default {
 
             gd.data.forEach((trace) => {
                 const len = Math.min(trace.x.length, trace.y.length);
-                const xInside = [];
                 const yInside = [];
 
                 for (let i = 0; i < len; i++) {
                     const x = trace.x[i];
-                    const y = trace.y[i];
-
                     if (x > xRange[0] && x < xRange[1]) {
-                        xInside.push(x);
-                        yInside.push(y);
+                        yInside.push(trace.y[i]);
                     }
                 }
                 const extraData = ` | Min: ${Math.min(...yInside).toFixed(2)} \

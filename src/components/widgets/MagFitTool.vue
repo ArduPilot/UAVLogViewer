@@ -146,7 +146,7 @@
                     Compare
                     <select v-model.number="diffCompassA">
                         <option
-                            v-for="(name, index) in compassMessageNames"
+                            v-for="(compassName, index) in compassMessageNames"
                             :key="'a' + index"
                             :value="index"
                         >
@@ -156,7 +156,7 @@
                     vs
                     <select v-model.number="diffCompassB">
                         <option
-                            v-for="(name, index) in compassMessageNames"
+                            v-for="(compassName, index) in compassMessageNames"
                             :key="'b' + index"
                             :value="index"
                         >
@@ -380,7 +380,6 @@ async function selectParentAsync(population, probs) {
         resolve(population[index]);
     });
 }
-
 export default {
     name: "MagFitTool",
     mixins: [baseWidget],
@@ -565,7 +564,6 @@ export default {
                 MagX: "xmag",
                 MagY: "ymag",
                 MagZ: "zmag",
-                // eslint-disable-next-line camelcase
                 time_boot_ms: "time_boot_ms",
             };
             for (const message of this.compassData) {
@@ -887,17 +885,10 @@ export default {
         loadRequiredData() {
             // sends loadType messages for all of the following tyoes:
             // this includes both dataflash and telemetry logs
-            let requiredTypes = [];
-            if (this.state.logType === "tlog") {
-                requiredTypes = [
-                    "RAW_IMU",
-                    "SCALED_IMU2",
-                    "SCALED_IMU3",
-                    "ATTITUDE",
-                ];
-            } else {
-                requiredTypes = ["ATT", "MAG", "MAG2", "MAG3"];
-            }
+            const requiredTypes =
+                this.state.logType === "tlog"
+                    ? ["RAW_IMU", "SCALED_IMU2", "SCALED_IMU3", "ATTITUDE"]
+                    : ["ATT", "MAG", "MAG2", "MAG3"];
             this.waitForMessages(requiredTypes)
                 .finally(() => {
                     this.computeData();
@@ -1237,7 +1228,6 @@ export default {
                 this.$set(this.newCorrections, instance, c);
 
                 const newMessage = {
-                    // eslint-disable-next-line camelcase
                     time_boot_ms: [],
                     MagX: [],
                     MagY: [],

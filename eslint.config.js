@@ -35,12 +35,20 @@ export default [
             },
         },
         rules: {
-            // MAVLink/pymavlink names are snake_case: disable per line where they are used
-            camelcase: ["error", { properties: "always" }],
+            // Property names come from MAVLink, DataFlash, Plotly and Nightwatch (snake_case);
+            // our own identifiers are still checked
+            camelcase: ["error", { properties: "never", ignoreGlobals: true }],
+            // Math.random only drives MagFit's optimiser; nothing security-related uses it
+            "sonarjs/pseudo-random": "off",
             "vue/multi-word-component-names": "off",
             "vue/no-reserved-component-names": "off",
             "vue/no-v-html": "error",
         },
+    },
+    {
+        // Plot expressions are user-entered JavaScript by design (see src/mavextra/)
+        files: ["src/components/Plotly.vue"],
+        rules: { "sonarjs/code-eval": "off" },
     },
     {
         // the log parsers run in a web worker

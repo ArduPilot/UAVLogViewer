@@ -66,6 +66,6 @@ Plot series are user expressions such as `ATT.Roll * 2` or `lowpass(ATTITUDE.pit
 ## Code style
 
 - Prettier 3 owns formatting (`.prettierrc.json`: 4-space indent, double quotes, semicolons, trailing commas). Run `npm run format` rather than hand-formatting; `.prettierignore` excludes the submodule, XML assets and `package-lock.json`. Line endings are LF (`.gitattributes`).
-- ESLint (`plugin:vue/essential` + `standard` + `eslint-config-prettier`) checks code quality only. `camelcase` is enforced, so MAVLink/pymavlink field names need a rule-specific `// eslint-disable-next-line camelcase`; `mavextra.js` disables it file-wide. `src/libs/` (generated) and `src/tools/parsers/` are not linted.
+- ESLint (`plugin:vue/essential` + `standard` + `eslint-config-prettier`) checks code quality only. `camelcase` checks our identifiers but not property names (MAVLink, DataFlash, Plotly and Nightwatch use snake_case). Rule exceptions live in `eslint.config.js` with their reason, not in inline `eslint-disable` comments. `src/libs/` (generated) and `src/tools/parsers/` are not linted.
 - Vue 2: `:key` goes on the elements inside `<template v-for>`, never on the `<template>` itself.
 - Use `Number.isNaN(Number(x))` where the old code relied on the global `isNaN` coercing strings (for...in keys, preset color indices, expression values). Plain `Number.isNaN("abc")` is `false`.

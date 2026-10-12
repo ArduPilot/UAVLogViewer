@@ -48,14 +48,13 @@
 </template>
 <script>
 import VProgress from "./SideBarFileManagerProgressBar.vue";
+import sampleLog from "../assets/vtol.tlog";
 import Worker from "../tools/parsers/parser.worker.js";
 import { store, resetLogState } from "./Globals";
 
 import { MAVLink20Processor as MAVLink } from "../libs/mavlink";
 
 const worker = new Worker();
-
-worker.addEventListener("message", function (event) {});
 
 // Start parsing a log; clears everything left from a previous log first
 function parseLog(file, { isTlog, isDji }) {
@@ -145,7 +144,7 @@ export default {
             let url;
             if (file === "sample") {
                 this.state.file = "sample";
-                url = require("../assets/vtol.tlog").default;
+                url = sampleLog;
                 this.state.logType = "tlog";
             } else {
                 url = file;
@@ -166,7 +165,7 @@ export default {
             oReq.responseType = "arraybuffer";
 
             // Use arrow function to preserve 'this' context
-            oReq.onload = (oEvent) => {
+            oReq.onload = () => {
                 const arrayBuffer = oReq.response;
 
                 this.transferMessage = "Download Done";
@@ -194,7 +193,7 @@ export default {
 
             oReq.send();
         },
-        onChange(ev) {
+        onChange() {
             const fileinput = document.getElementById("choosefile");
             this.process(fileinput.files[0]);
         },
@@ -281,7 +280,6 @@ export default {
             if (message.name === "GLOBAL_POSITION_INT") {
                 message.lat = message.lat / 10000000;
                 message.lon = message.lon / 10000000;
-                // eslint-disable-next-line camelcase
                 message.relative_alt = message.relative_alt / 1000;
             }
             return message;

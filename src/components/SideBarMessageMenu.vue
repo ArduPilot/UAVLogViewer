@@ -102,10 +102,18 @@
     </div>
 </template>
 <script>
-import { isArray } from "underscore";
 import { store } from "./Globals.js";
 import TreeMenu from "./widgets/TreeMenu.vue";
 import fastXmlParser from "fast-xml-parser";
+import mavgraphs from "../assets/mavgraphs.xml";
+import mavgraphs2 from "../assets/mavgraphs2.xml";
+import ekfGraphs from "../assets/ekfGraphs.xml";
+import ekf3Graphs from "../assets/ekf3Graphs.xml";
+import planeDocs from "../assets/logmetadata/plane.xml";
+import copterDocs from "../assets/logmetadata/copter.xml";
+import trackerDocs from "../assets/logmetadata/tracker.xml";
+import roverDocs from "../assets/logmetadata/rover.xml";
+import subDocs from "../assets/logmetadata/sub.xml";
 
 export default {
     name: "MessageMenu",
@@ -246,14 +254,9 @@ export default {
     methods: {
         loadXmlPresets() {
             const graphs = {};
-            const files = [
-                require("../assets/mavgraphs.xml"),
-                require("../assets/mavgraphs2.xml"),
-                require("../assets/ekfGraphs.xml"),
-                require("../assets/ekf3Graphs.xml"),
-            ];
+            const files = [mavgraphs, mavgraphs2, ekfGraphs, ekf3Graphs];
             for (const contents of files) {
-                const result = fastXmlParser.parse(contents.default, {
+                const result = fastXmlParser.parse(contents, {
                     ignoreAttributes: false,
                 });
                 const igraphs = result.graphs;
@@ -297,20 +300,20 @@ export default {
         loadXmlDocs() {
             const logDocs = {};
             const files = [
-                require("../assets/logmetadata/plane.xml"),
-                require("../assets/logmetadata/copter.xml"),
-                require("../assets/logmetadata/tracker.xml"),
-                require("../assets/logmetadata/rover.xml"),
-                require("../assets/logmetadata/sub.xml"),
+                planeDocs,
+                copterDocs,
+                trackerDocs,
+                roverDocs,
+                subDocs,
             ];
             for (const contents of files) {
-                const result = fastXmlParser.parse(contents.default, {
+                const result = fastXmlParser.parse(contents, {
                     ignoreAttributes: false,
                 });
                 const igraphs = result.loggermessagefile;
                 for (const graph of igraphs.logformat) {
                     logDocs[graph["@_name"]] = { doc: graph.description };
-                    if (!isArray(graph.fields.field)) {
+                    if (!Array.isArray(graph.fields.field)) {
                         continue;
                     }
                     for (const field of graph.fields.field) {

@@ -63,9 +63,9 @@ import { store } from "../Globals.js";
 export default {
     name: "TreeMenu",
     props: {
-        label: String,
-        nodes: Object,
-        level: Number,
+        label: { type: String, required: true },
+        nodes: { type: Object, required: true },
+        level: { type: Number, required: true },
         name: {
             type: String,
             default: "",

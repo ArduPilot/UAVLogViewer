@@ -77,8 +77,7 @@ export default {
             return Object.keys(this.state.defaultParams).length > 0;
         },
         filteredData() {
-            // eslint-disable-next-line
-            let potato = this.forceRecompute;
+            this.dependOnParams();
             return Object.keys(this.state.params.values)
                 .filter((key) => key.indexOf(this.filter.toUpperCase()) !== -1)
                 .filter((key) => {

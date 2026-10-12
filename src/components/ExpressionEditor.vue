@@ -31,7 +31,7 @@
 <script>
 export default {
     props: {
-        value: String,
+        value: { type: String, default: "" },
         suggestions: {
             type: Array,
             default: () => [],
@@ -92,8 +92,7 @@ export default {
             return operators.includes(lastChar) || /\w/.test(lastChar);
         },
         getCurrentWord(text) {
-            // eslint-disable-next-line no-useless-escape
-            return text.split(/[\s\(\)\+\-\*\/\=,]+/).pop() || "";
+            return text.split(/[\s()+\-*/=,]+/).pop() || "";
         },
         handleKeyDown(e) {
             if (this.showSuggestions) {

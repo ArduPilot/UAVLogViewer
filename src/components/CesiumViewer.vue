@@ -103,6 +103,16 @@ import { MavlinkDataExtractor } from "../tools/mavlinkDataExtractor";
 import { DjiDataExtractor } from "../tools/djiDataExtractor";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import CesiumSettingsWidget from "./widgets/CesiumSettingsWidget.vue";
+import homeIcon from "../assets/home2.png";
+import maptilerIcon from "../assets/maptiler.png";
+import statkartIcon from "../assets/statkart.jpg";
+import eniroIcon from "../assets/eniro.png";
+import openseamapIcon from "../assets/openseamap.png";
+import submarineModel from "../assets/bluerovsimple.glb";
+import quadPlusModel from "../assets/quadp.glb";
+import quadXModel from "../assets/quadx.glb";
+import boatModel from "../assets/boat.glb";
+import planeModel from "../assets/plane.glb";
 import ColorCoderMode from "./cesiumExtra/colorCoderMode.js";
 import ColorCoderRange from "./cesiumExtra/colorCoderRange.js";
 import ColorCoderPlot from "./cesiumExtra/colorCoderPlot.js";
@@ -431,10 +441,7 @@ export default {
                     this.viewer.shadowMap.maximumDistance = 10000;
                     this.viewer.shadowMap.softShadows = true;
                     this.viewer.shadowMap.size = 4096;
-                    this.viewer.animation.viewModel.timeFormatter = (
-                        date,
-                        _viewModel,
-                    ) => {
+                    this.viewer.animation.viewModel.timeFormatter = (date) => {
                         const isoString = JulianDate.toIso8601(date);
                         let dateTime = DateTime.fromISO(isoString);
                         // get zone from current cesium location
@@ -487,7 +494,7 @@ export default {
                     const layers = this.viewer.scene.imageryLayers;
                     const xofs = 0.00001;
                     const options = {
-                        url: require("../assets/home2.png").default,
+                        url: homeIcon,
                         tileWidth: 1920,
                         tileHeight: 1080,
                         rectangle: Rectangle.fromDegrees(
@@ -552,7 +559,6 @@ export default {
             }
         },
         updateShader() {
-            // eslint-disable-next-line camelcase
             ShaderSource._czmBuiltinsAndUniforms.czm_translateRelativeToEye =
                 ShaderSource._czmBuiltinsAndUniforms.czm_translateRelativeToEye.replace(
                     "low - czm_encodedCameraPositionMCLow;",
@@ -616,7 +622,7 @@ export default {
             const imageryProviders = [];
             this.esriProvider = new ProviderViewModel({
                 name: "Satellite (Esri)",
-                iconUrl: require("../assets/maptiler.png").default,
+                iconUrl: maptilerIcon,
                 tooltip: "Esri World Imagery (satellite)",
                 creationFunction: function () {
                     return new UrlTemplateImageryProvider({
@@ -633,18 +639,20 @@ export default {
             imageryProviders.push(
                 new ProviderViewModel({
                     name: "StatKart",
-                    iconUrl: require("../assets/statkart.jpg").default,
-                    tooltip: "Statkart aerial imagery \nhttp://statkart.no/",
+                    iconUrl: statkartIcon,
+                    tooltip:
+                        "Kartverket topographic map \nhttps://www.kartverket.no/",
                     creationFunction: function () {
                         return new UrlTemplateImageryProvider({
-                            url: "http://opencache.statkart.no/gatekeeper/gk/gk.open_gmaps?layers=topo4&zoom={z}&x={x}&y={y}",
-                            credit: "Map tiles by Statkart.",
+                            // opencache.statkart.no was shut down; this is Kartverket's replacement
+                            url: "https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png",
+                            credit: "Map tiles by Kartverket.",
                         });
                     },
                 }),
                 new ProviderViewModel({
                     name: "MapTiler",
-                    iconUrl: require("../assets/maptiler.png").default,
+                    iconUrl: maptilerIcon,
                     tooltip: "Maptiler satellite imagery http://maptiler.com/",
                     creationFunction: function () {
                         return new UrlTemplateImageryProvider({
@@ -659,7 +667,7 @@ export default {
             imageryProviders.push(
                 new ProviderViewModel({
                     name: "Eniro",
-                    iconUrl: require("../assets/eniro.png").default,
+                    iconUrl: eniroIcon,
                     tooltip: "Eniro aerial imagery \nhttp://map.eniro.com/",
                     creationFunction: function () {
                         return new UrlTemplateImageryProvider({
@@ -670,7 +678,7 @@ export default {
                 }),
                 new ProviderViewModel({
                     name: "OpenSeaMap",
-                    iconUrl: require("../assets/openseamap.png").default,
+                    iconUrl: openseamapIcon,
                     tooltip:
                         "OpenSeaMap Nautical Maps \nhttp://openseamap.org/",
                     parameters: {
@@ -1045,14 +1053,12 @@ export default {
         },
 
         getTimeStart() {
-            let date = null;
             try {
-                date = JulianDate.fromDate(this.state.metadata.startTime);
+                return JulianDate.fromDate(this.state.metadata.startTime);
             } catch (e) {
                 console.log(e);
-                date = JulianDate.fromDate(new Date(2015, 2, 25, 16));
+                return JulianDate.fromDate(new Date(2015, 2, 25, 16));
             }
-            return date;
         },
 
         mouseIsOnPoint(point) {
@@ -1132,7 +1138,7 @@ export default {
             this._geodesic = this._geodesic || new EllipsoidGeodesic();
             this._geodesic.setEndPoints(lc, rc);
             const pixelDistance = this._geodesic.surfaceDistance;
-            if (!(pixelDistance > 0)) {
+            if (!Number.isFinite(pixelDistance) || pixelDistance <= 0) {
                 this.scaleBarLabel = "";
                 return;
             }
@@ -1236,7 +1242,7 @@ export default {
             }
         },
 
-        onLeftUp(movement) {
+        onLeftUp() {
             this.isDragging = false;
             this.viewer.container.style.cursor = "default";
             this.viewer.scene.screenSpaceCameraController.enableInputs = true;
@@ -2238,7 +2244,7 @@ export default {
                 if (v !== undefined && v !== null && !isNaN(v) && v > 0) {
                     fenceAltMax = v;
                 }
-            } catch (e) {
+            } catch {
                 /* use default */
             }
 
@@ -2300,7 +2306,7 @@ export default {
                         allPoints,
                         true,
                     );
-                } catch (e) {
+                } catch {
                     sampledPoints = allPoints;
                 }
             }
@@ -2394,18 +2400,18 @@ export default {
         getVehicleModel() {
             const type = this.state.vehicle;
             if (type === "submarine") {
-                return require("../assets/bluerovsimple.glb").default;
+                return submarineModel;
             }
             if (type === "quadcopter+") {
-                return require("../assets/quadp.glb").default;
+                return quadPlusModel;
             }
             if (type === "quadcopterx" || type === "quadcopter") {
-                return require("../assets/quadx.glb").default;
+                return quadXModel;
             }
             if (type === "boat") {
-                return require("../assets/boat.glb").default;
+                return boatModel;
             }
-            return require("../assets/plane.glb").default;
+            return planeModel;
         },
         getDataExtractor() {
             if (this.state.logType === "tlog") {
@@ -2549,12 +2555,10 @@ export default {
         },
         loadAttitude(source) {
             this.waitForMessages([source]).then(() => {
-                let dataExtractor = null;
-                if (this.state.logType === "tlog") {
-                    dataExtractor = MavlinkDataExtractor;
-                } else {
-                    dataExtractor = DataflashDataExtractor;
-                }
+                const dataExtractor =
+                    this.state.logType === "tlog"
+                        ? MavlinkDataExtractor
+                        : DataflashDataExtractor;
                 try {
                     this.state.timeAttitudeQ = [];
                     this.state.timeAttitude = dataExtractor.extractAttitude(

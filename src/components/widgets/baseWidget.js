@@ -19,6 +19,10 @@ export const baseWidget = {
         };
     },
     methods: {
+        // Call from a computed so it re-runs on "paramsUpdated" (the params store is not reactive)
+        dependOnParams() {
+            return this.forceRecompute;
+        },
         close() {
             this.$emit("close");
         },
@@ -101,7 +105,7 @@ export const baseWidget = {
                 document.removeEventListener("mouseup", unresize);
                 document.removeEventListener("touchend", unresize);
                 // Emit events according to interaction
-                if (hasResized(e)) {
+                if (hasResized()) {
                     this.dispatchEvent(new Event("resized"));
                 } else {
                     this.dispatchEvent(new Event("clicked"));
@@ -116,7 +120,7 @@ export const baseWidget = {
                 document.removeEventListener("touchmove", follow);
                 document.removeEventListener("touchend", unfollow);
                 // Emit events according to interaction
-                if (hasMoved(e)) {
+                if (hasMoved()) {
                     this.dispatchEvent(new Event("moved"));
                 } else {
                     this.dispatchEvent(new Event("clicked"));

@@ -3,13 +3,13 @@
     <div class="nav-side-menu col-lg-2">
         <h1 class="brand">
             <a class="github" href="https://github.com/ardupilot/uavlogviewer">
-                <img :src="require('../assets/GitHub-Mark-64px.png').default" />
+                <img :src="githubIcon" />
             </a>
             <a href="/"><b>UAV</b> Log Viewer<i class="fas fa-plane"></i></a
             ><a
                 class="github"
                 href="https://ardupilot.org/copter/docs/common-uavlogviewer.html"
-                ><img :src="require('../assets/wiki.svg').default"
+                ><img :src="wikiIcon"
             /></a>
         </h1>
         <!-- TABHOLDER -->
@@ -175,16 +175,20 @@
     </div>
 </template>
 <script>
-/* eslint-disable */
 import Dropzone from "./SideBarFileManager.vue";
 import MessageMenu from "./SideBarMessageMenu.vue";
 import { store } from "./Globals.js";
 import PlotSetup from "./PlotSetup.vue";
+import githubIcon from "../assets/GitHub-Mark-64px.png";
+import wikiIcon from "../assets/wiki.svg";
 
 export default {
-    name: "sidebar",
+    name: "Sidebar",
+    components: { PlotSetup, MessageMenu, Dropzone },
     data() {
         return {
+            githubIcon,
+            wikiIcon,
             selected: "home",
             state: store,
             chunks: false,
@@ -196,12 +200,20 @@ export default {
             fileName: "video.mp4",
         };
     },
+    watch: {
+        blob() {
+            this.downloadURL = URL.createObjectURL(this.blob);
+        },
+    },
+    created() {
+        this.$eventHub.$on("set-selected", this.setSelected);
+    },
     methods: {
         setSelected(selected) {
             this.selected = selected;
         },
 
-        startCapture(displayMediaOptions) {
+        startCapture() {
             navigator.mediaDevices
                 .getDisplayMedia({ video: { mediaSource: "screen" } })
                 .then((stream) => {
@@ -229,7 +241,7 @@ export default {
 
             this.recording = true;
 
-            recorder.onstop = (e) => {
+            recorder.onstop = () => {
                 const completeBlob = new Blob(chunks, { type: chunks[0].type });
                 this.chunks = true;
                 this.blob = completeBlob;
@@ -271,15 +283,6 @@ export default {
             );
         },
     },
-    created() {
-        this.$eventHub.$on("set-selected", this.setSelected);
-    },
-    watch: {
-        blob() {
-            this.downloadURL = URL.createObjectURL(this.blob);
-        },
-    },
-    components: { PlotSetup, MessageMenu, Dropzone },
 };
 </script>
 <style scoped>

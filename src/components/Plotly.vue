@@ -66,9 +66,7 @@ const plotOptions = {
         borderwidth: 1,
     },
     showlegend: true,
-    // eslint-disable-next-line camelcase
     plot_bgcolor: "#f8f8f8",
-    // eslint-disable-next-line camelcase
     paper_bgcolor: "white",
     // autosize: true,
     margin: { t: 20, l: 0, b: 30, r: 10 },
@@ -402,8 +400,7 @@ export default {
             }
             const dy = y2 - y1;
             const slope = dy / dx;
-            const interpolatedY = y1 + slope * dx;
-            return interpolatedY;
+            return y1 + slope * (x - x1);
         },
         resize() {
             Plotly.Plots.resize(this.gd);
@@ -483,16 +480,12 @@ export default {
 
             gd.data.forEach((trace) => {
                 const len = Math.min(trace.x.length, trace.y.length);
-                const xInside = [];
                 const yInside = [];
 
                 for (let i = 0; i < len; i++) {
                     const x = trace.x[i];
-                    const y = trace.y[i];
-
                     if (x > xRange[0] && x < xRange[1]) {
-                        xInside.push(x);
-                        yInside.push(y);
+                        yInside.push(trace.y[i]);
                     }
                 }
                 const extraData = ` | Min: ${Math.min(...yInside).toFixed(2)} \
@@ -638,7 +631,7 @@ export default {
             obj[key].autorange = true;
             Plotly.relayout(this.gd, obj);
         },
-        togglePlot(fieldname, axis, color, silent) {
+        togglePlot(fieldname, axis, color) {
             if (this.isPlotted(fieldname)) {
                 let index;
                 for (const i in this.state.expressions) {
@@ -656,10 +649,6 @@ export default {
                 this.addPlots([[fieldname, axis, color]]);
             }
             console.log(this.state.expressions);
-            // if (silent !== true) {
-            //     this.plot()
-            //     this.state.plotLoading = false
-            // }
         },
         calculateXAxisDomain() {
             let start = 0.02;
@@ -742,20 +731,7 @@ export default {
             // TODO: USE this regex with lookahead once firefox supports it
             // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
             // let fields = expression.name.match(RE)
-            for (const message of messages) {
-                if (
-                    !(message in this.state.messages) ||
-                    this.state.messages[message].lenght === 0
-                ) {
-                    if (
-                        !(message in this.state.messages) ||
-                        this.state.messages[message].lenght === 0
-                    ) {
-                        return false;
-                    }
-                }
-            }
-            return true;
+            return messages.every((message) => message in this.state.messages);
         },
         evaluateExpression(expression1) {
             const start = new Date();

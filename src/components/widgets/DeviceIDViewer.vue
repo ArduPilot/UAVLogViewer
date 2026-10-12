@@ -153,8 +153,7 @@ export default {
     computed: {
         filteredData() {
             // this seems necessary to force a recomputation
-            // eslint-disable-next-line
-            let potato = this.forceRecompute;
+            this.dependOnParams();
             return this.state.textMessages.filter(
                 (key) => key[0] < this.cursorTime,
             );

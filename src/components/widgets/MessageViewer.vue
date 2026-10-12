@@ -47,15 +47,14 @@ export default {
     computed: {
         filteredData() {
             // this seems necessary to force a recomputation
-            // eslint-disable-next-line
-            let potato = this.forceRecompute;
+            this.dependOnParams();
             return this.state.textMessages.filter(
                 (key) => key[0] < this.cursorTime,
             );
         },
     },
     watch: {
-        filteredData: function (data) {
+        filteredData: function () {
             const container = this.$el.querySelector("#paneContent");
             container.scrollTop = container.scrollHeight;
         },
@@ -66,17 +65,15 @@ export default {
     },
     methods: {
         timeFormatter(milliseconds) {
-            let outputString = "";
             const seconds = (milliseconds / 1000) % 60;
-            let minutes = Math.floor(milliseconds / 1000 / 60);
-            const hours = Math.floor(minutes / 60);
-            minutes = minutes % 60;
-            outputString = seconds.toFixed(1).padStart(4, "0");
-            outputString =
-                minutes.toFixed(0).padStart(2, "0") + ":" + outputString;
-            outputString =
-                hours.toFixed(0).padStart(2, "0") + ":" + outputString;
-            return outputString;
+            const totalMinutes = Math.floor(milliseconds / 1000 / 60);
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            return [
+                hours.toFixed(0).padStart(2, "0"),
+                minutes.toFixed(0).padStart(2, "0"),
+                seconds.toFixed(1).padStart(4, "0"),
+            ].join(":");
         },
         setTime(time) {
             this.cursorTime = time;

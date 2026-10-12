@@ -13,7 +13,10 @@
 <script>
 export default {
     name: "Progress",
-    props: ["percent", "complete"],
+    props: {
+        percent: { type: Number, required: true },
+        complete: { type: String, default: "" },
+    },
 };
 </script>
 

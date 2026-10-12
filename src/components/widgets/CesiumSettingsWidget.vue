@@ -52,7 +52,6 @@
                         v-model="state.trajectorySource"
                         class="cesium-button traj-source-select"
                     >
-                        <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
                         <option
                             v-for="item in state.trajectorySources"
                             :key="item"
@@ -82,7 +81,6 @@
                         :value="src"
                         @change="updateComparison(idx, $event.target.value)"
                     >
-                        <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
                         <option
                             v-for="item in state.trajectorySources"
                             :key="item"
@@ -103,7 +101,6 @@
             <div>
                 <label> Attitude Source</label>
                 <select v-model="state.attitudeSource" class="cesium-button">
-                    <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
                     <option v-for="item in attitudeSources" :key="item">
                         {{ item }}
                     </option>
