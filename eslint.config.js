@@ -20,7 +20,8 @@ export default [
         ],
     },
     js.configs.recommended,
-    ...neostandard({ noStyle: true }),
+    // neostandard only covers .js/.cjs/.mjs unless told otherwise
+    ...neostandard({ noStyle: true, files: ["**/*.vue"] }),
     ...pluginVue.configs["flat/vue2-recommended"],
     sonarjs.configs.recommended,
     {
@@ -48,7 +49,7 @@ export default [
     {
         // Plot expressions are user-entered JavaScript by design (see src/mavextra/)
         files: ["src/components/Plotly.vue"],
-        rules: { "sonarjs/code-eval": "off" },
+        rules: { "sonarjs/code-eval": "off", "no-new-func": "off" },
     },
     {
         // the log parsers run in a web worker

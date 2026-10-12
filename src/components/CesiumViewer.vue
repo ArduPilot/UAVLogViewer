@@ -1049,7 +1049,7 @@ export default {
                 cam.up.z.toFixed(2),
                 this.cameraType,
             ].join(",");
-            this.$router.push({ query: query });
+            this.$router.push({ query });
         },
 
         getTimeStart() {
@@ -2024,8 +2024,8 @@ export default {
         createPolylineGeometryInstance(positions, color, width = 3) {
             return new GeometryInstance({
                 geometry: new PolylineGeometry({
-                    positions: positions,
-                    width: width,
+                    positions,
+                    width,
                 }),
                 attributes: {
                     color: ColorGeometryInstanceAttribute.fromColor(color),
@@ -2509,7 +2509,7 @@ export default {
                 const primitive = new Primitive({
                     geometryInstances: new GeometryInstance({
                         geometry: new PolylineGeometry({
-                            positions: positions,
+                            positions,
                             width: 3.0,
                         }),
                         attributes: {
@@ -2543,7 +2543,7 @@ export default {
                                 () => this.modelScale / 10,
                                 false,
                             ),
-                            color: color,
+                            color,
                             colorBlendMode: ColorBlendMode.MIX,
                             colorBlendAmount: 0.7,
                         },

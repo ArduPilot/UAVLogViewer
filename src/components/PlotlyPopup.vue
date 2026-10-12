@@ -109,7 +109,7 @@ export default {
                 Plotly.relayout(this.gd, {
                     xaxis: {
                         title: "Time since boot",
-                        range: range,
+                        range,
                         domain: this.calculateXAxisDomain(),
                         tickformat: timeformat,
                     },
@@ -441,7 +441,7 @@ export default {
                 });
             }
             Plotly.relayout(this.gd, {
-                shapes: shapes,
+                shapes,
             });
         },
         calculateXAxisDomain() {
@@ -509,7 +509,7 @@ export default {
             }
             Plotly.relayout(this.gd, {
                 annotations: annotationsModes,
-                updatemenus: updatemenus,
+                updatemenus,
             });
             updatemenus[0].buttons[0].args = ["annotations", annotationsModes];
             updatemenus[0].buttons[1].args = [
@@ -573,7 +573,7 @@ export default {
             updatemenus[0].active = 0;
             Plotly.relayout(this.gd, {
                 annotations: [...annotationsModes],
-                updatemenus: updatemenus,
+                updatemenus,
             });
             updatemenus[0].buttons[2].args = [
                 "annotations",

@@ -79,7 +79,7 @@ function forwardWorkerRequests(eventHub) {
         }
     });
     eventHub.$on("loadType", (type) => {
-        worker.postMessage({ action: "loadType", type: type });
+        worker.postMessage({ action: "loadType", type });
     });
     eventHub.$on("trimFile", () => {
         worker.postMessage({ action: "trimFile", time: store.timeRange });

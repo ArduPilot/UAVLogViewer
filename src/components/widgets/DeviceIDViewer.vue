@@ -207,10 +207,10 @@ export default {
             this.devices.push({
                 param: device,
                 deviceName: decodedDevname,
-                busType: busType,
-                bus: bus,
-                address: address,
-                devtype: devtype,
+                busType,
+                bus,
+                address,
+                devtype,
             });
             console.log(
                 `${device}: ${decodedDevname}, ${busType}(${bus}), ${address}, ${devtype}`,

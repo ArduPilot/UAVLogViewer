@@ -200,7 +200,7 @@ export default {
                 Plotly.relayout(this.gd, {
                     xaxis: {
                         title: "Time since boot",
-                        range: range,
+                        range,
                         domain: this.calculateXAxisDomain(),
                         rangeslider: {},
                         tickformat: timeformat,
@@ -520,8 +520,8 @@ export default {
             }
             return {
                 name: fieldname,
-                color: color,
-                axis: axis,
+                color,
+                axis,
             };
         },
 
@@ -797,8 +797,8 @@ export default {
             }
             console.log("evaluated " + expression);
             const data = this.addGaps({
-                x: x,
-                y: y,
+                x,
+                y,
             });
             Vue.set(this.state.plotCache, expression1, data);
             // this.state.plotCache[expression1] = data
@@ -909,7 +909,7 @@ export default {
                 datasets.push({
                     name: expression.name,
                     // type: 'scattergl',
-                    mode: mode,
+                    mode,
                     x: data.x,
                     y: data.y,
                     yaxis: "y" + (expression.axis + 1),
@@ -917,7 +917,7 @@ export default {
                         color: expression.color,
                         width: 1.5,
                     },
-                    marker: marker,
+                    marker,
                 });
                 const axisname =
                     expression.axis > 0
@@ -1069,7 +1069,7 @@ export default {
                 });
             }
             Plotly.relayout(this.gd, {
-                shapes: shapes,
+                shapes,
             });
         },
         addEvents() {
@@ -1117,7 +1117,7 @@ export default {
             }
             Plotly.relayout(this.gd, {
                 annotations: annotationsModes,
-                updatemenus: updatemenus,
+                updatemenus,
             });
             updatemenus[0].buttons[0].args = ["annotations", annotationsModes];
             updatemenus[0].buttons[1].args = [
@@ -1184,7 +1184,7 @@ export default {
             updatemenus[0].active = 0;
             Plotly.relayout(this.gd, {
                 annotations: [...annotationsModes],
-                updatemenus: updatemenus,
+                updatemenus,
             });
             updatemenus[0].buttons[2].args = [
                 "annotations",
