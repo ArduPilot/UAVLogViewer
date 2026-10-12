@@ -14,6 +14,8 @@ export default [
             "static/",
             "test/unit/coverage/",
             "test/e2e/reports/",
+            // Python virtual environments (scripts/terrain/.venv)
+            "**/.venv/",
             // generated MAVLink binding and the DataFlash parser submodule
             "src/libs/",
             "src/tools/parsers/JsDataflashParser/",
