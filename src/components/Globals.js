@@ -83,6 +83,26 @@ export const store = {
 // Everything derived from the loaded log. Cleared before a new log is parsed (e.g. a second log
 // sent by an embedding page), so nothing carries over from the previous one: flight modes,
 // parameters, trajectories, and plots whose cached data belongs to the old log.
+// First y axis / color that no plotted expression uses (the last one when all are taken)
+export function firstFreeAxis(state) {
+    return (
+        state.allAxis.find(
+            // saved presets may hold the axis as a string
+            (axis) =>
+                !state.expressions.some((field) => Number(field.axis) === axis),
+        ) ?? state.allAxis.at(-1)
+    );
+}
+
+export function firstFreeColor(state) {
+    return (
+        state.allColors.find(
+            (color) =>
+                !state.expressions.some((field) => field.color === color),
+        ) ?? state.allColors.at(-1)
+    );
+}
+
 export function resetLogState() {
     Object.assign(store, {
         files: undefined,

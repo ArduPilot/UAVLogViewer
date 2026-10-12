@@ -97,14 +97,11 @@ export class MavlinkParser {
         this.messages = {};
         this.totalSize = undefined;
         this.lastPercentage = 0;
-        this.sent = false;
 
         this.mavlinkParser = new MAVLink();
         this.mavlinkParser.on("message", this.onMessage);
         this.maxPercentageInterval = 0.1;
         instance = this;
-        instance.forcedTimeOffset = 0;
-        instance.lastTime = 0;
     }
 
     static fixData(message) {
@@ -141,34 +138,12 @@ export class MavlinkParser {
                 instance.totalSize = this.buf.byteLength;
             }
             if (message._id !== -1) {
-                // if (message.time_boot_ms === undefined) {
-                //     message.time_boot_ms = instance.lastTime
-                // }
-                //
-                // // TODO: Fix this logic, it is probably wrong.
-                // if ((+message.time_boot_ms + instance.forcedTimeOffset) < instance.lastTime) {
-                //     console.log(
-                //     'Time going backwards detected, adding an offset.This means SYSTEM_TIME is now out of sync!')
-                //     instance.forcedTimeOffset = +instance.lastTime - message.time_boot_ms + 100000
-                // }
-
-                if (+message.time_boot_ms < instance.lastTime) {
-                    message.time_boot_ms =
-                        +message.time_boot_ms + instance.forcedTimeOffset;
-                }
-                instance.lastTime = +message.time_boot_ms;
-
                 if (message.name in instance.messages) {
                     MavlinkParser.fixData(message);
                 } else {
                     instance.messages[message._name] = [
                         MavlinkParser.fixData(message),
                     ];
-                }
-                // TODO: FIX THIS!
-                // This a hack to detect the end of the buffer and only them message the main thread
-                if (this.buf.length < 100 && instance.sent === false) {
-                    instance.sent = true;
                 }
             }
         }

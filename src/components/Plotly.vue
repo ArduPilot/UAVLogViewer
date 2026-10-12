@@ -4,7 +4,7 @@
 
 <script>
 import Plotly from "plotly.js";
-import { store } from "./Globals.js";
+import { store, firstFreeAxis, firstFreeColor } from "./Globals.js";
 import * as d3 from "d3";
 import { faWindowRestore } from "@fortawesome/free-solid-svg-icons";
 import Vue from "vue";
@@ -509,44 +509,14 @@ export default {
             }
             return false;
         },
-        getFirstFreeAxis() {
-            // get free axis number
-            for (const i of this.state.allAxis) {
-                let taken = false;
-                for (const field of this.state.expressions) {
-                    if (field.axis == i) {
-                        taken = true;
-                    }
-                }
-                if (!taken) {
-                    return i;
-                }
-            }
-            return this.state.allAxis.length - 1;
-        },
-        getFirstFreeColor() {
-            // get free color
-            for (const i of this.state.allColors) {
-                let taken = false;
-                for (const field of this.state.expressions) {
-                    if (field.color == i) {
-                        taken = true;
-                    }
-                }
-                if (!taken) {
-                    return i;
-                }
-            }
-            return this.state.allColors[this.state.allColors.length - 1];
-        },
         createNewField(fieldname, axis, color) {
             if (color === undefined) {
-                color = this.getFirstFreeColor();
+                color = firstFreeColor(this.state);
             } else if (!Number.isNaN(Number(color))) {
                 color = this.state.allColors[color];
             }
             if (axis === undefined) {
-                axis = this.getFirstFreeAxis();
+                axis = firstFreeAxis(this.state);
             }
             return {
                 name: fieldname,
@@ -558,7 +528,7 @@ export default {
         addPlots(plots) {
             this.state.plotLoading = true;
             const requested = new Set();
-            const RE2 = /[A-Z][A-Z0-9_]+(\[\d\])/g;
+            const RE2 = /(?<!\.)\b[A-Z][A-Z0-9_]+\[\d\]/g;
             for (const plot of plots) {
                 const expression = plot[0];
                 // ensure we have the data (only match messages with array index)
@@ -681,7 +651,7 @@ export default {
         },
         findMessagesInExpression(expression) {
             const RE =
-                /(?<message>[A-Z][A-Z0-9_]+(\[[\w.]+\])?)(\.(?<field>\w+))?/g;
+                /(?<!\.)\b(?<message>[A-Z][A-Z0-9_]+\b(\[[\w.]+\])?)(\.(?<field>\w+))?/g;
             const match = [];
             for (const m of expression.matchAll(RE)) {
                 match.push([m.groups.message, m.groups.field]);
@@ -689,9 +659,6 @@ export default {
             return match;
         },
         expressionCanBePlotted(expression, reask = false) {
-            // TODO: USE this regex with lookahead once firefox supports it
-            // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
-            // let fields = expression.name.match(RE)
             const messages = this.findMessagesInExpression(expression.name);
 
             if (messages === null) {
@@ -728,9 +695,6 @@ export default {
             return [true, ""];
         },
         messagesAreAvailable(messages) {
-            // TODO: USE this regex with lookahead once firefox supports it
-            // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
-            // let fields = expression.name.match(RE)
             return messages.every((message) => message in this.state.messages);
         },
         evaluateExpression(expression1) {
@@ -740,8 +704,6 @@ export default {
                 return this.state.plotCache[expression1];
             }
             console.log("MISS! evaluating : " + expression1);
-            // TODO: USE this regex with lookahead once firefox supports it
-            // let RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\b/g
             let fields = this.findMessagesInExpression(expression1).map(
                 (field) => field[0],
             );

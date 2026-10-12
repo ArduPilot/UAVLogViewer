@@ -392,7 +392,7 @@ export default {
             left: 432,
             top: 12,
             forceRecompute: 0,
-            numberOfPoints: 1000, // TODO: expose this to the user
+            numberOfPoints: 1000, // not settable in the widget yet: https://github.com/igoutta/UAVLogViewer/issues/5
             newParamFormat: true,
             forceScale: false,
             maxOffset: 1000,
@@ -545,8 +545,7 @@ export default {
         },
         filteredCompassData() {
             // returns the compassData, but with the data filtered to only include the data that is used
-            // that means we will only pass through the following fields:
-            // TODO: add dataflash ones
+            // that means we will only pass through the following fields (MAVLink, then DataFlash):
             const wantedFields = [
                 "time_boot_ms",
                 "xmag",

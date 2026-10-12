@@ -223,7 +223,7 @@ export default {
             // The settings field is free text: ignore values that are not positive numbers
             const value = Number.parseFloat(this.state.modelScale);
             const scale = Number.isNaN(value) || value <= 0 ? 1 : value;
-            // TODO: scale the model instead
+            // bluerovsimple.glb is small, so it is scaled up here (https://github.com/igoutta/UAVLogViewer/issues/1)
             return this.state.vehicle === "submarine" ? scale * 6.86 : scale;
         },
         heightOffset() {
@@ -482,7 +482,7 @@ export default {
                         this.onLeftUp,
                         ScreenSpaceEventType.LEFT_UP,
                     );
-                    // TODO: fix saving and sharing state
+                    // Saving the camera in the URL is off until it can be restored (https://github.com/igoutta/UAVLogViewer/issues/2)
                     // this.viewer.camera.moveEnd.addEventListener(this.onCameraUpdate)
 
                     knockout
@@ -1421,7 +1421,7 @@ export default {
             }
         },
         // =========================================================================
-        // 1. DATA PREPARATION (same as original, but extracted)
+        // 1. DATA PREPARATION
         // =========================================================================
         aggregateDepth(bathymetry, positions) {
             const positionsWithDepth = [];
@@ -1728,7 +1728,7 @@ export default {
             return canvas;
         },
         // =========================================================================
-        // 7. MAIN PLOT FUNCTION (short and readable)
+        // 7. MAIN PLOT FUNCTION
         // =========================================================================
         waitForBathymetryMessages(timeoutMs = 9000) {
             for (const message of ["RFND", "POS"]) {
@@ -1785,7 +1785,7 @@ export default {
             this.viewer.scene.requestRender();
         },
         // =========================================================================
-        // 1. CONSTRUIR PROPIEDAD DE POSICIÓN MUESTREADA (ya existía, pero la extraigo)
+        // 1. SAMPLED POSITION PROPERTY
         // =========================================================================
         buildSampledPositionProperty() {
             const sampled = new SampledPositionProperty();
@@ -1808,7 +1808,7 @@ export default {
             return sampled;
         },
         // =========================================================================
-        // 2. ORIENTACIÓN A PARTIR DE CUATERNIONES (timeAttitudeQ)
+        // 2. ORIENTATION FROM QUATERNIONS (timeAttitudeQ)
         // =========================================================================
         quaternionToHeadingPitchRoll(q1, q2, q3, q4) {
             const roll = Math.atan2(
@@ -1821,7 +1821,7 @@ export default {
                 2 * (q1 * q4 + q2 * q3),
                 1 - 2 * (q3 * q3 + q4 * q4),
             );
-            // TODO: fix coordinate system! (signs and offset)
+            // Signs and roll offset are ad hoc for the models' axes (https://github.com/igoutta/UAVLogViewer/issues/3)
             return new HeadingPitchRoll(-yaw, -pitch, roll - Math.PI);
         },
         addQuaternionSample(sampled, timeMs, positionAtTime) {
@@ -1843,10 +1843,10 @@ export default {
             sampled.addSample(time, quat);
         },
         // =========================================================================
-        // 3. ORIENTACIÓN A PARTIR DE ÁNGULOS DE EULER (timeAttitude)
+        // 3. ORIENTATION FROM EULER ANGLES (timeAttitude)
         // =========================================================================
         eulerToHeadingPitchRoll(roll, pitch, yaw) {
-            // Asumiendo que los ángulos vienen en radianes (roll, pitch, yaw)
+            // The angles are in radians (roll, pitch, yaw)
             return new HeadingPitchRoll(yaw, pitch, roll);
         },
         addEulerSample(sampled, timeMs, positionAtTime) {
@@ -1868,7 +1868,7 @@ export default {
             sampled.addSample(time, quat);
         },
         // =========================================================================
-        // 4. CONSTRUIR PROPIEDAD DE ORIENTACIÓN MUESTREADA (elige fuente)
+        // 4. SAMPLED ORIENTATION PROPERTY (picks the attitude source)
         // =========================================================================
         buildSampledOrientationProperty() {
             const sampled = new SampledProperty(Quaternion);
@@ -1878,8 +1878,8 @@ export default {
                 : this.state.timeAttitude;
             if (Object.keys(dataSource).length === 0) return sampled;
 
-            // Necesitamos una posición de referencia para cada muestra; fuera del rango
-            // del GPS se usa el extremo más cercano de la trayectoria
+            // Each sample needs a reference position; outside the GPS time range the
+            // nearest end of the trajectory is used
             const firstPoint = this.points[0];
             const lastPoint = this.points.at(-1);
             const toCartesian = (p) =>
@@ -1912,7 +1912,7 @@ export default {
             return sampled;
         },
         // =========================================================================
-        // 5. CREAR ENTIDAD DEL MODELO
+        // 5. MODEL ENTITY
         // =========================================================================
         createModelEntity(positionProp, orientationProp) {
             return this.viewer.entities.add({
@@ -1936,7 +1936,7 @@ export default {
             });
         },
         // =========================================================================
-        // 6. MÉTODO PRINCIPAL addModel (ahora corto y claro)
+        // 6. addModel
         // =========================================================================
         async addModel() {
             if (this.model) {
@@ -1963,7 +1963,7 @@ export default {
             }
         },
         // =========================================================================
-        // 1. OBTENER PUNTOS DE LA TRAYECTORIA DENTRO DEL RANGO DE TIEMPO
+        // 1. TRAJECTORY POINTS WITHIN THE TIME RANGE
         // =========================================================================
 
         getPointsInTimeRange(startTimeMs, endTimeMs) {
@@ -1986,7 +1986,7 @@ export default {
         },
 
         // =========================================================================
-        // 2. AGRUPAR PUNTOS EN SEGMENTOS POR COLOR (cambia de color => nuevo segmento)
+        // 2. GROUP POINTS INTO SEGMENTS BY COLOR (a new color starts a new segment)
         // =========================================================================
 
         groupPointsByColor(points) {
@@ -2018,7 +2018,7 @@ export default {
         },
 
         // =========================================================================
-        // 3. CREAR INSTANCIA DE GEOMETRY PARA UN SEGMENTO
+        // 3. GEOMETRY INSTANCE FOR ONE SEGMENT
         // =========================================================================
 
         createPolylineGeometryInstance(positions, color, width = 3) {
@@ -2034,7 +2034,7 @@ export default {
         },
 
         // =========================================================================
-        // 4. CONSTRUIR TODAS LAS INSTANCIAS DE GEOMETRY A PARTIR DE LOS SEGMENTOS
+        // 4. GEOMETRY INSTANCES FOR ALL SEGMENTS
         // =========================================================================
 
         buildGeometryInstancesFromSegments(segments) {
@@ -2053,20 +2053,20 @@ export default {
         },
 
         // =========================================================================
-        // 5. ACTUALIZAR EL PRIMITIVE DE LA TRAYECTORIA EN EL VISOR
+        // 5. TRAJECTORY PRIMITIVE IN THE SCENE
         // =========================================================================
 
         updateTrajectoryPrimitive(instances) {
-            // Remover el primitive anterior si existe
+            // Remove the previous primitive, if any
             if (this.trajectoryPrimitive) {
                 this.viewer.scene.primitives.remove(this.trajectoryPrimitive);
             }
-            // Si no hay instancias o la trayectoria está desactivada, no hacer nada
+            // Nothing to draw without instances or with the trajectory hidden
             if (!this.showTrajectory || instances.length === 0) {
                 this.viewer.scene.requestRender();
                 return;
             }
-            // Crear nuevo primitive
+            // Create the new primitive
             this.trajectoryPrimitive = new Primitive({
                 geometryInstances: instances,
                 appearance: new PolylineColorAppearance(),
@@ -2077,28 +2077,28 @@ export default {
         },
 
         // =========================================================================
-        // 6. MÉTODO PRINCIPAL updateAndPlotTrajectory (ahora corto y claro)
+        // 6. updateAndPlotTrajectory
         // =========================================================================
 
         async updateAndPlotTrajectory() {
             if (!this.viewer) {
                 return;
             }
-            // Asegurar que existe un colorCoder
+            // Make sure there is a color coder
             if (!this.colorCoder) {
                 this.colorCoder =
                     this.availableColorCoders[this.selectedColorCoder];
             }
-            // Obtener rango de tiempo visible en la línea de tiempo
+            // Time range visible on the timeline
             const startTime = this.cesiumTimeToMs(this.timelineStart);
             const endTime = this.cesiumTimeToMs(this.timelineStop);
-            // Filtrar puntos
+            // Filter the points
             const pointsInRange = this.getPointsInTimeRange(startTime, endTime);
-            // Agrupar por color
+            // Group them by color
             const segments = this.groupPointsByColor(pointsInRange);
-            // Crear instancias de geometría
+            // Build the geometry instances
             const instances = this.buildGeometryInstancesFromSegments(segments);
-            // Actualizar el primitive en la escena
+            // Update the primitive in the scene
             this.updateTrajectoryPrimitive(instances);
         },
 

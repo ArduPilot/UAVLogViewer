@@ -119,7 +119,7 @@
     </div>
 </template>
 <script>
-import { store } from "./Globals.js";
+import { store, firstFreeAxis, firstFreeColor } from "./Globals.js";
 import debounce from "v-debounce";
 import ExpressionEditor from "./ExpressionEditor.vue";
 
@@ -170,31 +170,10 @@ export default {
             this.$nextTick(() => {
                 this.state.expressions.push({
                     name: "1+1",
-                    color: this.getFirstFreeColor(),
-                    axis: this.getFirstFreeAxis(),
+                    color: firstFreeColor(this.state),
+                    axis: firstFreeAxis(this.state),
                 });
             });
-        },
-        // TODO: this is duplicated in Plotly.vue, refactor it out!
-        getFirstFreeAxis() {
-            return (
-                this.state.allAxis.find(
-                    (axis) =>
-                        !this.state.expressions.some(
-                            (field) => field.axis === axis,
-                        ),
-                ) || this.state.allAxis[this.state.allAxis.length - 1]
-            );
-        },
-        getFirstFreeColor() {
-            return (
-                this.state.allColors.find(
-                    (color) =>
-                        !this.state.expressions.some(
-                            (field) => field.color === color,
-                        ),
-                ) || this.state.allColors[this.state.allColors.length - 1]
-            );
         },
         savePreset(name) {
             const myStorage = globalThis.localStorage;

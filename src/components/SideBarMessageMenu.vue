@@ -148,7 +148,7 @@ export default {
                 "UNIT",
                 "MULT",
             ],
-            // TODO: lists are nor clear, use objects instead
+            // Preset fields are positional arrays (https://github.com/igoutta/UAVLogViewer/issues/4)
             messagePresets: {},
             userPresets: {},
             messageDocs: {},
@@ -277,8 +277,7 @@ export default {
                             }
                         }
                         graphs[name + i] = fields;
-                        // workaround to avoid replacing a key
-                        // TODO: implement this in a way that doesn't need this hack
+                        // graphs with several expressions share a name: pad it so each keeps its own key
                         i += " ";
                     }
                 }

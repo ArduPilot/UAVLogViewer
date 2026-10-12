@@ -40,7 +40,7 @@
                         >
                             {{ nodeName }}
                         </a>
-                        <!-- TODO: remove this hacky check when presets use a better data sctructure -->
+                        <!-- user presets (deletable) are flagged at index 3 of their first field (https://github.com/igoutta/UAVLogViewer/issues/4) -->
                         <a
                             v-if="newNode[Object.keys(newNode)[0]][0][3] === 1"
                             @click="deletePreset(name + nodeName)"
