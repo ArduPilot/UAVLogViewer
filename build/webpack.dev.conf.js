@@ -53,7 +53,9 @@ const devWebpackConfig = merge(baseWebpackConfig, {
             ],
         },
         hot: true,
-        static: "./",
+        // Serve only the build output. "./" also served the repo itself (sources, .git) to the
+        // network, since the dev server listens on 0.0.0.0.
+        static: false,
         compress: true,
         host: HOST || dev.host,
         port: PORT || dev.port,

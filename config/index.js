@@ -14,15 +14,15 @@ export const dev = {
     proxyTable: {
         "/upload/*": {
             target: "http://localhost:8001/upload",
-            secure: "false",
+            secure: false,
         },
         "/eniro/*": {
             target: "http://localhost:8001/eniro",
-            secure: "false",
+            secure: false,
         },
         "/uploaded/*": {
             target: "http://localhost:8001/uploaded",
-            secure: "false",
+            secure: false,
         },
         "/quantized/*": {
             target: "https://plot.ardupilot.org",
