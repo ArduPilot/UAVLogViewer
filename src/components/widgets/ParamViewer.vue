@@ -1,7 +1,7 @@
 <template>
     <div
         :id="getDivName()"
-        v-bind:style="{
+        :style="{
             width: width + 'px',
             height: height + 'px',
             top: top + 'px',
@@ -15,7 +15,7 @@
             >
                 X
             </span>
-            <input id="filterbox" placeholder="Filter" v-model="filter" />
+            <input id="filterbox" v-model="filter" placeholder="Filter" />
             <button @click="saveParametersToFile">save</button>
             <b-form-checkbox v-if="haveDefaults" v-model="showdiff">
                 Show only changed
@@ -26,7 +26,7 @@
                     <th>Value</th>
                     <th v-if="haveDefaults">Default</th>
                 </tr>
-                <tr v-for="param in filteredData" v-bind:key="param">
+                <tr v-for="param in filteredData" :key="param">
                     <td>{{ param }}</td>
                     <template v-if="haveDefaults">
                         <td>
@@ -71,6 +71,27 @@ export default {
             forceRecompute: 0,
             showdiff: false,
         };
+    },
+    computed: {
+        haveDefaults() {
+            return Object.keys(this.state.defaultParams).length > 0;
+        },
+        filteredData() {
+            // eslint-disable-next-line
+            let potato = this.forceRecompute;
+            return Object.keys(this.state.params.values)
+                .filter((key) => key.indexOf(this.filter.toUpperCase()) !== -1)
+                .filter((key) => {
+                    if (this.showdiff) {
+                        return (
+                            this.state.params.values[key] !==
+                            this.state.defaultParams[key]
+                        );
+                    } else {
+                        return true;
+                    }
+                });
+        },
     },
     methods: {
         waitForMessage(fieldname) {
@@ -155,27 +176,6 @@ export default {
                 this.state.params.values[param] ===
                 this.state.defaultParams[param]
             );
-        },
-    },
-    computed: {
-        haveDefaults() {
-            return Object.keys(this.state.defaultParams).length > 0;
-        },
-        filteredData() {
-            // eslint-disable-next-line
-            let potato = this.forceRecompute;
-            return Object.keys(this.state.params.values)
-                .filter((key) => key.indexOf(this.filter.toUpperCase()) !== -1)
-                .filter((key) => {
-                    if (this.showdiff) {
-                        return (
-                            this.state.params.values[key] !==
-                            this.state.defaultParams[key]
-                        );
-                    } else {
-                        return true;
-                    }
-                });
         },
     },
 };

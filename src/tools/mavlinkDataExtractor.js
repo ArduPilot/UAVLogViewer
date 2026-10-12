@@ -176,9 +176,9 @@ export class MavlinkDataExtractor {
             }
             if (trajectory.length) {
                 ret.GLOBAL_POSITION_INT = {
-                    startAltitude: startAltitude,
-                    trajectory: trajectory,
-                    timeTrajectory: timeTrajectory,
+                    startAltitude,
+                    trajectory,
+                    timeTrajectory,
                 };
             }
         }
@@ -208,9 +208,9 @@ export class MavlinkDataExtractor {
             }
             if (trajectory.length) {
                 ret.GPS_RAW_INT = {
-                    startAltitude: startAltitude,
-                    trajectory: trajectory,
-                    timeTrajectory: timeTrajectory,
+                    startAltitude,
+                    trajectory,
+                    timeTrajectory,
                 };
             }
         }
@@ -240,9 +240,9 @@ export class MavlinkDataExtractor {
             }
             if (trajectory.length) {
                 ret.AHRS2 = {
-                    startAltitude: startAltitude,
-                    trajectory: trajectory,
-                    timeTrajectory: timeTrajectory,
+                    startAltitude,
+                    trajectory,
+                    timeTrajectory,
                 };
             }
         }
@@ -272,9 +272,9 @@ export class MavlinkDataExtractor {
             }
             if (trajectory.length) {
                 ret.AHRS3 = {
-                    startAltitude: startAltitude,
-                    trajectory: trajectory,
-                    timeTrajectory: timeTrajectory,
+                    startAltitude,
+                    trajectory,
+                    timeTrajectory,
                 };
             }
         }

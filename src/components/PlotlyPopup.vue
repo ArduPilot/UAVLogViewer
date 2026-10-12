@@ -59,6 +59,71 @@ const updatemenus = [
 
 export default {
     name: "PlotlyPopup",
+    data() {
+        return {
+            gd: null,
+            plotInstance: null,
+            state: store,
+            plotData: [],
+            plotOptions: {},
+            flightModeChanges: [],
+            externalTimeRange: null,
+            $eventHub: null,
+            cursor: null,
+        };
+    },
+    computed: {
+        setOfModes() {
+            const set = [];
+            for (const mode of this.flightModeChanges) {
+                if (!set.includes(mode[1])) {
+                    set.push(mode[1]);
+                }
+            }
+            return set;
+        },
+        timeRange() {
+            if (this.externalTimeRange != null) {
+                return this.externalTimeRange;
+            }
+            return undefined;
+        },
+        expressions() {
+            return this.state.expressions;
+        },
+        loadedMessages() {
+            return Object.keys(this.state.messages);
+        },
+        messagesInLog() {
+            return Object.keys(this.state.messageTypes);
+        },
+    },
+    watch: {
+        timeRange(range) {
+            console.log("timeRange", range);
+
+            if (this.zoomInterval !== null) {
+                clearTimeout(this.zoomInterval);
+            }
+            this.zoomInterval = setTimeout(() => {
+                Plotly.relayout(this.gd, {
+                    xaxis: {
+                        title: "Time since boot",
+                        range: range,
+                        domain: this.calculateXAxisDomain(),
+                        tickformat: timeformat,
+                    },
+                });
+            }, 500);
+            return range; // make linter happy, it says this is a computed property(?)
+        },
+        expressions: {
+            deep: true,
+            handler() {
+                this.plot();
+            },
+        },
+    },
     created() {
         this.zoomInterval = null;
         this.cache = {};
@@ -106,19 +171,6 @@ export default {
         this.$eventHub.$off("animation-changed");
         this.$eventHub.$off("cesium-time-changed");
         clearInterval(this.interval);
-    },
-    data() {
-        return {
-            gd: null,
-            plotInstance: null,
-            state: store,
-            plotData: [],
-            plotOptions: {},
-            flightModeChanges: [],
-            externalTimeRange: null,
-            $eventHub: null,
-            cursor: null,
-        };
     },
     methods: {
         setTimeRange(timeRange) {
@@ -535,58 +587,6 @@ export default {
                     ...annotationsParams,
                 ],
             ];
-        },
-    },
-    computed: {
-        setOfModes() {
-            const set = [];
-            for (const mode of this.flightModeChanges) {
-                if (!set.includes(mode[1])) {
-                    set.push(mode[1]);
-                }
-            }
-            return set;
-        },
-        timeRange() {
-            if (this.externalTimeRange != null) {
-                return this.externalTimeRange;
-            }
-            return undefined;
-        },
-        expressions() {
-            return this.state.expressions;
-        },
-        loadedMessages() {
-            return Object.keys(this.state.messages);
-        },
-        messagesInLog() {
-            return Object.keys(this.state.messageTypes);
-        },
-    },
-    watch: {
-        timeRange(range) {
-            console.log("timeRange", range);
-
-            if (this.zoomInterval !== null) {
-                clearTimeout(this.zoomInterval);
-            }
-            this.zoomInterval = setTimeout(() => {
-                Plotly.relayout(this.gd, {
-                    xaxis: {
-                        title: "Time since boot",
-                        range: range,
-                        domain: this.calculateXAxisDomain(),
-                        tickformat: timeformat,
-                    },
-                });
-            }, 500);
-            return range; // make linter happy, it says this is a computed property(?)
-        },
-        expressions: {
-            deep: true,
-            handler() {
-                this.plot();
-            },
         },
     },
 };

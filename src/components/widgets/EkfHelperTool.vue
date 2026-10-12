@@ -1,7 +1,7 @@
 <template>
     <div
         :id="getDivName()"
-        v-bind:style="{
+        :style="{
             width: width + 'px',
             height: height + 'px',
             top: top + 'px',
@@ -41,10 +41,6 @@ import { baseWidget } from "./baseWidget";
 export default {
     name: "EkfHelperViewer",
     mixins: [baseWidget],
-    created() {
-        this.$eventHub.$on("cesium-time-changed", this.setTime);
-        this.$eventHub.$on("hoveredTime", this.setTime);
-    },
     data() {
         return {
             name: "EkfHelperViewer",
@@ -57,35 +53,6 @@ export default {
             forceRecompute: 0,
             cursorTime: 0,
         };
-    },
-    methods: {
-        setTime(time) {
-            this.cursorTime = time;
-        },
-        waitForMessage(fieldname) {
-            this.$eventHub.$emit("loadType", fieldname.split(".")[0]);
-            let interval;
-            const _this = this;
-            let counter = 0;
-            return new Promise((resolve, reject) => {
-                interval = setInterval(function () {
-                    if (_this.state.messages[fieldname.split(".")[0]]) {
-                        clearInterval(interval);
-                        counter += 1;
-                        resolve();
-                    } else {
-                        if (counter > 6) {
-                            console.log("not resolving");
-                            clearInterval(interval);
-                            reject(new Error("Could not load messageType"));
-                        }
-                    }
-                }, 2000);
-            });
-        },
-        setup() {
-            this.waitForMessage("EKF4.SS");
-        },
     },
     computed: {
         closestIndex() {
@@ -134,6 +101,39 @@ export default {
                 rejectingAirspeed: !!(solution & (1 << 17)),
                 deadReckoning: !!(solution & (1 << 18)),
             };
+        },
+    },
+    created() {
+        this.$eventHub.$on("cesium-time-changed", this.setTime);
+        this.$eventHub.$on("hoveredTime", this.setTime);
+    },
+    methods: {
+        setTime(time) {
+            this.cursorTime = time;
+        },
+        waitForMessage(fieldname) {
+            this.$eventHub.$emit("loadType", fieldname.split(".")[0]);
+            let interval;
+            const _this = this;
+            let counter = 0;
+            return new Promise((resolve, reject) => {
+                interval = setInterval(function () {
+                    if (_this.state.messages[fieldname.split(".")[0]]) {
+                        clearInterval(interval);
+                        counter += 1;
+                        resolve();
+                    } else {
+                        if (counter > 6) {
+                            console.log("not resolving");
+                            clearInterval(interval);
+                            reject(new Error("Could not load messageType"));
+                        }
+                    }
+                }, 2000);
+            });
+        },
+        setup() {
+            this.waitForMessage("EKF4.SS");
         },
     },
 };

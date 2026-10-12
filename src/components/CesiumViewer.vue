@@ -3,15 +3,15 @@
         <div id="toolbar">
             <div class="infoPanel">
                 <select
+                    v-model="selectedColorCoder"
                     class="color-coding-select"
                     aria-label="Color coding"
-                    v-model="selectedColorCoder"
-                    v-on:change="updateColor"
+                    @change="updateColor"
                 >
                     <option
+                        v-for="(value, key) in useableColorCoders"
                         :key="key"
                         :value="key"
-                        v-for="(value, key) in useableColorCoders"
                     >
                         {{ key }}
                     </option>
@@ -23,14 +23,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr
-                            v-bind:key="mode[0]"
-                            v-for="mode in colorCodeLegend"
-                        >
-                            <td
-                                class="mode"
-                                v-bind:style="{ color: mode.color }"
-                            >
+                        <tr v-for="mode in colorCodeLegend" :key="mode[0]">
+                            <td class="mode" :style="{ color: mode.color }">
                                 {{ mode.name }}
                             </td>
                         </tr>
@@ -40,7 +34,7 @@
             <CesiumSettingsWidget />
         </div>
         <div id="cesiumContainer"></div>
-        <div id="distanceLegend" v-show="scaleBarLabel">
+        <div v-show="scaleBarLabel" id="distanceLegend">
             <div class="distanceLegendLabel">{{ scaleBarLabel }}</div>
             <div
                 class="distanceLegendBar"
@@ -152,6 +146,9 @@ function getMaxTime(data) {
 
 export default {
     name: "CesiumViewer",
+    components: {
+        CesiumSettingsWidget,
+    },
 
     data() {
         return {
@@ -164,8 +161,173 @@ export default {
             scaleBarWidth: 0,
         };
     },
-    components: {
-        CesiumSettingsWidget,
+    computed: {
+        availableColorCoders() {
+            const coders = {
+                Mode: colorCoderMode,
+                range: colorCoderRange,
+            };
+            for (const key in this.state.plotCache) {
+                coders[key] = new ColorCoderPlot(store, key);
+            }
+            return coders;
+        },
+        useableColorCoders() {
+            // check if requiredMessages for each color coder are present
+            // iterates on key:value pais of this.availableColorCoders and filters them
+            // based on the requiredMessages property
+            const colorCoders = {};
+            for (const [key, value] of Object.entries(
+                this.availableColorCoders,
+            )) {
+                if (
+                    value.requiredMessages.every((m) =>
+                        Object.keys(this.state.messageTypes).includes(m),
+                    )
+                ) {
+                    colorCoders[key] = value;
+                }
+            }
+            return colorCoders;
+        },
+
+        colorCodeLegend() {
+            return this.colorCoder?.getLegend() ?? [];
+        },
+        setOfModes() {
+            const set = [];
+            for (const mode of this.state.flightModeChanges) {
+                if (!set.includes(mode[1])) {
+                    set.push(mode[1]);
+                }
+            }
+            return set;
+        },
+        timeRange() {
+            if (this.state.timeRange !== null) {
+                return this.state.timeRange;
+            }
+            return undefined;
+        },
+        modelScale() {
+            // The settings field is free text: ignore values that are not positive numbers
+            const value = Number.parseFloat(this.state.modelScale);
+            const scale = Number.isNaN(value) || value <= 0 ? 1 : value;
+            // TODO: scale the model instead
+            return this.state.vehicle === "submarine" ? scale * 6.86 : scale;
+        },
+        heightOffset() {
+            return Number.parseFloat(this.state.heightOffset);
+        },
+        cameraType() {
+            return this.state.cameraType;
+        },
+        showTrajectory() {
+            return this.state.showTrajectory;
+        },
+        showClickableTrajectory() {
+            return this.state.showClickableTrajectory;
+        },
+        showWaypoints() {
+            return this.state.showWaypoints;
+        },
+        showFences() {
+            return this.state.showFences;
+        },
+        trajectorySource() {
+            return this.state.trajectorySource;
+        },
+        comparisonTrajectories() {
+            return this.state.comparisonTrajectories;
+        },
+        attitudeSource() {
+            return this.state.attitudeSource;
+        },
+        radioMode() {
+            return this.state.radioMode;
+        },
+    },
+    watch: {
+        // The model scale is read through CallbackProperty; just redraw (requestRenderMode)
+        modelScale() {
+            this.viewer.scene.requestRender();
+        },
+        heightOffset(offset) {
+            const value = Number.parseFloat(offset);
+            if (!Number.isNaN(value)) {
+                this.updateAndPlotTrajectory();
+                this.processTrajectory();
+                this.addModel();
+                this.plotComparisonTrajectories();
+                this.viewer.scene.requestRender();
+            }
+        },
+        colorCoder() {
+            this.updateAndPlotTrajectory();
+            this.processTrajectory();
+            this.viewer.scene.requestRender();
+        },
+        timeRange(range) {
+            try {
+                if (range[1] > range[0]) {
+                    const cesiumStart = this.msToCesiumTime(
+                        range[0],
+                    ).secondsOfDay;
+                    const plotlyStart =
+                        this.viewer.timeline._startJulian.secondsOfDay;
+                    const cesiumEnd = this.msToCesiumTime(
+                        range[1],
+                    ).secondsOfDay;
+                    const plotlyEnd =
+                        this.viewer.timeline._endJulian.secondsOfDay;
+                    // If range has changed more than 1 second
+                    if (
+                        Math.abs(cesiumStart - plotlyStart) > 1 ||
+                        Math.abs(cesiumEnd - plotlyEnd) > 1
+                    ) {
+                        this.viewer.timeline.zoomTo(
+                            this.msToCesiumTime(range[0]),
+                            this.msToCesiumTime(range[1]),
+                        );
+                    }
+                }
+            } catch (e) {
+                console.log(e);
+            }
+        },
+        cameraType() {
+            this.changeCamera();
+        },
+        showTrajectory() {
+            this.updateAndPlotTrajectory();
+            this.plotComparisonTrajectories();
+        },
+        showClickableTrajectory() {
+            this.updateVisibility();
+        },
+        showWaypoints() {
+            this.updateVisibility();
+        },
+        "state.fences"() {
+            // Fences are extracted asynchronously and may be populated after this
+            // component has already run its initial setup (timing differs per browser),
+            // so re-plot whenever the fence list changes.
+            if (this.viewer != null) {
+                this.plotFences(this.state.fences);
+            }
+        },
+        trajectorySource() {
+            this.loadTrajectory(this.state.trajectorySource);
+        },
+        comparisonTrajectories: {
+            handler() {
+                this.plotComparisonTrajectories();
+            },
+            deep: true,
+        },
+        attitudeSource() {
+            this.loadAttitude(this.state.attitudeSource);
+        },
     },
     created() {
         this.updateShader();
@@ -2408,174 +2570,6 @@ export default {
                 }
                 this.addModel();
             });
-        },
-    },
-    computed: {
-        availableColorCoders() {
-            const coders = {
-                Mode: colorCoderMode,
-                range: colorCoderRange,
-            };
-            for (const key in this.state.plotCache) {
-                coders[key] = new ColorCoderPlot(store, key);
-            }
-            return coders;
-        },
-        useableColorCoders() {
-            // check if requiredMessages for each color coder are present
-            // iterates on key:value pais of this.availableColorCoders and filters them
-            // based on the requiredMessages property
-            const colorCoders = {};
-            for (const [key, value] of Object.entries(
-                this.availableColorCoders,
-            )) {
-                if (
-                    value.requiredMessages.every((m) =>
-                        Object.keys(this.state.messageTypes).includes(m),
-                    )
-                ) {
-                    colorCoders[key] = value;
-                }
-            }
-            return colorCoders;
-        },
-
-        colorCodeLegend() {
-            return this.colorCoder?.getLegend() ?? [];
-        },
-        setOfModes() {
-            const set = [];
-            for (const mode of this.state.flightModeChanges) {
-                if (!set.includes(mode[1])) {
-                    set.push(mode[1]);
-                }
-            }
-            return set;
-        },
-        timeRange() {
-            if (this.state.timeRange !== null) {
-                return this.state.timeRange;
-            }
-            return undefined;
-        },
-        modelScale() {
-            // The settings field is free text: ignore values that are not positive numbers
-            const value = Number.parseFloat(this.state.modelScale);
-            const scale = Number.isNaN(value) || value <= 0 ? 1 : value;
-            // TODO: scale the model instead
-            return this.state.vehicle === "submarine" ? scale * 6.86 : scale;
-        },
-        heightOffset() {
-            return Number.parseFloat(this.state.heightOffset);
-        },
-        cameraType() {
-            return this.state.cameraType;
-        },
-        showTrajectory() {
-            return this.state.showTrajectory;
-        },
-        showClickableTrajectory() {
-            return this.state.showClickableTrajectory;
-        },
-        showWaypoints() {
-            return this.state.showWaypoints;
-        },
-        showFences() {
-            return this.state.showFences;
-        },
-        trajectorySource() {
-            return this.state.trajectorySource;
-        },
-        comparisonTrajectories() {
-            return this.state.comparisonTrajectories;
-        },
-        attitudeSource() {
-            return this.state.attitudeSource;
-        },
-        radioMode() {
-            return this.state.radioMode;
-        },
-    },
-    watch: {
-        // The model scale is read through CallbackProperty; just redraw (requestRenderMode)
-        modelScale() {
-            this.viewer.scene.requestRender();
-        },
-        heightOffset(offset) {
-            const value = Number.parseFloat(offset);
-            if (!Number.isNaN(value)) {
-                this.updateAndPlotTrajectory();
-                this.processTrajectory();
-                this.addModel();
-                this.plotComparisonTrajectories();
-                this.viewer.scene.requestRender();
-            }
-        },
-        colorCoder() {
-            this.updateAndPlotTrajectory();
-            this.processTrajectory();
-            this.viewer.scene.requestRender();
-        },
-        timeRange(range) {
-            try {
-                if (range[1] > range[0]) {
-                    const cesiumStart = this.msToCesiumTime(
-                        range[0],
-                    ).secondsOfDay;
-                    const plotlyStart =
-                        this.viewer.timeline._startJulian.secondsOfDay;
-                    const cesiumEnd = this.msToCesiumTime(
-                        range[1],
-                    ).secondsOfDay;
-                    const plotlyEnd =
-                        this.viewer.timeline._endJulian.secondsOfDay;
-                    // If range has changed more than 1 second
-                    if (
-                        Math.abs(cesiumStart - plotlyStart) > 1 ||
-                        Math.abs(cesiumEnd - plotlyEnd) > 1
-                    ) {
-                        this.viewer.timeline.zoomTo(
-                            this.msToCesiumTime(range[0]),
-                            this.msToCesiumTime(range[1]),
-                        );
-                    }
-                }
-            } catch (e) {
-                console.log(e);
-            }
-        },
-        cameraType() {
-            this.changeCamera();
-        },
-        showTrajectory() {
-            this.updateAndPlotTrajectory();
-            this.plotComparisonTrajectories();
-        },
-        showClickableTrajectory() {
-            this.updateVisibility();
-        },
-        showWaypoints() {
-            this.updateVisibility();
-        },
-        "state.fences"() {
-            // Fences are extracted asynchronously and may be populated after this
-            // component has already run its initial setup (timing differs per browser),
-            // so re-plot whenever the fence list changes.
-            if (this.viewer != null) {
-                this.plotFences(this.state.fences);
-            }
-        },
-        trajectorySource() {
-            this.loadTrajectory(this.state.trajectorySource);
-        },
-        comparisonTrajectories: {
-            handler() {
-                this.plotComparisonTrajectories();
-            },
-            deep: true,
-        },
-        attitudeSource() {
-            this.loadAttitude(this.state.attitudeSource);
         },
     },
 };

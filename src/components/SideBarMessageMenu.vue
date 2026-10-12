@@ -26,15 +26,13 @@
                 <li class="input-li">
                     <input
                         id="filterbox"
-                        placeholder=" Type here to filter..."
                         v-model="filter"
+                        placeholder=" Type here to filter..."
                     />
                 </li>
             </ul>
-            <template
-                v-for="key of Object.keys(this.messageTypesFiltered).sort()"
-            >
-                <ul v-bind:key="key">
+            <template v-for="key of Object.keys(messageTypesFiltered).sort()">
+                <ul :key="key">
                     <li class="type">
                         <div
                             v-b-toggle="'type' + key"
@@ -61,19 +59,19 @@
                         </div>
                     </li>
                 </ul>
-                <b-collapse :id="'type' + key" v-bind:key="key + '1'">
+                <b-collapse :id="'type' + key" :key="key + '1'">
                     <template v-for="item in messageTypes[key].complexFields">
                         <li
-                            @click="toggle(key, item.name)"
-                            class="field"
-                            :title="fieldDoc(key, item.name)"
-                            v-bind:key="key + '.' + item.name"
                             v-if="
                                 isPlottable(key, item.name) &&
                                 item.name
                                     .toLowerCase()
                                     .includes(filter.toLowerCase())
                             "
+                            :key="key + '.' + item.name"
+                            class="field"
+                            :title="fieldDoc(key, item.name)"
+                            @click="toggle(key, item.name)"
                         >
                             <a>
                                 {{ item.name }}
@@ -110,7 +108,7 @@ import TreeMenu from "./widgets/TreeMenu.vue";
 import fastXmlParser from "fast-xml-parser";
 
 export default {
-    name: "message-menu",
+    name: "MessageMenu",
     components: { TreeMenu },
     data() {
         return {
@@ -147,6 +145,93 @@ export default {
             userPresets: {},
             messageDocs: {},
         };
+    },
+    computed: {
+        hasMessages() {
+            return Object.keys(this.messageTypes).length > 0;
+        },
+        messageTypesFiltered() {
+            const filtered = {};
+            for (const key of Object.keys(this.messageTypes)) {
+                if (!this.hiddenTypes.includes(key)) {
+                    if (this.filter === "") {
+                        this.collapse("type" + key);
+                        filtered[key] = this.messageTypes[key];
+                        continue;
+                    }
+                    if (
+                        this.messageTypes[key].expressions.some((field) =>
+                            field
+                                .toLowerCase()
+                                .includes(this.filter.toLowerCase()),
+                        )
+                    ) {
+                        filtered[key] = this.messageTypes[key];
+                        // console.log('type' + key, document.getElementById('type' + key))
+                        this.expand("type" + key);
+                    } else {
+                        this.collapse("type" + key);
+                    }
+                }
+            }
+            return filtered;
+        },
+        availableMessagePresets() {
+            const dict = {};
+            // do it for default messages
+            for (const [key, value] of Object.entries(this.messagePresets)) {
+                let missing = false;
+                let color = 0;
+                for (const field of value) {
+                    // If all of the expressions match, add this and move on
+                    if (field[0] === "") {
+                        continue;
+                    }
+                    missing = missing || !this.isAvailable(field);
+                    if (!missing) {
+                        if (key in dict) {
+                            dict[key].messages.push([...field, color++]);
+                        } else {
+                            dict[key] = { messages: [[...field, color++]] };
+                        }
+                    }
+                }
+                if (missing) {
+                    delete dict[key];
+                }
+            }
+            // And again for user presets
+            for (const [key, value] of Object.entries(this.userPresets)) {
+                let missing = false;
+                let color = 0;
+                for (const field of value) {
+                    // If all of the expressions match, add this and move on
+                    missing = missing || !this.isAvailable(field);
+                    if (!missing) {
+                        if (key in dict) {
+                            dict[key].messages.push([...field, color++]);
+                        } else {
+                            dict[key] = { messages: [[...field, color++]] };
+                        }
+                    }
+                }
+            }
+            const newDict = {};
+            for (const [key, value] of Object.entries(dict)) {
+                let current = newDict;
+                const fields = key.trim().split("/");
+                const lastField = fields.pop();
+                for (const field of fields) {
+                    if (!(field in current)) {
+                        console.log("overwriting " + field);
+                        current[field] = {};
+                    }
+                    current = current[field];
+                }
+                current[lastField] = value;
+            }
+            return newDict;
+        },
     },
     created() {
         this.$eventHub.$on("messageTypes", this.handleMessageTypes);
@@ -357,93 +442,6 @@ export default {
                 return false;
             }
             return true;
-        },
-    },
-    computed: {
-        hasMessages() {
-            return Object.keys(this.messageTypes).length > 0;
-        },
-        messageTypesFiltered() {
-            const filtered = {};
-            for (const key of Object.keys(this.messageTypes)) {
-                if (!this.hiddenTypes.includes(key)) {
-                    if (this.filter === "") {
-                        this.collapse("type" + key);
-                        filtered[key] = this.messageTypes[key];
-                        continue;
-                    }
-                    if (
-                        this.messageTypes[key].expressions.some((field) =>
-                            field
-                                .toLowerCase()
-                                .includes(this.filter.toLowerCase()),
-                        )
-                    ) {
-                        filtered[key] = this.messageTypes[key];
-                        // console.log('type' + key, document.getElementById('type' + key))
-                        this.expand("type" + key);
-                    } else {
-                        this.collapse("type" + key);
-                    }
-                }
-            }
-            return filtered;
-        },
-        availableMessagePresets() {
-            const dict = {};
-            // do it for default messages
-            for (const [key, value] of Object.entries(this.messagePresets)) {
-                let missing = false;
-                let color = 0;
-                for (const field of value) {
-                    // If all of the expressions match, add this and move on
-                    if (field[0] === "") {
-                        continue;
-                    }
-                    missing = missing || !this.isAvailable(field);
-                    if (!missing) {
-                        if (key in dict) {
-                            dict[key].messages.push([...field, color++]);
-                        } else {
-                            dict[key] = { messages: [[...field, color++]] };
-                        }
-                    }
-                }
-                if (missing) {
-                    delete dict[key];
-                }
-            }
-            // And again for user presets
-            for (const [key, value] of Object.entries(this.userPresets)) {
-                let missing = false;
-                let color = 0;
-                for (const field of value) {
-                    // If all of the expressions match, add this and move on
-                    missing = missing || !this.isAvailable(field);
-                    if (!missing) {
-                        if (key in dict) {
-                            dict[key].messages.push([...field, color++]);
-                        } else {
-                            dict[key] = { messages: [[...field, color++]] };
-                        }
-                    }
-                }
-            }
-            const newDict = {};
-            for (const [key, value] of Object.entries(dict)) {
-                let current = newDict;
-                const fields = key.trim().split("/");
-                const lastField = fields.pop();
-                for (const field of fields) {
-                    if (!(field in current)) {
-                        console.log("overwriting " + field);
-                        current[field] = {};
-                    }
-                    current = current[field];
-                }
-                current[lastField] = value;
-            }
-            return newDict;
         },
     },
 };

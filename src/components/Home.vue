@@ -12,33 +12,33 @@
             </div>
         </template>
         <TxInputs
-            fixed-aspect-ratio
             v-if="state.mapAvailable && state.showMap && state.showRadio"
+            fixed-aspect-ratio
         ></TxInputs>
         <ParamViewer
-            @close="state.showParams = false"
             v-if="state.showParams"
+            @close="state.showParams = false"
         ></ParamViewer>
         <MessageViewer
-            @close="state.showMessages = false"
             v-if="state.showMessages"
+            @close="state.showMessages = false"
         ></MessageViewer>
         <DeviceIDViewer
-            @close="state.showDeviceIDs = false"
             v-if="state.showDeviceIDs"
+            @close="state.showDeviceIDs = false"
         ></DeviceIDViewer>
         <AttitudeViewer
-            @close="state.showAttitude = false"
             v-if="state.showAttitude"
+            @close="state.showAttitude = false"
         ></AttitudeViewer>
         <MagFitTool
+            v-if="state.showMagfit"
             :resizeable="false"
             @close="state.showMagfit = false"
-            v-if="state.showMagfit"
         ></MagFitTool>
         <EkfHelperTool
-            @close="state.showEkfHelper = false"
             v-if="state.showEkfHelper"
+            @close="state.showEkfHelper = false"
         ></EkfHelperTool>
         <div class="container-fluid" style="height: 100%; overflow: hidden">
             <sidebar />
@@ -48,18 +48,18 @@
                 role="main"
             >
                 <div
-                    class="row"
-                    v-bind:class="[state.showMap ? 'h-50' : 'h-100']"
                     v-if="state.plotOn"
+                    class="row"
+                    :class="[state.showMap ? 'h-50' : 'h-100']"
                 >
                     <div class="col-12">
                         <Plotly />
                     </div>
                 </div>
                 <div
-                    class="row"
-                    v-bind:class="[state.plotOn ? 'h-50' : 'h-100']"
                     v-if="state.showMap"
+                    class="row"
+                    :class="[state.plotOn ? 'h-50' : 'h-100']"
                 >
                     <div class="col-12 noPadding">
                         <CesiumViewer
@@ -73,11 +73,11 @@
                             <h3>Map Initialization Failed</h3>
                             <p>{{ state.mapError }}</p>
                             <button
+                                class="btn btn-outline-info btn-sm"
                                 @click="
                                     state.mapError = null;
                                     state.showMap = false;
                                 "
-                                class="btn btn-outline-info btn-sm"
                             >
                                 Dismiss
                             </button>
@@ -93,8 +93,8 @@
                                 trajectory data to display on the map.
                             </p>
                             <button
-                                @click="state.showMap = false"
                                 class="btn btn-outline-info btn-sm"
+                                @click="state.showMap = false"
                             >
                                 Close Map
                             </button>
@@ -129,6 +129,48 @@ import Vue from "vue";
 
 export default {
     name: "Home",
+    components: {
+        Sidebar,
+        Plotly,
+        CesiumViewer,
+        AtomSpinner,
+        TxInputs,
+        ParamViewer,
+        MessageViewer,
+        DeviceIDViewer,
+        AttitudeViewer,
+        MagFitTool,
+        EkfHelperTool,
+    },
+    data() {
+        return {
+            state: store,
+            dataExtractor: null,
+        };
+    },
+    computed: {
+        mapOk() {
+            return (
+                this.state.flightModeChanges !== undefined &&
+                this.state.currentTrajectory !== undefined &&
+                this.state.currentTrajectory.length > 0 &&
+                (Object.keys(this.state.timeAttitude).length > 0 ||
+                    Object.keys(this.state.timeAttitudeQ).length > 0)
+            );
+        },
+        setOfModes() {
+            const set = [];
+            if (!this.state.flightModeChanges) {
+                return [];
+            }
+            for (const mode of this.state.flightModeChanges) {
+                if (!set.includes(mode[1])) {
+                    set.push(mode[1]);
+                }
+            }
+            return set;
+        },
+    },
     created() {
         this.$eventHub.$on("messagesDoneLoading", this.extractFlightData);
         this.state.messages = {};
@@ -141,12 +183,6 @@ export default {
     },
     beforeDestroy() {
         this.$eventHub.$off("messages");
-    },
-    data() {
-        return {
-            state: store,
-            dataExtractor: null,
-        };
     },
     methods: {
         extractFlightData() {
@@ -334,42 +370,6 @@ export default {
                 this.state.colors.push(new Color(rgba[0], rgba[1], rgba[2]));
                 // this.translucentColors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2], 0.1))
             }
-        },
-    },
-    components: {
-        Sidebar,
-        Plotly,
-        CesiumViewer,
-        AtomSpinner,
-        TxInputs,
-        ParamViewer,
-        MessageViewer,
-        DeviceIDViewer,
-        AttitudeViewer,
-        MagFitTool,
-        EkfHelperTool,
-    },
-    computed: {
-        mapOk() {
-            return (
-                this.state.flightModeChanges !== undefined &&
-                this.state.currentTrajectory !== undefined &&
-                this.state.currentTrajectory.length > 0 &&
-                (Object.keys(this.state.timeAttitude).length > 0 ||
-                    Object.keys(this.state.timeAttitudeQ).length > 0)
-            );
-        },
-        setOfModes() {
-            const set = [];
-            if (!this.state.flightModeChanges) {
-                return [];
-            }
-            for (const mode of this.state.flightModeChanges) {
-                if (!set.includes(mode[1])) {
-                    set.push(mode[1]);
-                }
-            }
-            return set;
         },
     },
 };

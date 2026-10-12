@@ -17,33 +17,33 @@
                             newNode.length === undefined &&
                             newNode.messages === undefined
                         "
+                        :key="cleanNodeName(nodeName)"
                         :label="nodeName"
                         :nodes="newNode"
                         :level="level + 1"
                         :name="name + nodeName + '/'"
                         :clean-name="cleanNodeName(nodeName)"
-                        :key="cleanNodeName(nodeName)"
                     >
                     </tree-menu>
                     <li
-                        :style="{ 'margin-left': '' + (level + 1) * 15 + 'px' }"
                         v-if="
                             newNode.messages !== undefined &&
                             newNode.messages.length !== undefined
                         "
-                        class="type"
                         :key="cleanNodeName(nodeName)"
+                        :style="{ 'margin-left': '' + (level + 1) * 15 + 'px' }"
+                        class="type"
                     >
                         <a
-                            @click="openPreset(newNode.messages)"
                             class="section"
+                            @click="openPreset(newNode.messages)"
                         >
                             {{ nodeName }}
                         </a>
                         <!-- TODO: remove this hacky check when presets use a better data sctructure -->
                         <a
-                            @click="deletePreset(name + nodeName)"
                             v-if="newNode[Object.keys(newNode)[0]][0][3] === 1"
+                            @click="deletePreset(name + nodeName)"
                         >
                             <i
                                 class="remove-icon fas fa-trash"
@@ -61,6 +61,7 @@
 import { store } from "../Globals.js";
 
 export default {
+    name: "TreeMenu",
     props: {
         label: String,
         nodes: Object,
@@ -74,7 +75,6 @@ export default {
             default: "",
         },
     },
-    name: "tree-menu",
     data() {
         return {
             state: store,

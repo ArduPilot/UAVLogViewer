@@ -1,12 +1,9 @@
 <template>
-    <div
-        :id="getDivName()"
-        v-bind:style="{ top: top + 'px', left: left + 'px' }"
-    >
+    <div :id="getDivName()" :style="{ top: top + 'px', left: left + 'px' }">
         <div id="paneContent">
             <div class="header">
                 <h5>Mag Fit Tool</h5>
-                <span class="close-btn" @click="close()" title="Close"
+                <span class="close-btn" title="Close" @click="close()"
                     >&times;</span
                 >
             </div>
@@ -17,10 +14,10 @@
                         <td>Lat</td>
                         <td>
                             <input
+                                v-model="GpsPosition.lat"
                                 type="text"
                                 disabled
                                 readonly
-                                v-model="GpsPosition.lat"
                                 size="10"
                             />
                         </td>
@@ -29,10 +26,10 @@
                         <td>Lon</td>
                         <td>
                             <input
+                                v-model="GpsPosition.lon"
                                 type="text"
                                 disabled
                                 readonly
-                                v-model="GpsPosition.lon"
                                 size="10"
                             />
                         </td>
@@ -40,21 +37,21 @@
                     <tr v-if="!GpsPosition">
                         <td>Lat</td>
                         <td>
-                            <input type="text" v-model="userLat" size="10" />
+                            <input v-model="userLat" type="text" size="10" />
                         </td>
                     </tr>
                     <tr v-if="!GpsPosition">
                         <td>Lon</td>
                         <td>
-                            <input type="text" v-model="userLon" size="10" />
+                            <input v-model="userLon" type="text" size="10" />
                         </td>
                     </tr>
                     <tr v-if="!GpsPosition">
                         <td></td>
                         <td>
                             <button
-                                @click="getLocationFromIp()"
                                 :disabled="fetchingLocation"
+                                @click="getLocationFromIp()"
                             >
                                 {{
                                     fetchingLocation
@@ -94,8 +91,8 @@
                         <th colspan="3"></th>
                     </tr>
                     <tr
-                        :key="'param' + index"
                         v-for="(value, index) in compassOffsets"
+                        :key="'param' + index"
                     >
                         <td>{{ index }}</td>
                         <td>{{ value.offsets.x.toFixed(2) }}</td>
@@ -111,7 +108,7 @@
                                         ? ''
                                         : 'Enter a latitude and longitude first'
                                 "
-                                v-on:click="fitWmm(index)"
+                                @click="fitWmm(index)"
                             >
                                 <i
                                     v-if="
@@ -143,7 +140,7 @@
                 </table>
                 <i v-else class="fas fa-spinner fa-spin"> </i>
             </div>
-            <div class="section" v-if="compassMessageNames.length >= 2">
+            <div v-if="compassMessageNames.length >= 2" class="section">
                 <h6>Consistency</h6>
                 <div style="margin-bottom: 6px">
                     Compare
@@ -184,7 +181,7 @@
                     Plot heading diff (fitted)
                 </button>
             </div>
-            <div class="section" v-if="processing">
+            <div v-if="processing" class="section">
                 <h6>Optimizer fitness</h6>
                 <svg
                     class="fitness-chart"
@@ -205,10 +202,7 @@
                     >
                 </div>
             </div>
-            <div
-                class="section"
-                v-if="newCorrections.length > 0 || this.processing"
-            >
+            <div v-if="newCorrections.length > 0 || processing" class="section">
                 <h6>New</h6>
                 <table class="results">
                     <tr>
@@ -221,8 +215,8 @@
                         <th colspan="2"></th>
                     </tr>
                     <tr
-                        :key="'param' + index"
                         v-for="(value, index) in newCorrections"
+                        :key="'param' + index"
                     >
                         <td>{{ index }}</td>
                         <td>{{ value?.offsets?.x?.toFixed(2) }}</td>
@@ -289,7 +283,6 @@ const COMPASS_MESSAGE_CANDIDATES = [
     "MAG3",
 ];
 
-// eslint-disable-next-line
 async function geneticOptimizer(
     f,
     xStart,
@@ -302,7 +295,6 @@ async function geneticOptimizer(
         onProgress = null,
     } = {},
 ) {
-    // eslint-disable-next-line
     let population = Array(populationSize - 1)
         .fill()
         .map(() =>
@@ -424,6 +416,272 @@ export default {
             diffCompassA: 0,
             diffCompassB: 1,
         };
+    },
+    computed: {
+        bestFitness() {
+            const n = this.fitnessHistory.length;
+            return n ? this.fitnessHistory[n - 1] : null;
+        },
+        fitnessPoints() {
+            // build the SVG polyline for the live optimizer fitness chart
+            const history = this.fitnessHistory;
+            const n = history.length;
+            if (n === 0) {
+                return "";
+            }
+            const pad = 3;
+            const w = this.chartWidth;
+            const h = this.chartHeight;
+            const min = Math.min(...history);
+            const max = Math.max(...history);
+            const range = max - min || 1;
+            return history
+                .map((value, i) => {
+                    const x =
+                        n === 1 ? w / 2 : pad + (i / (n - 1)) * (w - 2 * pad);
+                    const y = pad + (1 - (value - min) / range) * (h - 2 * pad);
+                    return `${x.toFixed(1)},${y.toFixed(1)}`;
+                })
+                .join(" ");
+        },
+        fitnessesPreCalibration() {
+            const ret = [];
+            for (const instance in this.compassDataAugmentedWithATT) {
+                ret.push(
+                    this.wmmErrorOnce(
+                        this.compassDataAugmentedWithATT[instance],
+                        this.compassOffsets[instance],
+                    ),
+                );
+            }
+            return ret;
+        },
+        fitnessesPostCalibration() {
+            return this.newCorrections.map((c, i) => {
+                return this.wmmErrorOnce(
+                    this.compassDataAugmentedWithATT[i],
+                    c,
+                );
+            });
+        },
+        GpsPosition() {
+            const pos =
+                Object.values(this.state.trajectories)[0]?.trajectory[0] ??
+                null;
+            if (pos === null) return null;
+            return {
+                lon: pos[0],
+                lat: pos[1],
+            };
+        },
+        position() {
+            return this.GpsPosition || this.userPosition;
+        },
+        userPosition() {
+            return {
+                lat: this.userLat,
+                lon: this.userLon,
+            };
+        },
+        positionValid() {
+            // a fit needs a location to compute the expected earth field. Either
+            // the log has GPS, or the user must have entered valid lat/lon.
+            if (this.GpsPosition) {
+                return true;
+            }
+            const lat = parseFloat(this.userLat);
+            const lon = parseFloat(this.userLon);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                return false;
+            }
+            if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                return false;
+            }
+            // treat the untouched (0, 0) default as "not entered yet"
+            return !(lat === 0 && lon === 0);
+        },
+        // next three come from mavextra.js
+        intensity() {
+            return window.interpolate_table(
+                window.intensity_table,
+                this.position.lat,
+                this.position.lon,
+            );
+        },
+        declination() {
+            return window.interpolate_table(
+                window.declination_table,
+                this.position.lat,
+                this.position.lon,
+            );
+        },
+        inclination() {
+            return window.interpolate_table(
+                window.inclination_table,
+                this.position.lat,
+                this.position.lon,
+            );
+        },
+        earthField() {
+            const fieldVar = window.get_mag_field_ef(
+                this.position.lat,
+                this.position.lon,
+            );
+            let magEf = new Vector3(fieldVar[2] * 1000.0, 0.0, 0.0);
+            const R = new Matrix3();
+            R.fromEuler(
+                0.0,
+                -window.radians(fieldVar[1]),
+                window.radians(fieldVar[0]),
+            );
+            magEf = R.times(magEf);
+            return magEf;
+            // This has been verified to match MAGFIT_WMM.py
+        },
+        printEarthField() {
+            return (
+                `( ${this.earthField.x.toFixed(0)}, ${this.earthField.y.toFixed(0)}, ` +
+                ` ${this.earthField.z.toFixed(0)})`
+            );
+        },
+        filteredCompassData() {
+            // returns the compassData, but with the data filtered to only include the data that is used
+            // that means we will only pass through the following fields:
+            // TODO: add dataflash ones
+            const wantedFields = [
+                "time_boot_ms",
+                "xmag",
+                "ymag",
+                "zmag",
+                "MagX",
+                "MagY",
+                "MagZ",
+            ];
+            const filtered = [];
+            const nameMap = {
+                xmag: "xmag",
+                ymag: "ymag",
+                zmag: "zmag",
+                MagX: "xmag",
+                MagY: "ymag",
+                MagZ: "zmag",
+                // eslint-disable-next-line camelcase
+                time_boot_ms: "time_boot_ms",
+            };
+            for (const message of this.compassData) {
+                const filteredMessage = {};
+                // for each key, value in message, filter it down:
+                for (const [key, values] of Object.entries(message)) {
+                    if (wantedFields.includes(key)) {
+                        filteredMessage[nameMap[key]] = values;
+                    }
+                }
+                filtered.push(filteredMessage);
+            }
+            return filtered;
+        },
+        sampledCompassData() {
+            // returns this.compassData, but sampled down in a way that every array child of each message
+            // has at most this.numberOfPoints
+            const sampled = [];
+            for (const message of this.filteredCompassData) {
+                const messageLength = Object.values(message)[0].length;
+                const sampleRate =
+                    Math.floor(messageLength / this.numberOfPoints) || 1;
+                const sampledMessage = {};
+                // for each key, value in message, sample value down:
+                for (const [key, values] of Object.entries(message)) {
+                    const sampledValue = [];
+                    for (let i = 0; i < values.length; i += sampleRate) {
+                        sampledValue.push(values[i]);
+                    }
+                    sampledMessage[key] = sampledValue;
+                }
+                sampled.push(sampledMessage);
+            }
+            return sampled;
+        },
+        compassOffsets() {
+            const offsets = [];
+            if (this.sampledCompassData.length === 0) {
+                console.log("no compass data");
+                return offsets;
+            }
+            for (const compass in this.sampledCompassData) {
+                offsets.push(this.getCompassParams(parseFloat(compass) + 1));
+            }
+            return offsets;
+        },
+        compassDataRemovedOffsets() {
+            // returns this.compassData, but with the offsets removed
+            const data = [];
+            for (const [compass, message] of Object.entries(
+                this.sampledCompassData,
+            )) {
+                data.push(
+                    this.removeOffsets(message, this.compassOffsets[compass]),
+                );
+            }
+            return data;
+        },
+        attitudeMessageName() {
+            if ("ATT" in this.state.messages) {
+                return "ATT";
+            }
+            return "ATTITUDE";
+        },
+        isTlog() {
+            return this.state.logType === "tlog";
+        },
+        attitudeMessages() {
+            if ("ATT" in this.state.messages) {
+                return this.state.messages.ATT;
+            }
+            return this.state.messages.ATTITUDE;
+        },
+        compassDataAugmentedWithATT() {
+            // iterates on index of compassDataRemovedOffsets.time_boot_ms, finds the nearest ATT message
+            // with the closes time_boot_ms, and adds that to the compassDataRemovedOffsets message
+            return this.compassDataRemovedOffsets.map((message) => {
+                const augmentedMessage = Object.assign({}, message);
+                augmentedMessage.roll = [];
+                augmentedMessage.pitch = [];
+                augmentedMessage.yaw = [];
+                let attIndex = 0;
+                for (const time of message.time) {
+                    while (
+                        this.attitudeMessages.time_boot_ms[attIndex] < time
+                    ) {
+                        attIndex++;
+                    }
+                    if ("Roll" in this.attitudeMessages) {
+                        augmentedMessage.roll.push(
+                            this.attitudeMessages.Roll[attIndex],
+                        );
+                        augmentedMessage.pitch.push(
+                            this.attitudeMessages.Pitch[attIndex],
+                        );
+                        augmentedMessage.yaw.push(
+                            this.attitudeMessages.Yaw[attIndex],
+                        );
+                    } else {
+                        augmentedMessage.roll.push(
+                            this.attitudeMessages.roll[attIndex],
+                        );
+                        augmentedMessage.pitch.push(
+                            this.attitudeMessages.pitch[attIndex],
+                        );
+                        augmentedMessage.yaw.push(
+                            this.attitudeMessages.yaw[attIndex],
+                        );
+                    }
+                }
+                return augmentedMessage;
+            });
+        },
+        parameters() {
+            return this.state.params.values;
+        },
     },
     methods: {
         downloadParams() {
@@ -1084,272 +1342,6 @@ export default {
                 return "";
             }
             return post <= pre ? "fitness-better" : "fitness-worse";
-        },
-    },
-    computed: {
-        bestFitness() {
-            const n = this.fitnessHistory.length;
-            return n ? this.fitnessHistory[n - 1] : null;
-        },
-        fitnessPoints() {
-            // build the SVG polyline for the live optimizer fitness chart
-            const history = this.fitnessHistory;
-            const n = history.length;
-            if (n === 0) {
-                return "";
-            }
-            const pad = 3;
-            const w = this.chartWidth;
-            const h = this.chartHeight;
-            const min = Math.min(...history);
-            const max = Math.max(...history);
-            const range = max - min || 1;
-            return history
-                .map((value, i) => {
-                    const x =
-                        n === 1 ? w / 2 : pad + (i / (n - 1)) * (w - 2 * pad);
-                    const y = pad + (1 - (value - min) / range) * (h - 2 * pad);
-                    return `${x.toFixed(1)},${y.toFixed(1)}`;
-                })
-                .join(" ");
-        },
-        fitnessesPreCalibration() {
-            const ret = [];
-            for (const instance in this.compassDataAugmentedWithATT) {
-                ret.push(
-                    this.wmmErrorOnce(
-                        this.compassDataAugmentedWithATT[instance],
-                        this.compassOffsets[instance],
-                    ),
-                );
-            }
-            return ret;
-        },
-        fitnessesPostCalibration() {
-            return this.newCorrections.map((c, i) => {
-                return this.wmmErrorOnce(
-                    this.compassDataAugmentedWithATT[i],
-                    c,
-                );
-            });
-        },
-        GpsPosition() {
-            const pos =
-                Object.values(this.state.trajectories)[0]?.trajectory[0] ??
-                null;
-            if (pos === null) return null;
-            return {
-                lon: pos[0],
-                lat: pos[1],
-            };
-        },
-        position() {
-            return this.GpsPosition || this.userPosition;
-        },
-        userPosition() {
-            return {
-                lat: this.userLat,
-                lon: this.userLon,
-            };
-        },
-        positionValid() {
-            // a fit needs a location to compute the expected earth field. Either
-            // the log has GPS, or the user must have entered valid lat/lon.
-            if (this.GpsPosition) {
-                return true;
-            }
-            const lat = parseFloat(this.userLat);
-            const lon = parseFloat(this.userLon);
-            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-                return false;
-            }
-            if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-                return false;
-            }
-            // treat the untouched (0, 0) default as "not entered yet"
-            return !(lat === 0 && lon === 0);
-        },
-        // next three come from mavextra.js
-        intensity() {
-            return window.interpolate_table(
-                window.intensity_table,
-                this.position.lat,
-                this.position.lon,
-            );
-        },
-        declination() {
-            return window.interpolate_table(
-                window.declination_table,
-                this.position.lat,
-                this.position.lon,
-            );
-        },
-        inclination() {
-            return window.interpolate_table(
-                window.inclination_table,
-                this.position.lat,
-                this.position.lon,
-            );
-        },
-        earthField() {
-            const fieldVar = window.get_mag_field_ef(
-                this.position.lat,
-                this.position.lon,
-            );
-            let magEf = new Vector3(fieldVar[2] * 1000.0, 0.0, 0.0);
-            const R = new Matrix3();
-            R.fromEuler(
-                0.0,
-                -window.radians(fieldVar[1]),
-                window.radians(fieldVar[0]),
-            );
-            magEf = R.times(magEf);
-            return magEf;
-            // This has been verified to match MAGFIT_WMM.py
-        },
-        printEarthField() {
-            return (
-                `( ${this.earthField.x.toFixed(0)}, ${this.earthField.y.toFixed(0)}, ` +
-                ` ${this.earthField.z.toFixed(0)})`
-            );
-        },
-        filteredCompassData() {
-            // returns the compassData, but with the data filtered to only include the data that is used
-            // that means we will only pass through the following fields:
-            // TODO: add dataflash ones
-            const wantedFields = [
-                "time_boot_ms",
-                "xmag",
-                "ymag",
-                "zmag",
-                "MagX",
-                "MagY",
-                "MagZ",
-            ];
-            const filtered = [];
-            const nameMap = {
-                xmag: "xmag",
-                ymag: "ymag",
-                zmag: "zmag",
-                MagX: "xmag",
-                MagY: "ymag",
-                MagZ: "zmag",
-                // eslint-disable-next-line camelcase
-                time_boot_ms: "time_boot_ms",
-            };
-            for (const message of this.compassData) {
-                const filteredMessage = {};
-                // for each key, value in message, filter it down:
-                for (const [key, values] of Object.entries(message)) {
-                    if (wantedFields.includes(key)) {
-                        filteredMessage[nameMap[key]] = values;
-                    }
-                }
-                filtered.push(filteredMessage);
-            }
-            return filtered;
-        },
-        sampledCompassData() {
-            // returns this.compassData, but sampled down in a way that every array child of each message
-            // has at most this.numberOfPoints
-            const sampled = [];
-            for (const message of this.filteredCompassData) {
-                const messageLength = Object.values(message)[0].length;
-                const sampleRate =
-                    Math.floor(messageLength / this.numberOfPoints) || 1;
-                const sampledMessage = {};
-                // for each key, value in message, sample value down:
-                for (const [key, values] of Object.entries(message)) {
-                    const sampledValue = [];
-                    for (let i = 0; i < values.length; i += sampleRate) {
-                        sampledValue.push(values[i]);
-                    }
-                    sampledMessage[key] = sampledValue;
-                }
-                sampled.push(sampledMessage);
-            }
-            return sampled;
-        },
-        compassOffsets() {
-            const offsets = [];
-            if (this.sampledCompassData.length === 0) {
-                console.log("no compass data");
-                return offsets;
-            }
-            for (const compass in this.sampledCompassData) {
-                offsets.push(this.getCompassParams(parseFloat(compass) + 1));
-            }
-            return offsets;
-        },
-        compassDataRemovedOffsets() {
-            // returns this.compassData, but with the offsets removed
-            const data = [];
-            for (const [compass, message] of Object.entries(
-                this.sampledCompassData,
-            )) {
-                data.push(
-                    this.removeOffsets(message, this.compassOffsets[compass]),
-                );
-            }
-            return data;
-        },
-        attitudeMessageName() {
-            if ("ATT" in this.state.messages) {
-                return "ATT";
-            }
-            return "ATTITUDE";
-        },
-        isTlog() {
-            return this.state.logType === "tlog";
-        },
-        attitudeMessages() {
-            if ("ATT" in this.state.messages) {
-                return this.state.messages.ATT;
-            }
-            return this.state.messages.ATTITUDE;
-        },
-        compassDataAugmentedWithATT() {
-            // iterates on index of compassDataRemovedOffsets.time_boot_ms, finds the nearest ATT message
-            // with the closes time_boot_ms, and adds that to the compassDataRemovedOffsets message
-            return this.compassDataRemovedOffsets.map((message) => {
-                const augmentedMessage = Object.assign({}, message);
-                augmentedMessage.roll = [];
-                augmentedMessage.pitch = [];
-                augmentedMessage.yaw = [];
-                let attIndex = 0;
-                for (const time of message.time) {
-                    while (
-                        this.attitudeMessages.time_boot_ms[attIndex] < time
-                    ) {
-                        attIndex++;
-                    }
-                    if ("Roll" in this.attitudeMessages) {
-                        augmentedMessage.roll.push(
-                            this.attitudeMessages.Roll[attIndex],
-                        );
-                        augmentedMessage.pitch.push(
-                            this.attitudeMessages.Pitch[attIndex],
-                        );
-                        augmentedMessage.yaw.push(
-                            this.attitudeMessages.Yaw[attIndex],
-                        );
-                    } else {
-                        augmentedMessage.roll.push(
-                            this.attitudeMessages.roll[attIndex],
-                        );
-                        augmentedMessage.pitch.push(
-                            this.attitudeMessages.pitch[attIndex],
-                        );
-                        augmentedMessage.yaw.push(
-                            this.attitudeMessages.yaw[attIndex],
-                        );
-                    }
-                }
-                return augmentedMessage;
-            });
-        },
-        parameters() {
-            return this.state.params.values;
         },
     },
 };

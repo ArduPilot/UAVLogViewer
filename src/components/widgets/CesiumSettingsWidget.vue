@@ -1,20 +1,20 @@
 <template>
     <div class="cesium-settings-defaultContainer">
-        <div @click="toggleSettings" class="gear-icon">⚙</div>
+        <div class="gear-icon" @click="toggleSettings">⚙</div>
         <div v-show="isSettingsVisible" class="cesium-settings-display">
             <label>Camera</label>
-            <select class="cesium-button" v-model="state.cameraType">
+            <select v-model="state.cameraType" class="cesium-button">
                 <option value="free">Free</option>
                 <option value="follow">Follow</option>
             </select>
             <!-- CHECKBOXES -->
             <div>
                 <label
-                    ><input type="checkbox" v-model="state.showWaypoints" />
+                    ><input v-model="state.showWaypoints" type="checkbox" />
                     Waypoints</label
                 >
                 <label
-                    ><input type="checkbox" v-model="state.showTrajectory" />
+                    ><input v-model="state.showTrajectory" type="checkbox" />
                     Trajectory</label
                 >
             </div>
@@ -23,10 +23,10 @@
                 <label
                     >Wingspan
                     <input
+                        v-model="state.modelScale"
                         class="wingspan-text"
                         size="5"
                         type="text"
-                        v-model="state.modelScale"
                     />
                     (m)
                 </label>
@@ -36,10 +36,10 @@
                 <label>
                     Altitude Offset
                     <input
+                        v-model="state.heightOffset"
                         class="wingspan-text"
                         size="5"
                         type="number"
-                        v-model="state.heightOffset"
                     />
                     (m)
                 </label>
@@ -49,8 +49,8 @@
                 <label> Trajectory Source</label>
                 <div class="traj-source-row">
                     <select
-                        class="cesium-button traj-source-select"
                         v-model="state.trajectorySource"
+                        class="cesium-button traj-source-select"
                     >
                         <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
                         <option
@@ -69,9 +69,9 @@
                     </button>
                 </div>
                 <div
-                    class="traj-source-row"
                     v-for="(src, idx) in state.comparisonTrajectories"
                     :key="'cmp' + idx"
+                    class="traj-source-row"
                 >
                     <span
                         class="traj-color-swatch"
@@ -102,7 +102,7 @@
             <!-- Attitude Source -->
             <div>
                 <label> Attitude Source</label>
-                <select class="cesium-button" v-model="state.attitudeSource">
+                <select v-model="state.attitudeSource" class="cesium-button">
                     <!-- eslint-disable-next-line vue/no-v-html vue/no-unused-vars -->
                     <option v-for="item in attitudeSources" :key="item">
                         {{ item }}
@@ -129,6 +129,14 @@ export default {
             isSettingsVisible: false,
         };
     },
+    computed: {
+        attitudeSources() {
+            return [
+                ...this.state.attitudeSources.quaternions,
+                ...this.state.attitudeSources.eulers,
+            ];
+        },
+    },
     methods: {
         toggleSettings() {
             this.isSettingsVisible = !this.isSettingsVisible;
@@ -154,14 +162,6 @@ export default {
         },
         updateComparison(idx, value) {
             this.$set(this.state.comparisonTrajectories, idx, value);
-        },
-    },
-    computed: {
-        attitudeSources() {
-            return [
-                ...this.state.attitudeSources.quaternions,
-                ...this.state.attitudeSources.eulers,
-            ];
         },
     },
 };

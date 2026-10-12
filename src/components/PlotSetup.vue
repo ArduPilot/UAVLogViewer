@@ -18,7 +18,7 @@
             <ul class="colorpicker plot-wrapper">
                 <template v-if="state.expressions.length">
                     <template v-for="(field, index) in state.expressions">
-                        <li class="field plotsetup" :key="'field' + index">
+                        <li :key="'field' + index" class="field plotsetup">
                             <expression-editor
                                 v-model.lazy="field.name"
                                 v-debounce="1000"
@@ -80,16 +80,16 @@
                 </button>
                 <button
                     v-if="state.expressions.length > 0"
-                    class="save-preset"
                     v-b-modal.modal-prevent-closing
+                    class="save-preset"
                 >
                     <i class="fa fa-check-circle" aria-hidden="true"></i>Save
                     Preset
                 </button>
                 <button
-                    class="save-preset"
                     v-if="state.expressions.length > 0"
                     v-b-modal.modal-prevent-closing
+                    class="save-preset"
                     @click="$eventHub.$emit('clearPlot')"
                 >
                     <i class="fa fa-ban" aria-hidden="true"></i>

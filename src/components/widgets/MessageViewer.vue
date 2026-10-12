@@ -1,7 +1,7 @@
 <template>
     <div
         :id="getDivName()"
-        v-bind:style="{
+        :style="{
             width: width + 'px',
             height: height + 'px',
             top: top + 'px',
@@ -16,7 +16,7 @@
                 X
             </span>
             <ul>
-                <li v-bind:key="msg[0] + msg[1]" v-for="msg in filteredData">
+                <li v-for="msg in filteredData" :key="msg[0] + msg[1]">
                     [{{ timeFormatter(msg[0]) }}]: {{ msg[2] }}
                 </li>
             </ul>
@@ -31,10 +31,6 @@ import { baseWidget } from "./baseWidget";
 export default {
     name: "MessageViewer",
     mixins: [baseWidget],
-    created() {
-        this.$eventHub.$on("cesium-time-changed", this.setTime);
-        this.$eventHub.$on("hoveredTime", this.setTime);
-    },
     data() {
         return {
             name: "MessageViewer",
@@ -47,6 +43,26 @@ export default {
             forceRecompute: 0,
             cursorTime: 0,
         };
+    },
+    computed: {
+        filteredData() {
+            // this seems necessary to force a recomputation
+            // eslint-disable-next-line
+            let potato = this.forceRecompute;
+            return this.state.textMessages.filter(
+                (key) => key[0] < this.cursorTime,
+            );
+        },
+    },
+    watch: {
+        filteredData: function (data) {
+            const container = this.$el.querySelector("#paneContent");
+            container.scrollTop = container.scrollHeight;
+        },
+    },
+    created() {
+        this.$eventHub.$on("cesium-time-changed", this.setTime);
+        this.$eventHub.$on("hoveredTime", this.setTime);
     },
     methods: {
         timeFormatter(milliseconds) {
@@ -87,22 +103,6 @@ export default {
             });
         },
         setup() {},
-    },
-    computed: {
-        filteredData() {
-            // this seems necessary to force a recomputation
-            // eslint-disable-next-line
-            let potato = this.forceRecompute;
-            return this.state.textMessages.filter(
-                (key) => key[0] < this.cursorTime,
-            );
-        },
-    },
-    watch: {
-        filteredData: function (data) {
-            const container = this.$el.querySelector("#paneContent");
-            container.scrollTop = container.scrollHeight;
-        },
     },
 };
 </script>

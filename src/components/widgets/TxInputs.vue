@@ -1,7 +1,7 @@
 <template>
     <div
         :id="getDivName()"
-        v-bind:style="{
+        :style="{
             width: width + 'px',
             height: height + 'px',
             top: top + 'px',
@@ -10,9 +10,9 @@
     >
         <div class="circle">
             <div
-                class="stick"
                 id="left"
-                v-bind:style="{
+                class="stick"
+                :style="{
                     'margin-left': leftStickLeft - 3 + 'px',
                     'margin-top': leftStickTop - 3 + 'px',
                 }"
@@ -20,9 +20,9 @@
         </div>
         <div class="circle">
             <div
-                class="stick"
                 id="right"
-                v-bind:style="{
+                class="stick"
+                :style="{
                     'margin-left': rightStickLeft - 3 + 'px',
                     'margin-top': rightStickTop - 3 + 'px',
                 }"
@@ -63,6 +63,13 @@ class Interpolator {
 }
 
 export default {
+    name: "TxInputs",
+    mixins: [baseWidget],
+    props: {
+        snappable: { type: Boolean, default: false },
+        fixedAspectRatio: { type: Boolean, default: false },
+        aspectRatio: { type: Number, default: 2 },
+    },
     data() {
         return {
             state: store,
@@ -81,6 +88,49 @@ export default {
             yawMap: 3,
             channels: [50, 50, 50, 50],
         };
+    },
+    computed: {
+        leftStickLeft() {
+            return -29 + (0.01 * this.channels[this.yawMap] * this.width) / 2;
+        },
+        leftStickTop() {
+            if (this.state.radioMode === "2") {
+                return (
+                    0.02 *
+                        (100 - this.channels[this.throttleMap]) *
+                        this.circleHeight -
+                    22
+                );
+            }
+            return (
+                0.02 *
+                    (100 - this.channels[this.pitchMap]) *
+                    this.circleHeight -
+                22
+            );
+        },
+        rightStickLeft() {
+            return -29 + 0.01 * this.channels[this.rollMap] * (this.width / 2);
+        },
+        rightStickTop() {
+            if (this.state.radioMode === "2") {
+                return (
+                    0.02 *
+                        (100 - this.channels[this.pitchMap]) *
+                        this.circleHeight -
+                    22
+                );
+            }
+            return (
+                0.02 *
+                    (100 - this.channels[this.throttleMap]) *
+                    this.circleHeight -
+                22
+            );
+        },
+        circleHeight() {
+            return this.height * (69 / 150);
+        },
     },
     methods: {
         waitForMessage(fieldname) {
@@ -182,56 +232,6 @@ export default {
                 _this.$eventHub.$on("hoveredTime", _this.setTime);
             });
         },
-    },
-    computed: {
-        leftStickLeft() {
-            return -29 + (0.01 * this.channels[this.yawMap] * this.width) / 2;
-        },
-        leftStickTop() {
-            if (this.state.radioMode === "2") {
-                return (
-                    0.02 *
-                        (100 - this.channels[this.throttleMap]) *
-                        this.circleHeight -
-                    22
-                );
-            }
-            return (
-                0.02 *
-                    (100 - this.channels[this.pitchMap]) *
-                    this.circleHeight -
-                22
-            );
-        },
-        rightStickLeft() {
-            return -29 + 0.01 * this.channels[this.rollMap] * (this.width / 2);
-        },
-        rightStickTop() {
-            if (this.state.radioMode === "2") {
-                return (
-                    0.02 *
-                        (100 - this.channels[this.pitchMap]) *
-                        this.circleHeight -
-                    22
-                );
-            }
-            return (
-                0.02 *
-                    (100 - this.channels[this.throttleMap]) *
-                    this.circleHeight -
-                22
-            );
-        },
-        circleHeight() {
-            return this.height * (69 / 150);
-        },
-    },
-    name: "TxInputs",
-    mixins: [baseWidget],
-    props: {
-        snappable: { type: Boolean, default: false },
-        fixedAspectRatio: { type: Boolean, default: false },
-        aspectRatio: { type: Number, default: 2 },
     },
 };
 </script>

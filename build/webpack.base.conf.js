@@ -5,7 +5,6 @@ import { dev, build } from "../config/index.js";
 import vueLoaderConfig from "./vue-loader.conf.js";
 import { createRequire } from "node:module";
 import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
-import eslintFriendlyFormatter from "eslint-friendly-formatter";
 
 const require = createRequire(import.meta.url);
 
@@ -14,20 +13,6 @@ const require = createRequire(import.meta.url);
 function resolveDir(dir) {
     return join(import.meta.dirname, "..", dir);
 }
-
-const createLintingRule = () => ({
-    test: /\.(js|vue)$/,
-    loader: "eslint-loader",
-    enforce: "pre",
-    include: [resolveDir("src"), resolveDir("test")],
-    options: {
-        formatter: eslintFriendlyFormatter,
-        emitWarning: !dev.showEslintErrorsInOverlay,
-        emitError: true,
-        failOnError: true,
-        failOnWarning: true,
-    },
-});
 
 export const context = _resolve(import.meta.dirname, "../");
 export const entry = {
@@ -51,7 +36,6 @@ export const module = {
             test: /.m?js$/,
             resolve: { fullySpecified: false },
         },
-        ...(dev.useEslint ? [createLintingRule()] : []),
         {
             test: /\.worker\.js$/,
             use: { loader: "worker-loader" },

@@ -1,7 +1,7 @@
 <template>
     <div
         :id="getDivName()"
-        v-bind:style="{
+        :style="{
             width: width + 'px',
             height: height + 'px',
             top: top + 'px',
@@ -16,7 +16,7 @@
                 X
             </span>
             <ul>
-                <li v-bind:key="device.param" v-for="device in this.devices">
+                <li v-for="device in devices" :key="device.param">
                     {{ device.param }}:
                     <span style="float: right">
                         {{ device.deviceName }}({{ device.address | toHex }}) @
@@ -126,6 +126,15 @@ const airspeedTypes = {
 
 export default {
     name: "DeviceIDViewer",
+    filters: {
+        toHex: function (value) {
+            let hex = Number(value).toString(16);
+            if (hex.length < 2) {
+                hex = "0" + hex;
+            }
+            return "0x" + hex;
+        },
+    },
     mixins: [baseWidget],
     data() {
         return {
@@ -139,6 +148,17 @@ export default {
             cursorTime: 0,
             devices: [],
         };
+    },
+
+    computed: {
+        filteredData() {
+            // this seems necessary to force a recomputation
+            // eslint-disable-next-line
+            let potato = this.forceRecompute;
+            return this.state.textMessages.filter(
+                (key) => key[0] < this.cursorTime,
+            );
+        },
     },
     methods: {
         update() {
@@ -199,26 +219,6 @@ export default {
         },
         setup() {
             this.update();
-        },
-    },
-
-    computed: {
-        filteredData() {
-            // this seems necessary to force a recomputation
-            // eslint-disable-next-line
-            let potato = this.forceRecompute;
-            return this.state.textMessages.filter(
-                (key) => key[0] < this.cursorTime,
-            );
-        },
-    },
-    filters: {
-        toHex: function (value) {
-            let hex = Number(value).toString(16);
-            if (hex.length < 2) {
-                hex = "0" + hex;
-            }
-            return "0x" + hex;
         },
     },
 };

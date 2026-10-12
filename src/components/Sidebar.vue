@@ -13,33 +13,33 @@
             /></a>
         </h1>
         <!-- TABHOLDER -->
-        <i class="fa fa-bars fa-2x toggle-btn" v-b-toggle.menucontent></i>
-        <b-collapse class="menu-content collapse out" id="menucontent" visible>
+        <i v-b-toggle.menucontent class="fa fa-bars fa-2x toggle-btn"></i>
+        <b-collapse id="menucontent" class="menu-content collapse out" visible>
             <span v-if="state.file" class="filename"
                 >Current file: {{ state.file }}</span
             >
             <div class="tabholder">
                 <!-- Home -->
                 <a
+                    v-if="!state.processDone"
                     :class="selected === 'home' ? 'selected' : ''"
                     @click="selected = 'home'"
-                    v-if="!state.processDone"
                 >
                     <i class="fas fa-home"></i>Home</a
                 >
                 <!-- Plot -->
                 <a
+                    v-if="state.processDone"
                     :class="selected === 'plot' ? 'selected' : ''"
                     @click="selected = 'plot'"
-                    v-if="state.processDone"
                 >
                     <i class="fas fa-chart-line"></i>Plot</a
                 >
                 <!-- more -->
                 <a
+                    v-if="state.processDone"
                     :class="selected === 'other' ? 'selected' : ''"
                     @click="selected = 'other'"
-                    v-if="state.processDone"
                 >
                     <i class="fas fa-ellipsis-v"></i>
                 </a>
@@ -48,8 +48,8 @@
         <!-- TOGGLE MENU -->
         <div class="menu-list">
             <b-collapse
-                class="menu-content collapse out"
                 id="menucontent"
+                class="menu-content collapse out"
                 visible
             >
                 <div :style="{ display: selected === 'plot' ? '' : 'none' }">
@@ -68,65 +68,65 @@
                     <div v-if="state.processDone" class="show-hide">
                         <label v-if="state.params">
                             <i class="fa fa-cogs circle"></i>
-                            <input type="checkbox" v-model="state.showParams" />
+                            <input v-model="state.showParams" type="checkbox" />
                             <a class="check-font"> Parameters </a>
                         </label>
                         <label>
                             <i class="fa fa-gamepad circle"></i>
-                            <input type="checkbox" v-model="state.showRadio" />
+                            <input v-model="state.showRadio" type="checkbox" />
                             <a class="check-font"> Radio Sticks </a>
                         </label>
                         <label>
                             <i class="fa fa-compass circle"></i>
-                            <input type="checkbox" v-model="state.showMagfit" />
+                            <input v-model="state.showMagfit" type="checkbox" />
                             <a class="check-font"> Mag Fit Tool </a>
                         </label>
                         <label>
                             <i class="fa fa-compass circle"></i>
                             <input
-                                type="checkbox"
                                 v-model="state.showEkfHelper"
+                                type="checkbox"
                             />
                             <a class="check-font"> EKF helper </a>
                         </label>
                         <label v-if="state.textMessages">
                             <i class="fa fa-comment circle"></i>
                             <input
-                                type="checkbox"
                                 v-model="state.showMessages"
+                                type="checkbox"
                             />
                             <a class="check-font"> Messages </a>
                         </label>
                         <label>
                             <i class="fa fa-plane-departure circle"></i>
                             <input
-                                type="checkbox"
                                 v-model="state.showAttitude"
+                                type="checkbox"
                             />
                             <a class="check-font"> Attitude </a>
                         </label>
-                        <label v-if="!recording" v-on:click="startCapture">
+                        <label v-if="!recording" @click="startCapture">
                             <i class="fa fa-play circle"></i>
                             <a class="check-font"> Record </a>
                         </label>
-                        <label v-if="recording" v-on:click="stopCapture">
+                        <label v-if="recording" @click="stopCapture">
                             <i class="fa fa-stop circle"></i>
                             <a class="check-font"> End Rec </a>
                         </label>
-                        <label v-if="this.chunks" v-on:click="download">
+                        <label v-if="chunks" @click="download">
                             <i class="fa fa-download circle"></i>
                             <a
-                                class="check-font download-text"
-                                v-bind:href="downloadURL"
-                                v-bind:download="fileName"
                                 ref="downloadFile"
+                                class="check-font download-text"
+                                :href="downloadURL"
+                                :download="fileName"
                             >
                                 Download
                             </a>
                         </label>
                         <label
                             v-if="state.logType === 'tlog'"
-                            v-on:click="downloadTrimmed"
+                            @click="downloadTrimmed"
                         >
                             <i
                                 class="fa fa-download circle"
@@ -142,8 +142,8 @@
                             >
                             </i>
                             <input
-                                type="checkbox"
                                 v-model="state.showDeviceIDs"
+                                type="checkbox"
                             />
                             <a class="check-font"> Sensors </a>
                         </label>
@@ -164,7 +164,7 @@
                     </div>
                     <div>
                         <label><i class="fas fa-gamepad"></i> Radio Mode</label>
-                        <select class="cesium-button" v-model="state.radioMode">
+                        <select v-model="state.radioMode" class="cesium-button">
                             <option value="1">1</option>
                             <option value="2">2</option>
                         </select>

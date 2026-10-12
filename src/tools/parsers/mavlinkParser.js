@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import {
     mavlink20 as mavlink,
     MAVLink20Processor as MAVLink,
@@ -240,14 +239,14 @@ export class MavlinkParser {
                 expressions: fields,
                 units: null,
                 multipiers: null,
-                complexFields: complexFields,
+                complexFields,
             };
         }
         const metadata = {
             startTime: this.extractStartTime(),
         };
 
-        self.postMessage({ metadata: metadata });
+        self.postMessage({ metadata });
         self.postMessage({ availableMessages: messageTypes });
         self.postMessage({ messagesDoneLoading: true });
         // self.postMessage({done: true})

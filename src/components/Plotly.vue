@@ -162,6 +162,62 @@ const plotOptions = {
 };
 
 export default {
+    data() {
+        return {
+            gd: null,
+            plotInstance: null,
+            state: store,
+        };
+    },
+    computed: {
+        setOfModes() {
+            const set = [];
+            for (const mode of this.state.flightModeChanges) {
+                if (!set.includes(mode[1])) {
+                    set.push(mode[1]);
+                }
+            }
+            return set;
+        },
+        timeRange() {
+            if (this.state.timeRange != null) {
+                return this.state.timeRange;
+            }
+            return undefined;
+        },
+        expressions() {
+            return this.state.expressions;
+        },
+        messagesInLog() {
+            return Object.keys(this.state.messageTypes);
+        },
+    },
+    watch: {
+        timeRange(range) {
+            if (this.zoomInterval !== null) {
+                clearTimeout(this.zoomInterval);
+            }
+            this.updatChildrenTimeRange(this.state.timeRange);
+            this.zoomInterval = setTimeout(() => {
+                Plotly.relayout(this.gd, {
+                    xaxis: {
+                        title: "Time since boot",
+                        range: range,
+                        domain: this.calculateXAxisDomain(),
+                        rangeslider: {},
+                        tickformat: timeformat,
+                    },
+                });
+            }, 500);
+            return range; // make linter happy, it says this is a computed property(?)
+        },
+        expressions: {
+            deep: true,
+            handler() {
+                this.plot();
+            },
+        },
+    },
     created() {
         this.$eventHub.$on("cesium-time-changed", this.setCursorTime);
         this.$eventHub.$on("hoveredTime", this.setCursorTime);
@@ -221,13 +277,6 @@ export default {
         this.$eventHub.$off("hidePlot");
         this.$eventHub.$off("togglePlot");
         clearInterval(this.interval);
-    },
-    data() {
-        return {
-            gd: null,
-            plotInstance: null,
-            state: store,
-        };
     },
     methods: {
         popupButton() {
@@ -472,7 +521,6 @@ export default {
             for (const i of this.state.allAxis) {
                 let taken = false;
                 for (const field of this.state.expressions) {
-                    // eslint-disable-next-line eqeqeq
                     if (field.axis == i) {
                         taken = true;
                     }
@@ -488,7 +536,6 @@ export default {
             for (const i of this.state.allColors) {
                 let taken = false;
                 for (const field of this.state.expressions) {
-                    // eslint-disable-next-line eqeqeq
                     if (field.color == i) {
                         taken = true;
                     }
@@ -768,7 +815,6 @@ export default {
             }
             let f;
             try {
-                // eslint-disable-next-line no-new-func
                 f = new Function("a", "return " + expression);
             } catch (e) {
                 return { error: e };
@@ -1213,55 +1259,6 @@ export default {
         },
         loadedMessages() {
             return Object.keys(this.state.messages);
-        },
-    },
-    computed: {
-        setOfModes() {
-            const set = [];
-            for (const mode of this.state.flightModeChanges) {
-                if (!set.includes(mode[1])) {
-                    set.push(mode[1]);
-                }
-            }
-            return set;
-        },
-        timeRange() {
-            if (this.state.timeRange != null) {
-                return this.state.timeRange;
-            }
-            return undefined;
-        },
-        expressions() {
-            return this.state.expressions;
-        },
-        messagesInLog() {
-            return Object.keys(this.state.messageTypes);
-        },
-    },
-    watch: {
-        timeRange(range) {
-            if (this.zoomInterval !== null) {
-                clearTimeout(this.zoomInterval);
-            }
-            this.updatChildrenTimeRange(this.state.timeRange);
-            this.zoomInterval = setTimeout(() => {
-                Plotly.relayout(this.gd, {
-                    xaxis: {
-                        title: "Time since boot",
-                        range: range,
-                        domain: this.calculateXAxisDomain(),
-                        rangeslider: {},
-                        tickformat: timeformat,
-                    },
-                });
-            }, 500);
-            return range; // make linter happy, it says this is a computed property(?)
-        },
-        expressions: {
-            deep: true,
-            handler() {
-                this.plot();
-            },
         },
     },
 };

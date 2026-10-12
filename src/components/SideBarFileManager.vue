@@ -1,12 +1,12 @@
 <template>
     <div>
         <li v-if="file == null && !sampleLoaded">
-            <a @click="onLoadSample('sample')" class="section"
+            <a class="section" @click="onLoadSample('sample')"
                 ><i class="fas fa-play"></i> Open Sample
             </a>
         </li>
         <li v-if="url">
-            <a @click="share" class="section"
+            <a class="section" @click="share"
                 ><i class="fas fa-share-alt"></i>
                 {{ shared ? "Copied to clipboard!" : "Share link" }}</a
             >
@@ -17,32 +17,32 @@
             >
         </li>
         <div
+            v-if="file == null && uploadpercentage === -1 && !sampleLoaded"
+            id="drop_zone"
             @click="browse"
             @dragover.prevent
             @drop="onDrop"
-            id="drop_zone"
-            v-if="file == null && uploadpercentage === -1 && !sampleLoaded"
         >
             <p>Drop *.tlog or *.bin file here or click to browse</p>
             <input
-                @change="onChange"
                 id="choosefile"
                 style="opacity: 0"
                 type="file"
+                @change="onChange"
             />
         </div>
         <!--<b-form-checkbox @change="uploadFile()" class="uploadCheckbox" v-if="file!=null && !uploadStarted"> Upload
         </b-form-checkbox>-->
         <VProgress
-            v-bind:complete="transferMessage"
-            v-bind:percent="uploadpercentage"
             v-if="uploadpercentage > -1"
+            :complete="transferMessage"
+            :percent="uploadpercentage"
         >
         </VProgress>
         <VProgress
-            v-bind:complete="state.processStatus"
-            v-bind:percent="state.processPercentage"
             v-if="state.processPercentage > -1"
+            :complete="state.processStatus"
+            :percent="state.processPercentage"
         ></VProgress>
     </div>
 </template>
@@ -89,9 +89,11 @@ function forwardWorkerRequests(eventHub) {
 
 export default {
     name: "Dropzone",
+    components: {
+        VProgress,
+    },
     data: function () {
         return {
-            // eslint-disable-next-line no-undef
             mavlinkParser: new MAVLink(),
             uploadpercentage: -1,
             sampleLoaded: false,
@@ -105,6 +107,38 @@ export default {
     },
     created() {
         forwardWorkerRequests(this.$eventHub);
+    },
+    mounted() {
+        worker.onmessage = (event) => {
+            if (event.data.percentage) {
+                this.state.processPercentage = event.data.percentage;
+            } else if (event.data.availableMessages) {
+                this.$eventHub.$emit(
+                    "messageTypes",
+                    event.data.availableMessages,
+                );
+            } else if (event.data.metadata) {
+                this.state.metadata = event.data.metadata;
+            } else if (event.data.messages) {
+                this.state.messages = event.data.messages;
+                this.$eventHub.$emit("messages");
+            } else if (event.data.messagesDoneLoading) {
+                this.$eventHub.$emit("messagesDoneLoading");
+            } else if (event.data.messageType) {
+                this.state.messages[event.data.messageType] =
+                    event.data.messageList;
+                this.$eventHub.$emit("messages");
+            } else if (event.data.files) {
+                this.state.files = event.data.files;
+                this.$eventHub.$emit("messages");
+            } else if (event.data.url) {
+                this.downloadFileFromURL(event.data.url);
+            }
+        };
+        const url = document.location.search.split("?file=")[1];
+        if (url) {
+            this.onLoadSample(decodeURIComponent(url));
+        }
     },
     methods: {
         onLoadSample(file) {
@@ -274,41 +308,6 @@ export default {
             a.remove();
             globalThis.URL.revokeObjectURL(url);
         },
-    },
-    mounted() {
-        worker.onmessage = (event) => {
-            if (event.data.percentage) {
-                this.state.processPercentage = event.data.percentage;
-            } else if (event.data.availableMessages) {
-                this.$eventHub.$emit(
-                    "messageTypes",
-                    event.data.availableMessages,
-                );
-            } else if (event.data.metadata) {
-                this.state.metadata = event.data.metadata;
-            } else if (event.data.messages) {
-                this.state.messages = event.data.messages;
-                this.$eventHub.$emit("messages");
-            } else if (event.data.messagesDoneLoading) {
-                this.$eventHub.$emit("messagesDoneLoading");
-            } else if (event.data.messageType) {
-                this.state.messages[event.data.messageType] =
-                    event.data.messageList;
-                this.$eventHub.$emit("messages");
-            } else if (event.data.files) {
-                this.state.files = event.data.files;
-                this.$eventHub.$emit("messages");
-            } else if (event.data.url) {
-                this.downloadFileFromURL(event.data.url);
-            }
-        };
-        const url = document.location.search.split("?file=")[1];
-        if (url) {
-            this.onLoadSample(decodeURIComponent(url));
-        }
-    },
-    components: {
-        VProgress,
     },
 };
 </script>

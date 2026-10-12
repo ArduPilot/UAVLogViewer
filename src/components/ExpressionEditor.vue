@@ -1,13 +1,13 @@
 <template>
     <div class="code-editor">
         <input
+            ref="codeEditor"
             class="code-input"
             :value="value"
             @input="updateValue($event.target.value)"
             @keydown="handleKeyDown"
             @blur="hideSuggestions"
             @focus="handleInput"
-            ref="codeEditor"
         />
         <div
             v-if="showSuggestions"
@@ -17,10 +17,10 @@
             <div
                 v-for="(suggestion, index) in filteredSuggestions"
                 :key="index"
-                @click="applySuggestion(suggestion)"
-                @mouseover="selectedIndex = index"
                 class="suggestion-item"
                 :class="{ selected: index === selectedIndex }"
+                @click="applySuggestion(suggestion)"
+                @mouseover="selectedIndex = index"
             >
                 {{ suggestion }}
             </div>

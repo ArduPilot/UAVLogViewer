@@ -410,9 +410,9 @@ export class DataflashDataExtractor {
             }
             if (trajectory.length) {
                 ret.POS = {
-                    startAltitude: startAltitude,
-                    trajectory: trajectory,
-                    timeTrajectory: timeTrajectory,
+                    startAltitude,
+                    trajectory,
+                    timeTrajectory,
                 };
             }
         }
@@ -448,9 +448,9 @@ export class DataflashDataExtractor {
             }
             if (trajectory.length) {
                 ret.AHR2 = {
-                    startAltitude: startAltitude,
-                    trajectory: trajectory,
-                    timeTrajectory: timeTrajectory,
+                    startAltitude,
+                    trajectory,
+                    timeTrajectory,
                 };
             }
         }
@@ -486,9 +486,9 @@ export class DataflashDataExtractor {
             }
             if (trajectory.length) {
                 ret.SIM = {
-                    startAltitude: startAltitude,
-                    trajectory: trajectory,
-                    timeTrajectory: timeTrajectory,
+                    startAltitude,
+                    trajectory,
+                    timeTrajectory,
                 };
             }
         }
@@ -525,9 +525,9 @@ export class DataflashDataExtractor {
                 }
                 if (trajectory.length) {
                     ret[gpsSource] = {
-                        startAltitude: startAltitude,
-                        trajectory: trajectory,
-                        timeTrajectory: timeTrajectory,
+                        startAltitude,
+                        trajectory,
+                        timeTrajectory,
                     };
                 }
             }

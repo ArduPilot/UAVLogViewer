@@ -1,5 +1,5 @@
 <template>
-    <div class="progress1" v-bind:id="[percent > 99 ? 'hideMe' : '']">
+    <div :id="[percent > 99 ? 'hideMe' : '']" class="progress1">
         <b-progress :max="100" height="30px">
             <b-progress-bar :value="percent">
                 <strong>{{

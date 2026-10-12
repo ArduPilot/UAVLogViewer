@@ -121,9 +121,9 @@ export class DjiDataExtractor {
             }
             if (trajectory.length) {
                 ret.OSD = {
-                    startAltitude: startAltitude,
-                    trajectory: trajectory,
-                    timeTrajectory: timeTrajectory,
+                    startAltitude,
+                    trajectory,
+                    timeTrajectory,
                 };
             }
         }

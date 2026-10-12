@@ -1,7 +1,7 @@
 <template>
     <div
         :id="getDivName()"
-        v-bind:style="{
+        :style="{
             width: width + 'px',
             height: height + 'px',
             top: top + 'px',
@@ -54,6 +54,9 @@ class Interpolator {
 
 export default {
     name: "AttitudeViewer",
+    components: {
+        Attitude,
+    },
     mixins: [baseWidget],
     props: {
         snappable: { type: Boolean, default: false },
@@ -73,8 +76,14 @@ export default {
             forceRecompute: 1,
         };
     },
-    components: {
-        Attitude,
+    computed: {
+        filteredData() {
+            // eslint-disable-next-line
+            let potato = this.forceRecompute;
+            return Object.keys(this.state.params.values).filter(
+                (key) => key.indexOf(this.filter.toUpperCase()) !== -1,
+            );
+        },
     },
 
     mounted() {
@@ -108,15 +117,6 @@ export default {
             this.pitch = rp[1];
         },
         setup() {},
-    },
-    computed: {
-        filteredData() {
-            // eslint-disable-next-line
-            let potato = this.forceRecompute;
-            return Object.keys(this.state.params.values).filter(
-                (key) => key.indexOf(this.filter.toUpperCase()) !== -1,
-            );
-        },
     },
 };
 </script>

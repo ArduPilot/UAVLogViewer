@@ -62,7 +62,12 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         proxy: dev.proxyTable,
     },
     plugins: [
-        new ESLintPlugin({ fix: true }),
+        // lint the app sources while developing (fixes what ESLint can fix automatically)
+        new ESLintPlugin({
+            files: "src",
+            extensions: ["js", "vue"],
+            fix: true,
+        }),
         new webpack.DefinePlugin({
             "process.env": devEnv,
             _COMMIT_: JSON.stringify(gitRevisionPlugin.commithash()),
