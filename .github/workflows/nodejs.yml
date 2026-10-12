@@ -11,18 +11,18 @@ jobs:
                 node-version: [24.x]
 
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v4
               with:
                   submodules: true
 
-            - uses: actions/cache@v3
+            - uses: actions/cache@v4
               with:
                   path: ~/.npm
                   key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
                   restore-keys: |
                       ${{ runner.os }}-node-
 
-            - uses: actions/cache@v3
+            - uses: actions/cache@v4
               with:
                   path: /tmp/testlogs
                   key: ${{ runner.os }}-testlogs-${{ hashFiles('**/logdownloader.sh') }}
@@ -35,7 +35,7 @@ jobs:
                   node-version: ${{ matrix.node-version }}
             - run: npm install
             - run: npm run build --if-present
-              # - run: ./test/testlogfiles/logdownloader.sh
-              # - run: npm run unit
+            - run: bash test/testlogfiles/logdownloader.sh
+            - run: npm run unit
               env:
                   CI: true
