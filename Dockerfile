@@ -59,6 +59,8 @@ COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 COPY --from=build /usr/src/app/scripts/generate-runtime-config.js ./scripts/
 COPY --chmod=755 docker-entrypoint.sh ./
+# Static server config: serves a terrain tileset mounted at dist/quantized as gzip
+COPY serve.json ./
 
 # Only the runtime config, regenerated at startup, is writable by the app user
 RUN touch runtime-config.js dist/runtime-config.js && \

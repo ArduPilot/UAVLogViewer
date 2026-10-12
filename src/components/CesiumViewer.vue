@@ -1,7 +1,7 @@
 <template>
     <div id="wrapper">
         <div id="toolbar">
-            <table class="infoPanel">
+            <div class="infoPanel">
                 <select
                     class="color-coding-select"
                     aria-label="Color coding"
@@ -16,14 +16,27 @@
                         {{ key }}
                     </option>
                 </select>
-                <tbody>
-                    <tr v-bind:key="mode[0]" v-for="mode in colorCodeLegend">
-                        <td class="mode" v-bind:style="{ color: mode.color }">
-                            {{ mode.name }}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                <table>
+                    <thead class="sr-only">
+                        <tr>
+                            <th scope="col">Legend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-bind:key="mode[0]"
+                            v-for="mode in colorCodeLegend"
+                        >
+                            <td
+                                class="mode"
+                                v-bind:style="{ color: mode.color }"
+                            >
+                                {{ mode.name }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <CesiumSettingsWidget />
         </div>
         <div id="cesiumContainer"></div>
@@ -44,6 +57,10 @@ import {
     UrlTemplateImageryProvider,
     Viewer,
     CesiumTerrainProvider,
+    EllipsoidTerrainProvider,
+    ImageryLayer,
+    TileMapServiceImageryProvider,
+    buildModuleUrl,
     PointPrimitiveCollection,
     Entity,
     ScreenSpaceEventHandler,
@@ -109,6 +126,14 @@ import {
 const ESRI_WORLD_IMAGERY_URL =
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 const ESRI_CREDIT = "Imagery © Esri, Maxar, Earthstar Geographics";
+// Self-hosted ArduPilot SRTM quantized-mesh terrain (scripts/terrain). Same origin first:
+// plot.ardupilot.org, the dev server proxy, or a tileset mounted into the Docker image (works
+// offline). Without one, use plot.ardupilot.org's tileset when online (it allows CORS).
+const LOCAL_TERRAIN_URL = "/quantized/";
+const PUBLIC_TERRAIN_URL = "https://plot.ardupilot.org/quantized/";
+// Terrain detail level that counts as real terrain data at a location (level 10 tiles are
+// ~20 km wide). Regional tilesets only have coarse levels outside their area.
+const MIN_TERRAIN_LEVEL = 10;
 const MAPTILER_SATELLITE_URL =
     "https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=o3JREHNnXex8WSPPm2BU";
 
@@ -166,28 +191,36 @@ export default {
         this.asyncSetup();
     },
     methods: {
+        async tryTerrainProvider(url) {
+            try {
+                return await CesiumTerrainProvider.fromUrl(url);
+            } catch (e) {
+                console.warn(`quantized terrain unavailable at ${url}:`, e);
+                return null;
+            }
+        },
+        async loadTerrainProvider(online) {
+            const local = await this.tryTerrainProvider(LOCAL_TERRAIN_URL);
+            if (local) {
+                return local;
+            }
+            const remote = online
+                ? await this.tryTerrainProvider(PUBLIC_TERRAIN_URL)
+                : null;
+            if (remote) {
+                return remote;
+            }
+            // Fall back to the ellipsoid so the 3D view still works.
+            console.warn("no quantized terrain available, using ellipsoid");
+            return new EllipsoidTerrainProvider();
+        },
         async asyncSetup() {
             try {
                 if (this.viewer == null) {
-                    if (this.state.isOnline) {
-                        this.viewer = this.createViewer(true);
-                        if (this.state.vehicle !== "boat") {
-                            try {
-                                // Self-hosted ArduPilot SRTM terrain (same origin), replaces ion.
-                                this.viewer.terrainProvider =
-                                    await CesiumTerrainProvider.fromUrl(
-                                        "/quantized/",
-                                    );
-                            } catch (e) {
-                                // Fall back to the ellipsoid so the 3D view still works.
-                                console.warn(
-                                    "quantized terrain unavailable, using ellipsoid:",
-                                    e,
-                                );
-                            }
-                        }
-                    } else {
-                        this.viewer = this.createViewer(false);
+                    this.viewer = this.createViewer(this.state.isOnline);
+                    if (this.state.vehicle !== "boat") {
+                        this.viewer.terrainProvider =
+                            await this.loadTerrainProvider(this.state.isOnline);
                     }
                     this.viewer.scene.debugShowFramesPerSecond = true;
 
@@ -311,9 +344,10 @@ export default {
                     );
                 }
 
+                this.terrainSampled = false;
                 if (
                     this.state.vehicle !== "boat" &&
-                    this.state.isOnline &&
+                    this.viewer.terrainProvider.availability &&
                     this.correctedTrajectory.length > 0
                 ) {
                     const promise = sampleTerrainMostDetailed(
@@ -322,6 +356,7 @@ export default {
                     );
                     promise
                         .then(async (result) => {
+                            this.terrainSampled = true;
                             await this.setup2(result);
                         })
                         .catch(() => this.setup2(this.correctedTrajectory));
@@ -384,7 +419,12 @@ export default {
                 shadows: true,
                 orderIndependentTranslucency: false,
                 baseLayerPicker: false,
-                imageryProvider: false,
+                // low-resolution world imagery bundled with Cesium (dist/Assets), no network
+                baseLayer: ImageryLayer.fromProviderAsync(
+                    TileMapServiceImageryProvider.fromUrl(
+                        buildModuleUrl("Assets/Textures/NaturalEarthII"),
+                    ),
+                ),
                 geocoder: false,
                 useBrowserRecommendedResolution: false,
             });
@@ -504,6 +544,13 @@ export default {
                 scene.requestRender();
             });
         },
+        // Most detailed terrain level available at a position, -1 when there is no terrain tile
+        terrainLevelAt(cartographic) {
+            const availability = this.viewer.terrainProvider.availability;
+            return availability === undefined
+                ? -1
+                : availability.computeMaximumLevelAtPosition(cartographic);
+        },
         async setup2(updatedPositions) {
             try {
                 /*
@@ -524,6 +571,23 @@ export default {
                 // and the vehicle sits at the right height above the visible ground. No terrain
                 // offset is added. (This would be wrong against ellipsoidal terrain, e.g. ion.)
                 this.state.heightOffset = 0;
+                const takeoffLevel = this.terrainLevelAt(
+                    this.correctedTrajectory[0],
+                );
+                if (takeoffLevel < MIN_TERRAIN_LEVEL) {
+                    // No terrain data here (offline without a tileset, or outside its area): the
+                    // ground is the flat globe or a coarse level, so absolute heights would float.
+                    // Put the takeoff on the visible ground instead (adjustable in the settings).
+                    // Without any terrain tile the sampler leaves the height unchanged, so the
+                    // visible ground is the ellipsoid (0).
+                    const ground =
+                        this.terrainSampled && takeoffLevel >= 0
+                            ? updatedPositions[0].height
+                            : 0;
+                    this.state.heightOffset =
+                        ground - this.state.currentTrajectory[0][2];
+                    this.terrainHeights = null;
+                }
                 this.processTrajectory(this.state.currentTrajectory);
                 this.addModel();
                 this.updateAndPlotTrajectory();
@@ -1892,12 +1956,12 @@ export default {
                 if (frame === 10 || frame === 11) {
                     finalPoints[i].height += alt;
                 } else if (frame === 3 || frame === 6) {
-                    finalPoints[i].height = homeAlt + alt;
+                    finalPoints[i].height = homeAlt + alt + this.heightOffset;
                 } else {
                     // GLOBAL/absolute. Use the raw alt directly: cesiumPointsOrig shares its
                     // Cartographic objects with the terrain-sampled array, so its height has
                     // been overwritten with terrain.
-                    finalPoints[i].height = alt;
+                    finalPoints[i].height = alt + this.heightOffset;
                 }
             }
 

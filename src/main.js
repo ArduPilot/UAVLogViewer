@@ -8,6 +8,8 @@ import router from "./router";
 import BootstrapVue from "bootstrap-vue";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-vue/dist/bootstrap-vue.css";
+// Icons bundled with the app (no CDN, works offline)
+import "@fortawesome/fontawesome-free/css/all.css";
 
 // Using imported components
 import VueRouter from "vue-router";
