@@ -4,6 +4,7 @@
             <table class="infoPanel">
                 <select
                     class="color-coding-select"
+                    aria-label="Color coding"
                     v-model="selectedColorCoder"
                     v-on:change="updateColor"
                 >
@@ -79,6 +80,7 @@ import {
     Primitive,
     ShaderSource,
     ImageMaterialProperty,
+    CallbackProperty,
 } from "cesium";
 
 import { DateTime } from "luxon";
@@ -115,12 +117,12 @@ const colorCoderRange = new ColorCoderRange(store);
 
 function getMinTime(data) {
     // returns the minimum time in the array. Used to define the time range
-    return data.reduce((min, p) => (p[3] < min ? p[3] : min), data[0][3]);
+    return data.reduce((min, p) => Math.min(p[3], min), data[0][3]);
 }
 
 function getMaxTime(data) {
     // returns the maximum time in   the array. Used to define the time range
-    return data.reduce((max, p) => (p[3] > max ? p[3] : max), data[0][3]);
+    return data.reduce((max, p) => Math.max(p[3], max), data[0][3]);
 }
 
 export default {
@@ -213,7 +215,7 @@ export default {
                         0.1, 0.25, 0.5, 0.75, 1, 2, 5, 10, 15,
                     ]);
                     this.viewer.scene.globe.depthTestAgainstTerrain = true;
-                    this.viewer.shadowMap.maxmimumDistance = 10000.0;
+                    this.viewer.shadowMap.maxmimumDistance = 10000;
                     this.viewer.shadowMap.softShadows = true;
                     this.viewer.shadowMap.size = 4096;
                     this.viewer.animation.viewModel.timeFormatter = (
@@ -236,7 +238,9 @@ export default {
                         // dateTime = dateTime.setZone("America/Chicago");
                         const offset =
                             dateTime.offsetNameShort || dateTime.offsetNameLong;
-                        return `${dateTime.toLocaleString(DateTime.TIME_SIMPLE)} (${offset})`;
+                        return `${dateTime.toLocaleString(
+                            DateTime.TIME_SIMPLE,
+                        )} (${offset})`;
                     };
                     // Attach hover handler
                     const handler = new ScreenSpaceEventHandler(
@@ -286,7 +290,7 @@ export default {
                         new SingleTileImageryProvider(options),
                     );
                     this.viewer.scene.globe.translucency.frontFaceAlphaByDistance =
-                        new NearFarScalar(50.0, 0.4, 150.0, 1.0);
+                        new NearFarScalar(50, 0.4, 150, 1);
                     this.viewer.scene.globe.translucency.enabled = true;
                     this.viewer.scene.screenSpaceCameraController.enableCollisionDetection = false;
                     this.viewer.scene.globe.undergroundColor =
@@ -294,7 +298,7 @@ export default {
                     this.viewer.scene.globe.undergroundColorAlphaByDistance.near = 2;
                     this.viewer.scene.globe.undergroundColorAlphaByDistance.far = 10;
                     this.viewer.scene.globe.undergroundColorAlphaByDistance.nearValue = 0.2;
-                    this.viewer.scene.globe.undergroundColorAlphaByDistance.farValue = 1.0;
+                    this.viewer.scene.globe.undergroundColorAlphaByDistance.farValue = 1;
                 }
                 this.addBathymetryButton();
                 this.addCenterVehicleButton();
@@ -418,8 +422,6 @@ export default {
                         });
                     },
                 }),
-            );
-            imageryProviders.push(
                 new ProviderViewModel({
                     name: "MapTiler",
                     iconUrl: require("../assets/maptiler.png").default,
@@ -446,8 +448,6 @@ export default {
                         });
                     },
                 }),
-            );
-            imageryProviders.push(
                 new ProviderViewModel({
                     name: "OpenSeaMap",
                     iconUrl: require("../assets/openseamap.png").default,
@@ -473,7 +473,37 @@ export default {
             );
             return imageryProviders;
         },
-
+        // Resolve once the globe has no tiles left to load (or after timeoutMs, so a slow
+        // or failing tile server never blocks the UI). Never rejects.
+        waitForCesiumReady(timeoutMs = 10000) {
+            const scene = this.viewer.scene;
+            const globe = scene.globe;
+            return new Promise((resolve) => {
+                if (globe.tilesLoaded) {
+                    resolve();
+                    return;
+                }
+                let removeListener = null;
+                const timer = setTimeout(() => {
+                    console.warn(
+                        "Cesium tiles still loading after timeout, continuing",
+                    );
+                    removeListener?.();
+                    resolve();
+                }, timeoutMs);
+                // tileLoadProgressEvent reports the tile load queue length; 0 means done
+                removeListener = globe.tileLoadProgressEvent.addEventListener(
+                    (queued) => {
+                        if (queued === 0 && globe.tilesLoaded) {
+                            clearTimeout(timer);
+                            removeListener();
+                            resolve();
+                        }
+                    },
+                );
+                scene.requestRender();
+            });
+        },
         async setup2(updatedPositions) {
             try {
                 /*
@@ -503,10 +533,16 @@ export default {
                 document.addEventListener("setzoom", this.onTimelineZoom);
                 this.$eventHub.$on("rangeChanged", this.onRangeChanged);
 
-                // TODO: Find a better way to know that cesium finished loading
-                setTimeout(() => {
+                try {
+                    await this.waitForCesiumReady();
+                } catch (e) {
+                    console.warn(
+                        "Cesium loading timeout, continuing anyway",
+                        e,
+                    );
+                } finally {
                     this.state.mapLoading = false;
-                }, 2000);
+                }
                 // Default to a framed top-down view of the flight (not vehicle-follow, which
                 // frames a point and ends up too wide to find the flight). Follow is available
                 // via the centre-vehicle button.
@@ -529,12 +565,11 @@ export default {
                 this.$eventHub.$emit("loadType", message);
             }
             let interval;
-            const _this = this;
             let counter = 0;
             return new Promise((resolve, reject) => {
-                interval = setInterval(function () {
+                interval = setInterval(() => {
                     for (const message of messages) {
-                        if (!_this.state.messages[message]) {
+                        if (!this.state.messages[message]) {
                             counter += 1;
                             if (counter > 30) {
                                 // 30 * 300ms = 9 s timeout
@@ -656,8 +691,11 @@ export default {
                 "cesium-bathymetry-button",
             );
             bathymetryButton.addEventListener("click", () => {
-                this.plotBathymetry();
-                this.viewer.scene.requestRender();
+                this.plotBathymetry()
+                    .catch((e) =>
+                        console.warn("Could not plot bathymetry:", e.message),
+                    )
+                    .finally(() => this.viewer.scene.requestRender());
             });
         },
         addFitContentsButton() {
@@ -761,17 +799,13 @@ export default {
         mouseIsOnPoint(point) {
             // Checks if there is a trajectory point under the coordinate "point"
             const pickedObjects = this.viewer.scene.drillPick(point);
-            if (defined(pickedObjects)) {
-                // tries to read the time of each entioty under the mouse, returns once one is found.
-                for (const entity of pickedObjects) {
-                    try {
-                        const time = entity.id.time;
-                        if (time !== undefined) {
-                            this.lastHoveredTime = time;
-                            return true;
-                        }
-                        return;
-                    } catch (e) {}
+            if (!defined(pickedObjects)) return false;
+
+            for (const entity of pickedObjects) {
+                const time = entity.id?.time;
+                if (time !== undefined && time !== null) {
+                    this.lastHoveredTime = time;
+                    return true;
                 }
             }
             return false;
@@ -886,8 +920,10 @@ export default {
                 if (change[0] > start && change[0] < end) {
                     const percentage =
                         ((change[0] - start) * 100) / (end - start);
-                    colors.push([percentage - 0.001, previousColor]);
-                    colors.push([percentage, this.getModeColor(change[0])]);
+                    colors.push(
+                        [percentage - 0.001, previousColor],
+                        [percentage, this.getModeColor(change[0])],
+                    );
                     previousColor = this.getModeColor(change[0]);
                 }
             }
@@ -970,12 +1006,10 @@ export default {
                             new JulianDate(),
                         );
                     }
+                } else if (this.mouseIsOnPoint(movement.endPosition)) {
+                    this.viewer.container.style.cursor = "pointer";
                 } else {
-                    if (this.mouseIsOnPoint(movement.endPosition)) {
-                        this.viewer.container.style.cursor = "pointer";
-                    } else {
-                        this.viewer.container.style.cursor = "default";
-                    }
+                    this.viewer.container.style.cursor = "default";
                 }
             }
         },
@@ -1115,222 +1149,240 @@ export default {
                 }
             }
         },
+        // =========================================================================
+        // 1. DATA PREPARATION (same as original, but extracted)
+        // =========================================================================
         aggregateDepth(bathymetry, positions) {
             const positionsWithDepth = [];
             let lastIndex = 0;
-
-            for (const index in positions.time_boot_ms) {
+            for (let i = 0; i < positions.time_boot_ms.length; i++) {
                 while (
+                    lastIndex < bathymetry.time_boot_ms.length - 1 &&
                     bathymetry.time_boot_ms[lastIndex] <
-                        positions.time_boot_ms[index] &&
-                    lastIndex < bathymetry.time_boot_ms.length - 1
+                        positions.time_boot_ms[i]
                 ) {
                     lastIndex++;
                 }
                 if (
                     bathymetry.time_boot_ms[lastIndex] >=
-                    positions.time_boot_ms[index]
+                    positions.time_boot_ms[i]
                 ) {
                     positionsWithDepth.push({
-                        latitude: positions.Lat[index] * 1e-7,
-                        longitude: positions.Lng[index] * 1e-7,
+                        latitude: positions.Lat[i] * 1e-7,
+                        longitude: positions.Lng[i] * 1e-7,
                         depth: bathymetry.Dist[lastIndex],
                     });
                 }
             }
             return positionsWithDepth;
         },
-        async plotBathymetry() {
-            const requiredMessages = ["RFND", "POS"];
-            for (const message of requiredMessages) {
-                this.$eventHub.$emit("loadType", message);
-            }
-            while (
-                !(this.state.messages.RFND || this.state.messages["RFND[0]"]) ||
-                !this.state.messages.POS
-            ) {
-                await new Promise((resolve) => setTimeout(resolve, 100));
-            }
-            const bathymetry =
-                this.state.messages.RFND || this.state.messages["RFND[0]"];
-            let positionsWithDepth = this.aggregateDepth(
-                bathymetry,
-                this.state.messages.POS,
-            );
-
-            // Filter out outliers and invalid readings
-            const depths = positionsWithDepth
+        filterOutliers(pointsWithDepth) {
+            const depths = pointsWithDepth
                 .map((p) => p.depth)
                 .filter((d) => d > 0.1);
+            if (depths.length === 0) return [];
             const mean = depths.reduce((a, b) => a + b, 0) / depths.length;
             const stdDev = Math.sqrt(
                 depths.reduce((a, b) => a + Math.pow(b - mean, 2), 0) /
                     depths.length,
             );
-
-            positionsWithDepth = positionsWithDepth.filter((p) => {
-                return (
+            return pointsWithDepth.filter(
+                (p) =>
                     p.depth > 0.1 &&
                     Math.abs(p.depth - mean) < 2.5 * stdDev &&
                     p.latitude !== 0 &&
-                    p.longitude !== 0
-                );
-            });
-
-            // Normalize coordinates to 1000x1000 space
-            const minLat = Math.min(
-                ...positionsWithDepth.map((p) => p.latitude),
+                    p.longitude !== 0,
             );
-            const maxLat = Math.max(
-                ...positionsWithDepth.map((p) => p.latitude),
-            );
-            const minLng = Math.min(
-                ...positionsWithDepth.map((p) => p.longitude),
-            );
-            const maxLng = Math.max(
-                ...positionsWithDepth.map((p) => p.longitude),
-            );
-
-            const normalizedPoints = positionsWithDepth.map((p) => ({
+        },
+        normalizeToGridSpace(points) {
+            const minLat = Math.min(...points.map((p) => p.latitude));
+            const maxLat = Math.max(...points.map((p) => p.latitude));
+            const minLng = Math.min(...points.map((p) => p.longitude));
+            const maxLng = Math.max(...points.map((p) => p.longitude));
+            return points.map((p) => ({
                 x: ((p.longitude - minLng) / (maxLng - minLng)) * 1000,
                 y: ((p.latitude - minLat) / (maxLat - minLat)) * 1000,
                 depth: p.depth,
             }));
+        },
+        // =========================================================================
+        // 2. GRID, HULL, AND DEPTH RANGE
+        // =========================================================================
 
-            // Generate and expand hull
-            const hull = generateHull(normalizedPoints);
-            const margin = 50; // Adjustable margin
+        prepareGridAndHull(points, gridSize = 200, margin = 50) {
+            const hull = generateHull(points);
             const expandedHull = expandPolygon(hull, margin);
-
-            // Create canvas
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            const width = 512;
-            const height = 512;
-            canvas.width = width;
-            canvas.height = height;
-
-            // Create grid with improved interpolation
-            const gridSize = 200;
-            const grid = interpolateToGrid(normalizedPoints, gridSize);
-            const smoothedGrid = smoothGrid(grid, 1);
-
-            // Find depth range for color scaling
-            let minDepth = Infinity;
-            let maxDepth = -Infinity;
-            smoothedGrid.forEach((row) =>
-                row.forEach((depth) => {
-                    if (depth !== null) {
-                        minDepth = Math.min(minDepth, depth);
-                        maxDepth = Math.max(maxDepth, depth);
+            let grid = interpolateToGrid(points, gridSize);
+            grid = smoothGrid(grid, 1);
+            return { grid, expandedHull };
+        },
+        getDepthRange(grid) {
+            let min = Infinity;
+            let max = -Infinity;
+            grid.forEach((row) =>
+                row.forEach((d) => {
+                    if (d !== null) {
+                        min = Math.min(min, d);
+                        max = Math.max(max, d);
                     }
                 }),
             );
-
-            const cellWidth = width / gridSize;
-            const cellHeight = height / gridSize;
-
-            // Draw bathymetry
-            const imageData = new ImageData(width, height);
-            for (let i = 0; i < gridSize; i++) {
-                for (let j = 0; j < gridSize; j++) {
-                    const depth = smoothedGrid[i][j];
-                    if (depth === null) continue;
-
-                    const normalizedDepth =
-                        (depth - minDepth) / (maxDepth - minDepth);
-                    const r = Math.floor(100 * (1 - normalizedDepth));
-                    const g = Math.floor(149 * (1 - normalizedDepth));
-                    const b = Math.floor(237 * (1 - normalizedDepth * 0.5));
-
-                    const x = Math.floor(i * cellWidth);
-                    const y = Math.floor(j * cellHeight);
-                    for (let dx = 0; dx < cellWidth + 1; dx++) {
-                        for (let dy = 0; dy < cellHeight + 1; dy++) {
-                            const pixelX = x + dx;
-                            const pixelY = y + dy;
-                            const idx = (pixelY * width + pixelX) * 4;
-
-                            if (
-                                isPointInPolygon(
-                                    (pixelX / width) * 1000,
-                                    (pixelY / height) * 1000,
-                                    expandedHull,
-                                )
-                            ) {
-                                imageData.data[idx] = r;
-                                imageData.data[idx + 1] = g;
-                                imageData.data[idx + 2] = b;
-                                imageData.data[idx + 3] = 255; // Fully opaque inside hull
-                            } else {
-                                imageData.data[idx + 3] = 0; // Transparent outside hull
-                            }
-                        }
+            return { min, max };
+        },
+        // =========================================================================
+        // 3. COLOR CONVERSION AND PIXEL MANIPULATION
+        // =========================================================================
+        getDepthColor(depth, minDepth, maxDepth) {
+            const norm = (depth - minDepth) / (maxDepth - minDepth);
+            return {
+                r: Math.floor(100 * (1 - norm)),
+                g: Math.floor(149 * (1 - norm)),
+                b: Math.floor(237 * (1 - norm * 0.5)),
+            };
+        },
+        setPixel(imageData, width, x, y, r, g, b, a = 255) {
+            const idx = (y * width + x) * 4;
+            imageData.data[idx] = r;
+            imageData.data[idx + 1] = g;
+            imageData.data[idx + 2] = b;
+            imageData.data[idx + 3] = a;
+        },
+        fillCellPixels(
+            imageData,
+            width,
+            height,
+            cellX,
+            cellY,
+            cellW,
+            cellH,
+            color,
+            expandedHull,
+        ) {
+            for (let dx = 0; dx <= cellW; dx++) {
+                for (let dy = 0; dy <= cellH; dy++) {
+                    const px = cellX + dx;
+                    const py = cellY + dy;
+                    const inside = isPointInPolygon(
+                        (px / width) * 1000,
+                        (py / height) * 1000,
+                        expandedHull,
+                    );
+                    if (inside) {
+                        this.setPixel(
+                            imageData,
+                            width,
+                            px,
+                            py,
+                            color.r,
+                            color.g,
+                            color.b,
+                            255,
+                        );
+                    } else {
+                        this.setPixel(imageData, width, px, py, 0, 0, 0, 0);
                     }
+                }
+            }
+        },
+        fillColoredPixels(
+            ctx,
+            width,
+            height,
+            grid,
+            cellW,
+            cellH,
+            expandedHull,
+            depthMin,
+            depthMax,
+        ) {
+            const imageData = ctx.getImageData(0, 0, width, height);
+            for (let i = 0; i < grid.length; i++) {
+                for (let j = 0; j < grid[0].length; j++) {
+                    const depth = grid[i][j];
+                    if (depth === null) continue;
+                    const color = this.getDepthColor(depth, depthMin, depthMax);
+                    const cellX = Math.floor(i * cellW);
+                    const cellY = Math.floor(j * cellH);
+                    this.fillCellPixels(
+                        imageData,
+                        width,
+                        height,
+                        cellX,
+                        cellY,
+                        cellW,
+                        cellH,
+                        color,
+                        expandedHull,
+                    );
                 }
             }
             ctx.putImageData(imageData, 0, 0);
-
-            // Draw contour lines
-            ctx.save();
-            ctx.beginPath();
-            expandedHull.forEach((point, i) => {
-                const x = (point.x / 1000) * width;
-                const y = (point.y / 1000) * height;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.closePath();
-            ctx.clip();
-
-            const contourLevels = 10;
-            ctx.strokeStyle = "rgba(0,0,0,0.2)";
-            ctx.lineWidth = 0.5;
-
-            for (let level = 0; level < contourLevels; level++) {
-                const threshold =
-                    minDepth + (maxDepth - minDepth) * (level / contourLevels);
-                ctx.beginPath();
-
-                for (let i = 0; i < gridSize - 1; i++) {
-                    for (let j = 0; j < gridSize - 1; j++) {
-                        const x = i * cellWidth;
-                        const y = j * cellHeight;
-                        const cell = [
-                            smoothedGrid[i][j],
-                            smoothedGrid[i + 1][j],
-                            smoothedGrid[i + 1][j + 1],
-                            smoothedGrid[i][j + 1],
-                        ];
-
-                        if (cell.includes(null)) continue;
-
-                        if (
-                            (cell[0] < threshold && cell[1] >= threshold) ||
-                            (cell[0] >= threshold && cell[1] < threshold)
-                        ) {
-                            ctx.moveTo(x + cellWidth, y);
-                            ctx.lineTo(x + cellWidth, y + cellHeight);
-                        }
-
-                        if (
-                            (cell[0] < threshold && cell[3] >= threshold) ||
-                            (cell[0] >= threshold && cell[3] < threshold)
-                        ) {
-                            ctx.moveTo(x, y + cellHeight);
-                            ctx.lineTo(x + cellWidth, y + cellHeight);
-                        }
+        },
+        // =========================================================================
+        // 4. CONTOUR LINES
+        // =========================================================================
+        crossesThreshold(a, b, threshold) {
+            return (
+                (a < threshold && b >= threshold) ||
+                (a >= threshold && b < threshold)
+            );
+        },
+        drawContoursForLevel(ctx, grid, cellW, cellH, threshold) {
+            for (let i = 0; i < grid.length - 1; i++) {
+                for (let j = 0; j < grid[0].length - 1; j++) {
+                    const cell = [
+                        grid[i][j],
+                        grid[i + 1][j],
+                        grid[i + 1][j + 1],
+                        grid[i][j + 1],
+                    ];
+                    if (cell.includes(null)) continue;
+                    const x = i * cellW;
+                    const y = j * cellH;
+                    // neighbours along x cross the level: vertical segment between them
+                    if (this.crossesThreshold(cell[0], cell[1], threshold)) {
+                        ctx.moveTo(x + cellW, y);
+                        ctx.lineTo(x + cellW, y + cellH);
+                    }
+                    // neighbours along y cross the level: horizontal segment between them
+                    if (this.crossesThreshold(cell[0], cell[3], threshold)) {
+                        ctx.moveTo(x, y + cellH);
+                        ctx.lineTo(x + cellW, y + cellH);
                     }
                 }
+            }
+        },
+        drawContourLines(
+            ctx,
+            width,
+            height,
+            grid,
+            cellW,
+            cellH,
+            depthMin,
+            depthMax,
+            contourLevels = 10,
+        ) {
+            ctx.save();
+            ctx.strokeStyle = "rgba(0,0,0,0.2)";
+            ctx.lineWidth = 0.5;
+            for (let level = 0; level < contourLevels; level++) {
+                const threshold =
+                    depthMin + (depthMax - depthMin) * (level / contourLevels);
+                ctx.beginPath();
+                this.drawContoursForLevel(ctx, grid, cellW, cellH, threshold);
                 ctx.stroke();
             }
             ctx.restore();
-
-            // Draw hull outline
+        },
+        // =========================================================================
+        // 5. HULL OUTLINE
+        // =========================================================================
+        drawHullOutline(ctx, width, height, expandedHull) {
             ctx.beginPath();
-            expandedHull.forEach((point, i) => {
-                const x = (point.x / 1000) * width;
-                const y = (point.y / 1000) * height;
+            expandedHull.forEach((p, i) => {
+                const x = (p.x / 1000) * width;
+                const y = (p.y / 1000) * height;
                 if (i === 0) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
             });
@@ -1338,10 +1390,102 @@ export default {
             ctx.strokeStyle = "rgba(0,0,0,0.5)";
             ctx.lineWidth = 2;
             ctx.stroke();
+        },
+        // =========================================================================
+        // 6. MAIN DRAW FUNCTION (orchestrator)
+        // =========================================================================
+        drawBathymetryCanvas(
+            normalizedPoints,
+            gridSize = 200,
+            margin = 50,
+            contourLevels = 10,
+        ) {
+            const { grid, expandedHull } = this.prepareGridAndHull(
+                normalizedPoints,
+                gridSize,
+                margin,
+            );
+            const { min: depthMin, max: depthMax } = this.getDepthRange(grid);
 
-            // Create the rectangle with the canvas texture
+            const width = 512;
+            const height = 512;
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            const cellW = width / gridSize;
+            const cellH = height / gridSize;
+
+            this.fillColoredPixels(
+                ctx,
+                width,
+                height,
+                grid,
+                cellW,
+                cellH,
+                expandedHull,
+                depthMin,
+                depthMax,
+            );
+
+            // Clip to hull for contour drawing
+            ctx.save();
+            ctx.beginPath();
+            expandedHull.forEach((p, i) => {
+                const x = (p.x / 1000) * width;
+                const y = (p.y / 1000) * height;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.closePath();
+            ctx.clip();
+            this.drawContourLines(
+                ctx,
+                width,
+                height,
+                grid,
+                cellW,
+                cellH,
+                depthMin,
+                depthMax,
+                contourLevels,
+            );
+            ctx.restore();
+
+            this.drawHullOutline(ctx, width, height, expandedHull);
+
+            return canvas;
+        },
+        // =========================================================================
+        // 7. MAIN PLOT FUNCTION (short and readable)
+        // =========================================================================
+        async waitForBathymetryMessages(timeoutMs = 9000) {
+            for (const message of ["RFND", "POS"]) {
+                this.$eventHub.$emit("loadType", message);
+            }
+            const ready = () =>
+                (this.state.messages.RFND || this.state.messages["RFND[0]"]) &&
+                this.state.messages.POS;
+            const deadline = Date.now() + timeoutMs;
+            while (!ready()) {
+                if (Date.now() > deadline) {
+                    throw new Error("Bathymetry needs RFND and POS messages");
+                }
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+        },
+        async plotBathymetry() {
+            await this.waitForBathymetryMessages();
+            const bath =
+                this.state.messages.RFND || this.state.messages["RFND[0]"];
+            let points = this.aggregateDepth(bath, this.state.messages.POS);
+            points = this.filterOutliers(points);
+            if (points.length === 0) return;
+
+            const normalized = this.normalizeToGridSpace(points);
+            const canvas = this.drawBathymetryCanvas(normalized);
             const rectangle = Rectangle.fromCartographicArray(
-                positionsWithDepth.map((p) =>
+                points.map((p) =>
                     Cartographic.fromDegrees(p.longitude, p.latitude),
                 ),
             );
@@ -1361,205 +1505,319 @@ export default {
             });
             this.viewer.scene.requestRender();
         },
-
-        // Hull generation helper function remains the same as before,
-        addModel() {
-            if (this.model !== null) {
-                this.viewer.entities.remove(this.model);
+        // =========================================================================
+        // 1. CONSTRUIR PROPIEDAD DE POSICIÓN MUESTREADA (ya existía, pero la extraigo)
+        // =========================================================================
+        buildSampledPositionProperty() {
+            const sampled = new SampledPositionProperty();
+            const isBoat = this.state.vehicle === "boat";
+            for (const pos of this.points) {
+                const position = isBoat
+                    ? Cartesian3.fromDegrees(pos[0], pos[1], 0)
+                    : Cartesian3.fromDegrees(
+                          pos[0],
+                          pos[1],
+                          pos[2] + this.heightOffset,
+                      );
+                const time = JulianDate.addSeconds(
+                    this.start,
+                    (pos[3] - this.startTimeMs) / 1000,
+                    new JulianDate(),
+                );
+                sampled.addSample(time, position);
             }
-            const points = this.points;
-            // Create sampled aircraft orientation
-            const position = Cartesian3.fromDegrees(
-                points[0][0],
-                points[0][1],
-                points[0][2] + this.heightOffset,
+            return sampled;
+        },
+        // =========================================================================
+        // 2. ORIENTACIÓN A PARTIR DE CUATERNIONES (timeAttitudeQ)
+        // =========================================================================
+        quaternionToHeadingPitchRoll(q1, q2, q3, q4) {
+            const roll = Math.atan2(
+                2 * (q1 * q2 + q3 * q4),
+                1 - 2 * (q2 * q2 + q3 * q3),
             );
-            let fixedFrameTransform =
-                Transforms.localFrameToFixedFrameGenerator("north", "west");
-            const sampledOrientation = new SampledProperty(Quaternion);
-            if (Object.keys(this.state.timeAttitudeQ).length > 0) {
-                fixedFrameTransform =
-                    Transforms.localFrameToFixedFrameGenerator("north", "east");
-                for (const atti in this.state.timeAttitudeQ) {
-                    if (this.state.timeAttitudeQ[atti]) {
-                        const att = this.state.timeAttitudeQ[atti];
+            let pitch = Math.asin(2 * (q1 * q3 - q4 * q2));
+            if (Number.isNaN(pitch)) pitch = 0;
+            const yaw = Math.atan2(
+                2 * (q1 * q4 + q2 * q3),
+                1 - 2 * (q3 * q3 + q4 * q4),
+            );
+            // TODO: fix coordinate system! (signs and offset)
+            return new HeadingPitchRoll(-yaw, -pitch, roll - Math.PI);
+        },
+        addQuaternionSample(sampled, timeMs, positionAtTime) {
+            const att = this.state.timeAttitudeQ[timeMs];
+            if (!att) return;
+            const [q1, q2, q3, q4] = att;
+            const hpRoll = this.quaternionToHeadingPitchRoll(q1, q2, q3, q4);
+            const quat = Transforms.headingPitchRollQuaternion(
+                positionAtTime,
+                hpRoll,
+                Ellipsoid.WGS84,
+                Transforms.localFrameToFixedFrameGenerator("north", "east"),
+            );
+            const time = JulianDate.addSeconds(
+                this.start,
+                (timeMs - this.startTimeMs) / 1000,
+                new JulianDate(),
+            );
+            sampled.addSample(time, quat);
+        },
+        // =========================================================================
+        // 3. ORIENTACIÓN A PARTIR DE ÁNGULOS DE EULER (timeAttitude)
+        // =========================================================================
+        eulerToHeadingPitchRoll(roll, pitch, yaw) {
+            // Asumiendo que los ángulos vienen en radianes (roll, pitch, yaw)
+            return new HeadingPitchRoll(yaw, pitch, roll);
+        },
+        addEulerSample(sampled, timeMs, positionAtTime) {
+            const att = this.state.timeAttitude[timeMs];
+            if (!att) return;
+            const [roll, pitch, yaw] = att;
+            const hpRoll = this.eulerToHeadingPitchRoll(roll, pitch, yaw);
+            const quat = Transforms.headingPitchRollQuaternion(
+                positionAtTime,
+                hpRoll,
+                Ellipsoid.WGS84,
+                Transforms.localFrameToFixedFrameGenerator("north", "west"),
+            );
+            const time = JulianDate.addSeconds(
+                this.start,
+                (timeMs - this.startTimeMs) / 1000,
+                new JulianDate(),
+            );
+            sampled.addSample(time, quat);
+        },
+        // =========================================================================
+        // 4. CONSTRUIR PROPIEDAD DE ORIENTACIÓN MUESTREADA (elige fuente)
+        // =========================================================================
+        buildSampledOrientationProperty() {
+            const sampled = new SampledProperty(Quaternion);
+            const hasQuat = Object.keys(this.state.timeAttitudeQ).length > 0;
+            const dataSource = hasQuat
+                ? this.state.timeAttitudeQ
+                : this.state.timeAttitude;
+            if (Object.keys(dataSource).length === 0) return sampled;
 
-                        const q1 = att[0];
-                        const q2 = att[1];
-                        const q3 = att[2];
-                        const q4 = att[3];
-
-                        const roll = Math.atan2(
-                            2.0 * (q1 * q2 + q3 * q4),
-                            1.0 - 2.0 * (q2 * q2 + q3 * q3),
-                        );
-                        let pitch = Math.asin(2.0 * (q1 * q3 - q4 * q2));
-                        if (isNaN(pitch)) {
-                            pitch = 0;
-                        }
-                        const yaw = Math.atan2(
-                            2.0 * (q1 * q4 + q2 * q3),
-                            1.0 - 2.0 * (q3 * q3 + q4 * q4),
-                        );
-                        // TODO: fix this coordinate system!
-                        const hpRoll = Transforms.headingPitchRollQuaternion(
-                            position,
-                            new HeadingPitchRoll(-yaw, -pitch, roll - 3.14),
-                            Ellipsoid.WGS84,
-                            fixedFrameTransform,
-                        );
-
-                        const time = JulianDate.addSeconds(
-                            this.start,
-                            (atti - this.startTimeMs) / 1000,
-                            new JulianDate(),
-                        );
-
-                        sampledOrientation.addSample(time, hpRoll);
-                    }
-                }
-            } else {
-                for (const atti in this.state.timeAttitude) {
-                    if (this.state.timeAttitude[atti]) {
-                        const att = this.state.timeAttitude[atti];
-                        const hpRoll = Transforms.headingPitchRollQuaternion(
-                            position,
-                            new HeadingPitchRoll(att[2], att[1], att[0]),
-                            Ellipsoid.WGS84,
-                            fixedFrameTransform,
-                        );
-
-                        const time = JulianDate.addSeconds(
-                            this.start,
-                            (atti - this.startTimeMs) / 1000,
-                            new JulianDate(),
-                        );
-                        sampledOrientation.addSample(time, hpRoll);
-                    }
+            // Necesitamos una posición de referencia para cada muestra; fuera del rango
+            // del GPS se usa el extremo más cercano de la trayectoria
+            const firstPoint = this.points[0];
+            const lastPoint = this.points.at(-1);
+            const toCartesian = (p) =>
+                Cartesian3.fromDegrees(
+                    p[0],
+                    p[1],
+                    this.state.vehicle === "boat"
+                        ? 0
+                        : p[2] + this.heightOffset,
+                );
+            const firstPosition = toCartesian(firstPoint);
+            const lastPosition = toCartesian(lastPoint);
+            for (const timeMs in dataSource) {
+                const time = JulianDate.addSeconds(
+                    this.start,
+                    (timeMs - this.startTimeMs) / 1000,
+                    new JulianDate(),
+                );
+                const positionAtTime =
+                    this.sampledPos.getValue(time) ||
+                    (Number(timeMs) < firstPoint[3]
+                        ? firstPosition
+                        : lastPosition);
+                if (hasQuat) {
+                    this.addQuaternionSample(sampled, timeMs, positionAtTime);
+                } else {
+                    this.addEulerSample(sampled, timeMs, positionAtTime);
                 }
             }
-
-            // Reused by the comparison-trajectory vehicles (position differs, orientation shared).
-            this.sampledOrientation = sampledOrientation;
-            // Add airplane model with interpolated position and orientation
-            this.model = this.viewer.entities.add({
+            return sampled;
+        },
+        // =========================================================================
+        // 5. CREAR ENTIDAD DEL MODELO
+        // =========================================================================
+        createModelEntity(positionProp, orientationProp) {
+            return this.viewer.entities.add({
                 availability: new TimeIntervalCollection([
                     new TimeInterval({
                         start: this.start,
                         stop: this.stop,
                     }),
                 ]),
-                position: this.sampledPos,
-                orientation: sampledOrientation,
+                position: positionProp,
+                orientation: orientationProp,
                 model: {
                     uri: this.getVehicleModel(),
                     minimumPixelSize: 15,
-                    scale: this.modelScale / 10,
+                    scale: new CallbackProperty(
+                        () => this.modelScale / 10,
+                        false,
+                    ),
                 },
                 viewFrom: new Cartesian3(5, 0, 3),
             });
+        },
+        // =========================================================================
+        // 6. MÉTODO PRINCIPAL addModel (ahora corto y claro)
+        // =========================================================================
+        async addModel() {
+            if (this.model) {
+                this.viewer.entities.remove(this.model);
+            }
+            this.sampledPos = this.buildSampledPositionProperty();
+            const sampledOrientation = this.buildSampledOrientationProperty();
+            // Reused by the comparison-trajectory vehicles (position differs, orientation shared).
+            this.sampledOrientation = sampledOrientation;
+            this.model = this.createModelEntity(
+                this.sampledPos,
+                sampledOrientation,
+            );
             this.changeCamera();
+
             if (this.state.vehicle === "boat") {
                 setTimeout(() => {
                     this.viewer
                         .flyTo(this.model, {
                             offset: new HeadingPitchRange(0, -0.5, 100),
                         })
-                        .then(() => {
-                            this.changeCamera();
-                        });
+                        .then(() => this.changeCamera());
                 }, 3000);
             }
         },
+        // =========================================================================
+        // 1. OBTENER PUNTOS DE LA TRAYECTORIA DENTRO DEL RANGO DE TIEMPO
+        // =========================================================================
+
+        getPointsInTimeRange(startTimeMs, endTimeMs) {
+            const isBoat = this.state.vehicle === "boat";
+            const pointsInRange = [];
+            for (const pos of this.points) {
+                if (pos[3] >= startTimeMs && pos[3] <= endTimeMs) {
+                    pointsInRange.push({
+                        position: Cartesian3.fromDegrees(
+                            pos[0],
+                            pos[1],
+                            isBoat ? 0.1 : pos[2] + this.heightOffset,
+                        ),
+                        time: pos[3],
+                        color: this.getModeColor(pos[3]),
+                    });
+                }
+            }
+            return pointsInRange;
+        },
+
+        // =========================================================================
+        // 2. AGRUPAR PUNTOS EN SEGMENTOS POR COLOR (cambia de color => nuevo segmento)
+        // =========================================================================
+
+        groupPointsByColor(points) {
+            if (points.length === 0) return [];
+            const segments = [];
+            let currentSegment = {
+                positions: [points[0].position],
+                color: points[0].color,
+            };
+            for (let i = 1; i < points.length; i++) {
+                const point = points[i];
+                if (Color.equals(point.color, currentSegment.color)) {
+                    currentSegment.positions.push(point.position);
+                } else {
+                    segments.push(currentSegment);
+                    currentSegment = {
+                        positions: [
+                            currentSegment.positions[
+                                currentSegment.positions.length - 1
+                            ],
+                            point.position,
+                        ],
+                        color: point.color,
+                    };
+                }
+            }
+            segments.push(currentSegment);
+            return segments;
+        },
+
+        // =========================================================================
+        // 3. CREAR INSTANCIA DE GEOMETRY PARA UN SEGMENTO
+        // =========================================================================
+
+        createPolylineGeometryInstance(positions, color, width = 3) {
+            return new GeometryInstance({
+                geometry: new PolylineGeometry({
+                    positions: positions,
+                    width: width,
+                }),
+                attributes: {
+                    color: ColorGeometryInstanceAttribute.fromColor(color),
+                },
+            });
+        },
+
+        // =========================================================================
+        // 4. CONSTRUIR TODAS LAS INSTANCIAS DE GEOMETRY A PARTIR DE LOS SEGMENTOS
+        // =========================================================================
+
+        buildGeometryInstancesFromSegments(segments) {
+            const instances = [];
+            for (const seg of segments) {
+                if (seg.positions.length > 1) {
+                    instances.push(
+                        this.createPolylineGeometryInstance(
+                            seg.positions,
+                            seg.color,
+                        ),
+                    );
+                }
+            }
+            return instances;
+        },
+
+        // =========================================================================
+        // 5. ACTUALIZAR EL PRIMITIVE DE LA TRAYECTORIA EN EL VISOR
+        // =========================================================================
+
+        updateTrajectoryPrimitive(instances) {
+            // Remover el primitive anterior si existe
+            if (this.trajectoryPrimitive) {
+                this.viewer.scene.primitives.remove(this.trajectoryPrimitive);
+            }
+            // Si no hay instancias o la trayectoria está desactivada, no hacer nada
+            if (!this.showTrajectory || instances.length === 0) {
+                this.viewer.scene.requestRender();
+                return;
+            }
+            // Crear nuevo primitive
+            this.trajectoryPrimitive = new Primitive({
+                geometryInstances: instances,
+                appearance: new PolylineColorAppearance(),
+            });
+            this.viewer.scene.primitives.add(this.trajectoryPrimitive);
+            this.viewer.scene.primitives.raiseToTop(this.trajectoryPrimitive);
+            this.viewer.scene.requestRender();
+        },
+
+        // =========================================================================
+        // 6. MÉTODO PRINCIPAL updateAndPlotTrajectory (ahora corto y claro)
+        // =========================================================================
+
         async updateAndPlotTrajectory() {
+            // Asegurar que existe un colorCoder
             if (!this.colorCoder) {
                 this.colorCoder =
                     this.availableColorCoders[this.selectedColorCoder];
             }
-            const isBoat = this.state.vehicle === "boat";
+            // Obtener rango de tiempo visible en la línea de tiempo
             const startTime = this.cesiumTimeToMs(this.timelineStart);
             const endTime = this.cesiumTimeToMs(this.timelineStop);
-            const geometryInstances = [];
-            let currentSegment = [];
-            let currentColor = this.getModeColor(this.points[0][3]);
-
-            let first = 0;
-            let last = this.points.length;
-
-            for (const i in this.points) {
-                if (this.points[i][3] < startTime) {
-                    first = i;
-                } else if (this.points[i][3] < endTime) {
-                    last = i;
-                }
-            }
-
-            for (const pos of this.points.slice(first, last)) {
-                const position = Cartesian3.fromDegrees(
-                    pos[0],
-                    pos[1],
-                    isBoat ? 0.1 : pos[2] + this.heightOffset,
-                );
-
-                const newColor = this.getModeColor(pos[3]);
-
-                if (!Color.equals(newColor, currentColor)) {
-                    currentSegment.push(position);
-                    if (currentSegment.length > 1) {
-                        geometryInstances.push(
-                            new GeometryInstance({
-                                geometry: new PolylineGeometry({
-                                    positions: currentSegment,
-                                    width: 3.0,
-                                }),
-                                attributes: {
-                                    color: ColorGeometryInstanceAttribute.fromColor(
-                                        currentColor,
-                                    ),
-                                },
-                            }),
-                        );
-                    }
-
-                    currentColor = newColor;
-                    currentSegment = [position];
-                } else {
-                    currentSegment.push(position);
-                }
-            }
-
-            if (currentSegment.length > 1) {
-                geometryInstances.push(
-                    new GeometryInstance({
-                        geometry: new PolylineGeometry({
-                            positions: currentSegment,
-                            width: 3.0,
-                        }),
-                        attributes: {
-                            color: ColorGeometryInstanceAttribute.fromColor(
-                                currentColor,
-                            ),
-                        },
-                    }),
-                );
-            }
-
-            // Remove old trajectory primitives
-            this.viewer.scene.primitives.remove(this.trajectoryPrimitive);
-
-            if (!this.showTrajectory) {
-                this.viewer.scene.requestRender();
-                return;
-            }
-            // Create a new primitive with the geometry instances
-            this.trajectoryPrimitive = new Primitive({
-                geometryInstances: geometryInstances,
-                appearance: new PolylineColorAppearance(),
-            });
-
-            this.viewer.scene.primitives.add(this.trajectoryPrimitive);
-            this.viewer.scene.primitives.raiseToTop(this.trajectoryPrimitive);
-            this.viewer.scene.requestRender();
+            // Filtrar puntos
+            const pointsInRange = this.getPointsInTimeRange(startTime, endTime);
+            // Agrupar por color
+            const segments = this.groupPointsByColor(pointsInRange);
+            // Crear instancias de geometría
+            const instances = this.buildGeometryInstancesFromSegments(segments);
+            // Actualizar el primitive en la escena
+            this.updateTrajectoryPrimitive(instances);
         },
 
         async plotMission(points) {
@@ -1573,13 +1831,23 @@ export default {
                     pos[1],
                     pos[2],
                 );
-                if (isNaN(pos[0]) || isNaN(pos[1]) || isNaN(pos[2])) {
+                if (
+                    Number.isNaN(pos[0]) ||
+                    Number.isNaN(pos[1]) ||
+                    Number.isNaN(pos[2])
+                ) {
                     continue;
                 }
                 cesiumPoints.push(position);
                 cesiumPointsOrig.push(position);
             }
-            if (this.state.vehicle !== "boat") {
+            if (this.state.vehicle === "boat") {
+                this.plotMissionPoints(
+                    cesiumPointsOrig,
+                    cesiumPointsOrig,
+                    points,
+                );
+            } else {
                 sampleTerrainMostDetailed(
                     this.viewer.terrainProvider,
                     cesiumPoints,
@@ -1599,12 +1867,6 @@ export default {
                             points,
                         ),
                     );
-            } else {
-                this.plotMissionPoints(
-                    cesiumPointsOrig,
-                    cesiumPointsOrig,
-                    points,
-                );
             }
         },
 
@@ -1651,7 +1913,7 @@ export default {
                     width: 1,
                     material: new PolylineDashMaterialProperty({
                         color: Color.WHITE,
-                        dashLength: 8.0,
+                        dashLength: 8,
                     }),
                 },
             });
@@ -1995,7 +2257,10 @@ export default {
                         model: {
                             uri: this.getVehicleModel(),
                             minimumPixelSize: 15,
-                            scale: this.modelScale / 10,
+                            scale: new CallbackProperty(
+                                () => this.modelScale / 10,
+                                false,
+                            ),
                             color: color,
                             colorBlendMode: ColorBlendMode.MIX,
                             colorBlendAmount: 0.7,
@@ -2080,14 +2345,14 @@ export default {
             return undefined;
         },
         modelScale() {
+            // The settings field is free text: ignore values that are not positive numbers
+            const value = Number.parseFloat(this.state.modelScale);
+            const scale = Number.isNaN(value) || value <= 0 ? 1 : value;
             // TODO: scale the model instead
-            if (this.state.vehicle === "submarine") {
-                return this.state.modelScale * 6.86;
-            }
-            return this.state.modelScale;
+            return this.state.vehicle === "submarine" ? scale * 6.86 : scale;
         },
         heightOffset() {
-            return parseFloat(this.state.heightOffset);
+            return Number.parseFloat(this.state.heightOffset);
         },
         cameraType() {
             return this.state.cameraType;
@@ -2118,21 +2383,13 @@ export default {
         },
     },
     watch: {
-        modelScale(scale) {
-            const value = parseFloat(scale);
-            if (!isNaN(value)) {
-                this.model.model.scale = value / 10;
-                if (this.comparisonModels) {
-                    for (const model of this.comparisonModels) {
-                        model.model.scale = value / 10;
-                    }
-                }
-                this.viewer.scene.requestRender();
-            }
+        // The model scale is read through CallbackProperty; just redraw (requestRenderMode)
+        modelScale() {
+            this.viewer.scene.requestRender();
         },
         heightOffset(offset) {
-            const value = parseFloat(offset);
-            if (!isNaN(value)) {
+            const value = Number.parseFloat(offset);
+            if (!Number.isNaN(value)) {
                 this.updateAndPlotTrajectory();
                 this.processTrajectory();
                 this.addModel();
