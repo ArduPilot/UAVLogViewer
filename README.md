@@ -34,7 +34,7 @@ npm start
 # run unit tests
 npm run unit
 
-# run e2e tests
+# run e2e tests (headless Chrome; add `-- --env edgeHeadless` to use Edge)
 npm run e2e
 
 # run all tests

@@ -1,37 +1,36 @@
-require("@babel/register");
-const config = require("../../config");
+// https://nightwatchjs.org/guide/reference/settings.html
+// Nightwatch 3 starts the browser driver itself (Selenium Manager downloads a matching one).
+const appUrl = process.env.E2E_URL || "http://localhost:8089";
+const headless = ["--headless=new", "--disable-gpu", "--no-sandbox"];
 
-// http://nightwatchjs.org/gettingstarted#settings-file
 module.exports = {
     src_folders: ["test/e2e/specs"],
     output_folder: "test/e2e/reports",
     custom_assertions_path: ["test/e2e/custom-assertions"],
-    selenium: {
-        start_process: false,
-        server_path: require("selenium-server").path,
-        port: 4444,
-        cli_args: {
-            "webdriver.chrome.driver": require("chromedriver").path,
-        },
+    // no anonymous usage reporting from test runs
+    usage_analytics: { enabled: false },
+
+    webdriver: {
+        start_process: true,
     },
 
     test_settings: {
         default: {
-            selenium_port: 4444,
-            selenium_host: "localhost",
-            silent: true,
+            launch_url: appUrl,
             globals: {
-                devServerURL: "http://localhost:8080",
+                devServerURL: appUrl,
             },
         },
         chromeHeadless: {
             desiredCapabilities: {
-                browserName: "chromeHeadless",
-                javascriptEnabled: true,
-                acceptSslCerts: true,
-                chromeOptions: {
-                    args: ["headless", "disable-gpu", "no-sandbox"],
-                },
+                browserName: "chrome",
+                "goog:chromeOptions": { args: headless },
+            },
+        },
+        edgeHeadless: {
+            desiredCapabilities: {
+                browserName: "MicrosoftEdge",
+                "ms:edgeOptions": { args: headless },
             },
         },
     },

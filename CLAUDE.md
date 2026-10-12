@@ -26,7 +26,7 @@ npx jest --config test/unit/jest.conf.js -t "parse"                           # 
 ```
 
 - The parser specs need real logs. They read `$TEST_LOG_DIR`, else `<os tmpdir>/testlogs` (filled by `test/testlogfiles/logdownloader.sh`, some of whose URLs are stale), else `test/testlogfiles/`. Without logs both suites are skipped, not failed. Use full flight logs: the assertions expect more than 50 attitude samples.
-- `npm run e2e` (Nightwatch 2) does not currently run: `chromedriver` is not a dependency and the config uses old Selenium 3 capabilities.
+- `npm run e2e` builds, serves `dist/` on port 8089 and runs Nightwatch 3 in headless Chrome; use `npm run e2e -- --env edgeHeadless` where only Edge is installed. Nightwatch starts the browser driver itself; `selenium-webdriver` is overridden in package.json because the version Nightwatch pins can no longer download Edge drivers. On Windows its startup prints a harmless `wmic.exe` not-found message.
 - The dev server runs `ESLintPlugin({ fix: true })`, so **it rewrites source files while it runs**. Check `git status` after a dev session.
 - The Dockerfile is a two-stage build (build stage with git, runtime stage running as a non-root user with `USER_UID`/`USER_GID` build args). Keep it clean under `hadolint --failure-threshold style`; CI runs hadolint.
 - Offline use: mount a quantized-mesh tileset (built with `scripts/terrain`, see README) at `dist/quantized` in the container. `serve.json` (used by `npm start`) sends `Content-Encoding: gzip` for the gzipped `.terrain` tiles; `layer.json` is plain JSON. Icons (Font Awesome) and the offline globe imagery (Cesium's Natural Earth II in `dist/Assets`) are bundled; only analytics, a Google web font and the online check need the network.
