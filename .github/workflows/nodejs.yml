@@ -59,11 +59,11 @@ jobs:
 
             # Ruff's default rules change between releases: keep the version pinned
             - name: Ruff
-              uses: astral-sh/ruff-action@v4
+              uses: astral-sh/ruff-action@v4.1.0
               with:
                   version: "0.17.0"
             - name: Ruff format
-              uses: astral-sh/ruff-action@v4
+              uses: astral-sh/ruff-action@v4.1.0
               with:
                   version: "0.17.0"
                   args: format --check
