@@ -20,6 +20,50 @@ const validGCSs = new Set([
     mavlink.MAV_TYPE_KITE,
 ]);
 
+const armedText = (baseMode) =>
+    (baseMode & 0b10000000) === 128 ? "Armed" : "Disarmed";
+
+// How each source gives [lon, lat, alt] points: which samples have a position, and the
+// start altitude, read at the first of them (or at the first sample, for some sources)
+const TRAJECTORY_SOURCES = new Map([
+    [
+        "GLOBAL_POSITION_INT",
+        {
+            hasPosition: (d, i) => d.lat[i] !== 0,
+            startAltitude: (d, i) => d.relative_alt[i],
+            point: (d, i) => [d.lon[i], d.lat[i], d.alt[i] / 1000],
+        },
+    ],
+    [
+        "GPS_RAW_INT",
+        {
+            hasPosition: (d, i) => d.lat[i] !== 0,
+            startAltitude: (d) => d.alt[0] / 1000,
+            point: (d, i) => [
+                d.lon[i] * 1e-7,
+                d.lat[i] * 1e-7,
+                d.alt[i] / 1000,
+            ],
+        },
+    ],
+    [
+        "AHRS2",
+        {
+            hasPosition: (d, i) => d.lat[i] !== 0 || d.lng[i] !== 0,
+            startAltitude: (d) => d.altitude[0],
+            point: (d, i) => [d.lng[i] * 1e-7, d.lat[i] * 1e-7, d.altitude[i]],
+        },
+    ],
+    [
+        "AHRS3",
+        {
+            hasPosition: (d, i) => d.lat[i] !== 0,
+            startAltitude: (d) => d.altitude[0],
+            point: (d, i) => [d.lng[i] * 1e-7, d.lat[i] * 1e-7, d.altitude[i]],
+        },
+    ],
+]);
+
 export class MavlinkDataExtractor {
     static extractAttitude(messages, source) {
         const attitudes = {};
@@ -66,22 +110,14 @@ export class MavlinkDataExtractor {
         let armedState = [];
         if ("HEARTBEAT" in messages) {
             const msgs = messages.HEARTBEAT;
-            const event =
-                (msgs.base_mode[0] & 0b10000000) === 128 ? "Armed" : "Disarmed";
-            armedState = [[msgs.time_boot_ms[0], event]];
+            armedState = [[msgs.time_boot_ms[0], armedText(msgs.base_mode[0])]];
             for (const i in msgs.time_boot_ms) {
-                if (msgs.type[i] !== mavlink.MAV_TYPE_GCS) {
-                    const newEvent =
-                        (msgs.base_mode[i] & 0b10000000) === 128
-                            ? "Armed"
-                            : "Disarmed";
-                    if (newEvent !== armedState.at(-1)[1]) {
-                        const event =
-                            (msgs.base_mode[i] & 0b10000000) === 128
-                                ? "Armed"
-                                : "Disarmed";
-                        armedState.push([msgs.time_boot_ms[i], event]);
-                    }
+                if (msgs.type[i] === mavlink.MAV_TYPE_GCS) {
+                    continue;
+                }
+                const event = armedText(msgs.base_mode[i]);
+                if (event !== armedState.at(-1)[1]) {
+                    armedState.push([msgs.time_boot_ms[i], event]);
                 }
             }
         }
@@ -147,136 +183,27 @@ export class MavlinkDataExtractor {
 
     static extractTrajectory(messages, source) {
         const ret = {};
-        if (
-            "GLOBAL_POSITION_INT" in messages &&
-            source === "GLOBAL_POSITION_INT"
-        ) {
-            const trajectory = [];
-            const timeTrajectory = {};
-            let startAltitude = null;
-            const gpsData = messages.GLOBAL_POSITION_INT;
-            for (const i in gpsData.time_boot_ms) {
-                if (gpsData.lat[i] !== 0) {
-                    if (startAltitude === null) {
-                        startAltitude = gpsData.relative_alt[i];
-                    }
-                    trajectory.push([
-                        gpsData.lon[i],
-                        gpsData.lat[i],
-                        gpsData.alt[i] / 1000,
-                        gpsData.time_boot_ms[i],
-                    ]);
-                    timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.lon[i],
-                        gpsData.lat[i],
-                        gpsData.alt[i] / 1000,
-                        gpsData.time_boot_ms[i],
-                    ];
-                }
-            }
-            if (trajectory.length) {
-                ret.GLOBAL_POSITION_INT = {
-                    startAltitude,
-                    trajectory,
-                    timeTrajectory,
-                };
-            }
+        const reader = TRAJECTORY_SOURCES.get(source);
+        if (!reader || !(source in messages)) {
+            return ret;
         }
-        if ("GPS_RAW_INT" in messages && source === "GPS_RAW_INT") {
-            const trajectory = [];
-            const timeTrajectory = {};
-            let startAltitude = null;
-            const gpsData = messages.GPS_RAW_INT;
-            for (const i in gpsData.time_boot_ms) {
-                if (gpsData.lat[i] !== 0) {
-                    if (startAltitude === null) {
-                        startAltitude = gpsData.alt[0] / 1000;
-                    }
-                    trajectory.push([
-                        gpsData.lon[i] * 1e-7,
-                        gpsData.lat[i] * 1e-7,
-                        gpsData.alt[i] / 1000,
-                        gpsData.time_boot_ms[i],
-                    ]);
-                    timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.lon[i] * 1e-7,
-                        gpsData.lat[i] * 1e-7,
-                        gpsData.alt[i] / 1000,
-                        gpsData.time_boot_ms[i],
-                    ];
-                }
+        const gpsData = messages[source];
+        const trajectory = [];
+        const timeTrajectory = {};
+        let startAltitude = null;
+        for (const i in gpsData.time_boot_ms) {
+            if (!reader.hasPosition(gpsData, i)) {
+                continue;
             }
-            if (trajectory.length) {
-                ret.GPS_RAW_INT = {
-                    startAltitude,
-                    trajectory,
-                    timeTrajectory,
-                };
+            if (startAltitude === null) {
+                startAltitude = reader.startAltitude(gpsData, i);
             }
+            const time = gpsData.time_boot_ms[i];
+            trajectory.push([...reader.point(gpsData, i), time]);
+            timeTrajectory[time] = [...reader.point(gpsData, i), time];
         }
-        if ("AHRS2" in messages && source === "AHRS2") {
-            const trajectory = [];
-            const timeTrajectory = {};
-            let startAltitude = null;
-            const gpsData = messages.AHRS2;
-            for (const i in gpsData.time_boot_ms) {
-                if (gpsData.lat[i] !== 0 || gpsData.lng[i] !== 0) {
-                    if (startAltitude === null) {
-                        startAltitude = gpsData.altitude[0];
-                    }
-                    trajectory.push([
-                        gpsData.lng[i] * 1e-7,
-                        gpsData.lat[i] * 1e-7,
-                        gpsData.altitude[i],
-                        gpsData.time_boot_ms[i],
-                    ]);
-                    timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.lng[i] * 1e-7,
-                        gpsData.lat[i] * 1e-7,
-                        gpsData.altitude[i],
-                        gpsData.time_boot_ms[i],
-                    ];
-                }
-            }
-            if (trajectory.length) {
-                ret.AHRS2 = {
-                    startAltitude,
-                    trajectory,
-                    timeTrajectory,
-                };
-            }
-        }
-        if ("AHRS3" in messages && source === "AHRS3") {
-            const trajectory = [];
-            const timeTrajectory = {};
-            let startAltitude = null;
-            const gpsData = messages.AHRS3;
-            for (const i in gpsData.time_boot_ms) {
-                if (gpsData.lat[i] !== 0) {
-                    if (startAltitude === null) {
-                        startAltitude = gpsData.altitude[0];
-                    }
-                    trajectory.push([
-                        gpsData.lng[i] * 1e-7,
-                        gpsData.lat[i] * 1e-7,
-                        gpsData.altitude[i],
-                        gpsData.time_boot_ms[i],
-                    ]);
-                    timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.lng[i] * 1e-7,
-                        gpsData.lat[i] * 1e-7,
-                        gpsData.altitude[i],
-                        gpsData.time_boot_ms[i],
-                    ];
-                }
-            }
-            if (trajectory.length) {
-                ret.AHRS3 = {
-                    startAltitude,
-                    trajectory,
-                    timeTrajectory,
-                };
-            }
+        if (trajectory.length) {
+            ret[source] = { startAltitude, trajectory, timeTrajectory };
         }
         return ret;
     }

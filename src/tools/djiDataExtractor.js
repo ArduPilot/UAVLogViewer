@@ -2,6 +2,38 @@ globalThis.radians = function (a) {
     return 0.0174533 * a;
 };
 
+// OSD points at least 200 ms apart, skipping samples without a position (latitude 0)
+function osdTrajectory(gpsData) {
+    const trajectory = [];
+    const timeTrajectory = {};
+    let startAltitude = null;
+    let start = 0;
+    for (const i in gpsData.time_boot_ms) {
+        const time = gpsData.time_boot_ms[i];
+        if (time - start < 200) {
+            continue;
+        }
+        start = time;
+        if (gpsData.latitude[i] === 0) {
+            continue;
+        }
+        if (startAltitude === null) {
+            startAltitude = gpsData.altitude[i];
+        }
+        const point = () => [
+            gpsData.longitude[i],
+            gpsData.latitude[i],
+            gpsData.altitude[i],
+            time,
+        ];
+        trajectory.push(point());
+        timeTrajectory[time] = point();
+    }
+    return trajectory.length
+        ? { startAltitude, trajectory, timeTrajectory }
+        : null;
+}
+
 export class DjiDataExtractor {
     static extractAttitude(messages, source) {
         const attitudes = {};
@@ -89,42 +121,9 @@ export class DjiDataExtractor {
         console.log("extractTrajectory", messages, source);
         const ret = {};
         if ("OSD" in messages && source === "OSD") {
-            const trajectory = [];
-            const timeTrajectory = {};
-            let startAltitude = null;
-            const gpsData = messages.OSD;
-            let start = 0;
-            for (const i in gpsData.time_boot_ms) {
-                const delta = gpsData.time_boot_ms[i] - start;
-                if (delta < 200) {
-                    continue;
-                }
-                start = gpsData.time_boot_ms[i];
-                // console.log('extractTrajectory', gpsData)
-                if (gpsData.latitude[i] !== 0) {
-                    if (startAltitude === null) {
-                        startAltitude = gpsData.altitude[i];
-                    }
-                    trajectory.push([
-                        gpsData.longitude[i],
-                        gpsData.latitude[i],
-                        gpsData.altitude[i],
-                        gpsData.time_boot_ms[i],
-                    ]);
-                    timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.longitude[i],
-                        gpsData.latitude[i],
-                        gpsData.altitude[i],
-                        gpsData.time_boot_ms[i],
-                    ];
-                }
-            }
-            if (trajectory.length) {
-                ret.OSD = {
-                    startAltitude,
-                    trajectory,
-                    timeTrajectory,
-                };
+            const trajectory = osdTrajectory(messages.OSD);
+            if (trajectory) {
+                ret.OSD = trajectory;
             }
         }
         console.log("extractTrajectory", ret);

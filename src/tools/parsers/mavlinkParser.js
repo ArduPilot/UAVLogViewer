@@ -131,20 +131,13 @@ export class MavlinkParser {
     }
 
     onMessage(messages) {
+        // parseType() emits all messages of one type at once
         const name = messages[0]._name;
+        // for percentage calculation
+        instance.totalSize ??= this.buf.byteLength;
         for (const message of messages) {
-            if (instance.totalSize == null) {
-                // for percentage calculation
-                instance.totalSize = this.buf.byteLength;
-            }
             if (message._id !== -1) {
-                if (message.name in instance.messages) {
-                    MavlinkParser.fixData(message);
-                } else {
-                    instance.messages[message._name] = [
-                        MavlinkParser.fixData(message),
-                    ];
-                }
+                MavlinkParser.fixData(message);
             }
         }
 
@@ -162,9 +155,8 @@ export class MavlinkParser {
             mergedData[field] = [];
         }
         for (const message of messages) {
-            for (const element of fields) {
-                const fieldname = element;
-                mergedData[fieldname].push(message[fieldname]);
+            for (const field of fields) {
+                mergedData[field].push(message[field]);
             }
         }
         instance.messages[name] = mergedData;

@@ -127,6 +127,9 @@ import MagFitTool from "@/components/widgets/MagFitTool.vue";
 import EkfHelperTool from "@/components/widgets/EkfHelperTool.vue";
 import Vue from "vue";
 
+// any other log type is DataFlash
+const EXTRACTORS = { tlog: MavlinkDataExtractor, dji: DjiDataExtractor };
+
 export default {
     name: "Home",
     components: {
@@ -187,68 +190,17 @@ export default {
     methods: {
         extractFlightData() {
             // chosen per log: a page can load a tlog and later a DataFlash log
-            if (this.state.logType === "tlog") {
-                this.dataExtractor = MavlinkDataExtractor;
-            } else if (this.state.logType === "dji") {
-                this.dataExtractor = DjiDataExtractor;
-            } else {
-                this.dataExtractor = DataflashDataExtractor;
-            }
+            this.dataExtractor =
+                EXTRACTORS[this.state.logType] ?? DataflashDataExtractor;
             if (
                 "FMTU" in this.state.messages &&
                 this.state.messages.FMTU.length === 0
             ) {
                 this.state.processStatus = "ERROR PARSING?";
             }
-
-            if (this.state.flightModeChanges.length === 0) {
-                this.state.flightModeChanges =
-                    this.dataExtractor.extractFlightModes(this.state.messages);
-            }
-            Vue.delete(this.state.messages, "MODE");
-
-            if (this.state.events.length === 0) {
-                this.state.events = this.dataExtractor.extractEvents(
-                    this.state.messages,
-                );
-            }
-            Vue.delete(this.state.messages, "STAT");
-            Vue.delete(this.state.messages, "EV");
-
-            if (this.state.mission.length === 0) {
-                this.state.mission = this.dataExtractor.extractMission(
-                    this.state.messages,
-                );
-            }
-
-            Vue.delete(this.state.messages, "CMD");
-
-            this.state.vehicle = this.dataExtractor.extractVehicleType(
-                this.state.messages,
-            );
-            if (this.state.params === undefined) {
-                this.state.params = this.dataExtractor.extractParams(
-                    this.state.messages,
-                );
-                if (this.state.params !== undefined) {
-                    this.state.defaultParams =
-                        this.dataExtractor.extractDefaultParams(
-                            this.state.messages,
-                        );
-                    if (this.state.params !== undefined) {
-                        this.$eventHub.$on("cesium-time-changed", (time) => {
-                            this.state.params.seek(time);
-                        });
-                    }
-                }
-            }
-            if (this.state.vehicle === "quadcopter") {
-                if (this.state.params?.get("FRAME_TYPE") === 0) {
-                    this.state.vehicle += "+";
-                } else {
-                    this.state.vehicle += "x";
-                }
-            }
+            // each step deletes the messages it no longer needs, so the order matters
+            this.extractTimeline();
+            this.extractVehicleAndParams();
             if (this.state.textMessages.length === 0) {
                 this.state.textMessages =
                     this.dataExtractor.extractTextMessages(this.state.messages);
@@ -258,75 +210,9 @@ export default {
             if (this.state.colors.length === 0) {
                 this.generateColorMMap();
             }
-            this.state.attitudeSources =
-                this.dataExtractor.extractAttitudeSources(this.state.messages);
-            if (this.state.attitudeSources.quaternions.length > 0) {
-                const source = this.state.attitudeSources.quaternions[0];
-                this.state.attitudeSource = source;
-                this.state.timeAttitudeQ = this.dataExtractor.extractAttitudeQ(
-                    this.state.messages,
-                    source,
-                );
-            } else if (this.state.attitudeSources.eulers.length > 0) {
-                const source = this.state.attitudeSources.eulers[0];
-                this.state.attitudeSource = source;
-                this.state.timeAttitude = this.dataExtractor.extractAttitude(
-                    this.state.messages,
-                    source,
-                );
-            }
-
-            const list = Object.keys(this.state.timeAttitude);
-            this.state.lastTime = Number.parseInt(list[list.length - 1]);
-
-            this.state.trajectorySources =
-                this.dataExtractor.extractTrajectorySources(
-                    this.state.messages,
-                );
-            if (this.state.trajectorySources.length > 0) {
-                const first = this.state.trajectorySources[0];
-                this.state.trajectorySource = first;
-                this.state.trajectories = this.dataExtractor.extractTrajectory(
-                    this.state.messages,
-                    first,
-                );
-                try {
-                    this.state.currentTrajectory =
-                        this.state.trajectories[first].trajectory;
-                    this.state.timeTrajectory =
-                        this.state.trajectories[first].timeTrajectory;
-                } catch {
-                    console.log("unable to load trajectory");
-                }
-            }
-            try {
-                if (this.state.messages?.GPS?.time_boot_ms) {
-                    this.state.metadata = {
-                        startTime: this.dataExtractor.extractStartTime(
-                            this.state.messages.GPS,
-                        ),
-                    };
-                } else {
-                    this.state.metadata = {
-                        startTime: this.dataExtractor.extractStartTime(
-                            this.state.messages["GPS[0]"],
-                        ),
-                    };
-                }
-            } catch (error) {
-                console.log("unable to load metadata");
-                console.log(error);
-            }
-            try {
-                this.state.namedFloats =
-                    this.dataExtractor.extractNamedValueFloatNames(
-                        this.state.messages,
-                    );
-                console.log(this.state.namedFloats);
-            } catch (error) {
-                console.log("unable to load named floats");
-                console.log(error);
-            }
+            this.extractAttitudeData();
+            this.extractTrajectoryData();
+            this.extractMetadata();
             Vue.delete(this.state.messages, "AHR2");
             Vue.delete(this.state.messages, "POS");
             Vue.delete(this.state.messages, "GPS");
@@ -349,6 +235,122 @@ export default {
                 if (this.state.mapAvailable) {
                     this.state.showMap = true;
                 }
+            }
+        },
+
+        extractTimeline() {
+            if (this.state.flightModeChanges.length === 0) {
+                this.state.flightModeChanges =
+                    this.dataExtractor.extractFlightModes(this.state.messages);
+            }
+            Vue.delete(this.state.messages, "MODE");
+
+            if (this.state.events.length === 0) {
+                this.state.events = this.dataExtractor.extractEvents(
+                    this.state.messages,
+                );
+            }
+            Vue.delete(this.state.messages, "STAT");
+            Vue.delete(this.state.messages, "EV");
+
+            if (this.state.mission.length === 0) {
+                this.state.mission = this.dataExtractor.extractMission(
+                    this.state.messages,
+                );
+            }
+            Vue.delete(this.state.messages, "CMD");
+        },
+
+        extractVehicleAndParams() {
+            this.state.vehicle = this.dataExtractor.extractVehicleType(
+                this.state.messages,
+            );
+            if (this.state.params === undefined) {
+                this.state.params = this.dataExtractor.extractParams(
+                    this.state.messages,
+                );
+                if (this.state.params !== undefined) {
+                    this.state.defaultParams =
+                        this.dataExtractor.extractDefaultParams(
+                            this.state.messages,
+                        );
+                    this.$eventHub.$on("cesium-time-changed", (time) => {
+                        this.state.params.seek(time);
+                    });
+                }
+            }
+            if (this.state.vehicle === "quadcopter") {
+                this.state.vehicle +=
+                    this.state.params?.get("FRAME_TYPE") === 0 ? "+" : "x";
+            }
+        },
+
+        extractAttitudeData() {
+            this.state.attitudeSources =
+                this.dataExtractor.extractAttitudeSources(this.state.messages);
+            const { quaternions, eulers } = this.state.attitudeSources;
+            if (quaternions.length > 0) {
+                this.state.attitudeSource = quaternions[0];
+                this.state.timeAttitudeQ = this.dataExtractor.extractAttitudeQ(
+                    this.state.messages,
+                    quaternions[0],
+                );
+            } else if (eulers.length > 0) {
+                this.state.attitudeSource = eulers[0];
+                this.state.timeAttitude = this.dataExtractor.extractAttitude(
+                    this.state.messages,
+                    eulers[0],
+                );
+            }
+            const list = Object.keys(this.state.timeAttitude);
+            this.state.lastTime = Number.parseInt(list[list.length - 1]);
+        },
+
+        extractTrajectoryData() {
+            this.state.trajectorySources =
+                this.dataExtractor.extractTrajectorySources(
+                    this.state.messages,
+                );
+            if (this.state.trajectorySources.length === 0) {
+                return;
+            }
+            const first = this.state.trajectorySources[0];
+            this.state.trajectorySource = first;
+            this.state.trajectories = this.dataExtractor.extractTrajectory(
+                this.state.messages,
+                first,
+            );
+            try {
+                this.state.currentTrajectory =
+                    this.state.trajectories[first].trajectory;
+                this.state.timeTrajectory =
+                    this.state.trajectories[first].timeTrajectory;
+            } catch {
+                console.log("unable to load trajectory");
+            }
+        },
+
+        extractMetadata() {
+            try {
+                const gps = this.state.messages?.GPS?.time_boot_ms
+                    ? this.state.messages.GPS
+                    : this.state.messages["GPS[0]"];
+                this.state.metadata = {
+                    startTime: this.dataExtractor.extractStartTime(gps),
+                };
+            } catch (error) {
+                console.log("unable to load metadata");
+                console.log(error);
+            }
+            try {
+                this.state.namedFloats =
+                    this.dataExtractor.extractNamedValueFloatNames(
+                        this.state.messages,
+                    );
+                console.log(this.state.namedFloats);
+            } catch (error) {
+                console.log("unable to load named floats");
+                console.log(error);
             }
         },
 

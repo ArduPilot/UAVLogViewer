@@ -68,6 +68,62 @@ const events = {
     165: "BOTTOMED",
     166: "NOT_BOTTOMED",
 };
+// FNCE.Type values (ArduPilot's AC_PolyFenceType) of exclusion fences:
+// 97 POLYGON_EXCLUSION, 96 CIRCLE_EXCLUSION_INT, 93 CIRCLE_EXCLUSION
+// (the others: 98 POLYGON_INCLUSION, 95 RETURN_POINT, 94 CIRCLE_INCLUSION_INT, 92 CIRCLE_INCLUSION)
+const EXCLUSION_FENCE_TYPES = new Set([97, 96, 93]);
+
+// Lat/Lng in degrees * 1e7 to degrees; each source keeps the operation it always used
+// (dividing and multiplying round differently)
+const divideBy1e7 = (value) => value / 1e7;
+const times1e7 = (value) => value * 1e-7;
+const TRAJECTORY_SCALES = new Map([
+    ["POS", divideBy1e7],
+    ["AHR2", times1e7],
+    ["SIM", times1e7],
+    ["GPS", divideBy1e7],
+    ["GPS[0]", divideBy1e7],
+    ["GPS[1]", divideBy1e7],
+]);
+
+// Points at least 200 ms apart, skipping samples without a position (Lat 0)
+function trajectoryFrom(gpsData, toDegrees) {
+    const trajectory = [];
+    const timeTrajectory = {};
+    let startAltitude = null;
+    let start = 0;
+    for (const i in gpsData.time_boot_ms) {
+        const time = gpsData.time_boot_ms[i];
+        if (time - start < 200) {
+            continue;
+        }
+        start = time;
+        if (gpsData.Lat[i] === 0) {
+            continue;
+        }
+        if (startAltitude === null) {
+            startAltitude = gpsData.Alt[i];
+        }
+        const point = () => [
+            toDegrees(gpsData.Lng[i]),
+            toDegrees(gpsData.Lat[i]),
+            gpsData.Alt[i],
+            time,
+        ];
+        trajectory.push(point());
+        timeTrajectory[time] = point();
+    }
+    return trajectory.length
+        ? { startAltitude, trajectory, timeTrajectory }
+        : null;
+}
+
+// Lat/Lng in degrees, or in degrees * 1e7
+function fenceVertex(fnce, i) {
+    const scale = Math.abs(fnce.Lat[i]) > 180 ? 10e6 : 1;
+    return [fnce.Lng[i] / scale, fnce.Lat[i] / scale, fnce.Radius[i]];
+}
+
 export class DataflashDataExtractor {
     static extractAttitude(messages, source) {
         const attitudes = {};
@@ -210,54 +266,44 @@ export class DataflashDataExtractor {
 
     static extractFences(messages) {
         const fences = [];
+        if (!("FNCE" in messages)) {
+            return fences;
+        }
+        console.log(messages.FNCE);
+        const cmdMsgs = messages.FNCE;
+        const hasType = cmdMsgs.Type !== undefined;
         let tempFences = [];
         let lastCount = -1;
         let lastType = -1;
-        if ("FNCE" in messages) {
-            console.log(messages.FNCE);
-            const cmdMsgs = messages.FNCE;
-            const hasType = cmdMsgs.Type !== undefined;
-            for (const i in cmdMsgs.time_boot_ms) {
-                if (cmdMsgs.Lat[i] !== 0) {
-                    let lat = cmdMsgs.Lat[i];
-                    let lon = cmdMsgs.Lng[i];
-                    const type = hasType ? cmdMsgs.Type[i] : -1;
-                    // Start a new fence group when the polygon vertex count changes,
-                    // when a circle (Radius > 0) is encountered, or when the fence
-                    // Type changes (e.g. an inclusion polygon followed by an exclusion
-                    // polygon with the same vertex count).
-                    if (
-                        lastCount !== cmdMsgs.Count[i] ||
-                        cmdMsgs.Radius[i] > 0 ||
-                        (hasType && lastType !== type)
-                    ) {
-                        if (tempFences.length > 0) {
-                            fences.push(tempFences);
-                        }
-                        tempFences = [];
-                        lastCount = cmdMsgs.Count[i];
-                        lastType = type;
-                    }
-                    if (Math.abs(lat) > 180) {
-                        lat = lat / 10e6;
-                        lon = lon / 10e6;
-                    }
-                    // Tag the fence group with its type so the viewer can colour
-                    // inclusion vs exclusion fences. FNCE.Type holds ArduPilot's
-                    // AC_PolyFenceType enum:
-                    //   98 POLYGON_INCLUSION, 97 POLYGON_EXCLUSION,
-                    //   96 CIRCLE_EXCLUSION_INT, 95 RETURN_POINT,
-                    //   94 CIRCLE_INCLUSION_INT, 93 CIRCLE_EXCLUSION,
-                    //   92 CIRCLE_INCLUSION.
-                    if (hasType) {
-                        tempFences.exclusion =
-                            type === 97 || type === 93 || type === 96;
-                    }
-                    tempFences.push([lon, lat, cmdMsgs.Radius[i]]);
-                }
+        for (const i in cmdMsgs.time_boot_ms) {
+            if (cmdMsgs.Lat[i] === 0) {
+                continue;
             }
-            fences.push(tempFences);
+            const type = hasType ? cmdMsgs.Type[i] : -1;
+            // Start a new fence group when the polygon vertex count changes,
+            // when a circle (Radius > 0) is encountered, or when the fence
+            // Type changes (e.g. an inclusion polygon followed by an exclusion
+            // polygon with the same vertex count).
+            const newGroup =
+                lastCount !== cmdMsgs.Count[i] ||
+                cmdMsgs.Radius[i] > 0 ||
+                (hasType && lastType !== type);
+            if (newGroup) {
+                if (tempFences.length > 0) {
+                    fences.push(tempFences);
+                }
+                tempFences = [];
+                lastCount = cmdMsgs.Count[i];
+                lastType = type;
+            }
+            // Tag the fence group with its type so the viewer can colour
+            // inclusion vs exclusion fences
+            if (hasType) {
+                tempFences.exclusion = EXCLUSION_FENCE_TYPES.has(type);
+            }
+            tempFences.push(fenceVertex(cmdMsgs, i));
         }
+        fences.push(tempFences);
         return fences;
     }
 
@@ -378,158 +424,11 @@ export class DataflashDataExtractor {
     static extractTrajectory(messages, source) {
         // returns a dict with the trajectories found
         const ret = {};
-        if ("POS" in messages && source === "POS") {
-            const trajectory = [];
-            const timeTrajectory = {};
-            let startAltitude = null;
-            const gpsData = messages.POS;
-            let start = 0;
-            for (const i in gpsData.time_boot_ms) {
-                const delta = gpsData.time_boot_ms[i] - start;
-                if (delta < 200) {
-                    continue;
-                }
-                start = gpsData.time_boot_ms[i];
-                if (gpsData.Lat[i] !== 0) {
-                    if (startAltitude === null) {
-                        startAltitude = gpsData.Alt[i];
-                    }
-                    trajectory.push([
-                        gpsData.Lng[i] / 1e7,
-                        gpsData.Lat[i] / 1e7,
-                        gpsData.Alt[i],
-                        gpsData.time_boot_ms[i],
-                    ]);
-                    timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.Lng[i] / 1e7,
-                        gpsData.Lat[i] / 1e7,
-                        gpsData.Alt[i],
-                        gpsData.time_boot_ms[i],
-                    ];
-                }
-            }
-            if (trajectory.length) {
-                ret.POS = {
-                    startAltitude,
-                    trajectory,
-                    timeTrajectory,
-                };
-            }
-        }
-        if ("AHR2" in messages && source === "AHR2") {
-            const trajectory = [];
-            const timeTrajectory = {};
-            let startAltitude = null;
-            const gpsData = messages.AHR2;
-            let start = 0;
-            for (const i in gpsData.time_boot_ms) {
-                const delta = gpsData.time_boot_ms[i] - start;
-                if (delta < 200) {
-                    continue;
-                }
-                start = gpsData.time_boot_ms[i];
-                if (gpsData.Lat[i] !== 0) {
-                    if (startAltitude === null) {
-                        startAltitude = gpsData.Alt[i];
-                    }
-                    trajectory.push([
-                        gpsData.Lng[i] * 1e-7,
-                        gpsData.Lat[i] * 1e-7,
-                        gpsData.Alt[i],
-                        gpsData.time_boot_ms[i],
-                    ]);
-                    timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.Lng[i] * 1e-7,
-                        gpsData.Lat[i] * 1e-7,
-                        gpsData.Alt[i],
-                        gpsData.time_boot_ms[i],
-                    ];
-                }
-            }
-            if (trajectory.length) {
-                ret.AHR2 = {
-                    startAltitude,
-                    trajectory,
-                    timeTrajectory,
-                };
-            }
-        }
-        if ("SIM" in messages && source === "SIM") {
-            const trajectory = [];
-            const timeTrajectory = {};
-            let startAltitude = null;
-            const gpsData = messages.SIM;
-            let start = 0;
-            for (const i in gpsData.time_boot_ms) {
-                const delta = gpsData.time_boot_ms[i] - start;
-                if (delta < 200) {
-                    continue;
-                }
-                start = gpsData.time_boot_ms[i];
-                if (gpsData.Lat[i] !== 0) {
-                    if (startAltitude === null) {
-                        startAltitude = gpsData.Alt[i];
-                    }
-                    trajectory.push([
-                        gpsData.Lng[i] * 1e-7,
-                        gpsData.Lat[i] * 1e-7,
-                        gpsData.Alt[i],
-                        gpsData.time_boot_ms[i],
-                    ]);
-                    timeTrajectory[gpsData.time_boot_ms[i]] = [
-                        gpsData.Lng[i] * 1e-7,
-                        gpsData.Lat[i] * 1e-7,
-                        gpsData.Alt[i],
-                        gpsData.time_boot_ms[i],
-                    ];
-                }
-            }
-            if (trajectory.length) {
-                ret.SIM = {
-                    startAltitude,
-                    trajectory,
-                    timeTrajectory,
-                };
-            }
-        }
-        for (const gpsSource of ["GPS", "GPS[0]", "GPS[1]"]) {
-            if (gpsSource in messages && source === gpsSource) {
-                const trajectory = [];
-                const timeTrajectory = {};
-                let startAltitude = null;
-                const gpsData = messages[gpsSource];
-                let start = 0;
-                for (const i in gpsData.time_boot_ms) {
-                    const delta = gpsData.time_boot_ms[i] - start;
-                    if (delta < 200) {
-                        continue;
-                    }
-                    start = gpsData.time_boot_ms[i];
-                    if (gpsData.Lat[i] !== 0) {
-                        if (startAltitude === null) {
-                            startAltitude = gpsData.Alt[i];
-                        }
-                        trajectory.push([
-                            gpsData.Lng[i] / 1e7,
-                            gpsData.Lat[i] / 1e7,
-                            gpsData.Alt[i],
-                            gpsData.time_boot_ms[i],
-                        ]);
-                        timeTrajectory[gpsData.time_boot_ms[i]] = [
-                            gpsData.Lng[i] / 1e7,
-                            gpsData.Lat[i] / 1e7,
-                            gpsData.Alt[i],
-                            gpsData.time_boot_ms[i],
-                        ];
-                    }
-                }
-                if (trajectory.length) {
-                    ret[gpsSource] = {
-                        startAltitude,
-                        trajectory,
-                        timeTrajectory,
-                    };
-                }
+        const toDegrees = TRAJECTORY_SCALES.get(source);
+        if (toDegrees && source in messages) {
+            const trajectory = trajectoryFrom(messages[source], toDegrees);
+            if (trajectory) {
+                ret[source] = trajectory;
             }
         }
         return ret;
