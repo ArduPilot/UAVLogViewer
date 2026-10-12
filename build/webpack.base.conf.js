@@ -75,8 +75,12 @@ export const module = {
                 resolveDir("node_modules/mavlink_common_v1.0/parsers"),
             ],
         },
+        // The asset rules below use url-loader/file-loader; "javascript/auto" stops webpack 5's
+        // asset modules from emitting the loader's JS output a second time as the asset itself
+        // (which broke url() references in CSS, e.g. the Font Awesome fonts).
         {
             test: /\.(png|jpe?g|gif)(\?.*)?$/,
+            type: "javascript/auto",
             loader: "url-loader",
             options: {
                 limit: 10000,
@@ -85,6 +89,7 @@ export const module = {
         },
         {
             test: /\.(svg)$/i,
+            type: "javascript/auto",
             use: [
                 {
                     loader: "file-loader",
@@ -96,6 +101,7 @@ export const module = {
         },
         {
             test: /\.(mp4|webm|ogg|mp3|wav|flac|aac|glb|tlog)(\?.*)?$/,
+            type: "javascript/auto",
             loader: "url-loader",
             options: {
                 limit: 10000,
@@ -104,10 +110,13 @@ export const module = {
         },
         {
             test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
+            type: "javascript/auto",
             loader: "url-loader",
             options: {
                 limit: 10000,
                 name: assetsPath("fonts/[name].[hash:7].[ext]"),
+                // fonts are only referenced from CSS url(), which needs a plain string export
+                esModule: false,
             },
         },
     ],
