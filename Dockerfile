@@ -27,7 +27,7 @@ COPY config ./config
 COPY scripts ./scripts
 COPY src ./src
 COPY static ./static
-COPY .gitmodules .eslintignore .eslintrc.cjs .postcssrc.js babel.config.js index.html ./
+COPY .gitmodules .eslintignore .eslintrc.cjs .postcssrc.js babel.config.cjs index.html ./
 
 # Initialise submodules only if .gitmodules exists (network required),
 # build production assets and drop the dev dependencies
