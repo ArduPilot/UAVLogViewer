@@ -28,7 +28,6 @@ npx jest --config test/unit/jest.conf.js -t "parse"                           # 
 - The parser specs need real logs. They read `$TEST_LOG_DIR`, else `<os tmpdir>/testlogs` (filled by `test/testlogfiles/logdownloader.sh`, some of whose URLs are stale), else `test/testlogfiles/`. Without logs both suites are skipped, not failed. Use full flight logs: the assertions expect more than 50 attitude samples.
 - `npm run e2e` (Nightwatch 2) does not currently run: `chromedriver` is not a dependency and the config uses old Selenium 3 capabilities.
 - The dev server runs `ESLintPlugin({ fix: true })`, so **it rewrites source files while it runs**. Check `git status` after a dev session.
-- `dev`, `build` and `start` first run `scripts/generate-runtime-config.js`, which writes `runtime-config.js` (`window.__APP_CONFIG__`). It is a leftover from the Cesium ion token and nothing in `src/` reads it any more.
 - The Dockerfile is a two-stage build (build stage with git, runtime stage running as a non-root user with `USER_UID`/`USER_GID` build args). Keep it clean under `hadolint --failure-threshold style`; CI runs hadolint.
 - Offline use: mount a quantized-mesh tileset (built with `scripts/terrain`, see README) at `dist/quantized` in the container. `serve.json` (used by `npm start`) sends `Content-Encoding: gzip` for the gzipped `.terrain` tiles; `layer.json` is plain JSON. Icons (Font Awesome) and the offline globe imagery (Cesium's Natural Earth II in `dist/Assets`) are bundled; only analytics, a Google web font and the online check need the network.
 

@@ -377,21 +377,6 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.global-token-warning {
-    position: fixed;
-    top: 8px;
-    left: 8px;
-    right: 8px;
-    z-index: 1200;
-    padding: 10px 12px;
-    border: 1px solid #f2b000;
-    border-radius: 4px;
-    background: rgba(44, 33, 10, 0.95);
-    color: #ffd75e;
-    font-family: "Montserrat", sans-serif;
-    font-size: 12px;
-}
-
 body {
     margin: 0;
     padding: 0;

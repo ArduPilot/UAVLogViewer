@@ -85,7 +85,6 @@ const webpackConfig = merge(baseWebpackConfig, {
         new webpack.optimize.ModuleConcatenationPlugin(),
         new CopyWebpackPlugin({
             patterns: [
-                { from: "runtime-config.js", to: "runtime-config.js" },
                 { from: join(cesiumSource, "Assets"), to: "Assets" },
                 { from: join(cesiumSource, "Widgets"), to: "Widgets" },
                 { from: cesiumWorkers, to: "Workers" },

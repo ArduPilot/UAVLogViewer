@@ -24,7 +24,6 @@ RUN npm ci && \
 COPY .git ./.git
 COPY build ./build
 COPY config ./config
-COPY scripts ./scripts
 COPY src ./src
 COPY static ./static
 COPY .gitmodules .eslintignore .eslintrc.cjs .postcssrc.js babel.config.cjs index.html ./
@@ -54,20 +53,13 @@ RUN userdel node && \
 WORKDIR /usr/src/app
 
 # Application files stay owned by root so the app user cannot modify them
-COPY --from=build /usr/src/app/package.json ./
+COPY --from=build --chmod=644 /usr/src/app/package.json ./
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
-COPY --from=build /usr/src/app/scripts/generate-runtime-config.js ./scripts/
-COPY --chmod=755 docker-entrypoint.sh ./
 # Static server config: serves a terrain tileset mounted at dist/quantized as gzip
-COPY serve.json ./
-
-# Only the runtime config, regenerated at startup, is writable by the app user
-RUN touch runtime-config.js dist/runtime-config.js && \
-    chown nodeuser:nodeuser runtime-config.js dist/runtime-config.js
+COPY --chmod=644 serve.json ./
 
 USER ${USER_UID}:${USER_GID}
 
 EXPOSE 8080
-ENTRYPOINT ["/usr/src/app/docker-entrypoint.sh"]
 CMD ["npm", "start"]
