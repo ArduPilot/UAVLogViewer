@@ -12,7 +12,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>UAV Log Viewer</title>
         <script>
-            window.__APP_CONFIG__ = window.__APP_CONFIG__ || {};
+            globalThis.__APP_CONFIG__ = globalThis.__APP_CONFIG__ || {};
         </script>
         <script src="./runtime-config.js"></script>
     </head>
@@ -22,7 +22,7 @@
         src="https://www.googletagmanager.com/gtag/js?id=G-CVQXD7KT3F"
     ></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
+        globalThis.dataLayer = globalThis.dataLayer || [];
         function gtag() {
             dataLayer.push(arguments);
         }
@@ -36,7 +36,7 @@
         src="https://www.googletagmanager.com/gtag/js?id=G-YTKXG38B06"
     ></script>
     <script>
-        window.dataLayer = window.dataLayer || [];
+        globalThis.dataLayer = globalThis.dataLayer || [];
         function gtag() {
             dataLayer.push(arguments);
         }
