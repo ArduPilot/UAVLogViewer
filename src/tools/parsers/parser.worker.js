@@ -47,7 +47,12 @@ onMessage(async function (event) {
             console.log("parser not ready");
             return;
         }
-        parser.loadType(event.data.type.split("[")[0]);
+        try {
+            parser.loadType(event.data.type.split("[")[0]);
+        } catch (e) {
+            // e.g. a type the log does not contain; the page times out waiting for it
+            console.warn(`could not load message type ${event.data.type}:`, e);
+        }
     } else if (event.data.action === "trimFile") {
         parser.trimFile(event.data.time);
     }

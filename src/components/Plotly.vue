@@ -853,6 +853,8 @@ export default {
             console.log("plot()");
             if (this.state.expressions.length === 0) {
                 console.log("no expressions to plot");
+                // e.g. the only requested plot's message could not be loaded
+                this.state.plotLoading = false;
                 return;
             }
             plotOptions.title = this.state.file;
