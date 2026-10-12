@@ -128,18 +128,16 @@ export function smoothGrid(grid, sigma) {
             let sum = 0;
             let weightSum = 0;
 
-            for (let ki = -kernelSize; ki <= kernelSize; ki++) {
-                for (let kj = -kernelSize; kj <= kernelSize; kj++) {
-                    const ni = i + ki;
-                    const nj = j + kj;
-
-                    if (ni >= 0 && ni < size && nj >= 0 && nj < size) {
-                        const weight = Math.exp(
-                            -(ki * ki + kj * kj) / (2 * sigma * sigma),
-                        );
-                        sum += grid[ni][nj] * weight;
-                        weightSum += weight;
-                    }
+            // only the kernel offsets that stay inside the grid
+            const kiEnd = Math.min(kernelSize, size - 1 - i);
+            const kjEnd = Math.min(kernelSize, size - 1 - j);
+            for (let ki = Math.max(-kernelSize, -i); ki <= kiEnd; ki++) {
+                for (let kj = Math.max(-kernelSize, -j); kj <= kjEnd; kj++) {
+                    const weight = Math.exp(
+                        -(ki * ki + kj * kj) / (2 * sigma * sigma),
+                    );
+                    sum += grid[i + ki][j + kj] * weight;
+                    weightSum += weight;
                 }
             }
 

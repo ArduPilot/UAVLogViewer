@@ -154,6 +154,78 @@ function getMaxTime(data) {
     return data.reduce((max, p) => Math.max(p[3], max), data[0][3]);
 }
 
+// Fence descriptor: circular fences (single point + radius) become closed cylinders,
+// polygon fences walls (a closed vertical tube). Exclusion fences are tagged by the
+// extractor; everything else is treated as an inclusion fence.
+function fenceItem(fence) {
+    const exclusion = fence.exclusion === true;
+    if (fence.length === 1) {
+        const pos = fence[0];
+        if (pos[2] === 0) {
+            return null;
+        }
+        return {
+            type: "circle",
+            center: Cartographic.fromDegrees(pos[0], pos[1]),
+            radius: pos[2],
+            exclusion,
+        };
+    }
+    if (fence.length === 0) {
+        return null;
+    }
+    const ring = fence.map((pos) => Cartographic.fromDegrees(pos[0], pos[1]));
+    // close the polygon
+    ring.push(Cartographic.fromDegrees(fence[0][0], fence[0][1]));
+    return { type: "polygon", ring, exclusion };
+}
+
+const fencePoints = (f) => (f.type === "circle" ? [f.center] : f.ring);
+
+function fenceCylinder(f, groundPoint, fenceAltMax, color) {
+    const ground = groundPoint.height || 0;
+    return {
+        position: Cartesian3.fromRadians(
+            groundPoint.longitude,
+            groundPoint.latitude,
+            ground + fenceAltMax / 2,
+        ),
+        cylinder: {
+            length: fenceAltMax,
+            topRadius: f.radius,
+            bottomRadius: f.radius,
+            material: color.withAlpha(0.3),
+        },
+    };
+}
+
+function fenceWall(groundPoints, fenceAltMax, color) {
+    const positions = [];
+    const minimumHeights = [];
+    const maximumHeights = [];
+    for (const sp of groundPoints) {
+        const ground = sp.height || 0;
+        minimumHeights.push(ground);
+        maximumHeights.push(ground + fenceAltMax);
+        positions.push(
+            Cartesian3.fromRadians(
+                sp.longitude,
+                sp.latitude,
+                ground + fenceAltMax,
+            ),
+        );
+    }
+    return {
+        wall: {
+            positions,
+            minimumHeights,
+            maximumHeights,
+            material: color.withAlpha(0.3),
+            outline: false,
+        },
+    };
+}
+
 export default {
     name: "CesiumViewer",
     components: {
@@ -2222,146 +2294,74 @@ export default {
                 });
             }
         },
-        async plotFences(fencesList) {
-            // Remove any previously plotted fences so re-plotting (e.g. when state.fences
-            // is populated after this component has already run setup) doesn't leave
-            // orphaned entities behind.
-            if (this.fences) {
-                for (const f of this.fences) {
-                    this.viewer.entities.remove(f);
-                }
-            }
-            this.fences = [];
-
-            // Fence ceiling height (metres above terrain). ArduPilot's FENCE_ALT_MAX,
-            // falling back to a sensible default when the param isn't logged.
-            let fenceAltMax = 120;
+        // Fence ceiling height (metres above terrain): ArduPilot's FENCE_ALT_MAX,
+        // falling back to a sensible default when the param isn't logged
+        fenceCeiling() {
             try {
-                const v =
-                    this.state.params && this.state.params.values
-                        ? this.state.params.values.FENCE_ALT_MAX
-                        : undefined;
+                const v = this.state.params?.values
+                    ? this.state.params.values.FENCE_ALT_MAX
+                    : undefined;
                 if (v !== undefined && v !== null && !isNaN(v) && v > 0) {
-                    fenceAltMax = v;
+                    return v;
                 }
             } catch {
                 /* use default */
             }
-
-            // Build fence descriptors. Circular fences (single point + radius) become
-            // closed cylinders; polygon fences become walls (a closed vertical tube).
-            const fenceItems = [];
-            for (const fence of fencesList) {
-                // Exclusion fences are tagged by the extractor; everything else is
-                // treated as an inclusion fence.
-                const exclusion = fence.exclusion === true;
-                if (fence.length === 1) {
-                    if (fence[0][2] === 0) {
-                        continue;
-                    }
-                    const pos = fence[0];
-                    fenceItems.push({
-                        type: "circle",
-                        center: Cartographic.fromDegrees(pos[0], pos[1]),
-                        radius: pos[2],
-                        exclusion,
-                    });
-                } else {
-                    const ring = [];
-                    for (const pos of fence) {
-                        ring.push(Cartographic.fromDegrees(pos[0], pos[1]));
-                    }
-                    if (ring.length === 0) {
-                        continue;
-                    }
-                    // close the polygon
-                    ring.push(
-                        Cartographic.fromDegrees(fence[0][0], fence[0][1]),
-                    );
-                    fenceItems.push({ type: "polygon", ring, exclusion });
-                }
+            return 120;
+        },
+        // The points with their terrain height, so fences stand on the ground rather
+        // than at ellipsoid height 0 (boats stay at sea level)
+        async groundPoints(points) {
+            if (this.state.vehicle === "boat") {
+                return points;
             }
+            try {
+                return await sampleTerrainMostDetailed(
+                    this.viewer.terrainProvider,
+                    points,
+                    true,
+                );
+            } catch {
+                return points;
+            }
+        },
+        async plotFences(fencesList) {
+            // Remove any previously plotted fences so re-plotting (e.g. when state.fences
+            // is populated after this component has already run setup) doesn't leave
+            // orphaned entities behind.
+            for (const f of this.fences ?? []) {
+                this.viewer.entities.remove(f);
+            }
+            this.fences = [];
 
+            const fenceAltMax = this.fenceCeiling();
+            const fenceItems = fencesList.map(fenceItem).filter(Boolean);
             if (fenceItems.length === 0) {
                 return;
             }
-
-            // Sample terrain so each fence's base sits on the ground rather than at
-            // ellipsoid height 0.
-            const allPoints = [];
-            for (const f of fenceItems) {
-                if (f.type === "circle") {
-                    allPoints.push(f.center);
-                } else {
-                    for (const p of f.ring) {
-                        allPoints.push(p);
-                    }
-                }
-            }
-            let sampledPoints = allPoints;
-            if (this.state.vehicle !== "boat") {
-                try {
-                    sampledPoints = await sampleTerrainMostDetailed(
-                        this.viewer.terrainProvider,
-                        allPoints,
-                        true,
-                    );
-                } catch {
-                    sampledPoints = allPoints;
-                }
-            }
+            const sampledPoints = await this.groundPoints(
+                fenceItems.flatMap(fencePoints),
+            );
 
             let idx = 0;
             for (const f of fenceItems) {
                 // Inclusion fences green, exclusion fences red.
                 const color = f.exclusion ? Color.RED : Color.LIME;
-                if (f.type === "circle") {
-                    const sp = sampledPoints[idx++];
-                    const ground = sp.height || 0;
-                    this.fences.push(
-                        this.viewer.entities.add({
-                            position: Cartesian3.fromRadians(
-                                sp.longitude,
-                                sp.latitude,
-                                ground + fenceAltMax / 2,
-                            ),
-                            cylinder: {
-                                length: fenceAltMax,
-                                topRadius: f.radius,
-                                bottomRadius: f.radius,
-                                material: color.withAlpha(0.3),
-                            },
-                        }),
-                    );
-                    continue;
-                }
-                const positions = [];
-                const minimumHeights = [];
-                const maximumHeights = [];
-                for (let i = 0; i < f.ring.length; i++) {
-                    const sp = sampledPoints[idx++];
-                    const ground = sp.height || 0;
-                    minimumHeights.push(ground);
-                    maximumHeights.push(ground + fenceAltMax);
-                    positions.push(
-                        Cartesian3.fromRadians(
-                            sp.longitude,
-                            sp.latitude,
-                            ground + fenceAltMax,
-                        ),
-                    );
-                }
-                this.fences.push(
-                    this.viewer.entities.add({
-                        wall: {
-                            positions,
-                            minimumHeights,
-                            maximumHeights,
-                            material: color.withAlpha(0.3),
-                            outline: false,
-                        },
-                    }),
-                );
+                const entity =
+                    f.type === "circle"
+                        ? fenceCylinder(
+                              f,
+                              sampledPoints[idx],
+                              fenceAltMax,
+                              color,
+                          )
+                        : fenceWall(
+                              sampledPoints.slice(idx, idx + f.ring.length),
+                              fenceAltMax,
+                              color,
+                          );
+                idx += fencePoints(f).length;
+                this.fences.push(this.viewer.entities.add(entity));
             }
             this.viewer.scene.requestRender();
         },
@@ -2431,124 +2431,138 @@ export default {
                 this.processTrajectory();
             });
         },
+        removeComparisonTrajectories() {
+            for (const primitive of this.comparisonPrimitives ?? []) {
+                this.viewer.scene.primitives.remove(primitive);
+            }
+            this.comparisonPrimitives = [];
+            for (const model of this.comparisonModels ?? []) {
+                this.viewer.entities.remove(model);
+            }
+            this.comparisonModels = [];
+        },
+        // Track positions, and the same positions over time for the comparison vehicle
+        comparisonPositions(points, isBoat) {
+            const positions = [];
+            const sampledPos = new SampledPositionProperty();
+            for (const pos of points) {
+                const cartesian = Cartesian3.fromDegrees(
+                    pos[0],
+                    pos[1],
+                    isBoat ? 0.1 : pos[2] + this.heightOffset,
+                );
+                positions.push(cartesian);
+                if (
+                    this.start !== undefined &&
+                    this.startTimeMs !== undefined
+                ) {
+                    const time = JulianDate.addSeconds(
+                        this.start,
+                        (pos[3] - this.startTimeMs) / 1000,
+                        new JulianDate(),
+                    );
+                    sampledPos.addSample(time, cartesian);
+                }
+            }
+            return { positions, sampledPos };
+        },
+        // One comparison source; dataExtractor, isBoat and colors are read once per redraw
+        async plotComparisonTrajectory(
+            source,
+            idx,
+            { dataExtractor, isBoat, colors },
+        ) {
+            try {
+                await this.waitForMessages([source]);
+            } catch (e) {
+                console.warn(
+                    "comparison trajectory source unavailable:",
+                    source,
+                    e,
+                );
+                return;
+            }
+            const trajectories = dataExtractor.extractTrajectory(
+                this.state.messages,
+                source,
+            );
+            if (!trajectories[source]) {
+                return;
+            }
+            const { positions, sampledPos } = this.comparisonPositions(
+                trajectories[source].trajectory,
+                isBoat,
+            );
+            if (positions.length < 2) {
+                return;
+            }
+            const color = Color.fromCssColorString(colors[idx % colors.length]);
+            const primitive = new Primitive({
+                geometryInstances: new GeometryInstance({
+                    geometry: new PolylineGeometry({
+                        positions,
+                        width: 3.0,
+                    }),
+                    attributes: {
+                        color: ColorGeometryInstanceAttribute.fromColor(color),
+                    },
+                }),
+                appearance: new PolylineColorAppearance(),
+            });
+            this.viewer.scene.primitives.add(primitive);
+            this.comparisonPrimitives.push(primitive);
+
+            // Vehicle that flies the comparison track on the shared clock, tinted with the
+            // source's color so it can be told apart from the primary vehicle. Lets you read
+            // each source's position at the same instant in time.
+            if (this.start !== undefined && this.stop !== undefined) {
+                const comparisonModel = this.viewer.entities.add({
+                    availability: new TimeIntervalCollection([
+                        new TimeInterval({
+                            start: this.start,
+                            stop: this.stop,
+                        }),
+                    ]),
+                    position: sampledPos,
+                    orientation: this.sampledOrientation,
+                    model: {
+                        uri: this.getVehicleModel(),
+                        minimumPixelSize: 15,
+                        scale: new CallbackProperty(
+                            () => this.modelScale / 10,
+                            false,
+                        ),
+                        color,
+                        colorBlendMode: ColorBlendMode.MIX,
+                        colorBlendAmount: 0.7,
+                    },
+                });
+                this.comparisonModels.push(comparisonModel);
+            }
+        },
         async plotComparisonTrajectories() {
             if (!this.viewer) {
                 return;
             }
             // Remove the previously drawn comparison overlays and their vehicles.
-            if (this.comparisonPrimitives) {
-                for (const primitive of this.comparisonPrimitives) {
-                    this.viewer.scene.primitives.remove(primitive);
-                }
-            }
-            this.comparisonPrimitives = [];
-            if (this.comparisonModels) {
-                for (const model of this.comparisonModels) {
-                    this.viewer.entities.remove(model);
-                }
-            }
-            this.comparisonModels = [];
+            this.removeComparisonTrajectories();
             const sources = this.state.comparisonTrajectories || [];
             if (sources.length === 0 || !this.showTrajectory) {
                 this.viewer.scene.requestRender();
                 return;
             }
-            const dataExtractor = this.getDataExtractor();
-            const isBoat = this.state.vehicle === "boat";
-            const colors = this.state.comparisonTrajectoryColors;
+            const context = {
+                dataExtractor: this.getDataExtractor(),
+                isBoat: this.state.vehicle === "boat",
+                colors: this.state.comparisonTrajectoryColors,
+            };
             for (let idx = 0; idx < sources.length; idx++) {
-                const source = sources[idx];
-                if (!source) {
-                    continue;
-                }
-                try {
-                    await this.waitForMessages([source]);
-                } catch (e) {
-                    console.warn(
-                        "comparison trajectory source unavailable:",
-                        source,
-                        e,
+                if (sources[idx]) {
+                    await this.plotComparisonTrajectory(
+                        sources[idx],
+                        idx,
+                        context,
                     );
-                    continue;
-                }
-                const trajectories = dataExtractor.extractTrajectory(
-                    this.state.messages,
-                    source,
-                );
-                if (!trajectories[source]) {
-                    continue;
-                }
-                const points = trajectories[source].trajectory;
-                const positions = [];
-                const sampledPos = new SampledPositionProperty();
-                for (const pos of points) {
-                    const cartesian = Cartesian3.fromDegrees(
-                        pos[0],
-                        pos[1],
-                        isBoat ? 0.1 : pos[2] + this.heightOffset,
-                    );
-                    positions.push(cartesian);
-                    if (
-                        this.start !== undefined &&
-                        this.startTimeMs !== undefined
-                    ) {
-                        const time = JulianDate.addSeconds(
-                            this.start,
-                            (pos[3] - this.startTimeMs) / 1000,
-                            new JulianDate(),
-                        );
-                        sampledPos.addSample(time, cartesian);
-                    }
-                }
-                if (positions.length < 2) {
-                    continue;
-                }
-                const color = Color.fromCssColorString(
-                    colors[idx % colors.length],
-                );
-                const primitive = new Primitive({
-                    geometryInstances: new GeometryInstance({
-                        geometry: new PolylineGeometry({
-                            positions,
-                            width: 3.0,
-                        }),
-                        attributes: {
-                            color: ColorGeometryInstanceAttribute.fromColor(
-                                color,
-                            ),
-                        },
-                    }),
-                    appearance: new PolylineColorAppearance(),
-                });
-                this.viewer.scene.primitives.add(primitive);
-                this.comparisonPrimitives.push(primitive);
-
-                // Vehicle that flies the comparison track on the shared clock, tinted with the
-                // source's color so it can be told apart from the primary vehicle. Lets you read
-                // each source's position at the same instant in time.
-                if (this.start !== undefined && this.stop !== undefined) {
-                    const comparisonModel = this.viewer.entities.add({
-                        availability: new TimeIntervalCollection([
-                            new TimeInterval({
-                                start: this.start,
-                                stop: this.stop,
-                            }),
-                        ]),
-                        position: sampledPos,
-                        orientation: this.sampledOrientation,
-                        model: {
-                            uri: this.getVehicleModel(),
-                            minimumPixelSize: 15,
-                            scale: new CallbackProperty(
-                                () => this.modelScale / 10,
-                                false,
-                            ),
-                            color,
-                            colorBlendMode: ColorBlendMode.MIX,
-                            colorBlendAmount: 0.7,
-                        },
-                    });
-                    this.comparisonModels.push(comparisonModel);
                 }
             }
             this.viewer.scene.requestRender();
