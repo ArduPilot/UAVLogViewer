@@ -1,7 +1,5 @@
-import { fileURLToPath } from "node:url";
-
+// At the repo root so plain `jest` (and editor integrations such as vscode-jest) use it
 export default {
-    rootDir: fileURLToPath(new URL("../../", import.meta.url)),
     testEnvironment: "jsdom",
     moduleFileExtensions: ["js", "json", "vue"],
     moduleNameMapper: {

@@ -9,7 +9,7 @@
         "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 node_modules/webpack-dev-server/bin/webpack-dev-server.js --host 0.0.0.0 --progress --config build/webpack.dev.conf.js",
         "start": "serve -s dist -l 8080 -c ../serve.json",
         "start:dev": "npm run dev",
-        "unit": "jest --config test/unit/jest.conf.js --coverage",
+        "unit": "jest --coverage",
         "e2e": "npm run build && node test/e2e/runner.js",
         "test": "npm run unit && npm run e2e",
         "lint": "eslint .",

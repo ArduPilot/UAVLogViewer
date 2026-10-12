@@ -25,8 +25,8 @@ ruff check && ruff format --check   # Python tooling (scripts/terrain, src/asset
 npm run format        # prettier --write .
 npm run format:check  # prettier --check .
 npm run unit          # Jest 29 with coverage
-npx jest --config test/unit/jest.conf.js test/unit/specs/mavlinklogs.spec.js   # single spec file
-npx jest --config test/unit/jest.conf.js -t "parse"                           # filter by test name
+npx jest test/unit/specs/mavlinklogs.spec.js   # single spec file (jest.config.js is at the root)
+npx jest -t "parse"                            # filter by test name
 ```
 
 - The parser specs need real logs. They read `$TEST_LOG_DIR`, else `<os tmpdir>/testlogs` (filled by `test/testlogfiles/logdownloader.sh` from the current autotest logs), else `test/testlogfiles/`. Without logs both suites are skipped, not failed. Use full flight logs: the assertions expect more than 50 attitude samples.
@@ -40,7 +40,7 @@ npx jest --config test/unit/jest.conf.js -t "parse"                           # 
 
 ## Module system and build
 
-- `package.json` has `"type": "module"`: every `.js` file is an ES module. Configs whose tools load them synchronously stay CommonJS with a `.cjs` name: `babel.config.cjs`, `test/e2e/nightwatch.conf.cjs`. Everything else (`build/`, `config/`, `.postcssrc.js`, `eslint.config.js`, `stylelint.config.js`, `scripts/`, `test/unit/jest.conf.js`) uses `import`/`export`.
+- `package.json` has `"type": "module"`: every `.js` file is an ES module. Configs whose tools load them synchronously stay CommonJS with a `.cjs` name: `babel.config.cjs`, `test/e2e/nightwatch.conf.cjs`. Everything else (`build/`, `config/`, `.postcssrc.js`, `eslint.config.js`, `stylelint.config.js`, `jest.config.js`, `scripts/`) uses `import`/`export`.
 - In build configs, use `createRequire(import.meta.url)` for `require.resolve`, and `fileURLToPath(new URL(..., import.meta.url))` for paths. `import.meta.resolve` returns a `file://` URL, not a path.
 - ESM imports are hoisted, so `NODE_ENV` is set in the npm scripts with `cross-env`, before any config module runs.
 - webpack keeps resolving extensionless imports in `src/` (`resolve.fullySpecified: false` for `.m?js`).
