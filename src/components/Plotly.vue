@@ -255,7 +255,7 @@ export default {
             }
             if (this.$route.query.plots) {
                 for (const field of this.$route.query.plots.split(",")) {
-                    this.addPlots([field]);
+                    this.addPlots([[field]]);
                 }
             }
         });
