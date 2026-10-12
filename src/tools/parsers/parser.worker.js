@@ -1,11 +1,12 @@
 // Worker.js
-// import MavlinkParser from 'mavlinkParser'
+// Must stay the first import: registers this worker's message handler before the parsers' own
+import { onMessage } from "./workerMessages";
 import { MavlinkParser } from "./mavlinkParser";
 import DataflashParser from "./JsDataflashParser/parser";
 import DjiParser from "./djiParser";
 
 let parser;
-self.addEventListener("message", async function (event) {
+onMessage(async function (event) {
     if (event.data === null) {
         console.log("got bad file message!");
     } else if (event.data.action === "parse") {
@@ -44,6 +45,7 @@ self.addEventListener("message", async function (event) {
     } else if (event.data.action === "loadType") {
         if (!parser) {
             console.log("parser not ready");
+            return;
         }
         parser.loadType(event.data.type.split("[")[0]);
     } else if (event.data.action === "trimFile") {
