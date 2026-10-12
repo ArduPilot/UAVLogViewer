@@ -57,6 +57,24 @@ const worker = new Worker();
 
 worker.addEventListener("message", function (event) {});
 
+// The worker lives as long as the page, but this component only exists while the sidebar shows
+// its home tab. Forward on-demand requests to the worker from one app-wide listener, registered
+// the first time the component is created and never removed (per-instance listeners would either
+// stop working once the component is destroyed or pile up each time it is recreated).
+let workerRequestsForwarded = false;
+function forwardWorkerRequests(eventHub) {
+    if (workerRequestsForwarded) {
+        return;
+    }
+    workerRequestsForwarded = true;
+    eventHub.$on("loadType", (type) => {
+        worker.postMessage({ action: "loadType", type: type });
+    });
+    eventHub.$on("trimFile", () => {
+        worker.postMessage({ action: "trimFile", time: store.timeRange });
+    });
+}
+
 export default {
     name: "Dropzone",
     data: function () {
@@ -74,19 +92,9 @@ export default {
         };
     },
     created() {
-        this.$eventHub.$on("loadType", this.loadType);
-        this.$eventHub.$on("trimFile", this.trimFile);
-    },
-    beforeDestroy() {
-        this.$eventHub.$off("open-sample");
+        forwardWorkerRequests(this.$eventHub);
     },
     methods: {
-        trimFile() {
-            worker.postMessage({
-                action: "trimFile",
-                time: this.state.timeRange,
-            });
-        },
         onLoadSample(file) {
             let url;
             if (file === "sample") {
@@ -170,12 +178,6 @@ export default {
                     console.log(ev.dataTransfer.files[i]);
                 }
             }
-        },
-        loadType: function (type) {
-            worker.postMessage({
-                action: "loadType",
-                type: type,
-            });
         },
         process: async function (file) {
             this.state.file = file.name;
