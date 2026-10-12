@@ -11,6 +11,14 @@ export default {
         "^.+\\.js$": "babel-jest",
         ".*\\.(vue)$": "@vue/vue2-jest",
     },
+    globals: {
+        // Vue 2.7's template compiler calls prettier synchronously, which prettier 3 can't do
+        // (same as build/vue-loader.conf.js)
+        "vue-jest": { templateCompiler: { prettify: false } },
+        // defined by webpack's DefinePlugin in the app
+        _COMMIT_: "test",
+        _BUILDDATE_: "test",
+    },
     testPathIgnorePatterns: ["<rootDir>/test/e2e"],
     snapshotSerializers: ["jest-serializer-vue"],
     setupFiles: ["<rootDir>/test/unit/setup"],
