@@ -58,15 +58,17 @@ class Matrix3 {
         const cr = Math.cos(roll);
         const sy = Math.sin(yaw);
         const cy = Math.cos(yaw);
-        this._elements.push(cp * cy);
-        this._elements.push(sr * sp * cy - cr * sy);
-        this._elements.push(cr * sp * cy + sr * sy);
-        this._elements.push(cp * sy);
-        this._elements.push(sr * sp * sy + cr * cy);
-        this._elements.push(cr * sp * sy - sr * cy);
-        this._elements.push(-sp);
-        this._elements.push(sr * cp);
-        this._elements.push(cr * cp);
+        this._elements.push(
+            cp * cy,
+            sr * sp * cy - cr * sy,
+            cr * sp * cy + sr * sy,
+            cp * sy,
+            sr * sp * sy + cr * cy,
+            cr * sp * sy - sr * cy,
+            -sp,
+            sr * cp,
+            cr * cp,
+        );
         return this;
     }
 

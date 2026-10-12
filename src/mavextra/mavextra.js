@@ -1,64 +1,62 @@
-/* eslint-disable max-len */
 /* eslint-disable camelcase */
 import { Matrix3 } from "./matrix3";
 import { Vector3 } from "./vector3";
 
-// eslint-disable-next-line
-window.degrees = function (a) {
+globalThis.degrees = function (a) {
     return 57.2958 * a;
 };
 
-window.radians = function (a) {
+globalThis.radians = function (a) {
     return 0.0174533 * a;
 };
 
 // convert m/s to Km/h
-window.kmh = function (mps) {
+globalThis.kmh = function (mps) {
     return mps * 3.6;
 };
 
-window.getParam = function (name, default_) {
-    if (!(name in window.params)) {
+globalThis.getParam = function (name, default_) {
+    if (!(name in globalThis.params)) {
         return default_;
     }
-    return window.params[name];
+    return globalThis.params[name];
 };
 
 // calculate barometric altitude
-window.altitude = function (SCALED_PRESSURE, groundPressure, groundTemp) {
+globalThis.altitude = function (SCALED_PRESSURE, groundPressure, groundTemp) {
     if (groundPressure === undefined) {
-        if (!("GND_ABS_PRESS" in window.params)) {
+        if (!("GND_ABS_PRESS" in globalThis.params)) {
             return 0;
         }
     }
-    groundPressure = window.params.GND_ABS_PRESS;
+    groundPressure = globalThis.params.GND_ABS_PRESS;
     if (groundTemp === undefined) {
-        if ("GND_ABS_PRESS" in window.params) {
-            groundTemp = window.params.GND_TEMP;
+        if ("GND_ABS_PRESS" in globalThis.params) {
+            groundTemp = globalThis.params.GND_TEMP;
         }
     }
-    const scaling = groundPressure / (SCALED_PRESSURE.press_abs * 100.0);
+    const scaling = groundPressure / (SCALED_PRESSURE.press_abs * 100);
     const temp = groundTemp + 273.15;
     return Math.log(scaling) * temp * 29271.267 * 0.001;
 };
 
-window.altitude2 = function (SCALED_PRESSURE, groundPressure, groundTemp) {
+globalThis.altitude2 = function (SCALED_PRESSURE, groundPressure, groundTemp) {
     // calculate barometric altitude'
     if (groundPressure == null) {
-        if (window.params.GND_ABS_PRESS === null) {
+        if (globalThis.params.GND_ABS_PRESS === null) {
             return 0;
         }
     }
-    groundPressure = window.getParam("GND_ABS_PRESS", 1);
+    groundPressure = globalThis.getParam("GND_ABS_PRESS", 1);
     if (groundTemp === null) {
-        groundTemp = window.getParam("GND_TEMP", 0);
+        groundTemp = globalThis.getParam("GND_TEMP", 0);
     }
-    const scaling = (SCALED_PRESSURE.press_abs * 100.0) / groundPressure;
+    const scaling = (SCALED_PRESSURE.press_abs * 100) / groundPressure;
     const temp = groundTemp + 273.15;
-    return 153.8462 * temp * (1.0 - Math.exp(0.190259 * Math.log(scaling)));
+    return 153.8462 * temp * (1 - Math.exp(0.190259 * Math.log(scaling)));
 };
 
-window.mag_heading = function (
+globalThis.mag_heading = function (
     RAW_IMU,
     ATTITUDE,
     declination,
@@ -67,7 +65,7 @@ window.mag_heading = function (
 ) {
     // calculate heading from raw magnetometer
     if (declination === undefined) {
-        declination = window.degrees(window.params.COMPASS_DEC);
+        declination = globalThis.degrees(globalThis.params.COMPASS_DEC);
     }
     let magX = RAW_IMU.xmag || RAW_IMU.MagX;
     let magY = RAW_IMU.ymag || RAW_IMU.MagY;
@@ -84,22 +82,28 @@ window.mag_heading = function (
         ATTITUDE.pitch,
         ATTITUDE.yaw,
     );
-    const cosPitchSqr = 1.0 - dcmMatrix.e(6) * dcmMatrix.e(6);
+    const cosPitchSqr = 1 - dcmMatrix.e(6) * dcmMatrix.e(6);
     const headY = magY * dcmMatrix.e(8) - magZ * dcmMatrix.e(7);
     const headX =
         magX * cosPitchSqr -
         dcmMatrix.e(6) * (magY * dcmMatrix.e(7) + magZ * dcmMatrix.e(8));
-    let heading = window.degrees(Math.atan2(-headY, headX)) + declination;
+    let heading = globalThis.degrees(Math.atan2(-headY, headX)) + declination;
     if (heading < -180) {
         heading += 360;
     }
     return heading;
 };
 
-window.mag_heading_df = function (MAG, ATT, declination, SENSOR_OFFSETS, ofs) {
+globalThis.mag_heading_df = function (
+    MAG,
+    ATT,
+    declination,
+    SENSOR_OFFSETS,
+    ofs,
+) {
     // calculate heading from raw magnetometer
     if (declination === undefined) {
-        declination = window.degrees(window.params.COMPASS_DEC);
+        declination = globalThis.degrees(globalThis.params.COMPASS_DEC);
     }
     let magX = MAG.MagX;
     let magY = MAG.MagY;
@@ -112,23 +116,23 @@ window.mag_heading_df = function (MAG, ATT, declination, SENSOR_OFFSETS, ofs) {
 
     // go via a DCM matrix to match the APM calculation
     const dcmMatrix = new Matrix3().fromEuler(
-        window.radians(ATT.Roll),
-        window.radians(ATT.Pitch),
-        window.radians(ATT.Yaw),
+        globalThis.radians(ATT.Roll),
+        globalThis.radians(ATT.Pitch),
+        globalThis.radians(ATT.Yaw),
     );
-    const cosPitchSqr = 1.0 - dcmMatrix.e(6) * dcmMatrix.e(6);
+    const cosPitchSqr = 1 - dcmMatrix.e(6) * dcmMatrix.e(6);
     const headY = magY * dcmMatrix.e(8) - magZ * dcmMatrix.e(7);
     const headX =
         magX * cosPitchSqr -
         dcmMatrix.e(6) * (magY * dcmMatrix.e(7) + magZ * dcmMatrix.e(8));
-    let heading = window.degrees(Math.atan2(-headY, headX)) + declination;
+    let heading = globalThis.degrees(Math.atan2(-headY, headX)) + declination;
     if (heading < 0) {
         heading += 360;
     }
     return heading;
 };
 
-window.mag_field = function (RAW_IMU, SENSOR_OFFSETS, ofs) {
+globalThis.mag_field = function (RAW_IMU, SENSOR_OFFSETS, ofs) {
     // calculate magnetic field strength from raw magnetometer'
     let magX = RAW_IMU.xmag;
     let magY = RAW_IMU.ymag;
@@ -138,54 +142,60 @@ window.mag_field = function (RAW_IMU, SENSOR_OFFSETS, ofs) {
         magY += ofs[1] - SENSOR_OFFSETS.mag_ofs_y;
         magZ += ofs[2] - SENSOR_OFFSETS.mag_ofs_z;
     }
-    return Math.sqrt(magX ** 2 + magY ** 2 + magZ ** 2);
+    return Math.hypot(magX, magY, magZ);
 };
 
-window.mag_field_df = function (MAG, ofs) {
+globalThis.mag_field_df = function (MAG, ofs) {
     // calculate magnetic field strength from raw magnetometer (dataflash version)'''
-    return Math.sqrt(MAG.MagX ** 2 + MAG.MagY ** 2 + MAG.MagZ ** 2);
+    return Math.hypot(MAG.MagX, MAG.MagY, MAG.MagZ);
 };
 
-window.sqrt = Math.sqrt;
+globalThis.sqrt = Math.sqrt;
 
-window.lastLowpass = null;
-window.lowpass = function (variable, key, factor) {
-    if (!isNaN(key)) {
+globalThis.lastLowpass = null;
+globalThis.lowpass = function (variable, key, factor) {
+    if (!Number.isNaN(Number(key))) {
         factor = key;
     }
-    if (window.lastLowpass === null || isNaN(window.lastLowpass)) {
-        window.lastLowpass = variable;
+    if (
+        globalThis.lastLowpass === null ||
+        Number.isNaN(Number(globalThis.lastLowpass))
+    ) {
+        globalThis.lastLowpass = variable;
     } else {
-        window.lastLowpass =
-            factor * window.lastLowpass + (1.0 - factor) * variable;
+        globalThis.lastLowpass =
+            factor * globalThis.lastLowpass + (1 - factor) * variable;
     }
-    const ret = window.lastLowpass;
+    const ret = globalThis.lastLowpass;
     return ret;
 };
 
-window.lastDelta = {};
+globalThis.lastDelta = {};
 
-window.delta = function (variable, key) {
+globalThis.delta = function (variable, key) {
     let ret = 0;
-    if (!(key in window.lastDelta)) {
-        window.lastDelta[key] = variable;
+    if (!(key in globalThis.lastDelta)) {
+        globalThis.lastDelta[key] = variable;
     }
-    if (window.lastDelta[key] === null || isNaN(window.lastDelta[key])) {
-        window.lastDelta[key] = variable;
+    if (
+        globalThis.lastDelta[key] === null ||
+        Number.isNaN(Number(globalThis.lastDelta[key]))
+    ) {
+        globalThis.lastDelta[key] = variable;
     } else {
-        ret = variable - window.lastDelta[key];
-        window.lastDelta[key] = variable;
+        ret = variable - globalThis.lastDelta[key];
+        globalThis.lastDelta[key] = variable;
     }
     return ret;
 };
 
-window.SAMPLING_RES = 10.0;
-window.SAMPLING_minLat = -90.0;
-window.SAMPLING_MAX_LAT = 90.0;
-window.SAMPLING_minLon = -180.0;
-window.SAMPLING_MAX_LON = 180.0;
+globalThis.SAMPLING_RES = 10;
+globalThis.SAMPLING_minLat = -90;
+globalThis.SAMPLING_MAX_LAT = 90;
+globalThis.SAMPLING_minLon = -180;
+globalThis.SAMPLING_MAX_LON = 180;
 
-window.declination_table = [
+globalThis.declination_table = [
     [
         149.1095, 139.1095, 129.1095, 119.1095, 109.10949, 99.1095, 89.1095,
         79.1095, 69.1095, 59.1095, 49.1095, 39.1095, 29.1095, 19.1095, 9.1095,
@@ -339,7 +349,7 @@ window.declination_table = [
     ],
 ];
 
-window.inclination_table = [
+globalThis.inclination_table = [
     [
         -72.08447, -72.08447, -72.08447, -72.08447, -72.08447, -72.08447,
         -72.08447, -72.08447, -72.08447, -72.08447, -72.08447, -72.08447,
@@ -502,7 +512,7 @@ window.inclination_table = [
     ],
 ];
 
-window.intensity_table = [
+globalThis.intensity_table = [
     [
         0.54677, 0.54677, 0.54677, 0.54677, 0.54677, 0.54677, 0.54677, 0.54677,
         0.54677, 0.54677, 0.54677, 0.54677, 0.54677, 0.54677, 0.54677, 0.54677,
@@ -638,22 +648,24 @@ window.intensity_table = [
     ],
 ];
 
-window.interpolate_table = function (table, lat, lon) {
+globalThis.interpolate_table = function (table, lat, lon) {
     // interpolate inside a table for a given lat/lon in degrees
     // round down to nearest sampling resolution
     const minLat = Math.floor(
-        Math.floor(lat / window.SAMPLING_RES) * window.SAMPLING_RES,
+        Math.floor(lat / globalThis.SAMPLING_RES) * globalThis.SAMPLING_RES,
     );
     const minLon = Math.floor(
-        Math.floor(lon / window.SAMPLING_RES) * window.SAMPLING_RES,
+        Math.floor(lon / globalThis.SAMPLING_RES) * globalThis.SAMPLING_RES,
     );
 
     // find index of nearest low sampling point
     const minLatIndex = Math.floor(
-        Math.floor(-window.SAMPLING_minLat + minLat) / window.SAMPLING_RES,
+        Math.floor(-globalThis.SAMPLING_minLat + minLat) /
+            globalThis.SAMPLING_RES,
     );
     const minLonIndex = Math.floor(
-        Math.floor(-window.SAMPLING_minLon + minLon) / window.SAMPLING_RES,
+        Math.floor(-globalThis.SAMPLING_minLon + minLon) /
+            globalThis.SAMPLING_RES,
     );
 
     // calculate intensity
@@ -664,41 +676,42 @@ window.interpolate_table = function (table, lat, lon) {
 
     // perform bilinear interpolation on the four grid corners
     const dataMin =
-        ((lon - minLon) / window.SAMPLING_RES) * (dataSe - dataSw) + dataSw;
+        ((lon - minLon) / globalThis.SAMPLING_RES) * (dataSe - dataSw) + dataSw;
     const dataMax =
-        ((lon - minLon) / window.SAMPLING_RES) * (dataNe - dataNw) + dataNw;
+        ((lon - minLon) / globalThis.SAMPLING_RES) * (dataNe - dataNw) + dataNw;
 
     const value =
-        ((lat - minLat) / window.SAMPLING_RES) * (dataMax - dataMin) + dataMin;
+        ((lat - minLat) / globalThis.SAMPLING_RES) * (dataMax - dataMin) +
+        dataMin;
     return value;
 };
 
-window.get_mag_field_ef = function (lat, lon) {
+globalThis.get_mag_field_ef = function (lat, lon) {
     // limit to table bounds
-    if (lat < window.SAMPLING_minLat) {
+    if (lat < globalThis.SAMPLING_minLat) {
         return null;
     }
-    if (lat >= window.SAMPLING_MAX_LAT) {
+    if (lat >= globalThis.SAMPLING_MAX_LAT) {
         return null;
     }
-    if (lon < window.SAMPLING_minLon) {
+    if (lon < globalThis.SAMPLING_minLon) {
         return null;
     }
-    if (lon >= window.SAMPLING_MAX_LON) {
+    if (lon >= globalThis.SAMPLING_MAX_LON) {
         return null;
     }
-    const intensityGauss = window.interpolate_table(
-        window.intensity_table,
+    const intensityGauss = globalThis.interpolate_table(
+        globalThis.intensity_table,
         lat,
         lon,
     );
-    const declinationDeg = window.interpolate_table(
-        window.declination_table,
+    const declinationDeg = globalThis.interpolate_table(
+        globalThis.declination_table,
         lat,
         lon,
     );
-    const inclinationDeg = window.interpolate_table(
-        window.inclination_table,
+    const inclinationDeg = globalThis.interpolate_table(
+        globalThis.inclination_table,
         lat,
         lon,
     );
@@ -706,63 +719,67 @@ window.get_mag_field_ef = function (lat, lon) {
     return [declinationDeg, inclinationDeg, intensityGauss];
 };
 
-window.earth_field = null;
+globalThis.earth_field = null;
 
-window.expected_earth_field = function (GPS) {
+globalThis.expected_earth_field = function (GPS) {
     // return expected magnetic field for a location
-    if (window.earth_field !== null) {
-        return window.earth_field;
+    if (globalThis.earth_field !== null) {
+        return globalThis.earth_field;
     }
     let gpsStatus, lat, lon, magEf;
-    if (GPS.fix_type !== undefined) {
-        gpsStatus = GPS.fix_type;
-        lat = GPS.lat * 1.0e-7;
-        lon = GPS.lon * 1.0e-7;
-    } else {
+    if (GPS.fix_type === undefined) {
         gpsStatus = GPS.Status;
         lat = GPS.Lat;
         lon = GPS.Lng;
+    } else {
+        gpsStatus = GPS.fix_type;
+        lat = GPS.lat * 1e-7;
+        lon = GPS.lon * 1e-7;
     }
     if (gpsStatus < 3) {
         return new Vector3(0, 0, 0);
     }
-    const fieldVar = window.get_mag_field_ef(lat, lon);
-    magEf = new Vector3(fieldVar[2] * 1000.0, 0.0, 0.0);
+    const fieldVar = globalThis.get_mag_field_ef(lat, lon);
+    magEf = new Vector3(fieldVar[2] * 1000, 0, 0);
     const R = new Matrix3();
-    R.fromEuler(0.0, -window.radians(fieldVar[1]), window.radians(fieldVar[0]));
+    R.fromEuler(
+        0,
+        -globalThis.radians(fieldVar[1]),
+        globalThis.radians(fieldVar[0]),
+    );
     magEf = R.times(magEf);
-    window.earth_field = magEf;
-    return window.earth_field;
+    globalThis.earth_field = magEf;
+    return globalThis.earth_field;
 };
 
-window.expected_mag = function (
+globalThis.expected_mag = function (
     GPS,
     ATT,
     rollAdjust = 0,
     pitchAdjust = 0,
     yawAdjust = 0,
 ) {
-    window.expected_earth_field(GPS);
-    if (window.earth_field === null) {
+    globalThis.expected_earth_field(GPS);
+    if (globalThis.earth_field === null) {
         return new Vector3(0, 0, 0);
     }
     let roll, pitch, yaw;
-    if (ATT.roll !== undefined) {
-        roll = window.degrees(ATT.roll) + rollAdjust;
-        pitch = window.degrees(ATT.pitch) + pitchAdjust;
-        yaw = window.degrees(ATT.yaw) + yawAdjust;
-    } else {
+    if (ATT.roll === undefined) {
         roll = ATT.Roll + rollAdjust;
         pitch = ATT.Pitch + pitchAdjust;
         yaw = ATT.Yaw + yawAdjust;
+    } else {
+        roll = globalThis.degrees(ATT.roll) + rollAdjust;
+        pitch = globalThis.degrees(ATT.pitch) + pitchAdjust;
+        yaw = globalThis.degrees(ATT.yaw) + yawAdjust;
     }
     const rot = new Matrix3().fromEuler(
-        window.radians(roll),
-        window.radians(pitch),
-        window.radians(yaw),
+        globalThis.radians(roll),
+        globalThis.radians(pitch),
+        globalThis.radians(yaw),
     );
-    const field = rot.transposed().times(window.earth_field);
+    const field = rot.transposed().times(globalThis.earth_field);
     return field;
 };
 
-window.abs = Math.abs;
+globalThis.abs = Math.abs;

@@ -29,7 +29,7 @@ class Vector3 {
     }
 
     length() {
-        return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+        return Math.hypot(this.x, this.y, this.z);
     }
 
     equals(v) {
@@ -37,7 +37,9 @@ class Vector3 {
     }
 
     isNaN() {
-        return isNaN(this.x) || isNaN(this.y) || isNaN(this.z);
+        return (
+            Number.isNaN(this.x) || Number.isNaN(this.y) || Number.isNaN(this.z)
+        );
     }
 }
 

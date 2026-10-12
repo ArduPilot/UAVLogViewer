@@ -1,6 +1,6 @@
 // const key = ''
 // const last_value = 0
-window.named = (NAMED_VALUE_FLOAT, key) => {
+globalThis.named = (NAMED_VALUE_FLOAT, key) => {
     if (NAMED_VALUE_FLOAT.name.startsWith(key)) {
         return NAMED_VALUE_FLOAT.value;
     }
@@ -8,7 +8,7 @@ window.named = (NAMED_VALUE_FLOAT, key) => {
 };
 
 // eslint-disable-next-line camelcase
-window.angle_diff = (angle1, angle2) => {
+globalThis.angle_diff = (angle1, angle2) => {
     let ret = angle1 - angle2;
     if (ret > 180) {
         ret -= 360;
@@ -20,7 +20,7 @@ window.angle_diff = (angle1, angle2) => {
 };
 
 // eslint-disable-next-line camelcase
-window.wrap_360 = (angle) => {
+globalThis.wrap_360 = (angle) => {
     let ret = angle;
     if (ret > 360) {
         ret -= 360;
@@ -32,7 +32,7 @@ window.wrap_360 = (angle) => {
 };
 
 // eslint-disable-next-line camelcase
-window.wrap_180 = (angle) => {
+globalThis.wrap_180 = (angle) => {
     let ret = angle;
     if (ret > 180) {
         ret -= 360;
@@ -43,5 +43,5 @@ window.wrap_180 = (angle) => {
     return ret;
 };
 
-window.min = Math.min;
-window.max = Math.max;
+globalThis.min = Math.min;
+globalThis.max = Math.max;
