@@ -1,0 +1,7 @@
+# https://docs.astral.sh/ruff/configuration/
+# Ruff's default rules and formatter for the Python build tooling (terrain tiler, preset converter)
+
+[lint.per-file-ignores]
+# The terrain tiler's broad excepts are deliberate: an unreadable SRTM cell becomes a gap and
+# an unreadable old layer.json is rebuilt, instead of stopping a build that runs for hours.
+"scripts/terrain/*.py" = ["BLE001", "S110"]

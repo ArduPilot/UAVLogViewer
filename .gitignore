@@ -78,3 +78,7 @@ fabric.properties
 
 # Local environment (Cesium token)
 .env
+
+# Python (scripts/terrain venv, bytecode)
+.venv/
+__pycache__/
