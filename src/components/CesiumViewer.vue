@@ -176,6 +176,8 @@ export default {
         this.trajectory = null; // GPS trajectory (in degrees)
         this.fences = []; // Geo-fence entities
         this.correctedTrajectory = []; // GPS trajectory (Cartographic array)
+        this.globeOpacityInterval = null;
+        this.tornDown = false; // set when the component is destroyed (async setup checks it)
 
         // Link time with plot updates
         this.$eventHub.$on("hoveredTime", this.showAttitude);
@@ -184,7 +186,18 @@ export default {
         this.state.mapError = null;
     },
     beforeDestroy() {
-        this.$eventHub.$off("hoveredTime");
+        // asyncSetup/setup2 may still be waiting for terrain or tiles: let them stop
+        this.tornDown = true;
+        // remove only this component's listeners (plots and widgets listen to hoveredTime too)
+        this.$eventHub.$off("hoveredTime", this.showAttitude);
+        this.$eventHub.$off("rangeChanged", this.onRangeChanged);
+        document.removeEventListener("setzoom", this.onTimelineZoom);
+        clearInterval(this.globeOpacityInterval);
+        // free the WebGL context (browsers only allow a few at a time)
+        if (this.viewer && !this.viewer.isDestroyed()) {
+            this.viewer.destroy();
+        }
+        this.viewer = null;
     },
     mounted() {
         // create eniro, statkart, and openseamap providers
@@ -219,8 +232,13 @@ export default {
                 if (this.viewer == null) {
                     this.viewer = this.createViewer(this.state.isOnline);
                     if (this.state.vehicle !== "boat") {
-                        this.viewer.terrainProvider =
-                            await this.loadTerrainProvider(this.state.isOnline);
+                        const terrainProvider = await this.loadTerrainProvider(
+                            this.state.isOnline,
+                        );
+                        if (this.tornDown) {
+                            return;
+                        }
+                        this.viewer.terrainProvider = terrainProvider;
                     }
                     this.viewer.scene.debugShowFramesPerSecond = true;
 
@@ -552,6 +570,9 @@ export default {
                 : availability.computeMaximumLevelAtPosition(cartographic);
         },
         async setup2(updatedPositions) {
+            if (this.tornDown) {
+                return;
+            }
             try {
                 /*
                  * Second step of setup, happens after the height of the starting point has been returned by Cesium
@@ -593,6 +614,9 @@ export default {
                 this.updateAndPlotTrajectory();
                 this.plotComparisonTrajectories();
                 await this.plotMission(this.state.mission);
+                if (this.tornDown) {
+                    return;
+                }
                 this.plotFences(this.state.fences);
                 document.addEventListener("setzoom", this.onTimelineZoom);
                 this.$eventHub.$on("rangeChanged", this.onRangeChanged);
@@ -607,13 +631,19 @@ export default {
                 } finally {
                     this.state.mapLoading = false;
                 }
+                if (this.tornDown) {
+                    return;
+                }
                 // Default to a framed top-down view of the flight (not vehicle-follow, which
                 // frames a point and ends up too wide to find the flight). Follow is available
                 // via the centre-vehicle button.
                 this.state.cameraType = "free";
                 this.changeCamera();
                 setTimeout(this.updateTimelineColors, 500);
-                setInterval(this.updateGlobeOpacity, 1000);
+                this.globeOpacityInterval = setInterval(
+                    this.updateGlobeOpacity,
+                    1000,
+                );
                 setTimeout(() => {
                     this.fitTrajectoryBounds();
                 }, 1000);
@@ -655,6 +685,9 @@ export default {
             });
         },
         updateGlobeOpacity() {
+            if (!this.viewer) {
+                return;
+            }
             /*
             Makes the Globe transparent when the vehicle is underground/underwater. Called every 1 second
             */
@@ -695,9 +728,9 @@ export default {
         },
         addCloseButton() {
             /* Creates the close button on the Cesium toolbar */
-            const toolbar = document.getElementsByClassName(
-                "cesium-viewer-toolbar",
-            )[0];
+            const toolbar = this.viewer.container.querySelector(
+                ".cesium-viewer-toolbar",
+            );
 
             let closeButton = document.createElement("span");
             if (closeButton.classList) {
@@ -729,9 +762,9 @@ export default {
         },
         addBathymetryButton() {
             /* Creates the bathymetry button on the Cesium toolbar */
-            const toolbar = document.getElementsByClassName(
-                "cesium-viewer-toolbar",
-            )[0];
+            const toolbar = this.viewer.container.querySelector(
+                ".cesium-viewer-toolbar",
+            );
 
             let bathymetryButton = document.createElement("span");
             if (bathymetryButton.classList) {
@@ -764,9 +797,9 @@ export default {
         },
         addFitContentsButton() {
             /* Creates the close button on the Cesium toolbar */
-            const toolbar = document.getElementsByClassName(
-                "cesium-viewer-toolbar",
-            )[0];
+            const toolbar = this.viewer.container.querySelector(
+                ".cesium-viewer-toolbar",
+            );
 
             let closeButton = document.createElement("span");
             if (closeButton.classList) {
@@ -798,9 +831,9 @@ export default {
         },
         addCenterVehicleButton() {
             /* Creates the close button on the Cesium toolbar */
-            const toolbar = document.getElementsByClassName(
-                "cesium-viewer-toolbar",
-            )[0];
+            const toolbar = this.viewer.container.querySelector(
+                ".cesium-viewer-toolbar",
+            );
 
             let closeButton = document.createElement("span");
             if (closeButton.classList) {
@@ -885,6 +918,9 @@ export default {
             }
         },
         fitTrajectoryBounds() {
+            if (!this.viewer) {
+                return;
+            }
             // Frame the flight so it fills ~2/3 of the view, never zooming tighter than a ~100 m
             // view (so a hover/stationary flight stays visible). Use a 3D bounding sphere of the
             // actual track positions so the view accounts for terrain elevation (framing a 2D
@@ -966,14 +1002,17 @@ export default {
         //     this.viewer.timeline.zoomTo(this.msToCesiumTime(event[0]), this.msToCesiumTime(event[1]))
         // },
         updateTimelineColors() {
+            if (!this.viewer) {
+                return;
+            }
             const start = this.cesiumTimeToMs(
                 this.viewer.timeline._startJulian,
             );
             const end = this.cesiumTimeToMs(this.viewer.timeline._endJulian);
 
-            const timeline = document.getElementsByClassName(
-                "cesium-timeline-bar",
-            )[0];
+            const timeline = this.viewer.container.querySelector(
+                ".cesium-timeline-bar",
+            );
             let colors = [];
             let previousColor = null;
             for (const change of this.state.flightModeChanges) {
@@ -1874,6 +1913,9 @@ export default {
         // =========================================================================
 
         async updateAndPlotTrajectory() {
+            if (!this.viewer) {
+                return;
+            }
             // Asegurar que existe un colorCoder
             if (!this.colorCoder) {
                 this.colorCoder =
