@@ -89,12 +89,8 @@
                                 {{ fieldDoc(key, item.name) }}
                             </span>
 
-                            <a
-                                @click="
-                                    $eventHub.$emit('togglePlot', field.name)
-                                "
-                                v-if="isPlotted(key, item.name)"
-                            >
+                            <!-- clicking anywhere on the item (also this icon) toggles the plot -->
+                            <a v-if="isPlotted(key, item.name)">
                                 <i
                                     class="remove-icon fas fa-trash"
                                     title="Remove data"
