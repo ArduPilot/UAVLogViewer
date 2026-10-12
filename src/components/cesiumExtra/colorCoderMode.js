@@ -5,22 +5,28 @@ export default class ColorCoderMode {
         this.state = state;
     }
 
+    // Distinct flight modes of the current log, recomputed when another log is loaded
+    get modes() {
+        if (this.modesSource !== this.state.flightModeChanges) {
+            this.modesSource = this.state.flightModeChanges;
+            this.setOfModes = this.calculateSetOfModes();
+        }
+        return this.setOfModes;
+    }
+
     getLegend() {
         const legend = [];
-        for (const mode of this.setOfModes) {
+        for (const mode of this.modes) {
             legend.push({
                 name: mode,
-                color: this.state.cssColors[this.setOfModes.indexOf(mode)],
+                color: this.state.cssColors[this.modes.indexOf(mode)],
             });
         }
         return legend;
     }
 
     getColor(time) {
-        if (this.setOfModes === undefined) {
-            this.setOfModes = this.calculateSetOfModes();
-        }
-        return this.state.colors[this.setOfModes.indexOf(this.getMode(time))];
+        return this.state.colors[this.modes.indexOf(this.getMode(time))];
     }
 
     getMode(time) {

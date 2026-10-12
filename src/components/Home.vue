@@ -150,14 +150,13 @@ export default {
     },
     methods: {
         extractFlightData() {
-            if (this.dataExtractor === null) {
-                if (this.state.logType === "tlog") {
-                    this.dataExtractor = MavlinkDataExtractor;
-                } else if (this.state.logType === "dji") {
-                    this.dataExtractor = DjiDataExtractor;
-                } else {
-                    this.dataExtractor = DataflashDataExtractor;
-                }
+            // chosen per log: a page can load a tlog and later a DataFlash log
+            if (this.state.logType === "tlog") {
+                this.dataExtractor = MavlinkDataExtractor;
+            } else if (this.state.logType === "dji") {
+                this.dataExtractor = DjiDataExtractor;
+            } else {
+                this.dataExtractor = DataflashDataExtractor;
             }
             if (
                 "FMTU" in this.state.messages &&

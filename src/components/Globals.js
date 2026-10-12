@@ -79,3 +79,37 @@ export const store = {
     buildDate: _BUILDDATE_,
     childPlots: [],
 };
+
+// Everything derived from the loaded log. Cleared before a new log is parsed (e.g. a second log
+// sent by an embedding page), so nothing carries over from the previous one: flight modes,
+// parameters, trajectories, and plots whose cached data belongs to the old log.
+export function resetLogState() {
+    Object.assign(store, {
+        files: undefined,
+        flightModeChanges: [],
+        events: [],
+        mission: [],
+        fences: [],
+        textMessages: [],
+        namedFloats: [],
+        metadata: null,
+        params: undefined,
+        defaultParams: {},
+        trajectorySource: "",
+        trajectorySources: [],
+        trajectories: {},
+        currentTrajectory: [],
+        timeTrajectory: {},
+        timeAttitude: {},
+        timeAttitudeQ: {},
+        attitudeSources: {},
+        attitudeSource: null,
+        timeRange: null,
+        expressions: [],
+        expressionErrors: [],
+        plotCache: {},
+        // the mode color palette is sized for the log's flight modes
+        colors: [],
+        cssColors: [],
+    });
+}

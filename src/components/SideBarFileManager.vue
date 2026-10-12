@@ -49,13 +49,19 @@
 <script>
 import VProgress from "./SideBarFileManagerProgressBar.vue";
 import Worker from "../tools/parsers/parser.worker.js";
-import { store } from "./Globals";
+import { store, resetLogState } from "./Globals";
 
 import { MAVLink20Processor as MAVLink } from "../libs/mavlink";
 
 const worker = new Worker();
 
 worker.addEventListener("message", function (event) {});
+
+// Start parsing a log; clears everything left from a previous log first
+function parseLog(file, { isTlog, isDji }) {
+    resetLogState();
+    worker.postMessage({ action: "parse", file, isTlog, isDji });
+}
 
 // The worker lives as long as the page, but this component only exists while the sidebar shows
 // its home tab. Forward on-demand requests to the worker from one app-wide listener, registered
@@ -67,6 +73,12 @@ function forwardWorkerRequests(eventHub) {
         return;
     }
     workerRequestsForwarded = true;
+    // logs sent by an embedding page
+    window.addEventListener("message", (event) => {
+        if (event.data.type === "arrayBuffer") {
+            parseLog(event.data.data, { isTlog: false, isDji: false });
+        }
+    });
     eventHub.$on("loadType", (type) => {
         worker.postMessage({ action: "loadType", type: type });
     });
@@ -125,9 +137,7 @@ export default {
 
                 this.transferMessage = "Download Done";
                 this.sampleLoaded = true;
-                worker.postMessage({
-                    action: "parse",
-                    file: arrayBuffer,
+                parseLog(arrayBuffer, {
                     isTlog: url.indexOf(".tlog") > 0,
                     isDji: url.indexOf(".txt") > 0,
                 });
@@ -197,9 +207,7 @@ export default {
                     "Error reading file: " + (error?.message ?? error);
                 return;
             }
-            worker.postMessage({
-                action: "parse",
-                file: data,
+            parseLog(data, {
                 isTlog: file.name.endsWith("tlog"),
                 isDji: file.name.endsWith("txt"),
             });
@@ -268,16 +276,6 @@ export default {
         },
     },
     mounted() {
-        window.addEventListener("message", (event) => {
-            if (event.data.type === "arrayBuffer") {
-                worker.postMessage({
-                    action: "parse",
-                    file: event.data.data,
-                    isTlog: false,
-                    isDji: false,
-                });
-            }
-        });
         worker.onmessage = (event) => {
             if (event.data.percentage) {
                 this.state.processPercentage = event.data.percentage;
