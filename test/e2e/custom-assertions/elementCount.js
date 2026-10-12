@@ -7,7 +7,7 @@
 // For more information on custom assertions see:
 // http://nightwatchjs.org/guide#writing-custom-assertions
 
-exports.assertion = function (selector, count) {
+export function assertion(selector, count) {
     this.message = "Testing if element <" + selector + "> has count: " + count;
     this.expected = count;
     this.pass = function (val) {
@@ -17,15 +17,14 @@ exports.assertion = function (selector, count) {
         return res.value;
     };
     this.command = function (cb) {
-        const self = this;
         return this.api.execute(
             function (selector) {
                 return document.querySelectorAll(selector).length;
             },
             [selector],
-            function (res) {
-                cb.call(self, res);
+            (res) => {
+                cb.call(this, res);
             },
         );
     };
-};
+}
