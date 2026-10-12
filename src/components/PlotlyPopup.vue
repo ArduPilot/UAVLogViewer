@@ -66,25 +66,25 @@ export default {
     mounted() {
         console.log("mounted");
         console.log(this.$route.path);
-        window.plot = () => {
+        globalThis.plot = () => {
             this.plot();
         };
-        window.setPlotData = (data) => {
+        globalThis.setPlotData = (data) => {
             this.plotData = data;
         };
-        window.setPlotOptions = (options) => {
+        globalThis.setPlotOptions = (options) => {
             this.plotOptions = options;
         };
-        window.setFlightModeChanges = (modes) => {
+        globalThis.setFlightModeChanges = (modes) => {
             this.flightModeChanges = modes;
         };
-        window.setCssColors = (colors) => {
+        globalThis.setCssColors = (colors) => {
             this.cssColors = colors;
         };
-        window.setTimeRange = (timeRange) => {
+        globalThis.setTimeRange = (timeRange) => {
             this.setTimeRange(timeRange);
         };
-        window.setEventHub = (eventHub) => {
+        globalThis.setEventHub = (eventHub) => {
             this.$eventHub = eventHub;
             this.$eventHub.$on("cesium-time-changed", this.setCursorTime);
             this.$eventHub.$on("hoveredTime", this.setCursorTime);
@@ -179,7 +179,7 @@ export default {
                     link.style.visibility = "hidden";
                     document.body.appendChild(link);
                     link.click();
-                    document.body.removeChild(link);
+                    link.remove();
                 },
             };
         },
@@ -191,12 +191,11 @@ export default {
                 this.$eventHub.$emit("loadType", message);
             }
             let interval;
-            const _this = this;
             let counter = 0;
             return new Promise((resolve, reject) => {
-                interval = setInterval(function () {
+                interval = setInterval(() => {
                     for (const message of messages) {
-                        if (!_this.loadedMessages.includes(message)) {
+                        if (!this.loadedMessages.includes(message)) {
                             counter += 1;
                             if (counter > 30) {
                                 // 30 * 300ms = 9 s timeout
@@ -266,7 +265,7 @@ export default {
     Max: ${Math.max(...yInside).toFixed(2)} \
     Mean: ${average(yInside).toFixed(2)}`;
 
-                if (trace.name.indexOf(extraData) === -1) {
+                if (!trace.name.includes(extraData)) {
                     trace.name = trace.name.split(" | ")[0] + extraData;
                     needsRelayout = true;
                 }
@@ -280,13 +279,7 @@ export default {
             console.log("plot()");
             const start = new Date();
             delete this.plotOptions.xaxis.rangeslider;
-            if (this.plotInstance !== null) {
-                this.plotOptions.xaxis.range = this.gd._fullLayout.xaxis.range;
-                Plotly.newPlot(this.gd, this.plotData, this.plotOptions, {
-                    scrollZoom: true,
-                    responsive: true,
-                });
-            } else {
+            if (this.plotInstance === null) {
                 this.plotInstance = Plotly.newPlot(
                     this.gd,
                     this.plotData,
@@ -298,8 +291,14 @@ export default {
                         responsive: true,
                     },
                 );
+            } else {
+                this.plotOptions.xaxis.range = this.gd._fullLayout.xaxis.range;
+                Plotly.newPlot(this.gd, this.plotData, this.plotOptions, {
+                    scrollZoom: true,
+                    responsive: true,
+                });
             }
-            console.log("plotting done in " + (new Date() - start) + "ms");
+            console.log("plotting done in " + (Date.now() - start) + "ms");
             this.gd.on("plotly_relayout", this.onRangeChanged);
             this.gd.on("plotly_hover", (data) => {
                 const infotext = data.points.map(function (d) {
@@ -323,7 +322,9 @@ export default {
             );
             const x = rect.getAttribute("x");
             const y = rect.getAttribute("y");
-            const y2 = parseInt(y) + parseInt(rect.getAttribute("height"));
+            const y2 =
+                Number.parseInt(y) +
+                Number.parseInt(rect.getAttribute("height"));
             this.cursor.setAttribute("id", "batata");
             this.cursor.setAttribute("x1", x);
             this.cursor.setAttribute("y1", y);
@@ -332,14 +333,14 @@ export default {
             this.cursor.setAttribute("stroke-width", 1);
             this.cursor.setAttribute("stroke", "black");
             bglayer.append(this.cursor);
-            console.log("layout done in " + (new Date() - start) + "ms");
+            console.log("layout done in " + (Date.now() - start) + "ms");
         },
         setCursorTime(time) {
             try {
                 const bglayer = document.getElementsByClassName("bglayer")[0];
                 const rect = bglayer.childNodes[0];
-                const x = parseInt(rect.getAttribute("x"));
-                const width = parseInt(rect.getAttribute("width"));
+                const x = Number.parseInt(rect.getAttribute("x"));
+                const width = Number.parseInt(rect.getAttribute("width"));
                 const percTime =
                     (time - this.gd.layout.xaxis.range[0]) /
                     (this.gd.layout.xaxis.range[1] -
@@ -482,11 +483,11 @@ export default {
             const firstFetch = new Set();
             let startAt = null;
             for (const change of this.changeArray) {
-                if (!firstFetch.has(change[1])) {
-                    firstFetch.add(change[1]);
-                } else {
+                if (firstFetch.has(change[1])) {
                     startAt = change[0];
                     break;
+                } else {
+                    firstFetch.add(change[1]);
                 }
             }
             let last = [0, 0];

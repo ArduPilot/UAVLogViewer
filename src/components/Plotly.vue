@@ -66,9 +66,9 @@ const plotOptions = {
         borderwidth: 1,
     },
     showlegend: true,
-    // eslint-disable-next-line
+    // eslint-disable-next-line camelcase
     plot_bgcolor: "#f8f8f8",
-    // eslint-disable-next-line
+    // eslint-disable-next-line camelcase
     paper_bgcolor: "white",
     // autosize: true,
     margin: { t: 20, l: 0, b: 30, r: 10 },
@@ -153,7 +153,7 @@ const plotOptions = {
         anchor: "free",
         overlaying: "y",
         side: "left",
-        position: 1.0,
+        position: 1,
         autotick: true,
         showline: true,
         ticklen: 3,
@@ -180,12 +180,11 @@ export default {
             });
 
         this.gd = d3.select("#line").node();
-        const _this = this;
-        this.$nextTick(function () {
+        this.$nextTick(() => {
             if (this.$route.query.ranges) {
                 const ranges = [];
                 for (const field of this.$route.query.ranges.split(",")) {
-                    ranges.push(parseFloat(field));
+                    ranges.push(Number.parseFloat(field));
                 }
                 if (ranges.length > 0) {
                     plotOptions.xaxis.range = [ranges[0], ranges[1]];
@@ -205,7 +204,7 @@ export default {
             }
             if (this.$route.query.plots) {
                 for (const field of this.$route.query.plots.split(",")) {
-                    _this.addPlots([field]);
+                    this.addPlots([field]);
                 }
             }
         });
@@ -343,7 +342,7 @@ export default {
                     link.style.visibility = "hidden";
                     document.body.appendChild(link);
                     link.click();
-                    document.body.removeChild(link);
+                    link.remove();
                 },
             };
         },
@@ -365,12 +364,11 @@ export default {
                 this.$eventHub.$emit("loadType", message);
             }
             let interval;
-            const _this = this;
             let counter = 0;
             return new Promise((resolve, reject) => {
-                interval = setInterval(function () {
+                interval = setInterval(() => {
                     for (const message of messages) {
-                        if (!_this.loadedMessages().includes(message)) {
+                        if (!this.loadedMessages().includes(message)) {
                             counter += 1;
                             if (counter > 30) {
                                 // 30 * 300ms = 9 s timeout
@@ -452,7 +450,7 @@ export default {
     Max: ${Math.max(...yInside).toFixed(2)} \
     Mean: ${average(yInside).toFixed(2)}`;
 
-                if (trace.name.indexOf(extraData) === -1) {
+                if (!trace.name.includes(extraData)) {
                     trace.name = trace.name.split(" | ")[0] + extraData;
                     needsRelayout = true;
                 }
@@ -474,7 +472,7 @@ export default {
             for (const i of this.state.allAxis) {
                 let taken = false;
                 for (const field of this.state.expressions) {
-                    // eslint-disable-next-line
+                    // eslint-disable-next-line eqeqeq
                     if (field.axis == i) {
                         taken = true;
                     }
@@ -490,7 +488,7 @@ export default {
             for (const i of this.state.allColors) {
                 let taken = false;
                 for (const field of this.state.expressions) {
-                    // eslint-disable-next-line
+                    // eslint-disable-next-line eqeqeq
                     if (field.color == i) {
                         taken = true;
                     }
@@ -504,7 +502,7 @@ export default {
         createNewField(fieldname, axis, color) {
             if (color === undefined) {
                 color = this.getFirstFreeColor();
-            } else if (!isNaN(color)) {
+            } else if (!Number.isNaN(Number(color))) {
                 color = this.state.allColors[color];
             }
             if (axis === undefined) {
@@ -520,14 +518,12 @@ export default {
         addPlots(plots) {
             this.state.plotLoading = true;
             const requested = new Set();
-            const RE = /[A-Z][A-Z0-9_]+(\[[0-9]\])?\.[a-zA-Z0-9]+/g;
-            const RE2 = /[A-Z][A-Z0-9_]+(\[[0-9]\])/g;
+            const RE2 = /[A-Z][A-Z0-9_]+(\[\d\])/g;
             for (const plot of plots) {
                 const expression = plot[0];
-                // ensure we have the data
-                let messages = expression.match(RE);
+                // ensure we have the data (only match messages with array index)
                 // not match ATT, GPS
-                messages = expression.match(RE2);
+                const messages = expression.match(RE2);
                 if (messages !== null) {
                     for (const message of messages) {
                         if (!(message in this.state.messages)) {
@@ -587,7 +583,7 @@ export default {
             // Resets the Y axis so that the next plot autoranges
             // unfortunately the axis are named yaxis, yaxis2, yaxis3... and so on
             let suffix = "";
-            suffix = index === 0 ? suffix : parseInt(index) + 1;
+            suffix = index === 0 ? suffix : Number.parseInt(index) + 1;
             const key = "yaxis" + suffix;
             const obj = {};
             // Use older dict and set autorange to true
@@ -649,7 +645,7 @@ export default {
         },
         findMessagesInExpression(expression) {
             const RE =
-                /(?<message>[A-Z][A-Z0-9_]+(\[[A-Za-z0-9_.]+\])?)(\.(?<field>[A-Za-z0-9_]+))?/g;
+                /(?<message>[A-Z][A-Z0-9_]+(\[[\w.]+\])?)(\.(?<field>\w+))?/g;
             const match = [];
             for (const m of expression.matchAll(RE)) {
                 match.push([m.groups.message, m.groups.field]);
@@ -680,9 +676,9 @@ export default {
                 if (field !== undefined) {
                     if (
                         field !== "time_boot_ms" &&
-                        this.state.messageTypes[message].expressions.indexOf(
+                        !this.state.messageTypes[message].expressions.includes(
                             field,
-                        ) < 0
+                        )
                     ) {
                         console.log(
                             "ERROR: attempted to plot unavailable field: " +
@@ -728,7 +724,7 @@ export default {
             );
             console.log(fields);
             fields = fields === null ? [] : fields;
-            const messages = fields.length !== 0 ? fields : [];
+            const messages = fields.length === 0 ? [] : fields;
             // use time of first message for now
             let x;
             if (messages.length > 0) {
@@ -752,9 +748,8 @@ export default {
             const timeIndexes = new Array(fields.length).fill(0);
             const y = [];
             let expression = expression1;
-            // eslint-disable-next-line
-            for (let field in fields) {
-                if (isNaN(field)) {
+            for (const field in fields) {
+                if (Number.isNaN(Number(field))) {
                     break;
                 }
                 // first looks for fields in the expression
@@ -773,7 +768,7 @@ export default {
             }
             let f;
             try {
-                // eslint-disable-next-line
+                // eslint-disable-next-line no-new-func
                 f = new Function("a", "return " + expression);
             } catch (e) {
                 return { error: e };
@@ -821,16 +816,14 @@ export default {
             });
             Vue.set(this.state.plotCache, expression1, data);
             // this.state.plotCache[expression1] = data
-            console.log("Evaluation took " + (new Date() - start) + "ms");
+            console.log("Evaluation took " + (Date.now() - start) + "ms");
             this.cleanupCache();
             return data;
         },
         cleanupCache() {
             const keys = Object.keys(this.state.plotCache);
             for (const key of keys) {
-                if (
-                    this.state.expressions.map((e) => e.name).indexOf(key) < 0
-                ) {
+                if (!this.state.expressions.map((e) => e.name).includes(key)) {
                     delete this.state.plotCache[key];
                 }
             }
@@ -863,7 +856,7 @@ export default {
                 return;
             }
             plotOptions.title = this.state.file;
-            const _this = this;
+
             const datasets = [];
             this.state.expressionErrors = [];
             const errors = [];
@@ -968,13 +961,7 @@ export default {
                 title: "time_boot (ms)",
                 tickformat: ":04,2f",
             };
-            if (this.plotInstance !== null) {
-                plotOptions.xaxis.range = this.gd._fullLayout.xaxis.range;
-                Plotly.newPlot(this.gd, plotData, plotOptions, {
-                    scrollZoom: true,
-                    responsive: true,
-                });
-            } else {
+            if (this.plotInstance === null) {
                 this.plotInstance = Plotly.newPlot(
                     this.gd,
                     plotData,
@@ -989,15 +976,19 @@ export default {
                         responsive: true,
                     },
                 );
+            } else {
+                plotOptions.xaxis.range = this.gd._fullLayout.xaxis.range;
+                Plotly.newPlot(this.gd, plotData, plotOptions, {
+                    scrollZoom: true,
+                    responsive: true,
+                });
             }
-            console.log("plotting done in " + (new Date() - start) + "ms");
+            console.log("plotting done in " + (Date.now() - start) + "ms");
             start = new Date();
             this.gd.on("plotly_relayout", this.onRangeChanged);
-            this.gd.on("plotly_hover", function (data) {
-                const infotext = data.points.map(function (d) {
-                    return d.x;
-                });
-                _this.$eventHub.$emit("hoveredTime", infotext[0]);
+            this.gd.on("plotly_hover", (data) => {
+                const infotext = data.points.map((d) => d.x);
+                this.$eventHub.$emit("hoveredTime", infotext[0]);
             });
 
             this.addModeShapes();
@@ -1014,7 +1005,9 @@ export default {
             );
             const x = rect.getAttribute("x");
             const y = rect.getAttribute("y");
-            const y2 = parseInt(y) + parseInt(rect.getAttribute("height"));
+            const y2 =
+                Number.parseInt(y) +
+                Number.parseInt(rect.getAttribute("height"));
             this.cursor.setAttribute("id", "batata");
             this.cursor.setAttribute("x1", x);
             this.cursor.setAttribute("y1", y);
@@ -1023,15 +1016,15 @@ export default {
             this.cursor.setAttribute("stroke-width", 1);
             this.cursor.setAttribute("stroke", "black");
             bglayer.append(this.cursor);
-            console.log("layout done in " + (new Date() - start) + "ms");
+            console.log("layout done in " + (Date.now() - start) + "ms");
         },
         setCursorTime(time) {
             console.log("master got hover event at " + time + "ms");
             try {
                 const bglayer = document.getElementsByClassName("bglayer")[0];
                 const rect = bglayer.childNodes[0];
-                const x = parseInt(rect.getAttribute("x"));
-                const width = parseInt(rect.getAttribute("width"));
+                const x = Number.parseInt(rect.getAttribute("x"));
+                const width = Number.parseInt(rect.getAttribute("width"));
                 const percTime =
                     (time - this.gd.layout.xaxis.range[0]) /
                     (this.gd.layout.xaxis.range[1] -
@@ -1161,11 +1154,11 @@ export default {
             const firstFetch = new Set();
             let startAt = null;
             for (const change of this.state.params.changeArray) {
-                if (!firstFetch.has(change[1])) {
-                    firstFetch.add(change[1]);
-                } else {
+                if (firstFetch.has(change[1])) {
                     startAt = change[0];
                     break;
+                } else {
+                    firstFetch.add(change[1]);
                 }
             }
             let last = [0, 0];

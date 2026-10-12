@@ -1,13 +1,15 @@
 <template>
     <div>
-        <li class="type">
-            <div v-b-toggle.plotsetupcontent>
-                <a class="section">
-                    Plots Setup
-                    <i class="expand fas fa-caret-down"></i>
-                </a>
-            </div>
-        </li>
+        <ul>
+            <li class="type">
+                <div v-b-toggle.plotsetupcontent>
+                    <a class="section">
+                        Plots Setup
+                        <i class="expand fas fa-caret-down"></i>
+                    </a>
+                </div>
+            </li>
+        </ul>
         <b-collapse
             id="plotsetupcontent"
             class="menu-content collapse out"
@@ -195,7 +197,7 @@ export default {
             );
         },
         savePreset(name) {
-            const myStorage = window.localStorage;
+            const myStorage = globalThis.localStorage;
             const saved = JSON.parse(myStorage.getItem("savedFields")) || {};
             saved[name] = this.state.expressions.map((field) => [
                 field.name,
@@ -292,7 +294,7 @@ select {
     border: 1px solid rgb(156, 156, 156);
     background-color: rgb(255, 255, 255);
     padding: 2px 2.5px;
-    color: #838282;
+    color: #4a4a4a;
 }
 
 select:focus {

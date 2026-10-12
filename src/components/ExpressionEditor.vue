@@ -172,7 +172,7 @@ export default {
             document.body.appendChild(span);
 
             const textWidth = span.offsetWidth;
-            document.body.removeChild(span);
+            span.remove();
 
             this.cursorPosition = {
                 top: inputRect.top + window.pageYOffset + inputRect.height,
@@ -180,7 +180,7 @@ export default {
                     inputRect.left +
                     window.pageXOffset +
                     textWidth +
-                    parseInt(getComputedStyle(input).paddingLeft),
+                    Number.parseInt(getComputedStyle(input).paddingLeft),
             };
         },
     },
