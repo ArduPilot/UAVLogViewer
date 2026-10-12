@@ -23,13 +23,13 @@
 <script>
 import { store } from "../Globals.js";
 import { baseWidget } from "./baseWidget";
-import { Attitude } from "vue-flight-indicators";
+import AttitudeIndicator from "./flightIndicators/AttitudeIndicator.vue";
 import { Interpolator } from "./interpolator.js";
 
 export default {
     name: "AttitudeViewer",
     components: {
-        Attitude,
+        Attitude: AttitudeIndicator,
     },
     mixins: [baseWidget],
     props: {

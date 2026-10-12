@@ -19,7 +19,7 @@
                 <li v-for="device in devices" :key="device.param">
                     {{ device.param }}:
                     <span style="float: right">
-                        {{ device.deviceName }}({{ device.address | toHex }}) @
+                        {{ device.deviceName }}({{ toHex(device.address) }}) @
                         {{ device.busType }}({{ device.bus }})
                     </span>
                 </li>
@@ -126,15 +126,6 @@ const airspeedTypes = {
 
 export default {
     name: "DeviceIDViewer",
-    filters: {
-        toHex: function (value) {
-            let hex = Number(value).toString(16);
-            if (hex.length < 2) {
-                hex = "0" + hex;
-            }
-            return "0x" + hex;
-        },
-    },
     mixins: [baseWidget],
     data() {
         return {
@@ -160,6 +151,13 @@ export default {
         },
     },
     methods: {
+        toHex(value) {
+            let hex = Number(value).toString(16);
+            if (hex.length < 2) {
+                hex = "0" + hex;
+            }
+            return "0x" + hex;
+        },
         update() {
             this.devices = [];
             const devids = Object.keys(this.state.params.values).filter(

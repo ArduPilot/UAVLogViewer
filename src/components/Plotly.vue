@@ -227,7 +227,16 @@ export default {
         expressions: {
             deep: true,
             handler() {
-                this.plot();
+                // Typing in an expression changes it on every key: redraw once typing pauses.
+                // Adding or removing a plot redraws at once.
+                clearTimeout(this.plotTimer);
+                const count = this.state.expressions.length;
+                if (count !== this.plottedCount) {
+                    this.plottedCount = count;
+                    this.plot();
+                    return;
+                }
+                this.plotTimer = setTimeout(() => this.plot(), 500);
             },
         },
     },
@@ -275,6 +284,7 @@ export default {
         this.$eventHub.$off("plot", this.plot);
         this.$eventHub.$off("clearPlot", this.clearPlot);
         clearInterval(this.interval);
+        clearTimeout(this.plotTimer);
     },
     methods: {
         popupButton() {

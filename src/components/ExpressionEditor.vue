@@ -3,7 +3,7 @@
         <input
             ref="codeEditor"
             class="code-input"
-            :value="value"
+            :value="modelValue"
             @input="updateValue($event.target.value)"
             @keydown="handleKeyDown"
             @blur="hideSuggestions"
@@ -30,8 +30,9 @@
 
 <script>
 export default {
+    model: { prop: "modelValue", event: "update:modelValue" },
     props: {
-        value: { type: String, default: "" },
+        modelValue: { type: String, default: "" },
         suggestions: {
             type: Array,
             default: () => [],
@@ -62,7 +63,7 @@ export default {
     },
     methods: {
         updateValue(value) {
-            this.$emit("input", value);
+            this.$emit("update:modelValue", value);
             this.handleInput();
         },
         hideSuggestions() {
@@ -72,7 +73,7 @@ export default {
         },
         handleInput() {
             const cursorPosition = this.$refs.codeEditor.selectionStart;
-            const textBeforeCursor = this.value.slice(0, cursorPosition);
+            const textBeforeCursor = this.modelValue.slice(0, cursorPosition);
 
             if (this.shouldShowSuggestions(textBeforeCursor)) {
                 const currentWord = this.getCurrentWord(textBeforeCursor);
@@ -126,8 +127,8 @@ export default {
         },
         applySuggestion(suggestion) {
             const cursorPosition = this.$refs.codeEditor.selectionStart;
-            const textBeforeCursor = this.value.slice(0, cursorPosition);
-            const textAfterCursor = this.value.slice(cursorPosition);
+            const textBeforeCursor = this.modelValue.slice(0, cursorPosition);
+            const textAfterCursor = this.modelValue.slice(cursorPosition);
             const currentWord = this.getCurrentWord(textBeforeCursor);
             const lastChar = textBeforeCursor.slice(-1);
             const operators = ["+", "-", "*", "/", "=", "(", ",", " "];
@@ -160,7 +161,10 @@ export default {
         updateCursorPosition() {
             const input = this.$refs.codeEditor;
             const inputRect = input.getBoundingClientRect();
-            const textBeforeCursor = this.value.slice(0, input.selectionStart);
+            const textBeforeCursor = this.modelValue.slice(
+                0,
+                input.selectionStart,
+            );
 
             // Create temporary element to measure text width
             const span = document.createElement("span");

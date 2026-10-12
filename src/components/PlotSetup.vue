@@ -16,8 +16,7 @@
                     <template v-for="(field, index) in state.expressions">
                         <li :key="'field' + index" class="field plotsetup">
                             <expression-editor
-                                v-model.lazy="field.name"
-                                v-debounce="1000"
+                                v-model="field.name"
                                 :suggestions="completionOptions"
                             />
                             <select v-model.number="field.axis">
@@ -116,7 +115,6 @@
 </template>
 <script>
 import { store, firstFreeAxis, firstFreeColor } from "./Globals.js";
-import debounce from "v-debounce";
 import ExpressionEditor from "./ExpressionEditor.vue";
 import Collapse from "./ui/Collapse.vue";
 import Modal from "./ui/Modal.vue";
@@ -127,9 +125,6 @@ export default {
         ExpressionEditor,
         Collapse,
         Modal,
-    },
-    directives: {
-        debounce,
     },
     data() {
         return {
