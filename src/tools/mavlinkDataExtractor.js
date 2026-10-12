@@ -1,7 +1,7 @@
 import { mavlink20 as mavlink } from "../libs/mavlink";
-import { ParamSeeker } from "../tools/paramseeker";
+import { ParamSeeker } from "../tools/paramseeker.js";
 
-const validGCSs = [
+const validGCSs = new Set([
     mavlink.MAV_TYPE_FIXED_WING,
     mavlink.MAV_TYPE_QUADROTOR,
     mavlink.MAV_TYPE_COAXIAL,
@@ -18,7 +18,7 @@ const validGCSs = [
     mavlink.MAV_TYPE_TRICOPTER,
     mavlink.MAV_TYPE_FLAPPING_WING,
     mavlink.MAV_TYPE_KITE,
-];
+]);
 
 export class MavlinkDataExtractor {
     static extractAttitude(messages, source) {
@@ -26,7 +26,7 @@ export class MavlinkDataExtractor {
         if ("ATTITUDE" in messages) {
             const attitudeMsgs = messages.ATTITUDE;
             for (const i in attitudeMsgs.time_boot_ms) {
-                attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] = [
+                attitudes[Number.parseInt(attitudeMsgs.time_boot_ms[i])] = [
                     attitudeMsgs.roll[i],
                     attitudeMsgs.pitch[i],
                     attitudeMsgs.yaw[i],
@@ -46,13 +46,13 @@ export class MavlinkDataExtractor {
             const msgs = messages.HEARTBEAT;
             modes = [[msgs.time_boot_ms[0], msgs.asText[0]]];
             for (const i in msgs.time_boot_ms) {
-                if (validGCSs.includes(msgs.type[i])) {
+                if (validGCSs.has(msgs.type[i])) {
                     if (msgs.asText[i] === undefined) {
                         msgs.asText[i] = "Unknown";
                     }
                     if (
                         msgs.asText[i] !== null &&
-                        msgs.asText[i] !== modes[modes.length - 1][1]
+                        msgs.asText[i] !== modes.at(-1)[1]
                     ) {
                         modes.push([msgs.time_boot_ms[i], msgs.asText[i]]);
                     }
@@ -75,7 +75,7 @@ export class MavlinkDataExtractor {
                         (msgs.base_mode[i] & 0b10000000) === 128
                             ? "Armed"
                             : "Disarmed";
-                    if (newEvent !== armedState[armedState.length - 1][1]) {
+                    if (newEvent !== armedState.at(-1)[1]) {
                         const event =
                             (msgs.base_mode[i] & 0b10000000) === 128
                                 ? "Armed"
@@ -291,13 +291,10 @@ export class MavlinkDataExtractor {
         if ("PARAM_VALUE" in messages) {
             const paramData = messages.PARAM_VALUE;
             for (const i in paramData.time_boot_ms) {
-                const paramName = paramData.param_id[i].replace(
-                    /[^a-z0-9A-Z_]/gi,
-                    "",
-                );
+                const paramName = paramData.param_id[i].replace(/\W/gi, "");
                 const paramValue = paramData.param_value[i];
                 if (
-                    lastValue.paramName &&
+                    lastValue[paramName] !== undefined &&
                     lastValue[paramName] === paramValue
                 ) {
                     continue;

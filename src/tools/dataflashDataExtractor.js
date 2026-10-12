@@ -1,7 +1,7 @@
-import { ParamSeeker } from "../tools/paramseeker";
-import extractStartTime from "./datetools";
+import { ParamSeeker } from "../tools/paramseeker.js";
+import extractStartTime from "./datetools.js";
 
-window.radians = function (a) {
+globalThis.radians = function (a) {
     return 0.0174533 * a;
 };
 
@@ -74,10 +74,10 @@ export class DataflashDataExtractor {
         if (source in messages) {
             const attitudeMsgs = messages[source];
             for (const i in attitudeMsgs.time_boot_ms) {
-                attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] = [
-                    window.radians(attitudeMsgs.Roll[i]),
-                    window.radians(attitudeMsgs.Pitch[i]),
-                    window.radians(attitudeMsgs.Yaw[i]),
+                attitudes[Number.parseInt(attitudeMsgs.time_boot_ms[i])] = [
+                    globalThis.radians(attitudeMsgs.Roll[i]),
+                    globalThis.radians(attitudeMsgs.Pitch[i]),
+                    globalThis.radians(attitudeMsgs.Yaw[i]),
                 ];
             }
         }
@@ -124,7 +124,7 @@ export class DataflashDataExtractor {
             console.log(`QUATERNION1: ${source}`);
             const attitudeMsgs = messages[source];
             for (const i in attitudeMsgs.time_boot_ms) {
-                attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] = [
+                attitudes[Number.parseInt(attitudeMsgs.time_boot_ms[i])] = [
                     attitudeMsgs.Q1[i],
                     attitudeMsgs.Q2[i],
                     attitudeMsgs.Q3[i],
@@ -143,8 +143,8 @@ export class DataflashDataExtractor {
             modes = [[msgs.time_boot_ms[0], msgs.asText[0]]];
             for (const i in msgs.time_boot_ms) {
                 if (
-                    i !== 0 &&
-                    msgs.asText[i] !== modes[modes.length - 1][1] &&
+                    i !== "0" &&
+                    msgs.asText[i] !== modes.at(-1)[1] &&
                     msgs.asText[i] !== null
                 ) {
                     modes.push([msgs.time_boot_ms[i], msgs.asText[i]]);
@@ -160,10 +160,7 @@ export class DataflashDataExtractor {
             const msgs = messages.STAT;
             armedState = [[msgs.time_boot_ms[0], msgs.Armed[0] === 1]];
             for (const i in msgs.time_boot_ms) {
-                if (
-                    (msgs.Armed[i] === 1) !==
-                    armedState[armedState.length - 1][1]
-                ) {
+                if ((msgs.Armed[i] === 1) !== armedState.at(-1)[1]) {
                     armedState.push([
                         msgs.time_boot_ms[i],
                         msgs.Armed[i] === 1,
@@ -268,21 +265,21 @@ export class DataflashDataExtractor {
         if ("MSG" in messages) {
             const msgs = messages.MSG;
             for (const i in msgs.Message) {
-                if (msgs.Message[i].toLowerCase().indexOf("arduplane") > -1) {
+                if (msgs.Message[i].toLowerCase().includes("arduplane")) {
                     return "airplane";
                 }
-                if (msgs.Message[i].toLowerCase().indexOf("ardusub") > -1) {
+                if (msgs.Message[i].toLowerCase().includes("ardusub")) {
                     return "submarine";
                 }
                 if (
                     msgs.Message[i]
                         .toLowerCase()
                         .toLowerCase()
-                        .indexOf("rover") > -1
+                        .includes("rover")
                 ) {
                     return "boat";
                 }
-                if (msgs.Message[i].toLowerCase().indexOf("tracker") > -1) {
+                if (msgs.Message[i].toLowerCase().includes("tracker")) {
                     return "tracker";
                 }
             }
@@ -294,7 +291,7 @@ export class DataflashDataExtractor {
         const params = {};
         if ("PARM" in messages) {
             const paramData = messages.PARM;
-            const range = [...Array(paramData.Name.length).keys()];
+            const range = [...new Array(paramData.Name.length).keys()];
             if (paramData.Default === undefined) {
                 return {};
             }
@@ -322,7 +319,7 @@ export class DataflashDataExtractor {
             for (const i in paramData.time_boot_ms) {
                 params.push([
                     paramData.time_boot_ms[i],
-                    paramData.param_id[i].replace(/[^a-z0-9A-Z_]/gi, ""),
+                    paramData.param_id[i].replace(/\W/g, ""),
                     paramData.param_value[i],
                 ]);
             }

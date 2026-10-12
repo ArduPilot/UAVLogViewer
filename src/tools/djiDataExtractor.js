@@ -1,4 +1,4 @@
-window.radians = function (a) {
+globalThis.radians = function (a) {
     return 0.0174533 * a;
 };
 
@@ -13,10 +13,10 @@ export class DjiDataExtractor {
             for (const i in attitudeMsgs.time_boot_ms) {
                 // console.log('attitudeMsgs.time_boot_ms[i]', attitudeMsgs.time_boot_ms[i])
                 // console.log(attitudeMsgs)
-                attitudes[parseInt(attitudeMsgs.time_boot_ms[i])] = [
-                    window.radians(attitudeMsgs.roll[i]),
-                    window.radians(attitudeMsgs.pitch[i]),
-                    window.radians(attitudeMsgs.yaw[i]),
+                attitudes[Number.parseInt(attitudeMsgs.time_boot_ms[i])] = [
+                    globalThis.radians(attitudeMsgs.roll[i]),
+                    globalThis.radians(attitudeMsgs.pitch[i]),
+                    globalThis.radians(attitudeMsgs.yaw[i]),
                 ];
             }
         }

@@ -13,7 +13,7 @@ export class ParamSeeker {
         }
         this.seek(0);
         // export to window so the mavextra functions can access them
-        window.params = this.values;
+        globalThis.params = this.values;
     }
 
     seek(time) {

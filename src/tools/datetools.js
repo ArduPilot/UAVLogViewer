@@ -23,7 +23,7 @@ export default function extractStartTime(msgs) {
             const weeks = msgs.GWk[i];
             const ms = msgs.GMS[i];
             let d = new Date(
-                (315964800.0 + 60 * 60 * 24 * 7 * weeks + ms / 1000.0) * 1000.0,
+                (315964800 + 60 * 60 * 24 * 7 * weeks + ms / 1000) * 1000,
             );
             // adjusting for leap seconds
             d = new Date(

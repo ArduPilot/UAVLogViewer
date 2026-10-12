@@ -112,7 +112,6 @@ export class MavlinkParser {
         if (message._name === "GLOBAL_POSITION_INT") {
             message.lat = message.lat / 10000000;
             message.lon = message.lon / 10000000;
-            // eslint-disable-next-line
             message.relative_alt = message.relative_alt / 1000;
             return message;
         } else if (message._name === "HEARTBEAT") {
@@ -155,7 +154,6 @@ export class MavlinkParser {
                 // }
 
                 if (+message.time_boot_ms < instance.lastTime) {
-                    // eslint-disable-next-line
                     message.time_boot_ms =
                         +message.time_boot_ms + instance.forcedTimeOffset;
                 }
@@ -177,12 +175,11 @@ export class MavlinkParser {
         }
 
         const fields = messages[0].fieldnames;
-        if (fields.indexOf("time_boot_ms") === -1) {
+        if (!fields.includes("time_boot_ms")) {
             fields.push("time_boot_ms");
         }
         if (messages[0]._name === "HEARTBEAT") {
-            fields.push("asText");
-            fields.push("craft");
+            fields.push("asText", "craft");
         } else if (messages[0]._name === "SYSTEM_TIME") {
             fields.push("time_unix_usec");
         }
@@ -191,8 +188,8 @@ export class MavlinkParser {
             mergedData[field] = [];
         }
         for (const message of messages) {
-            for (let i = 0; i < fields.length; i++) {
-                const fieldname = fields[i];
+            for (const element of fields) {
+                const fieldname = element;
                 mergedData[fieldname].push(message[fieldname]);
             }
         }
