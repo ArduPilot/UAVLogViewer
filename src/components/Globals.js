@@ -105,6 +105,9 @@ export function firstFreeColor(state) {
 
 export function resetLogState() {
     Object.assign(store, {
+        mapAvailable: false,
+        showMap: false,
+        mapError: null,
         files: undefined,
         flightModeChanges: [],
         events: [],

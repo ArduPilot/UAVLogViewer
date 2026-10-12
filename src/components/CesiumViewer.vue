@@ -432,6 +432,8 @@ export default {
     beforeDestroy() {
         // asyncSetup/setup2 may still be waiting for terrain or tiles: let them stop
         this.tornDown = true;
+        // they return early without clearing the loading spinner
+        this.state.mapLoading = false;
         // remove only this component's listeners (plots and widgets listen to hoveredTime too)
         this.$eventHub.$off("hoveredTime", this.showAttitude);
         this.$eventHub.$off("rangeChanged", this.onRangeChanged);
@@ -997,9 +999,6 @@ export default {
             closeButton = document.getElementById("cesium-close-button");
             closeButton.addEventListener("click", () => {
                 this.state.showMap = false;
-                this.$nextTick(function () {
-                    this.$eventHub.$emit("force-resize-plotly");
-                });
             });
         },
         addBathymetryButton() {
@@ -2423,6 +2422,10 @@ export default {
         },
         loadTrajectory(source) {
             this.waitForMessages([source]).then(() => {
+                // the 3D view may have been closed while the messages loaded
+                if (this.tornDown) {
+                    return;
+                }
                 const dataExtractor = this.getDataExtractor();
                 this.state.trajectories = dataExtractor.extractTrajectory(
                     this.state.messages,
@@ -2569,6 +2572,9 @@ export default {
         },
         loadAttitude(source) {
             this.waitForMessages([source]).then(() => {
+                if (this.tornDown) {
+                    return;
+                }
                 const dataExtractor =
                     this.state.logType === "tlog"
                         ? MavlinkDataExtractor

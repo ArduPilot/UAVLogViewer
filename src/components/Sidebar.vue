@@ -35,6 +35,14 @@
                 >
                     <i class="fas fa-chart-line"></i>Plot</a
                 >
+                <!-- 3D: reopens the 3D view after its close button -->
+                <a
+                    v-if="state.mapAvailable && !state.showMap"
+                    title="Show the 3D view"
+                    @click="state.showMap = true"
+                >
+                    <i class="fas fa-cube"></i>3D</a
+                >
                 <!-- more -->
                 <a
                     v-if="state.processDone"

@@ -174,6 +174,11 @@ export default {
             return set;
         },
     },
+    watch: {
+        "state.showMap"() {
+            this.$nextTick(() => this.$eventHub.$emit("force-resize-plotly"));
+        },
+    },
     created() {
         this.$eventHub.$on("messagesDoneLoading", this.extractFlightData);
         this.state.messages = {};
