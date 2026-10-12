@@ -12,49 +12,55 @@
             :level="0"
         >
         </tree-menu>
-        <li v-b-toggle="'messages'">
-            <a class="section">
-                Plot Individual Field
-                <i class="fas fa-caret-down"></i
-            ></a>
-        </li>
+        <ul>
+            <li v-b-toggle="'messages'">
+                <a class="section">
+                    Plot Individual Field
+                    <i class="fas fa-caret-down"></i
+                ></a>
+            </li>
+        </ul>
 
         <b-collapse id="messages">
-            <li class="input-li">
-                <input
-                    id="filterbox"
-                    placeholder=" Type here to filter..."
-                    v-model="filter"
-                />
-            </li>
+            <ul>
+                <li class="input-li">
+                    <input
+                        id="filterbox"
+                        placeholder=" Type here to filter..."
+                        v-model="filter"
+                    />
+                </li>
+            </ul>
             <template
                 v-for="key of Object.keys(this.messageTypesFiltered).sort()"
             >
-                <li class="type" v-bind:key="key">
-                    <div
-                        v-b-toggle="'type' + key"
-                        :title="
-                            messageDocs[key.split('[')[0]]
-                                ? messageDocs[key.split('[')[0]].doc
-                                : ''
-                        "
-                    >
-                        <a class="section"
-                            >{{ key }}
-                            <span v-if="messageTypes[key].isArray">{{
-                                "[...]"
-                            }}</span>
-                            <i class="expand fas fa-caret-down"></i>
-                            <span class="description">
-                                {{
-                                    messageDocs[key.split("[")[0]]
-                                        ? messageDocs[key.split("[")[0]].doc
-                                        : ""
-                                }}
-                            </span>
-                        </a>
-                    </div>
-                </li>
+                <ul v-bind:key="key">
+                    <li class="type">
+                        <div
+                            v-b-toggle="'type' + key"
+                            :title="
+                                messageDocs[key.split('[')[0]]
+                                    ? messageDocs[key.split('[')[0]].doc
+                                    : ''
+                            "
+                        >
+                            <a class="section"
+                                >{{ key }}
+                                <span v-if="messageTypes[key].isArray">{{
+                                    "[...]"
+                                }}</span>
+                                <i class="expand fas fa-caret-down"></i>
+                                <span class="description">
+                                    {{
+                                        messageDocs[key.split("[")[0]]
+                                            ? messageDocs[key.split("[")[0]].doc
+                                            : ""
+                                    }}
+                                </span>
+                            </a>
+                        </div>
+                    </li>
+                </ul>
                 <b-collapse :id="'type' + key" v-bind:key="key + '1'">
                     <template v-for="item in messageTypes[key].complexFields">
                         <li
@@ -66,7 +72,7 @@
                                 isPlottable(key, item.name) &&
                                 item.name
                                     .toLowerCase()
-                                    .indexOf(filter.toLowerCase()) !== -1
+                                    .includes(filter.toLowerCase())
                             "
                         >
                             <a>
@@ -158,7 +164,6 @@ export default {
     },
     methods: {
         loadXmlPresets() {
-            // eslint-disable-next-line
             const graphs = {};
             const files = [
                 require("../assets/mavgraphs.xml"),
@@ -180,7 +185,7 @@ export default {
                     for (const expression of graph.expression) {
                         const fields = [];
                         for (let exp of expression.split(" ")) {
-                            if (exp.indexOf(":") >= 0) {
+                            if (exp.includes(":")) {
                                 exp = exp.replace(":2", "");
                                 fields.push([exp, 1]);
                             } else {
@@ -197,7 +202,7 @@ export default {
             return graphs;
         },
         loadLocalPresets() {
-            const saved = window.localStorage.getItem("savedFields");
+            const saved = globalThis.localStorage.getItem("savedFields");
             if (saved !== null) {
                 this.userPresets = JSON.parse(saved);
                 for (const preset in this.userPresets) {
@@ -292,7 +297,7 @@ export default {
             const numberFields = [];
             if (message && message.fieldnames) {
                 for (const field of message.fieldnames) {
-                    if (!isNaN(message[field])) {
+                    if (!Number.isNaN(Number(message[field]))) {
                         numberFields.push(field);
                     }
                 }
@@ -338,7 +343,7 @@ export default {
             return fields;
         },
         isAvailable(msg) {
-            const msgRe = /[A-Z][A-Z0-9_]+(\[[0-9]\])?(\.[a-zA-Z0-9_]+)?/g;
+            const msgRe = /[A-Z][A-Z0-9_]+(\[\d\])?(\.\w+)?/g;
             const match = msg[0].match(msgRe);
             if (!match) {
                 return true;
@@ -365,19 +370,18 @@ export default {
         messageTypesFiltered() {
             const filtered = {};
             for (const key of Object.keys(this.messageTypes)) {
-                if (this.hiddenTypes.indexOf(key) === -1) {
+                if (!this.hiddenTypes.includes(key)) {
                     if (this.filter === "") {
                         this.collapse("type" + key);
                         filtered[key] = this.messageTypes[key];
                         continue;
                     }
                     if (
-                        this.messageTypes[key].expressions.filter(
-                            (field) =>
-                                field
-                                    .toLowerCase()
-                                    .indexOf(this.filter.toLowerCase()) !== -1,
-                        ).length > 0
+                        this.messageTypes[key].expressions.some((field) =>
+                            field
+                                .toLowerCase()
+                                .includes(this.filter.toLowerCase()),
+                        )
                     ) {
                         filtered[key] = this.messageTypes[key];
                         // console.log('type' + key, document.getElementById('type' + key))
@@ -402,10 +406,10 @@ export default {
                     }
                     missing = missing || !this.isAvailable(field);
                     if (!missing) {
-                        if (!(key in dict)) {
-                            dict[key] = { messages: [[...field, color++]] };
-                        } else {
+                        if (key in dict) {
                             dict[key].messages.push([...field, color++]);
+                        } else {
+                            dict[key] = { messages: [[...field, color++]] };
                         }
                     }
                 }
@@ -421,10 +425,10 @@ export default {
                     // If all of the expressions match, add this and move on
                     missing = missing || !this.isAvailable(field);
                     if (!missing) {
-                        if (!(key in dict)) {
-                            dict[key] = { messages: [[...field, color++]] };
-                        } else {
+                        if (key in dict) {
                             dict[key].messages.push([...field, color++]);
+                        } else {
+                            dict[key] = { messages: [[...field, color++]] };
                         }
                     }
                 }

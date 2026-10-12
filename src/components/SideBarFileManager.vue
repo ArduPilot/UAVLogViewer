@@ -151,10 +151,10 @@ export default {
             ev.preventDefault();
             if (ev.dataTransfer.items) {
                 // Use DataTransferItemList interface to access the file(s)
-                for (let i = 0; i < ev.dataTransfer.items.length; i++) {
+                for (const element of ev.dataTransfer.items) {
                     // If dropped items aren't files, reject them
-                    if (ev.dataTransfer.items[i].kind === "file") {
-                        const file = ev.dataTransfer.items[i].getAsFile();
+                    if (element.kind === "file") {
+                        const file = element.getAsFile();
                         this.process(file);
                     }
                 }
@@ -177,26 +177,30 @@ export default {
                 type: type,
             });
         },
-        process: function (file) {
+        process: async function (file) {
             this.state.file = file.name;
             this.state.processStatus = "Pre-processing...";
             this.state.processPercentage = 100;
             this.file = file;
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const data = reader.result;
-                worker.postMessage({
-                    action: "parse",
-                    file: data,
-                    isTlog: file.name.endsWith("tlog"),
-                    isDji: file.name.endsWith("txt"),
-                });
-            };
             this.state.logType = file.name.endsWith("tlog") ? "tlog" : "bin";
             if (file.name.endsWith(".txt")) {
                 this.state.logType = "dji";
             }
-            reader.readAsArrayBuffer(file);
+            let data;
+            try {
+                data = await file.arrayBuffer();
+            } catch (error) {
+                console.error("Failed to read file", error);
+                this.state.processStatus =
+                    "Error reading file: " + (error?.message ?? error);
+                return;
+            }
+            worker.postMessage({
+                action: "parse",
+                file: data,
+                isTlog: file.name.endsWith("tlog"),
+                isDji: file.name.endsWith("txt"),
+            });
         },
         uploadFile() {
             this.uploadStarted = true;
@@ -233,7 +237,7 @@ export default {
             if (message.name === "GLOBAL_POSITION_INT") {
                 message.lat = message.lat / 10000000;
                 message.lon = message.lon / 10000000;
-                // eslint-disable-next-line
+                // eslint-disable-next-line camelcase
                 message.relative_alt = message.relative_alt / 1000;
             }
             return message;
@@ -243,11 +247,11 @@ export default {
         },
         share() {
             const el = document.createElement("textarea");
-            el.value = window.location.host + "/#/v/" + this.url;
+            el.value = globalThis.location.host + "/#/v/" + this.url;
             document.body.appendChild(el);
             el.select();
             document.execCommand("copy");
-            document.body.removeChild(el);
+            el.remove();
             this.shared = true;
         },
         downloadFileFromURL(url) {
@@ -257,8 +261,8 @@ export default {
             a.href = url;
             a.download = this.state.file + "-trimmed." + this.state.logType;
             a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            a.remove();
+            globalThis.URL.revokeObjectURL(url);
         },
     },
     mounted() {

@@ -242,7 +242,7 @@ export default {
             }
 
             const list = Object.keys(this.state.timeAttitude);
-            this.state.lastTime = parseInt(list[list.length - 1]);
+            this.state.lastTime = Number.parseInt(list[list.length - 1]);
 
             this.state.trajectorySources =
                 this.dataExtractor.extractTrajectorySources(
@@ -391,17 +391,6 @@ export default {
     color: #ffd75e;
     font-family: "Montserrat", sans-serif;
     font-size: 12px;
-}
-
-.nav-side-menu ul :not(collapsed) .arrow:before,
-.nav-side-menu li :not(collapsed) .arrow:before {
-    font-family: "Montserrat", sans-serif;
-    content: "\f078";
-    display: inline-block;
-    padding-left: 10px;
-    padding-right: 10px;
-    vertical-align: middle;
-    float: right;
 }
 
 body {
