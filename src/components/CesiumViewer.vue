@@ -266,7 +266,7 @@ export default {
                         0.1, 0.25, 0.5, 0.75, 1, 2, 5, 10, 15,
                     ]);
                     this.viewer.scene.globe.depthTestAgainstTerrain = true;
-                    this.viewer.shadowMap.maxmimumDistance = 10000;
+                    this.viewer.shadowMap.maximumDistance = 10000;
                     this.viewer.shadowMap.softShadows = true;
                     this.viewer.shadowMap.size = 4096;
                     this.viewer.animation.viewModel.timeFormatter = (
