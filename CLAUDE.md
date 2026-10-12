@@ -17,7 +17,11 @@ npm install                               # postinstall runs patch-package (patc
 npm run dev           # dev server with hot reload on 0.0.0.0:8080
 npm run build         # production build into dist/
 npm start             # serve dist/ on :8080
-npm run lint          # ESLint over src, test/unit, test/e2e/specs (runs with --fix)
+npm run lint          # ESLint (eslint.config.js); npm run lint:fix applies the autofixes
+npm run lint:css      # Stylelint on the component styles
+npm run lint:md       # markdownlint
+npm run lint:all      # the three above + format:check
+ruff check && ruff format --check   # Python tooling (scripts/terrain, src/assets/parse_mavgraph.py)
 npm run format        # prettier --write .
 npm run format:check  # prettier --check .
 npm run unit          # Jest 29 with coverage
@@ -25,19 +29,22 @@ npx jest --config test/unit/jest.conf.js test/unit/specs/mavlinklogs.spec.js   #
 npx jest --config test/unit/jest.conf.js -t "parse"                           # filter by test name
 ```
 
-- The parser specs need real logs. They read `$TEST_LOG_DIR`, else `<os tmpdir>/testlogs` (filled by `test/testlogfiles/logdownloader.sh`, some of whose URLs are stale), else `test/testlogfiles/`. Without logs both suites are skipped, not failed. Use full flight logs: the assertions expect more than 50 attitude samples.
+- The parser specs need real logs. They read `$TEST_LOG_DIR`, else `<os tmpdir>/testlogs` (filled by `test/testlogfiles/logdownloader.sh` from the current autotest logs), else `test/testlogfiles/`. Without logs both suites are skipped, not failed. Use full flight logs: the assertions expect more than 50 attitude samples.
+- Specs can import `.vue` components (`@vue/vue2-jest` with template `prettify: false`, as in webpack; `_COMMIT_`/`_BUILDDATE_` are Jest globals). A spec importing `Plotly.vue` must `jest.mock("plotly.js")` and `jest.mock("d3")` (d3 is ESM-only).
+- CI (`.github/workflows/nodejs.yml`) has a lint job: `npm run lint:all`, Ruff (pinned to 0.17.0, its default rules change between releases), ShellCheck, hadolint and actionlint. Keep all of them clean.
 - `npm run e2e` builds, serves `dist/` on port 8089 and runs Nightwatch 3 in headless Chrome; use `npm run e2e -- --env edgeHeadless` where only Edge is installed. Nightwatch starts the browser driver itself; `selenium-webdriver` is overridden in package.json because the version Nightwatch pins can no longer download Edge drivers. On Windows its startup prints a harmless `wmic.exe` not-found message.
 - The dev server runs `ESLintPlugin({ fix: true })`, so **it rewrites source files while it runs**. Check `git status` after a dev session.
 - The Dockerfile is a two-stage build (build stage with git, runtime stage running as a non-root user with `USER_UID`/`USER_GID` build args). Keep it clean under `hadolint --failure-threshold style`; CI runs hadolint.
+- `scripts/terrain` (Python): `uv venv scripts/terrain/.venv` then `uv pip install --python scripts/terrain/.venv -r scripts/terrain/requirements.txt` also works on Windows (the rasterio wheel bundles GDAL). Pass `--coarse-dem` (from `build_coarse.py`) for the low zooms, or one worker reads gigabytes for a long time. Tiles are gzipped with the write time in the header, so compare tilesets after decompressing.
 - Offline use: mount a quantized-mesh tileset (built with `scripts/terrain`, see README) at `dist/quantized` in the container. `serve.json` (used by `npm start`) sends `Content-Encoding: gzip` for the gzipped `.terrain` tiles; `layer.json` is plain JSON. Icons (Font Awesome) and the offline globe imagery (Cesium's Natural Earth II in `dist/Assets`) are bundled; only analytics, a Google web font and the online check need the network.
 
 ## Module system and build
 
-- `package.json` has `"type": "module"`: every `.js` file is an ES module. Configs whose tools load them synchronously stay CommonJS with a `.cjs` name: `.eslintrc.cjs`, `babel.config.cjs`, `test/e2e/nightwatch.conf.cjs`. Everything else (`build/`, `config/`, `.postcssrc.js`, `scripts/`, `test/unit/jest.conf.js`) uses `import`/`export`.
+- `package.json` has `"type": "module"`: every `.js` file is an ES module. Configs whose tools load them synchronously stay CommonJS with a `.cjs` name: `babel.config.cjs`, `test/e2e/nightwatch.conf.cjs`. Everything else (`build/`, `config/`, `.postcssrc.js`, `eslint.config.js`, `stylelint.config.js`, `scripts/`, `test/unit/jest.conf.js`) uses `import`/`export`.
 - In build configs, use `createRequire(import.meta.url)` for `require.resolve`, and `fileURLToPath(new URL(..., import.meta.url))` for paths. `import.meta.resolve` returns a `file://` URL, not a path.
 - ESM imports are hoisted, so `NODE_ENV` is set in the npm scripts with `cross-env`, before any config module runs.
 - webpack keeps resolving extensionless imports in `src/` (`resolve.fullySpecified: false` for `.m?js`).
-- The url-loader/file-loader asset rules in `webpack.base.conf.js` are `type: "javascript/auto"`, otherwise webpack 5 asset modules re-emit the loader output and CSS `url()`s break; fonts use `esModule: false` because only CSS references them. Images stay ES modules: components load them with `require("../assets/x.png").default`.
+- The url-loader/file-loader asset rules in `webpack.base.conf.js` are `type: "javascript/auto"`, otherwise webpack 5 asset modules re-emit the loader output and CSS `url()`s break; fonts and SVGs use `esModule: false`. Components `import` assets (`import icon from "../assets/x.png"`), which works with both kinds of loader; `require(...).default` is `undefined` for the `esModule: false` ones.
 - `build/vue-loader.conf.js` sets `prettify: false`: Vue 2.7's template compiler calls `prettier.format()` synchronously, and with prettier 3 that returns a Promise and breaks dev builds.
 - `webpack.dev.conf.js` and `webpack.prod.conf.js` define `_COMMIT_` and `_BUILDDATE_` (used in `Globals.js`); `webpack.base.conf.js` sets `resolve.fallback` polyfills for Node built-ins (`buffer`, `stream`, `zlib`, `crypto`, …) used by the parsers.
 
@@ -61,11 +68,13 @@ npx jest --config test/unit/jest.conf.js -t "parse"                           # 
 
 ### Plot expressions
 
-Plot series are user expressions such as `ATT.Roll * 2` or `lowpass(ATTITUDE.pitch, 0.9)`. `Plotly.vue#evaluateExpression` finds the uppercase message names in the expression, rewrites them to `a[i].`, compiles the result with `new Function`, and evaluates it over time-aligned rows. Results are cached in `state.plotCache` by expression string. Expressions can call helpers that `src/mavextra/mavextra.js` and `mymavextra.js` attach to `globalThis` (a port of pymavlink's mavextra; uses `vector3.js` and `matrix3.js`). Their snake_case names are public API, used by saved expressions and by the preset graphs in `src/assets/mavgraphs*.xml` and `ekf*Graphs.xml` (MAVExplorer format; `parse_mavgraph.py` is the converter). Don't rename them.
+Plot series are user expressions such as `ATT.Roll * 2` or `lowpass(ATTITUDE.pitch, 0.9)`. `Plotly.vue#evaluateExpression` finds the uppercase message names in the expression (whole words not preceded by a dot, so `Math.PI` is not a message), rewrites them to `a[i].`, compiles the result with `new Function`, and evaluates it over time-aligned rows. Results are cached in `state.plotCache` by expression string. Expressions can call helpers that `src/mavextra/mavextra.js` and `mymavextra.js` attach to `globalThis` (a port of pymavlink's mavextra; uses `vector3.js` and `matrix3.js`). Their snake_case names are public API, used by saved expressions and by the preset graphs in `src/assets/mavgraphs*.xml` and `ekf*Graphs.xml` (MAVExplorer format; `parse_mavgraph.py` is the converter). Don't rename them.
 
 ## Code style
 
 - Prettier 3 owns formatting (`.prettierrc.json`: 4-space indent, double quotes, semicolons, trailing commas). Run `npm run format` rather than hand-formatting; `.prettierignore` excludes the submodule, XML assets and `package-lock.json`. Line endings are LF (`.gitattributes`).
-- ESLint (`plugin:vue/essential` + `standard` + `eslint-config-prettier`) checks code quality only. `camelcase` checks our identifiers but not property names (MAVLink, DataFlash, Plotly and Nightwatch use snake_case). Rule exceptions live in `eslint.config.js` with their reason, not in inline `eslint-disable` comments. `src/libs/` (generated) and `src/tools/parsers/` are not linted.
+- ESLint 10 flat config (`eslint.config.js`) checks code quality only: `@eslint/js` recommended, neostandard (`noStyle`; its `files` option adds `.vue`, which it skips by default), eslint-plugin-vue `flat/vue2-recommended`, SonarJS recommended (cognitive complexity at most 15 per function) and eslint-config-prettier. `camelcase` checks our identifiers but not property names (MAVLink, DataFlash, Plotly and Nightwatch use snake_case). Rule exceptions live in `eslint.config.js` with their reason, not in inline `eslint-disable` comments. `src/libs/` (generated) and the JsDataflashParser submodule are not linted.
+- Stylelint (`stylelint.config.js`: standard + recommended-vue) checks the component styles. Ids and classes may be camelCase or snake_case (scripts build names like `"pane" + name`); media queries keep `min-`/`max-` (the range syntax needs Safari 16.4); autoprefixer adds vendor prefixes, so don't write them.
+- Ruff (`ruff.toml`) uses its default rules and formatter for the Python tooling; use f-strings.
 - Vue 2: `:key` goes on the elements inside `<template v-for>`, never on the `<template>` itself.
 - Use `Number.isNaN(Number(x))` where the old code relied on the global `isNaN` coercing strings (for...in keys, preset color indices, expression values). Plain `Number.isNaN("abc")` is `false`.
