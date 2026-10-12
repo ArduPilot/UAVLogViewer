@@ -1523,7 +1523,7 @@ export default {
         // =========================================================================
         // 7. MAIN PLOT FUNCTION (short and readable)
         // =========================================================================
-        async waitForBathymetryMessages(timeoutMs = 9000) {
+        waitForBathymetryMessages(timeoutMs = 9000) {
             for (const message of ["RFND", "POS"]) {
                 this.$eventHub.$emit("loadType", message);
             }
@@ -1531,12 +1531,20 @@ export default {
                 (this.state.messages.RFND || this.state.messages["RFND[0]"]) &&
                 this.state.messages.POS;
             const deadline = Date.now() + timeoutMs;
-            while (!ready()) {
-                if (Date.now() > deadline) {
-                    throw new Error("Bathymetry needs RFND and POS messages");
-                }
-                await new Promise((resolve) => setTimeout(resolve, 100));
-            }
+            return new Promise((resolve, reject) => {
+                const check = () => {
+                    if (ready()) {
+                        resolve();
+                    } else if (Date.now() > deadline) {
+                        reject(
+                            new Error("Bathymetry needs RFND and POS messages"),
+                        );
+                    } else {
+                        setTimeout(check, 100);
+                    }
+                };
+                check();
+            });
         },
         async plotBathymetry() {
             await this.waitForBathymetryMessages();
