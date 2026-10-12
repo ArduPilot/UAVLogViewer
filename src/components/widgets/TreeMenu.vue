@@ -1,7 +1,7 @@
 <template>
     <div>
         <li
-            v-b-toggle="cleanName"
+            v-collapse-toggle="cleanName"
             :style="{ 'margin-left': '' + level * 15 + 'px' }"
         >
             <a class="section">
@@ -10,7 +10,7 @@
             ></a>
         </li>
         <template v-if="nodes.length === undefined">
-            <b-collapse :id="cleanName">
+            <Collapse :name="cleanName">
                 <template v-for="(newNode, nodeName) in nodes">
                     <tree-menu
                         v-if="
@@ -52,16 +52,18 @@
                         </a>
                     </li>
                 </template>
-            </b-collapse>
+            </Collapse>
         </template>
     </div>
 </template>
 
 <script>
 import { store } from "../Globals.js";
+import Collapse from "../ui/Collapse.vue";
 
 export default {
     name: "TreeMenu",
+    components: { Collapse },
     props: {
         label: { type: String, required: true },
         nodes: { type: Object, required: true },

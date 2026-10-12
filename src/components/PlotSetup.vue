@@ -2,7 +2,7 @@
     <div>
         <ul>
             <li class="type">
-                <div v-b-toggle.plotsetupcontent>
+                <div v-collapse-toggle="'plotsetupcontent'">
                     <a class="section">
                         Plots Setup
                         <i class="expand fas fa-caret-down"></i>
@@ -10,11 +10,7 @@
                 </div>
             </li>
         </ul>
-        <b-collapse
-            id="plotsetupcontent"
-            class="menu-content collapse out"
-            visible
-        >
+        <Collapse name="plotsetupcontent" class="menu-content" visible>
             <ul class="colorpicker plot-wrapper">
                 <template v-if="state.expressions.length">
                     <template v-for="(field, index) in state.expressions">
@@ -80,15 +76,14 @@
                 </button>
                 <button
                     v-if="state.expressions.length > 0"
-                    v-b-modal.modal-prevent-closing
                     class="save-preset"
+                    @click="openSaveModal"
                 >
                     <i class="fa fa-check-circle" aria-hidden="true"></i>Save
                     Preset
                 </button>
                 <button
                     v-if="state.expressions.length > 0"
-                    v-b-modal.modal-prevent-closing
                     class="save-preset"
                     @click="$eventHub.$emit('clearPlot')"
                 >
@@ -96,37 +91,42 @@
                     clear
                 </button>
             </div>
-        </b-collapse>
+        </Collapse>
         <!-- MODAL -->
-        <b-modal
-            id="modal-prevent-closing"
-            ref="modal"
-            @show="resetModal"
-            @hidden="resetModal"
+        <Modal
+            :show="saveModalOpen"
             @ok="handleOk"
+            @cancel="saveModalOpen = false"
         >
-            <form ref="form" @submit.stop.prevent="handleOk">
-                <b-form-group label="New Preset Name" label-for="name-input">
-                    <b-form-input
-                        id="name-input"
-                        v-model="name"
-                        placeholder="Attitude/OtherRoll"
-                        required
-                    ></b-form-input>
-                </b-form-group>
+            <form @submit.prevent="handleOk">
+                <label for="name-input" class="form-label"
+                    >New Preset Name</label
+                >
+                <input
+                    id="name-input"
+                    ref="nameInput"
+                    v-model="name"
+                    class="form-control"
+                    placeholder="Attitude/OtherRoll"
+                    required
+                />
             </form>
-        </b-modal>
+        </Modal>
     </div>
 </template>
 <script>
 import { store, firstFreeAxis, firstFreeColor } from "./Globals.js";
 import debounce from "v-debounce";
 import ExpressionEditor from "./ExpressionEditor.vue";
+import Collapse from "./ui/Collapse.vue";
+import Modal from "./ui/Modal.vue";
 
 export default {
     name: "PlotSetup",
     components: {
         ExpressionEditor,
+        Collapse,
+        Modal,
     },
     directives: {
         debounce,
@@ -135,6 +135,7 @@ export default {
         return {
             state: store,
             name: "",
+            saveModalOpen: false,
         };
     },
     computed: {
@@ -188,19 +189,15 @@ export default {
             this.$eventHub.$emit("presetsChanged");
         },
 
-        resetModal() {
+        openSaveModal() {
             this.name = "";
+            this.saveModalOpen = true;
+            this.$nextTick(() => this.$refs.nameInput?.focus());
         },
-        handleOk(bvModalEvt) {
-            // Prevent modal from closing
-            bvModalEvt.preventDefault();
+        handleOk() {
             if (this.name.length > 0) {
                 this.savePreset(this.name);
-
-                // Hide the modal manually
-                this.$nextTick(() => {
-                    this.$refs.modal.hide();
-                });
+                this.saveModalOpen = false;
             }
         },
     },

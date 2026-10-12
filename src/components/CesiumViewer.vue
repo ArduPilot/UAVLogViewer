@@ -17,7 +17,7 @@
                     </option>
                 </select>
                 <table>
-                    <thead class="sr-only">
+                    <thead class="visually-hidden">
                         <tr>
                             <th scope="col">Legend</th>
                         </tr>

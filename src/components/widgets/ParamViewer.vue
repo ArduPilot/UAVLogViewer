@@ -17,9 +17,17 @@
             </span>
             <input id="filterbox" v-model="filter" placeholder="Filter" />
             <button @click="saveParametersToFile">save</button>
-            <b-form-checkbox v-if="haveDefaults" v-model="showdiff">
-                Show only changed
-            </b-form-checkbox>
+            <div v-if="haveDefaults" class="form-check">
+                <input
+                    id="showdiff"
+                    v-model="showdiff"
+                    class="form-check-input"
+                    type="checkbox"
+                />
+                <label class="form-check-label" for="showdiff">
+                    Show only changed
+                </label>
+            </div>
             <table id="params">
                 <tr>
                     <th>Param</th>

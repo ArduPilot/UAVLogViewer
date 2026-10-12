@@ -44,7 +44,7 @@
             <sidebar />
 
             <main
-                class="col-md-9 ml-sm-auto col-lg-10 flex-column d-sm-flex"
+                class="col-md-9 ms-sm-auto col-lg-10 flex-column d-sm-flex"
                 role="main"
             >
                 <div
@@ -398,6 +398,12 @@ body {
     padding-right: 0;
 }
 
+/* <main> is a column outside a .row, which Bootstrap 5 does not pad; without the gutter the
+   rows inside it would start 12px early, under the sidebar */
+.row {
+    --bs-gutter-x: 0;
+}
+
 div .col-12 {
     padding-left: 0;
     padding-right: 0;
@@ -472,5 +478,9 @@ div .atom-spinner {
 <style>
 a {
     color: #fff !important;
+}
+
+#app a {
+    text-decoration: none;
 }
 </style>

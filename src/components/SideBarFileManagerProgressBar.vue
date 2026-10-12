@@ -1,12 +1,19 @@
 <template>
     <div :id="[percent > 99 ? 'hideMe' : '']" class="progress1">
-        <b-progress :max="100" height="30px">
-            <b-progress-bar :value="percent">
+        <div class="progress" style="height: 30px">
+            <div
+                class="progress-bar"
+                role="progressbar"
+                :style="{ width: percent + '%' }"
+                :aria-valuenow="percent"
+                aria-valuemin="0"
+                aria-valuemax="100"
+            >
                 <strong>{{
                     percent < 100 ? percent.toFixed(1) : complete
                 }}</strong>
-            </b-progress-bar>
-        </b-progress>
+            </div>
+        </div>
     </div>
 </template>
 

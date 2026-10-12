@@ -13,8 +13,11 @@
             /></a>
         </h1>
         <!-- TABHOLDER -->
-        <i v-b-toggle.menucontent class="fa fa-bars fa-2x toggle-btn"></i>
-        <b-collapse id="menucontent" class="menu-content collapse out" visible>
+        <i
+            v-collapse-toggle="'menucontent'"
+            class="fa fa-bars fa-2x toggle-btn"
+        ></i>
+        <Collapse name="menucontent" class="menu-content" visible>
             <span v-if="state.file" class="filename"
                 >Current file: {{ state.file }}</span
             >
@@ -52,14 +55,10 @@
                     <i class="fas fa-ellipsis-v"></i>
                 </a>
             </div>
-        </b-collapse>
+        </Collapse>
         <!-- TOGGLE MENU -->
         <div class="menu-list">
-            <b-collapse
-                id="menucontent"
-                class="menu-content collapse out"
-                visible
-            >
+            <Collapse name="menucontent" class="menu-content" visible>
                 <div :style="{ display: selected === 'plot' ? '' : 'none' }">
                     <plotSetup />
                     <message-menu />
@@ -178,7 +177,7 @@
                         </select>
                     </div>
                 </div>
-            </b-collapse>
+            </Collapse>
         </div>
     </div>
 </template>
@@ -187,12 +186,13 @@ import Dropzone from "./SideBarFileManager.vue";
 import MessageMenu from "./SideBarMessageMenu.vue";
 import { store } from "./Globals.js";
 import PlotSetup from "./PlotSetup.vue";
+import Collapse from "./ui/Collapse.vue";
 import githubIcon from "../assets/GitHub-Mark-64px.png";
 import wikiIcon from "../assets/wiki.svg";
 
 export default {
     name: "Sidebar",
-    components: { PlotSetup, MessageMenu, Dropzone },
+    components: { PlotSetup, MessageMenu, Dropzone, Collapse },
     data() {
         return {
             githubIcon,
@@ -449,10 +449,6 @@ i {
     background: linear-gradient(0deg, rgb(67 95 155) 51%, rgb(61 79 121) 100%);
 }
 
-.custom-control-inline {
-    margin-right: 0;
-}
-
 /* BRAND */
 
 .fa-plane {
@@ -577,6 +573,7 @@ label {
 
 @media only screen and (min-width: 991px) and (max-width: 1439px) {
     .nav-side-menu {
+        width: 27% !important;
         max-width: 27% !important;
     }
 
@@ -591,6 +588,7 @@ label {
 
 @media only screen and (min-width: 1440px) and (max-width: 2000px) {
     .nav-side-menu {
+        width: 20% !important;
         max-width: 20% !important;
     }
 
@@ -605,6 +603,7 @@ label {
 
 @media only screen and (min-width: 2000px) {
     .nav-side-menu {
+        width: 15% !important;
         max-width: 15% !important;
     }
 

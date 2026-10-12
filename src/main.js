@@ -5,10 +5,9 @@ import App from "./App.vue";
 import router from "./router";
 import { eventHub } from "./eventHub.js";
 
-// Importing Bootstrap Vue
-import BootstrapVue from "bootstrap-vue";
+// Bootstrap 5 styles; the few components the app needs are in components/ui
 import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap-vue/dist/bootstrap-vue.css";
+import { collapseToggle } from "./components/ui/collapseToggle.js";
 // Icons bundled with the app (no CDN, works offline)
 import "@fortawesome/fontawesome-free/css/all.css";
 
@@ -16,7 +15,7 @@ import "@fortawesome/fontawesome-free/css/all.css";
 import VueRouter from "vue-router";
 
 Vue.use(VueRouter);
-Vue.use(BootstrapVue);
+Vue.directive("collapse-toggle", collapseToggle);
 
 Vue.config.productionTip = false;
 

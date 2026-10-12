@@ -31,8 +31,6 @@
                 @change="onChange"
             />
         </div>
-        <!--<b-form-checkbox @change="uploadFile()" class="uploadCheckbox" v-if="file!=null && !uploadStarted"> Upload
-        </b-form-checkbox>-->
         <VProgress
             v-if="uploadpercentage > -1"
             :complete="transferMessage"

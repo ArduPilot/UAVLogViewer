@@ -13,7 +13,7 @@
         >
         </tree-menu>
         <ul>
-            <li v-b-toggle="'messages'">
+            <li v-collapse-toggle="'messages'">
                 <a class="section">
                     Plot Individual Field
                     <i class="fas fa-caret-down"></i
@@ -21,7 +21,7 @@
             </li>
         </ul>
 
-        <b-collapse id="messages">
+        <Collapse name="messages">
             <ul>
                 <li class="input-li">
                     <input
@@ -35,7 +35,7 @@
                 <ul :key="key">
                     <li class="type">
                         <div
-                            v-b-toggle="'type' + key"
+                            v-collapse-toggle="'type' + key"
                             :title="
                                 messageDocs[key.split('[')[0]]
                                     ? messageDocs[key.split('[')[0]].doc
@@ -59,7 +59,12 @@
                         </div>
                     </li>
                 </ul>
-                <b-collapse :id="'type' + key" :key="key + '1'">
+                <Collapse
+                    :key="key + '1'"
+                    :name="'type' + key"
+                    :visible="filter !== ''"
+                    :sync-key="filter"
+                >
                     <template v-for="item in messageTypes[key].complexFields">
                         <li
                             v-if="
@@ -96,14 +101,15 @@
                             </a>
                         </li>
                     </template>
-                </b-collapse>
+                </Collapse>
             </template>
-        </b-collapse>
+        </Collapse>
     </div>
 </template>
 <script>
 import { store } from "./Globals.js";
 import TreeMenu from "./widgets/TreeMenu.vue";
+import Collapse from "./ui/Collapse.vue";
 import fastXmlParser from "fast-xml-parser";
 import mavgraphs from "../assets/mavgraphs.xml";
 import mavgraphs2 from "../assets/mavgraphs2.xml";
@@ -145,7 +151,7 @@ function presetTree(presets) {
 
 export default {
     name: "MessageMenu",
-    components: { TreeMenu },
+    components: { TreeMenu, Collapse },
     data() {
         return {
             filter: "",
@@ -188,26 +194,16 @@ export default {
         },
         messageTypesFiltered() {
             const filtered = {};
+            // the matching types' panels open while a filter is typed (Collapse :visible)
+            const filter = this.filter.toLowerCase();
             for (const key of Object.keys(this.messageTypes)) {
-                if (!this.hiddenTypes.includes(key)) {
-                    if (this.filter === "") {
-                        this.collapse("type" + key);
-                        filtered[key] = this.messageTypes[key];
-                        continue;
-                    }
-                    if (
-                        this.messageTypes[key].expressions.some((field) =>
-                            field
-                                .toLowerCase()
-                                .includes(this.filter.toLowerCase()),
-                        )
-                    ) {
-                        filtered[key] = this.messageTypes[key];
-                        // console.log('type' + key, document.getElementById('type' + key))
-                        this.expand("type" + key);
-                    } else {
-                        this.collapse("type" + key);
-                    }
+                const matches =
+                    filter === "" ||
+                    this.messageTypes[key].expressions.some((field) =>
+                        field.toLowerCase().includes(filter),
+                    );
+                if (!this.hiddenTypes.includes(key) && matches) {
+                    filtered[key] = this.messageTypes[key];
                 }
             }
             return filtered;
@@ -384,24 +380,6 @@ export default {
         },
         isPlottable(msgtype, item) {
             return item !== "TimeUS";
-        },
-        collapse(name) {
-            if (
-                document.getElementById(name) &&
-                document.getElementById(name).style &&
-                document.getElementById(name).style.display !== "none"
-            ) {
-                this.$root.$emit("bv::toggle::collapse", name);
-            }
-        },
-        expand(name) {
-            if (
-                document.getElementById(name) &&
-                document.getElementById(name).style &&
-                document.getElementById(name).style.display === "none"
-            ) {
-                this.$root.$emit("bv::toggle::collapse", name);
-            }
         },
         findMessagesInExpression(expression) {
             // delete all expressions after dots (and dots)
