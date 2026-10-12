@@ -192,6 +192,7 @@ export default {
     color: black;
     display: inline-block;
 }
+
 .code-input {
     width: 100%;
     font-family: monospace;
@@ -204,6 +205,7 @@ export default {
     padding: 4.5px;
     border-radius: 20px;
 }
+
 .suggestions-box {
     text-align: left;
     position: fixed;
@@ -212,12 +214,14 @@ export default {
     border-radius: 4px;
     max-height: 150px;
     z-index: 1000;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgb(0 0 0 / 10%);
 }
+
 .suggestion-item {
     cursor: pointer;
     line-height: 20px;
 }
+
 .suggestion-item.selected {
     background-color: #f0f0f0;
 }

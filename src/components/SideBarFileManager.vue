@@ -321,7 +321,7 @@ export default {
     margin: 20px;
     border-radius: 5px;
     cursor: default;
-    background-color: rgba(0, 0, 0, 0);
+    background-color: rgb(0 0 0 / 0%);
 }
 
 #drop_zone:hover {

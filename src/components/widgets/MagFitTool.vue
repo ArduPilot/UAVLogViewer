@@ -1341,22 +1341,25 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin: 0 0 8px 0;
+    margin: 0 0 8px;
     padding-left: 16px;
 }
+
 h5 {
     margin: 0;
     font-size: 14px;
     letter-spacing: 0.5px;
 }
+
 h6 {
-    margin: 0 0 6px 0;
+    margin: 0 0 6px;
     padding-bottom: 3px;
     border-bottom: 1px solid #d2d6dc;
     font-size: 11px;
     letter-spacing: 0.5px;
     color: #2e3f54;
 }
+
 .close-btn {
     cursor: pointer;
     font-size: 18px;
@@ -1364,9 +1367,11 @@ h6 {
     padding: 0 4px;
     color: #6b7280;
 }
+
 .close-btn:hover {
     color: #b00;
 }
+
 div.section {
     border: 1px solid #d2d6dc;
     border-radius: 4px;
@@ -1375,62 +1380,76 @@ div.section {
     padding: 8px 10px;
     margin-bottom: 8px;
     box-sizing: border-box;
-    background: rgba(255, 255, 255, 0.45);
+    background: rgb(255 255 255 / 45%);
 }
+
 table {
     border-collapse: collapse;
 }
+
 th,
 td {
     white-space: nowrap;
 }
+
 td {
     padding: 2px;
     padding-left: 6px;
 }
+
 table.results th,
 table.results td {
     padding: 3px 8px;
     text-align: right;
 }
+
 table.results th {
     border-bottom: 1px solid #d2d6dc;
     font-weight: 700;
     color: #4b5563;
 }
+
 table.results th:first-child,
 table.results td:first-child {
     text-align: center;
 }
+
 table.results td.actions {
     text-align: center;
     padding: 2px 3px;
 }
+
 .fitness-better {
     color: #1a7f37;
     font-weight: 700;
 }
+
 .fitness-worse {
     color: #b00;
     font-weight: 700;
 }
+
 .section-footer {
     margin-top: 6px;
 }
+
 .hint {
     color: #9a6700;
     font-style: italic;
 }
+
 .fitness-chart {
     display: block;
     background: #f3f5f8;
     border: 1px solid #d2d6dc;
     border-radius: 3px;
 }
+
 .chart-caption {
     margin-top: 3px;
     color: #4b5563;
 }
+
 button {
     white-space: nowrap;
     padding: 3px 8px;
@@ -1445,23 +1464,28 @@ button {
     cursor: pointer;
     transition: background 0.15s ease;
 }
+
 button:hover:not(:disabled) {
     background: #3f5573;
 }
+
 button:disabled {
     background: #b8c0cc;
     cursor: not-allowed;
 }
+
 input[type="text"] {
     border: 1px solid #aab;
     border-radius: 3px;
     padding: 2px 5px;
     font-size: 11px;
 }
+
 input[type="text"]:disabled {
     background: #eef0f3;
     color: #555;
 }
+
 select {
     border: 1px solid #aab;
     border-radius: 3px;
@@ -1470,24 +1494,27 @@ select {
     background: #fff;
     cursor: pointer;
 }
+
 .input {
     margin: 5px;
 }
+
 .data {
     display: block;
 }
+
 div #paneMagFitTool {
     padding: 10px;
     width: max-content;
     height: auto;
     position: absolute;
-    background: rgba(253, 254, 255, 0.856);
+    background: rgb(253 254 255 / 85.6%);
     color: #141924;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     z-index: 10000;
-    box-shadow: 9px 9px 3px -6px rgba(26, 26, 26, 0.699);
+    box-shadow: 9px 9px 3px -6px rgb(26 26 26 / 69.9%);
     border-radius: 5px;
     user-select: none;
 }
@@ -1501,7 +1528,7 @@ div #paneMagFitTool::after {
     width: 18px;
     height: 17px;
     margin-top: -3px;
-    padding: 0px 2px;
+    padding: 0 2px;
     box-sizing: border-box;
     align-items: center;
     justify-content: center;
@@ -1512,9 +1539,6 @@ div #paneMagFitTool::after {
 div#paneContent {
     height: auto;
     overflow: visible;
-    -webkit-user-select: none; /* Chrome all / Safari all */
-    -moz-user-select: none; /* Firefox all */
-    -ms-user-select: none; /* IE 10+ */
     user-select: none;
 }
 

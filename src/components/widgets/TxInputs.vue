@@ -216,60 +216,60 @@ div #paneinputViewer {
     width: 100px;
     height: 100px;
     overflow: hidden;
-    background: rgb(1, 160, 139);
+    background: rgb(1 160 139);
     font-size: 10px;
     text-transform: uppercase;
     z-index: 10000;
     border-radius: 20px;
-    border: 3px groove rgba(1, 133, 111, 0.541);
-    box-shadow: inset 0px 0px 8px 6px rgba(0, 87, 72, 0.411);
+    border: 3px groove rgb(1 133 111 / 54.1%);
+    box-shadow: inset 0 0 8px 6px rgb(0 87 72 / 41.1%);
     user-select: none;
 }
 
 div #paneinputViewer::before {
     content: "\25e2";
-    color: rgba(255, 255, 255, 0.918);
+    color: rgb(255 255 255 / 91.8%);
     position: absolute;
     bottom: 0;
     right: 0;
     width: 22px;
     height: 21px;
     padding: 2px 6px;
-    background: rgba(0, 36, 27, 0.212);
+    background: rgb(0 36 27 / 21.2%);
     box-sizing: border-box;
     align-items: center;
     justify-content: center;
     font-size: 11px;
-    border-radius: 15px 0px;
+    border-radius: 15px 0;
     cursor: se-resize;
 }
 
 div #paneinputViewer::after {
     content: "\2725";
-    color: rgba(255, 255, 255, 0.918);
+    color: rgb(255 255 255 / 91.8%);
     position: absolute;
     top: 0;
     left: 0;
     width: 25px;
     height: 23px;
-    padding: 0px 5px;
-    background: rgba(0, 36, 27, 0.212);
+    padding: 0 5px;
+    background: rgb(0 36 27 / 21.2%);
     box-sizing: border-box;
     align-items: center;
     justify-content: center;
     font-size: 17px;
-    border-radius: 15px 0px;
+    border-radius: 15px 0;
     cursor: grab;
 }
 
 div.circle {
-    border: double 4px rgba(2, 145, 121, 0.98);
-    background: rgb(116, 116, 116);
+    border: double 4px rgb(2 145 121 / 98%);
+    background: rgb(116 116 116);
     background:
         radial-gradient(
             circle,
-            rgba(24, 24, 24, 0.76) 0%,
-            rgba(0, 0, 0, 0.8886905103838411) 100%
+            rgb(24 24 24 / 76%) 0%,
+            rgb(0 0 0 / 88.9%) 100%
         ),
         linear-gradient(
             90deg,
@@ -289,7 +289,7 @@ div.circle {
     width: 48%;
     height: 98%;
     float: left;
-    box-shadow: 0px 0px 14px -1px rgba(1, 82, 65, 0.61);
+    box-shadow: 0 0 14px -1px rgb(1 82 65 / 61%);
 }
 
 /* STICK */
@@ -298,10 +298,10 @@ div.stick {
     border-radius: 50%;
     width: 12px;
     height: 12px;
-    background-color: rgb(221, 221, 221);
-    border: 1px solid rgb(139, 139, 139);
+    background-color: rgb(221 221 221);
+    border: 1px solid rgb(139 139 139);
     margin-left: 48%;
     display: inline-block;
-    box-shadow: inset 0px 0px 4px 2px rgba(102, 102, 102, 0.877);
+    box-shadow: inset 0 0 4px 2px rgb(102 102 102 / 87.7%);
 }
 </style>

@@ -2623,7 +2623,7 @@ export default {
     height: 5px;
     min-width: 2px;
     margin: 0 auto;
-    background: rgba(255, 255, 255, 0.55);
+    background: rgb(255 255 255 / 55%);
     border: 1px solid #fff;
     border-top: none;
     box-sizing: border-box;
@@ -2646,11 +2646,11 @@ export default {
 
 #toolbar {
     margin: 5px;
-    padding: 5px 5px;
+    padding: 5px;
     position: absolute;
     top: 0;
     color: #eee;
-    font-family: "Montserrat", sans-serif;
+    font-family: Montserrat, sans-serif;
     font-size: 9pt;
     z-index: 1;
     height: fit-content;
@@ -2661,7 +2661,7 @@ export default {
 
 .infoPanel {
     top: 10px;
-    background-color: rgba(40, 40, 40, 0.7);
+    background-color: rgb(40 40 40 / 70%);
     padding: 10px;
     padding-left: 25px;
     border-radius: 5px;
@@ -2691,9 +2691,6 @@ export default {
     margin: 2px 3px;
     cursor: pointer;
     overflow: hidden;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
     user-select: none;
 }
 
@@ -2735,14 +2732,12 @@ input#collapsible {
 .lbl-toggle::before {
     content: " ";
     display: inline-block;
-
     border-top: 5px solid transparent;
     border-bottom: 5px solid transparent;
-    border-left: 5px solid currentColor;
+    border-left: 5px solid currentcolor;
     vertical-align: middle;
     margin-right: 0.7rem;
     transform: translateY(-2px);
-
     transition: transform 0.2s ease-out;
 }
 
@@ -2751,7 +2746,7 @@ input#collapsible {
 }
 
 .collapsible-content {
-    max-height: 0px;
+    max-height: 0;
     overflow: hidden;
     transition: max-height 0.25s ease-in-out;
 }
@@ -2766,8 +2761,8 @@ input#collapsible {
 }
 
 .collapsible-content .content-inner {
-    background: rgba(250, 224, 66, 0.2);
-    border-bottom: 1px solid rgba(250, 224, 66, 0.45);
+    background: rgb(250 224 66 / 20%);
+    border-bottom: 1px solid rgb(250 224 66 / 45%);
     border-bottom-left-radius: 7px;
     border-bottom-right-radius: 7px;
     padding: 0.5rem 1rem;
@@ -2778,18 +2773,15 @@ input#collapsible {
 /* TOOLBAR BUTTONS */
 
 .cesium-toolbar-button {
-    background-color: rgb(61, 58, 56);
+    background-color: rgb(61 58 56);
     border-radius: 3px;
 }
 
 .cesium-toolbar-button:hover {
-    background-color: rgb(102, 90, 79);
+    background-color: rgb(102 90 79);
     color: #fff;
     box-shadow: none;
     border: #5b5b5b;
-    -webkit-transition: all 1s ease;
-    -moz-transition: all 1s ease;
-    -o-transition: all 1s ease;
     transition: all 1s ease;
 }
 

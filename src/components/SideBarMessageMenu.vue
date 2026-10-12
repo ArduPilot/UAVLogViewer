@@ -440,13 +440,16 @@ export default {
 i {
     margin: 5px;
 }
+
 i.expand {
     float: right;
 }
+
 li > div {
     display: inline-block;
     width: 100%;
 }
+
 li.field {
     line-height: 29px;
     padding-left: 40px;
@@ -455,42 +458,38 @@ li.field {
     vertical-align: middle;
     width: 100%;
 }
+
 li.type {
     line-height: 30px;
     padding-left: 10px;
     font-size: 85%;
 }
+
 input {
     margin: 12px 12px 15px 10px;
     border: 2px solid #ccc;
-    -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
     border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.897);
-    color: rgb(51, 51, 51);
+    background-color: rgb(255 255 255 / 89.7%);
+    color: rgb(51 51 51);
     width: 92%;
 }
+
 input:focus {
     outline: none;
     border: 2px solid #135388;
 }
+
 .input-li:hover {
-    background-color: rgba(30, 37, 54, 0.205);
-    border-left: 3px solid rgba(24, 30, 44, 0.212);
+    background-color: rgb(30 37 54 / 20.5%);
+    border-left: 3px solid rgb(24 30 44 / 21.2%);
 }
+
 ::placeholder {
     /* Chrome, Firefox, Opera, Safari 10.1+ */
-    color: rgb(148, 147, 147);
+    color: rgb(148 147 147);
     opacity: 1; /* Firefox */
 }
-:-ms-input-placeholder {
-    /* Internet Explorer 10-11 */
-    color: #2e2e2e;
-}
-::-ms-input-placeholder {
-    /* Microsoft Edge */
-    color: #2e2e2e;
-}
+
 i.remove-icon {
     float: right;
 }
@@ -502,7 +501,7 @@ i.remove-icon {
 }
 
 span.description {
-    opacity: 70%;
+    opacity: 0.7;
     font-size: 80%;
     overflow: hidden;
     white-space: nowrap;

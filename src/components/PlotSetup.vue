@@ -217,7 +217,7 @@ export default {
 /* COLOR PICKER */
 
 ul.colorpicker {
-    font-family: "Montserrat", sans-serif;
+    font-family: Montserrat, sans-serif;
 }
 
 ul.colorpicker li {
@@ -263,15 +263,15 @@ i {
 }
 
 .plotname:focus {
-    background-color: rgba(241, 248, 255, 0.966);
+    background-color: rgb(241 248 255 / 96.6%);
     outline: none;
 }
 
 select {
     display: inline;
     border-radius: 5px;
-    border: 1px solid rgb(156, 156, 156);
-    background-color: rgb(255, 255, 255);
+    border: 1px solid rgb(156 156 156);
+    background-color: rgb(255 255 255);
     padding: 2px 2.5px;
     color: #4a4a4a;
 }
@@ -282,7 +282,7 @@ select:focus {
 }
 
 select option {
-    background-color: rgb(216, 215, 215);
+    background-color: rgb(216 215 215);
 }
 
 select option:hover {
@@ -311,17 +311,17 @@ select option:hover {
 /* SAVE PRESET BUTTON */
 
 .save-preset {
-    background-color: rgb(33, 41, 61);
+    background-color: rgb(33 41 61);
     color: #fff;
     border-radius: 15px;
-    padding: 0px 10px 0px 0px;
-    border: 1px solid rgba(91, 100, 117, 0.76);
+    padding: 0 10px 0 0;
+    border: 1px solid rgb(91 100 117 / 76%);
     font-size: 13px;
 }
 
 .save-preset:hover {
-    background-color: rgb(47, 58, 87);
-    box-shadow: 0px 0px 12px 0px rgba(37, 78, 133, 0.55);
+    background-color: rgb(47 58 87);
+    box-shadow: 0 0 12px 0 rgb(37 78 133 / 55%);
     transition: all 0.5s ease;
 }
 
@@ -332,17 +332,17 @@ select option:hover {
 /* ADD EXPRESSION BUTTON */
 
 .add-expression {
-    background-color: rgb(33, 41, 61);
+    background-color: rgb(33 41 61);
     color: #fff;
     border-radius: 15px;
-    padding: 0px 10px 0px 0px;
-    border: 1px solid rgba(91, 100, 117, 0.76);
+    padding: 0 10px 0 0;
+    border: 1px solid rgb(91 100 117 / 76%);
     font-size: 13px;
 }
 
 .add-expression:hover {
-    background-color: rgb(47, 58, 87);
-    box-shadow: 0px 0px 12px 0px rgba(37, 78, 133, 0.55);
+    background-color: rgb(47 58 87);
+    box-shadow: 0 0 12px 0 rgb(37 78 133 / 55%);
     transition: all 0.5s ease;
 }
 

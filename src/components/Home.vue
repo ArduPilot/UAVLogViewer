@@ -438,7 +438,7 @@ div #waiting {
 
 .map-error-container i {
     font-size: 3rem;
-    color: #ffcc00;
+    color: #fc0;
     margin-bottom: 1rem;
 }
 
@@ -462,6 +462,6 @@ div .atom-spinner {
 </style>
 <style>
 a {
-    color: #ffffff !important;
+    color: #fff !important;
 }
 </style>

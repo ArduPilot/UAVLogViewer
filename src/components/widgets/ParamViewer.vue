@@ -185,12 +185,12 @@ div #paneParamViewer {
     min-width: 220px;
     min-height: 150px;
     position: absolute;
-    background: rgba(253, 254, 255, 0.856);
+    background: rgb(253 254 255 / 85.6%);
     color: #141924;
     font-size: 11px;
     font-weight: 600;
     z-index: 10000;
-    box-shadow: 9px 9px 3px -6px rgba(26, 26, 26, 0.699);
+    box-shadow: 9px 9px 3px -6px rgb(26 26 26 / 69.9%);
     border-radius: 5px;
     user-select: none;
 }
@@ -198,7 +198,7 @@ div #paneParamViewer {
 div #paneParamViewer::before {
     content: "\25e2";
     color: #fff;
-    background-color: rgb(38, 53, 71);
+    background-color: rgb(38 53 71);
     position: absolute;
     bottom: 0;
     right: 0;
@@ -209,7 +209,7 @@ div #paneParamViewer::before {
     align-items: center;
     justify-content: center;
     font-size: 11px;
-    border-radius: 10px 0px 1px 0px;
+    border-radius: 10px 0 1px;
     cursor: se-resize;
 }
 
@@ -222,7 +222,7 @@ div #paneParamViewer::after {
     width: 18px;
     height: 17px;
     margin-top: -3px;
-    padding: 0px 2px;
+    padding: 0 2px;
     box-sizing: border-box;
     align-items: center;
     justify-content: center;
@@ -237,10 +237,10 @@ div#paneContent {
 }
 
 input#filterbox {
-    margin: 23px 0px 0px 10px;
+    margin: 23px 0 0 10px;
     padding: 4px;
-    background-color: rgba(255, 255, 255, 0.836);
-    border: 1px solid rgb(133, 133, 133);
+    background-color: rgb(255 255 255 / 83.6%);
+    border: 1px solid rgb(133 133 133);
     border-radius: 3px;
 }
 
@@ -253,9 +253,6 @@ ul#params {
     padding: 12px;
     list-style: none;
     line-height: 22px;
-    -webkit-user-select: none; /* Chrome all / Safari all */
-    -moz-user-select: none; /* Firefox all */
-    -ms-user-select: none; /* IE 10+ */
     user-select: none;
 }
 </style>

@@ -30,40 +30,24 @@ strong {
 }
 
 .progress .progress-bar {
-    background: rgba(0, 50, 168, 0.63);
+    background: rgb(0 50 168 / 63%);
     background: linear-gradient(
         0deg,
-        rgba(30, 37, 53, 1) 51%,
-        rgba(51, 62, 88, 1) 100%
+        rgb(30 37 53 / 100%) 51%,
+        rgb(51 62 88 / 100%) 100%
     );
-    -webkit-transition: none;
-    -o-transition: none;
     transition: none;
 }
 
 #hideMe {
-    -moz-animation: cssAnimation 5s ease-in 5s forwards;
-    /* Firefox */
-    -webkit-animation: cssAnimation 5s ease-in 5s forwards;
-    /* Safari and Chrome */
-    -o-animation: cssAnimation 5s ease-in 5s forwards;
-    /* Opera */
-    animation: cssAnimation 5s ease-in 5s forwards;
-    -webkit-animation-fill-mode: forwards;
+    animation: fade-out 5s ease-in 5s forwards;
     animation-fill-mode: forwards;
 }
 
-@keyframes cssAnimation {
+@keyframes fade-out {
     to {
         opacity: 0;
         overflow: hidden;
-    }
-}
-
-@-webkit-keyframes cssAnimation {
-    to {
-        opacity: 0;
-        height: 0;
     }
 }
 </style>

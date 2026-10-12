@@ -181,14 +181,14 @@ export default {
     position: relative;
     font-weight: 400;
     line-height: 1.5;
-    color: #ffffff;
+    color: #fff;
     font-family: sans-serif;
     font-size: 16px;
     box-sizing: border-box;
     min-width: 30px; /* Width of gear icon + padding */
     min-height: 30px; /* Height of gear icon + padding */
     overflow: hidden;
-    background-color: rgba(40, 40, 40, 0.7);
+    background-color: rgb(40 40 40 / 70%);
     padding: 7px;
     padding-left: 25px;
     border-radius: 5px;
