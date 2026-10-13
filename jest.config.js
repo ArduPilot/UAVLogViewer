@@ -4,6 +4,7 @@ export default {
     moduleFileExtensions: ["js", "json", "vue"],
     moduleNameMapper: {
         "^@/(.*)$": "<rootDir>/src/$1",
+        "^(.+\\.xml)\\?raw$": "$1",
     },
     transform: {
         "^.+\\.js$": "babel-jest",

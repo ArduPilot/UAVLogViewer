@@ -24,6 +24,7 @@
             @drop="onDrop"
         >
             <p>Drop *.tlog or *.bin file here or click to browse</p>
+            <label for="choosefile">Choose a log file</label>
             <input
                 id="choosefile"
                 style="opacity: 0"
@@ -47,12 +48,15 @@
 <script>
 import VProgress from "./SideBarFileManagerProgressBar.vue";
 import sampleLog from "../assets/vtol.tlog";
-import Worker from "../tools/parsers/parser.worker.js";
 import { store, resetLogState } from "./Globals";
 
 import { MAVLink20Processor as MAVLink } from "../libs/mavlink";
 
-const worker = new Worker();
+// webpack 5 and Vite both bundle a worker created this way
+const worker = new Worker(
+    new URL("../tools/parsers/parser.worker.js", import.meta.url),
+    { type: "module" },
+);
 
 // Start parsing a log; clears everything left from a previous log first
 function parseLog(file, { isTlog, isDji }) {

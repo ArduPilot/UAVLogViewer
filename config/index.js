@@ -65,7 +65,9 @@ export const build = {
     // Paths
     assetsRoot: fromHere("../dist"),
     assetsSubDirectory: "static",
-    assetsPublicPath: "./",
+    // Relative to wherever dist/ is served. "auto" takes it from each script's own URL, which
+    // also holds inside the parser worker (with "./" it would load static/js/static/js/...)
+    assetsPublicPath: "auto",
 
     /**
      * Source Maps

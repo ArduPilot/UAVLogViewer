@@ -8,6 +8,18 @@ import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
 
 const require = createRequire(import.meta.url);
 
+// Images, fonts, 3D models and the sample log: files under 10 kB are inlined as data URLs
+function asset(test, dir) {
+    return {
+        test,
+        type: "asset",
+        parser: { dataUrlCondition: { maxSize: 10000 } },
+        generator: {
+            filename: assetsPath(`${dir}/[name].[contenthash:7][ext]`),
+        },
+    };
+}
+
 // The path to the Cesium source code
 
 function resolveDir(dir) {
@@ -36,13 +48,10 @@ export const module = {
             test: /.m?js$/,
             resolve: { fullySpecified: false },
         },
+        // `import text from "./file.xml?raw"` gives the file's content, as in Vite
         {
-            test: /\.worker\.js$/,
-            use: { loader: "worker-loader" },
-        },
-        {
-            test: /\.xml$/,
-            use: { loader: "raw-loader" },
+            resourceQuery: /raw/,
+            type: "asset/source",
         },
         {
             test: /\.vue$/,
@@ -59,50 +68,9 @@ export const module = {
                 resolveDir("node_modules/mavlink_common_v1.0/parsers"),
             ],
         },
-        // The asset rules below use url-loader/file-loader; "javascript/auto" stops webpack 5's
-        // asset modules from emitting the loader's JS output a second time as the asset itself
-        // (which broke url() references in CSS, e.g. the Font Awesome fonts).
-        {
-            test: /\.(png|jpe?g|gif)(\?.*)?$/,
-            type: "javascript/auto",
-            loader: "url-loader",
-            options: {
-                limit: 10000,
-                name: assetsPath("img/[name].[hash:7].[ext]"),
-            },
-        },
-        {
-            test: /\.(svg)$/i,
-            type: "javascript/auto",
-            use: [
-                {
-                    loader: "file-loader",
-                    options: {
-                        esModule: false,
-                    },
-                },
-            ],
-        },
-        {
-            test: /\.(mp4|webm|ogg|mp3|wav|flac|aac|glb|tlog)(\?.*)?$/,
-            type: "javascript/auto",
-            loader: "url-loader",
-            options: {
-                limit: 10000,
-                name: assetsPath("media/[name].[hash:7].[ext]"),
-            },
-        },
-        {
-            test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
-            type: "javascript/auto",
-            loader: "url-loader",
-            options: {
-                limit: 10000,
-                name: assetsPath("fonts/[name].[hash:7].[ext]"),
-                // fonts are only referenced from CSS url(), which needs a plain string export
-                esModule: false,
-            },
-        },
+        asset(/\.(png|jpe?g|gif|svg)$/i, "img"),
+        asset(/\.(woff2?|eot|ttf|otf)$/i, "fonts"),
+        asset(/\.(glb|tlog)$/i, "media"),
     ],
 };
 export const resolve = {

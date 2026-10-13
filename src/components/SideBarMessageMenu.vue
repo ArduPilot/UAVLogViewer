@@ -111,15 +111,15 @@ import { store } from "./Globals.js";
 import TreeMenu from "./widgets/TreeMenu.vue";
 import Collapse from "./ui/Collapse.vue";
 import fastXmlParser from "fast-xml-parser";
-import mavgraphs from "../assets/mavgraphs.xml";
-import mavgraphs2 from "../assets/mavgraphs2.xml";
-import ekfGraphs from "../assets/ekfGraphs.xml";
-import ekf3Graphs from "../assets/ekf3Graphs.xml";
-import planeDocs from "../assets/logmetadata/plane.xml";
-import copterDocs from "../assets/logmetadata/copter.xml";
-import trackerDocs from "../assets/logmetadata/tracker.xml";
-import roverDocs from "../assets/logmetadata/rover.xml";
-import subDocs from "../assets/logmetadata/sub.xml";
+import mavgraphs from "../assets/mavgraphs.xml?raw";
+import mavgraphs2 from "../assets/mavgraphs2.xml?raw";
+import ekfGraphs from "../assets/ekfGraphs.xml?raw";
+import ekf3Graphs from "../assets/ekf3Graphs.xml?raw";
+import planeDocs from "../assets/logmetadata/plane.xml?raw";
+import copterDocs from "../assets/logmetadata/copter.xml?raw";
+import trackerDocs from "../assets/logmetadata/tracker.xml?raw";
+import roverDocs from "../assets/logmetadata/rover.xml?raw";
+import subDocs from "../assets/logmetadata/sub.xml?raw";
 
 // "MSG.field:2" goes on the second axis
 function presetFields(expression) {
