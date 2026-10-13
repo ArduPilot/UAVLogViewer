@@ -116,6 +116,7 @@ import planeModel from "../assets/plane.glb";
 import ColorCoderMode from "./cesiumExtra/colorCoderMode.js";
 import ColorCoderRange from "./cesiumExtra/colorCoderRange.js";
 import ColorCoderPlot from "./cesiumExtra/colorCoderPlot.js";
+import { VehicleVisibility } from "./cesiumExtra/vehicleVisibility.js";
 
 import {
     generateHull,
@@ -429,6 +430,8 @@ export default {
         // The objects declared here are not watched by Vue
         this.viewer = null; // Cesium viewer instance
         this.model = null; // Vehicle model
+        this.vehicleVisibility = null; // lighting and outline of the vehicle
+        this.hasLogTime = false;
         this.waypoints = null; // Autopilot Waypoints
         this.trajectory = null; // GPS trajectory (in degrees)
         this.fences = []; // Geo-fence entities
@@ -453,6 +456,7 @@ export default {
         clearInterval(this.globeOpacityInterval);
         // free the WebGL context (browsers only allow a few at a time)
         if (this.viewer && !this.viewer.isDestroyed()) {
+            this.vehicleVisibility?.destroy();
             this.viewer.destroy();
         }
         this.viewer = null;
@@ -508,8 +512,9 @@ export default {
                     this.trajectory = this.viewer.entities.add(new Entity());
                     this.trajectoryUpdateTimeout = null;
                     this.viewer.scene.globe.enableLighting = true;
-                    this.viewer.scene.postRender.addEventListener(
-                        this.onFrameUpdate,
+                    this.vehicleVisibility = new VehicleVisibility(
+                        this.viewer,
+                        () => this.model,
                     );
                     this.viewer.scene.postRender.addEventListener(
                         this.onFrameUpdate,
@@ -1132,11 +1137,19 @@ export default {
         },
 
         // the log's start time: a Date (DataFlash, tlog) or milliseconds since 1970 (DJI)
+        // the real sun needs the log's absolute time and the flight's position
+        applyLighting() {
+            this.vehicleVisibility?.setRealLighting(
+                this.hasLogTime && this.flightTimeZone !== null,
+            );
+        },
+
         getTimeStart() {
             const start = new Date(
                 this.state.metadata?.startTime ?? Number.NaN,
             );
-            if (Number.isNaN(start.getTime())) {
+            this.hasLogTime = !Number.isNaN(start.getTime());
+            if (!this.hasLogTime) {
                 // no absolute time in the log: an arbitrary fixed date
                 return JulianDate.fromDate(new Date(2015, 2, 25, 16));
             }
@@ -1448,6 +1461,7 @@ export default {
             ];
             const viewer = this.viewer;
             this.start = this.getTimeStart();
+            this.applyLighting();
             this.stop = JulianDate.addSeconds(
                 this.start,
                 Math.round(timespan / 1000),
