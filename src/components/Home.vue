@@ -344,9 +344,12 @@ export default {
                 const gps = this.state.messages?.GPS?.time_boot_ms
                     ? this.state.messages.GPS
                     : this.state.messages["GPS[0]"];
-                this.state.metadata = {
-                    startTime: this.dataExtractor.extractStartTime(gps),
-                };
+                // tlog and DJI logs have no GPS time to extract here: their parser already
+                // sent the start time with the metadata, so keep that one
+                const startTime = this.dataExtractor.extractStartTime(gps);
+                if (startTime !== undefined) {
+                    this.state.metadata = { ...this.state.metadata, startTime };
+                }
             } catch (error) {
                 console.log("unable to load metadata");
                 console.log(error);

@@ -135,7 +135,8 @@ export class DjiDataExtractor {
         return [];
     }
 
+    // the parser sends the start time with the metadata
     static extractStartTime(messages) {
-        return 0;
+        return undefined;
     }
 }

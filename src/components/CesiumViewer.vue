@@ -1125,13 +1125,16 @@ export default {
             this.$router.push({ query });
         },
 
+        // the log's start time: a Date (DataFlash, tlog) or milliseconds since 1970 (DJI)
         getTimeStart() {
-            try {
-                return JulianDate.fromDate(this.state.metadata.startTime);
-            } catch (e) {
-                console.log(e);
+            const start = new Date(
+                this.state.metadata?.startTime ?? Number.NaN,
+            );
+            if (Number.isNaN(start.getTime())) {
+                // no absolute time in the log: an arbitrary fixed date
                 return JulianDate.fromDate(new Date(2015, 2, 25, 16));
             }
+            return JulianDate.fromDate(start);
         },
 
         mouseIsOnPoint(point) {
