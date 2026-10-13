@@ -113,9 +113,10 @@ export function firstFreeColor(state) {
     );
 }
 
-// Remove every plotted expression (the plot panel redraws or closes through its watcher)
+// Remove every plotted expression and close the plot, as removing the last plot does
 export function clearExpressions(state) {
     state.expressions.splice(0);
+    state.plotOn = false;
 }
 
 export function resetLogState() {
