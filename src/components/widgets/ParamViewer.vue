@@ -58,7 +58,7 @@
 <script>
 import { store } from "../Globals.js";
 import { baseWidget } from "./baseWidget";
-import { saveAs } from "file-saver";
+import { downloadData } from "../../tools/download.js";
 
 export default {
     name: "ParamViewer",
@@ -163,10 +163,7 @@ export default {
                 content += `${param[0]}${space}${param[1]}\n`;
             }
 
-            const file = new File([content], `${fileName}.txt`, {
-                type: "text/plain",
-            });
-            saveAs(file);
+            downloadData(content, `${fileName}.txt`, "text/plain");
         },
         setup() {},
         printParam(param) {

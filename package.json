@@ -56,7 +56,6 @@
         "eslint-webpack-plugin": "^6.0.0",
         "events": "^3.3.0",
         "fast-xml-parser": "^5.11.2",
-        "file-saver": "^2.0.5",
         "git-revision-webpack-plugin": "^3.0.6",
         "glob": "^7.2.3",
         "globals": "^17.13.0",

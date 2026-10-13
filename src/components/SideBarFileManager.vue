@@ -49,6 +49,7 @@
 import VProgress from "./SideBarFileManagerProgressBar.vue";
 import sampleLog from "../assets/vtol.tlog";
 import { store, resetLogState } from "./Globals";
+import { downloadObjectUrl } from "../tools/download.js";
 
 import { MAVLink20Processor as MAVLink } from "../libs/mavlink";
 
@@ -299,14 +300,10 @@ export default {
             this.shared = true;
         },
         downloadFileFromURL(url) {
-            const a = document.createElement("a");
-            document.body.appendChild(a);
-            a.style = "display: none";
-            a.href = url;
-            a.download = this.state.file + "-trimmed." + this.state.logType;
-            a.click();
-            a.remove();
-            globalThis.URL.revokeObjectURL(url);
+            downloadObjectUrl(
+                url,
+                this.state.file + "-trimmed." + this.state.logType,
+            );
         },
     },
 };

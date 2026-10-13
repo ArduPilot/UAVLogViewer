@@ -185,6 +185,7 @@
 import Dropzone from "./SideBarFileManager.vue";
 import MessageMenu from "./SideBarMessageMenu.vue";
 import { store } from "./Globals.js";
+import { downloadData } from "../tools/download.js";
 import PlotSetup from "./PlotSetup.vue";
 import Collapse from "./ui/Collapse.vue";
 import githubIcon from "../assets/GitHub-Mark-64px.png";
@@ -267,31 +268,8 @@ export default {
             this.$eventHub.$emit("trimFile");
         },
 
-        createDownloadURL(data, fileName) {
-            const a = document.createElement("a");
-            a.href = data;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.style.display = "none";
-            a.click();
-            a.remove();
-        },
-
-        downloadBlob(data, fileName, mimeType) {
-            const blob = new Blob([data], {
-                type: mimeType,
-            });
-            const url = window.URL.createObjectURL(blob);
-            this.createDownloadURL(url, fileName);
-            setTimeout(() => window.URL.revokeObjectURL(url), 1000);
-        },
-
         downloadFile(filename) {
-            this.downloadBlob(
-                this.state.files[filename],
-                filename,
-                "application/octet-stream",
-            );
+            downloadData(this.state.files[filename], filename);
         },
     },
 };

@@ -265,7 +265,7 @@ import { store } from "../Globals.js";
 import { baseWidget } from "./baseWidget";
 import { Vector3 } from "../../mavextra/vector3";
 import { Matrix3 } from "../../mavextra/matrix3";
-import { saveAs } from "file-saver";
+import { downloadData } from "../../tools/download.js";
 
 // Candidate compass message keys, in priority order. Covers tlogs (RAW_IMU,
 // SCALED_IMU*), modern dataflash instanced messages (MAG[0..2]) and older
@@ -717,10 +717,7 @@ export default {
                 content += `${param[0]}, ${param[1]}\n`;
             }
 
-            const file = new File([content], `${fileName}-compassfit.txt`, {
-                type: "text/plain",
-            });
-            saveAs(file);
+            downloadData(content, `${fileName}-compassfit.txt`, "text/plain");
         },
         plotRaw(instance) {
             this.state.plotOn = true;

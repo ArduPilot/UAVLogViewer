@@ -10,6 +10,7 @@ import Plotly from "plotly.js/lib/core";
 import { store } from "./Globals.js";
 
 import { darken } from "../tools/cssColor.js";
+import { downloadData } from "../tools/download.js";
 
 const timeformat = ":02,2f";
 let annotationsEvents = [];
@@ -224,17 +225,11 @@ export default {
                         lasttime = lasttime + interval;
                     }
                     const csvContent = csv.map((e) => e.join(",")).join("\n");
-                    const blob = new Blob([csvContent], {
-                        type: "text/csv;charset=utf-8;",
-                    });
-                    const link = document.createElement("a");
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute("href", url);
-                    link.setAttribute("download", "data.csv");
-                    link.style.visibility = "hidden";
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
+                    downloadData(
+                        csvContent,
+                        "data.csv",
+                        "text/csv;charset=utf-8;",
+                    );
                 },
             };
         },
