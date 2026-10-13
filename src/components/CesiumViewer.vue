@@ -2676,8 +2676,7 @@ export default {
 .infoPanel {
     top: 10px;
     background-color: rgb(40 40 40 / 70%);
-    padding: 10px;
-    padding-left: 25px;
+    padding: 6px 10px;
     border-radius: 5px;
     border: 1px solid #444;
 }
@@ -2689,8 +2688,7 @@ export default {
 }
 
 .mode {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding: 0 4px;
 }
 
 .cesium-button {
