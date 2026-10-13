@@ -5,6 +5,7 @@ import {
 import {
     modeMappingAcm,
     modeMappingApm,
+    modeMappingBlimp,
     modeMappingRover,
     modeMappingSub,
     modeMappingTracker,
@@ -29,51 +30,43 @@ const vehicles = {
     22: "airplane",
     23: "airplane",
     24: "airplane",
+    25: "airplane",
     29: "quadcopter", // Dodecarotor
+    35: "quadcopter", // Decarotor
 };
 
-function getModeMap(mavType) {
-    let map;
-    if (
-        [
-            mavlink.MAV_TYPE_QUADROTOR,
-            mavlink.MAV_TYPE_HELICOPTER,
-            mavlink.MAV_TYPE_HEXAROTOR,
-            mavlink.MAV_TYPE_OCTOROTOR,
-            mavlink.MAV_TYPE_COAXIAL,
-            mavlink.MAV_TYPE_TRICOPTER,
-        ].includes(mavType)
-    ) {
-        map = modeMappingAcm;
-    }
-    if (mavType === mavlink.MAV_TYPE_FIXED_WING) {
-        map = modeMappingApm;
-    }
-    if (
-        [mavlink.MAV_TYPE_GROUND_ROVER, mavlink.MAV_TYPE_SURFACE_BOAT].includes(
-            mavType,
-        )
-    ) {
-        map = modeMappingRover;
-    }
-    if (mavType === mavlink.MAV_TYPE_ANTENNA_TRACKER) {
-        map = modeMappingTracker;
-    }
-    if (mavType === mavlink.MAV_TYPE_SUBMARINE) {
-        map = modeMappingSub;
-    }
-    if (map == null) {
-        return null;
-    }
-    return map;
-}
+// The mode table for each vehicle type, as pymavlink's AP_MAV_TYPE_MODE_MAP:
+// every ArduPilot VTOL (a QuadPlane reports its Q_MAV_TYPE) runs Plane's modes
+const MODE_MAPS = new Map([
+    [mavlink.MAV_TYPE_QUADROTOR, modeMappingAcm],
+    [mavlink.MAV_TYPE_HELICOPTER, modeMappingAcm],
+    [mavlink.MAV_TYPE_HEXAROTOR, modeMappingAcm],
+    [mavlink.MAV_TYPE_OCTOROTOR, modeMappingAcm],
+    [mavlink.MAV_TYPE_DECAROTOR, modeMappingAcm],
+    [mavlink.MAV_TYPE_DODECAROTOR, modeMappingAcm],
+    [mavlink.MAV_TYPE_COAXIAL, modeMappingAcm],
+    [mavlink.MAV_TYPE_TRICOPTER, modeMappingAcm],
+    [mavlink.MAV_TYPE_FIXED_WING, modeMappingApm],
+    [mavlink.MAV_TYPE_VTOL_DUOROTOR, modeMappingApm],
+    [mavlink.MAV_TYPE_VTOL_QUADROTOR, modeMappingApm],
+    [mavlink.MAV_TYPE_VTOL_TILTROTOR, modeMappingApm],
+    [mavlink.MAV_TYPE_VTOL_RESERVED2, modeMappingApm],
+    [mavlink.MAV_TYPE_VTOL_RESERVED3, modeMappingApm],
+    [mavlink.MAV_TYPE_VTOL_RESERVED4, modeMappingApm],
+    [mavlink.MAV_TYPE_VTOL_RESERVED5, modeMappingApm],
+    [mavlink.MAV_TYPE_GROUND_ROVER, modeMappingRover],
+    [mavlink.MAV_TYPE_SURFACE_BOAT, modeMappingRover],
+    [mavlink.MAV_TYPE_ANTENNA_TRACKER, modeMappingTracker],
+    [mavlink.MAV_TYPE_SUBMARINE, modeMappingSub],
+    [mavlink.MAV_TYPE_AIRSHIP, modeMappingBlimp],
+]);
 
 function getModeString(mavtype, cmode, basemode) {
     if (mavtype === mavlink.MAV_TYPE_GCS) {
         return "";
     }
-    const map = getModeMap(mavtype);
-    if (map === null) {
+    const map = MODE_MAPS.get(mavtype);
+    if (map === undefined) {
         if ((basemode & 4) > 0) {
             return "Auto";
         }
@@ -85,9 +78,8 @@ function getModeString(mavtype, cmode, basemode) {
         }
         return "Unknown";
     }
-    try {
-        return map[cmode];
-    } catch {}
+    // a mode newer than this table: show its number, as pymavlink does
+    return map[cmode] ?? `Mode(${cmode})`;
 }
 
 export class MavlinkParser {

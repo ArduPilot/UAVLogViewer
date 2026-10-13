@@ -1,3 +1,5 @@
+// ArduPilot flight mode numbers, from each vehicle's mode.h (Mode::Number) and pymavlink's
+// mode_mapping_* tables. Retired modes stay listed, for old logs.
 export const modeMappingApm = {
     0: "MANUAL",
     1: "CIRCLE",
@@ -23,6 +25,8 @@ export const modeMappingApm = {
     22: "QAUTOTUNE",
     23: "QACRO",
     24: "THERMAL",
+    25: "LOITER_ALT_QLAND",
+    26: "AUTOLAND",
 };
 export const modeMappingAcm = {
     0: "STABILIZE",
@@ -33,7 +37,9 @@ export const modeMappingAcm = {
     5: "LOITER",
     6: "RTL",
     7: "CIRCLE",
+    8: "POSITION",
     9: "LAND",
+    10: "OF_LOITER",
     11: "DRIFT",
     13: "SPORT",
     14: "FLIP",
@@ -49,10 +55,14 @@ export const modeMappingAcm = {
     24: "ZIGZAG",
     25: "SYSTEMID",
     26: "AUTOROTATE",
+    27: "AUTO_RTL",
+    28: "TURTLE",
+    29: "RATE_ACRO",
 };
 export const modeMappingRover = {
     0: "MANUAL",
     1: "ACRO",
+    2: "LEARNING",
     3: "STEERING",
     4: "HOLD",
     5: "LOITER",
@@ -71,6 +81,7 @@ export const modeMappingTracker = {
     1: "STOP",
     2: "SCAN",
     3: "SERVO_TEST",
+    4: "GUIDED",
     10: "AUTO",
     16: "INITIALISING",
 };
@@ -85,4 +96,14 @@ export const modeMappingSub = {
     16: "POSHOLD",
     19: "MANUAL",
     20: "MOTOR_DETECT",
+    21: "SURFTRAK",
+};
+export const modeMappingBlimp = {
+    0: "LAND",
+    1: "MANUAL",
+    2: "VELOCITY",
+    3: "LOITER",
+    4: "RTL",
+    5: "AUTO",
+    6: "HOLD",
 };

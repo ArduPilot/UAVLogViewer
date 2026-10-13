@@ -1,7 +1,9 @@
 import { mavlink20 as mavlink } from "../libs/mavlink";
 import { ParamSeeker } from "../tools/paramseeker.js";
 
-const validGCSs = new Set([
+// Vehicle types: their heartbeats carry the flight mode and the armed state. A GCS, gimbal,
+// camera or companion computer sends heartbeats of its own, which must not count.
+const VEHICLE_TYPES = new Set([
     mavlink.MAV_TYPE_FIXED_WING,
     mavlink.MAV_TYPE_QUADROTOR,
     mavlink.MAV_TYPE_COAXIAL,
@@ -18,7 +20,28 @@ const validGCSs = new Set([
     mavlink.MAV_TYPE_TRICOPTER,
     mavlink.MAV_TYPE_FLAPPING_WING,
     mavlink.MAV_TYPE_KITE,
+    mavlink.MAV_TYPE_VTOL_DUOROTOR,
+    mavlink.MAV_TYPE_VTOL_QUADROTOR,
+    mavlink.MAV_TYPE_VTOL_TILTROTOR,
+    mavlink.MAV_TYPE_VTOL_RESERVED2,
+    mavlink.MAV_TYPE_VTOL_RESERVED3,
+    mavlink.MAV_TYPE_VTOL_RESERVED4,
+    mavlink.MAV_TYPE_VTOL_RESERVED5,
+    mavlink.MAV_TYPE_PARAFOIL,
+    mavlink.MAV_TYPE_DODECAROTOR,
+    mavlink.MAV_TYPE_DECAROTOR,
 ]);
+
+// Indexes of the vehicle's heartbeats; without any, the first heartbeat (as before)
+function vehicleHeartbeats(msgs) {
+    const indexes = [];
+    for (let i = 0; i < msgs.time_boot_ms.length; i++) {
+        if (VEHICLE_TYPES.has(msgs.type[i])) {
+            indexes.push(i);
+        }
+    }
+    return indexes.length > 0 || msgs.time_boot_ms.length === 0 ? indexes : [0];
+}
 
 const armedText = (baseMode) =>
     (baseMode & 0b10000000) === 128 ? "Armed" : "Disarmed";
@@ -85,21 +108,13 @@ export class MavlinkDataExtractor {
     }
 
     static extractFlightModes(messages) {
-        let modes = [];
+        const modes = [];
         if ("HEARTBEAT" in messages) {
             const msgs = messages.HEARTBEAT;
-            modes = [[msgs.time_boot_ms[0], msgs.asText[0]]];
-            for (const i in msgs.time_boot_ms) {
-                if (validGCSs.has(msgs.type[i])) {
-                    if (msgs.asText[i] === undefined) {
-                        msgs.asText[i] = "Unknown";
-                    }
-                    if (
-                        msgs.asText[i] !== null &&
-                        msgs.asText[i] !== modes.at(-1)[1]
-                    ) {
-                        modes.push([msgs.time_boot_ms[i], msgs.asText[i]]);
-                    }
+            for (const i of vehicleHeartbeats(msgs)) {
+                const mode = msgs.asText[i] ?? "Unknown";
+                if (mode !== modes.at(-1)?.[1]) {
+                    modes.push([msgs.time_boot_ms[i], mode]);
                 }
             }
         }
@@ -107,16 +122,12 @@ export class MavlinkDataExtractor {
     }
 
     static extractEvents(messages) {
-        let armedState = [];
+        const armedState = [];
         if ("HEARTBEAT" in messages) {
             const msgs = messages.HEARTBEAT;
-            armedState = [[msgs.time_boot_ms[0], armedText(msgs.base_mode[0])]];
-            for (const i in msgs.time_boot_ms) {
-                if (msgs.type[i] === mavlink.MAV_TYPE_GCS) {
-                    continue;
-                }
+            for (const i of vehicleHeartbeats(msgs)) {
                 const event = armedText(msgs.base_mode[i]);
-                if (event !== armedState.at(-1)[1]) {
+                if (event !== armedState.at(-1)?.[1]) {
                     armedState.push([msgs.time_boot_ms[i], event]);
                 }
             }
