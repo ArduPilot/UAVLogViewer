@@ -11,8 +11,10 @@ import baseWebpackConfig from "./webpack.base.conf.js";
 import CopyWebpackPlugin from "copy-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
-const cesiumSource = "node_modules/cesium/Source";
-const cesiumWorkers = "node_modules/cesium/Build/Cesium/Workers";
+// Cesium loads its web workers, decoders (ThirdParty: Draco, KTX2), images and widget files at
+// runtime from CESIUM_BASE_URL: copy its built folders next to the app
+const cesiumBuild = "node_modules/cesium/Build/Cesium";
+const cesiumFolders = ["Workers", "ThirdParty", "Assets", "Widgets"];
 import TerserPlugin from "terser-webpack-plugin";
 import { VueLoaderPlugin } from "vue-loader";
 import CompressionPlugin from "compression-webpack-plugin";
@@ -84,14 +86,10 @@ const webpackConfig = merge(baseWebpackConfig, {
         // enable scope hoisting
         new webpack.optimize.ModuleConcatenationPlugin(),
         new CopyWebpackPlugin({
-            patterns: [
-                { from: join(cesiumSource, "Assets"), to: "Assets" },
-                { from: join(cesiumSource, "Widgets"), to: "Widgets" },
-                { from: cesiumWorkers, to: "Workers" },
-                // {from: path.join(cesiumSource, 'ThirdParty'), to: 'ThirdParty'},
-                // {from: path.join(cesiumSource, '../Build/Cesium/ThirdParty/Workers'), to: 'ThirdParty/Workers', force: true},
-                // {from: path.join(cesiumSource, '../Build/Cesium/Workers'), to: 'Workers', force: true}
-            ],
+            patterns: cesiumFolders.map((dir) => ({
+                from: join(cesiumBuild, dir),
+                to: dir,
+            })),
         }),
     ],
 });

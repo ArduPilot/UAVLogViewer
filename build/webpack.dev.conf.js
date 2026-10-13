@@ -13,8 +13,10 @@ import CopyWebpackPlugin from "copy-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import { getPort } from "portfinder";
 import { VueLoaderPlugin } from "vue-loader";
-const cesiumSource = "node_modules/cesium/Source";
-const cesiumWorkers = "../Build/Cesium/Workers";
+// Cesium loads its web workers, decoders (ThirdParty: Draco, KTX2), images and widget files at
+// runtime from CESIUM_BASE_URL: copy its built folders next to the app
+const cesiumBuild = "node_modules/cesium/Build/Cesium";
+const cesiumFolders = ["Workers", "ThirdParty", "Assets", "Widgets"];
 import GitRevisionPlugin from "git-revision-webpack-plugin";
 const gitRevisionPlugin = new GitRevisionPlugin();
 import ESLintPlugin from "eslint-webpack-plugin";
@@ -85,18 +87,10 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         }),
         // copy custom static assets
         new CopyWebpackPlugin({
-            patterns: [
-                {
-                    from: _resolve(cesiumSource, cesiumWorkers),
-                    to: "Workers",
-                },
-                { from: _resolve(cesiumSource, "Assets"), to: "Assets" },
-                { from: _resolve(cesiumSource, "Widgets"), to: "Widgets" },
-                {
-                    from: _resolve(cesiumSource, "ThirdParty/Workers"),
-                    to: "ThirdParty/Workers",
-                },
-            ],
+            patterns: cesiumFolders.map((dir) => ({
+                from: _resolve(cesiumBuild, dir),
+                to: dir,
+            })),
             options: {
                 concurrency: 100,
             },
