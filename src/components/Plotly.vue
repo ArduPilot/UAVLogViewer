@@ -566,20 +566,6 @@ export default {
             }
             this.state.expressions.push(...newplots);
         },
-        removePlot(fieldname) {
-            const index = this.state.expressions.indexOf(fieldname); // <-- Not supported in <IE9
-            if (index !== -1) {
-                this.state.expressions = this.state.expressions.splice(
-                    index,
-                    1,
-                );
-            }
-            this.plot();
-            if (this.state.expressions.length === 0) {
-                this.state.plotOn = false;
-            }
-            this.onRangeChanged();
-        },
         resetAxis(index) {
             // Resets the Y axis so that the next plot autoranges
             // unfortunately the axis are named yaxis, yaxis2, yaxis3... and so on
