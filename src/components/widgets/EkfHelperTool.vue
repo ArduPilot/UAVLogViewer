@@ -36,21 +36,25 @@
 
 <script>
 import { store } from "../Globals.js";
-import { baseWidget } from "./baseWidget";
+import { useWidget, widgetProps } from "./useWidget.js";
 
 export default {
     name: "EkfHelperViewer",
-    mixins: [baseWidget],
-    data() {
-        return {
+    props: widgetProps,
+    emits: ["close"],
+    setup(props, { emit }) {
+        return useWidget(props, emit, {
             name: "EkfHelperViewer",
-            filter: "",
-            state: store,
             width: 220,
             height: 215,
             left: 310,
             top: 0,
-            forceRecompute: 0,
+        });
+    },
+    data() {
+        return {
+            filter: "",
+            state: store,
             cursorTime: 0,
         };
     },
@@ -111,6 +115,9 @@ export default {
         this.$eventHub.$off("cesium-time-changed", this.setTime);
         this.$eventHub.$off("hoveredTime", this.setTime);
     },
+    mounted() {
+        this.init();
+    },
     methods: {
         setTime(time) {
             this.cursorTime = time;
@@ -136,7 +143,7 @@ export default {
                 }, 2000);
             });
         },
-        setup() {
+        init() {
             this.waitForMessage("EKF4.SS");
         },
     },

@@ -26,21 +26,25 @@
 
 <script>
 import { store } from "../Globals.js";
-import { baseWidget } from "./baseWidget";
+import { useWidget, widgetProps } from "./useWidget.js";
 
 export default {
     name: "MessageViewer",
-    mixins: [baseWidget],
-    data() {
-        return {
+    props: widgetProps,
+    emits: ["close"],
+    setup(props, { emit }) {
+        return useWidget(props, emit, {
             name: "MessageViewer",
-            filter: "",
-            state: store,
             width: 220,
             height: 215,
             left: 310,
             top: 0,
-            forceRecompute: 0,
+        });
+    },
+    data() {
+        return {
+            filter: "",
+            state: store,
             cursorTime: 0,
         };
     },
@@ -103,7 +107,6 @@ export default {
                 }, 2000);
             });
         },
-        setup() {},
     },
 };
 </script>

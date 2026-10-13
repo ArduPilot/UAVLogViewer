@@ -22,7 +22,7 @@
 
 <script>
 import { store } from "../Globals.js";
-import { baseWidget } from "./baseWidget";
+import { useWidget, widgetProps } from "./useWidget.js";
 import AttitudeIndicator from "./flightIndicators/AttitudeIndicator.vue";
 import { Interpolator } from "./interpolator.js";
 
@@ -31,23 +31,22 @@ export default {
     components: {
         Attitude: AttitudeIndicator,
     },
-    mixins: [baseWidget],
-    props: {
-        snappable: { type: Boolean, default: false },
-        fixedAspectRatio: { type: Boolean, default: false },
-        aspectRatio: { type: Number, default: 2 },
-    },
-    data() {
-        return {
+    props: widgetProps,
+    emits: ["close"],
+    setup(props, { emit }) {
+        return useWidget(props, emit, {
             name: "AttitudeViewer",
-            state: store,
             width: 256,
             height: 256,
             left: 500,
             top: 12,
+        });
+    },
+    data() {
+        return {
+            state: store,
             roll: 0,
             pitch: 0,
-            forceRecompute: 1,
         };
     },
     computed: {
@@ -93,7 +92,6 @@ export default {
             this.roll = rp[0];
             this.pitch = rp[1];
         },
-        setup() {},
     },
 };
 </script>

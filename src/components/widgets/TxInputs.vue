@@ -33,29 +33,29 @@
 
 <script>
 import { store } from "../Globals.js";
-import { baseWidget } from "./baseWidget";
+import { useWidget, widgetProps } from "./useWidget.js";
 import { Interpolator } from "./interpolator.js";
 
 export default {
     name: "TxInputs",
-    mixins: [baseWidget],
-    props: {
-        snappable: { type: Boolean, default: false },
-        fixedAspectRatio: { type: Boolean, default: false },
-        aspectRatio: { type: Number, default: 2 },
-    },
-    data() {
-        return {
-            state: store,
+    props: widgetProps,
+    emits: ["close"],
+    setup(props, { emit }) {
+        return useWidget(props, emit, {
             name: "inputViewer",
-            throttle: 50,
-            yaw: 50,
-            pitch: 50,
-            roll: 50,
             width: 294,
             height: 150,
             left: 50,
             top: 12,
+        });
+    },
+    data() {
+        return {
+            state: store,
+            throttle: 50,
+            yaw: 50,
+            pitch: 50,
+            roll: 50,
             rollMap: 0,
             pitchMap: 1,
             throttleMap: 2,
@@ -110,6 +110,9 @@ export default {
         this.closed = true;
         this.$eventHub.$off("cesium-time-changed", this.setTime);
         this.$eventHub.$off("hoveredTime", this.setTime);
+    },
+    mounted() {
+        this.init();
     },
     methods: {
         waitForMessage(fieldname) {
@@ -181,7 +184,7 @@ export default {
                 console.log(e);
             }
         },
-        setup() {
+        init() {
             const _this = this;
             this.waitForMessage("RC_CHANNELS.*").then(function () {
                 const x = _this.state.messages.RC_CHANNELS.time_boot_ms;

@@ -13,7 +13,6 @@
         </template>
         <TxInputs
             v-if="state.mapAvailable && state.showMap && state.showRadio"
-            fixed-aspect-ratio
         ></TxInputs>
         <ParamViewer
             v-if="state.showParams"

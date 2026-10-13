@@ -49,11 +49,6 @@ export default [
         },
     },
     {
-        // The widgets share the Options API mixin in baseWidget.js until it becomes a composable
-        files: ["src/components/widgets/*.vue"],
-        rules: { "sonarjs/no-vue-mixins": "off" },
-    },
-    {
         // Plot expressions are user-entered JavaScript by design (see src/mavextra/)
         files: ["src/components/Plotly.vue"],
         rules: { "sonarjs/code-eval": "off", "no-new-func": "off" },

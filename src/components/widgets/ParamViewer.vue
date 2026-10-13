@@ -57,26 +57,30 @@
 
 <script>
 import { store } from "../Globals.js";
-import { baseWidget } from "./baseWidget";
+import { useWidget, widgetProps } from "./useWidget.js";
 import { downloadData } from "../../tools/download.js";
 
 export default {
     name: "ParamViewer",
-    mixins: [baseWidget],
+    props: widgetProps,
+    emits: ["close"],
+    setup(props, { emit }) {
+        return useWidget(props, emit, {
+            name: "ParamViewer",
+            width: 220,
+            height: 215,
+            left: 540,
+            top: 0,
+        });
+    },
     data() {
         return {
-            name: "ParamViewer",
             filter: "",
             state: store,
             throttle: 50,
             yaw: 50,
             pitch: 50,
             roll: 50,
-            width: 220,
-            height: 215,
-            left: 540,
-            top: 0,
-            forceRecompute: 0,
             showdiff: false,
         };
     },
@@ -165,7 +169,6 @@ export default {
 
             downloadData(content, `${fileName}.txt`, "text/plain");
         },
-        setup() {},
         printParam(param) {
             // prints number with just enough decimal places, up to 3, ommiting trailing zeroes
             return parseFloat(param).toFixed(

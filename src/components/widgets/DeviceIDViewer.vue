@@ -30,7 +30,7 @@
 
 <script>
 import { store } from "../Globals.js";
-import { baseWidget } from "./baseWidget";
+import { useWidget, widgetProps } from "./useWidget.js";
 
 const busTypes = {
     1: "I2C",
@@ -126,16 +126,20 @@ const airspeedTypes = {
 
 export default {
     name: "DeviceIDViewer",
-    mixins: [baseWidget],
-    data() {
-        return {
+    props: widgetProps,
+    emits: ["close"],
+    setup(props, { emit }) {
+        return useWidget(props, emit, {
             name: "DeviceIDViewer",
-            state: store,
             width: 300,
             height: 215,
             left: 768,
             top: 0,
-            forceRecompute: 0,
+        });
+    },
+    data() {
+        return {
+            state: store,
             cursorTime: 0,
             devices: [],
         };
@@ -149,6 +153,9 @@ export default {
                 (key) => key[0] < this.cursorTime,
             );
         },
+    },
+    mounted() {
+        this.init();
     },
     methods: {
         toHex(value) {
@@ -214,7 +221,7 @@ export default {
                 `${device}: ${decodedDevname}, ${busType}(${bus}), ${address}, ${devtype}`,
             );
         },
-        setup() {
+        init() {
             this.update();
         },
     },

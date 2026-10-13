@@ -263,7 +263,7 @@
 
 <script>
 import { store } from "../Globals.js";
-import { baseWidget } from "./baseWidget";
+import { useWidget, widgetProps } from "./useWidget.js";
 import { Vector3 } from "../../mavextra/vector3";
 import { Matrix3 } from "../../mavextra/matrix3";
 import { downloadData } from "../../tools/download.js";
@@ -383,16 +383,20 @@ async function selectParentAsync(population, probs) {
 }
 export default {
     name: "MagFitTool",
-    mixins: [baseWidget],
-    data() {
-        return {
+    props: widgetProps,
+    emits: ["close"],
+    setup(props, { emit }) {
+        return useWidget(props, emit, {
             name: "MagFitTool",
-            state: store,
             width: 580,
             height: 680,
             left: 432,
             top: 12,
-            forceRecompute: 0,
+        });
+    },
+    data() {
+        return {
+            state: store,
             numberOfPoints: 1000, // not settable in the widget yet: https://github.com/igoutta/UAVLogViewer/issues/5
             newParamFormat: true,
             forceScale: false,
@@ -681,6 +685,9 @@ export default {
             return this.state.params?.values ?? {};
         },
     },
+    mounted() {
+        this.init();
+    },
     methods: {
         downloadParams() {
             const params = [];
@@ -810,7 +817,7 @@ export default {
                 });
             });
         },
-        setup() {
+        init() {
             this.loadRequiredData();
         },
         async getLocationFromIp() {
