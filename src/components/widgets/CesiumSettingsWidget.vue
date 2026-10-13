@@ -1,8 +1,14 @@
 <template>
     <div class="cesium-settings-defaultContainer">
         <div class="cesium-settings-display">
-            <label>Camera</label>
-            <select v-model="state.cameraType" class="cesium-button">
+            <label for="settings-camera"
+                ><i class="fa-solid fa-camera"></i> Camera</label
+            >
+            <select
+                id="settings-camera"
+                v-model="state.cameraType"
+                class="cesium-button"
+            >
                 <option value="free">Free</option>
                 <option value="follow">Follow</option>
             </select>
@@ -10,42 +16,63 @@
             <div>
                 <label
                     ><input v-model="state.showWaypoints" type="checkbox" />
-                    Waypoints</label
+                    <i class="fa-solid fa-location-dot"></i> Waypoints</label
                 >
                 <label
                     ><input v-model="state.showTrajectory" type="checkbox" />
-                    Trajectory</label
+                    <i class="fa-solid fa-route"></i> Trajectory</label
                 >
             </div>
-            <!-- WINGSPAN -->
+            <!-- WINGSPAN: the slider for quick changes, the field for an exact value -->
             <div>
-                <label
-                    >Wingspan
+                <label for="settings-wingspan"
+                    ><i class="fa-solid fa-jet-fighter"></i> Wingspan (m)</label
+                >
+                <div class="slider-row">
                     <input
+                        v-model="state.modelScale"
+                        aria-label="Wingspan slider"
+                        type="range"
+                        min="0.1"
+                        max="15"
+                        step="0.01"
+                    />
+                    <input
+                        id="settings-wingspan"
                         v-model="state.modelScale"
                         class="wingspan-text"
                         size="5"
                         type="text"
                     />
-                    (m)
-                </label>
+                </div>
             </div>
             <!-- ALTITUDE OFFSET -->
             <div>
-                <label>
-                    Altitude Offset
+                <label for="settings-offset"
+                    ><i class="fa-solid fa-arrows-up-down"></i> Altitude Offset
+                    (m)</label
+                >
+                <div class="slider-row">
                     <input
+                        v-model="state.heightOffset"
+                        aria-label="Altitude offset slider"
+                        type="range"
+                        min="-5000"
+                        max="5000"
+                        step="0.1"
+                    />
+                    <input
+                        id="settings-offset"
                         v-model="state.heightOffset"
                         class="wingspan-text"
                         size="5"
                         type="number"
                     />
-                    (m)
-                </label>
+                </div>
             </div>
             <!-- Trajectory Source -->
             <div>
-                <label> Trajectory Source</label>
+                <label><i class="fa-solid fa-map"></i> Trajectory Source</label>
                 <div class="traj-source-row">
                     <select
                         v-model="state.trajectorySource"
@@ -98,7 +125,9 @@
             </div>
             <!-- Attitude Source -->
             <div>
-                <label> Attitude Source</label>
+                <label
+                    ><i class="fa-solid fa-compass"></i> Attitude Source</label
+                >
                 <select v-model="state.attitudeSource" class="cesium-button">
                     <option v-for="item in attitudeSources" :key="item">
                         {{ item }}
@@ -172,10 +201,21 @@ export default {
     border: 1px solid #444;
 }
 
+/* scrolls when the comparison sources make it taller than the 3D view leaves room for */
 .cesium-settings-display {
-    max-height: 400px; /* Estimate the maximum height of your content; you may need to adjust this */
-    overflow: hidden; /* To hide the content that exceeds the max-height */
+    max-height: 400px;
+    overflow: auto;
     font: bold 12px sans-serif;
+}
+
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.slider-row input[type="range"] {
+    flex: 1;
 }
 
 .traj-source-row {
