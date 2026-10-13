@@ -486,7 +486,9 @@ export default {
                         }
                         this.viewer.terrainProvider = terrainProvider;
                     }
-                    this.viewer.scene.debugShowFramesPerSecond = true;
+                    // Cesium's frame time counter: for working on the 3D view, not for users
+                    this.viewer.scene.debugShowFramesPerSecond =
+                        import.meta.env.DEV;
 
                     this.viewer.scene.postProcessStages.ambientOcclusion.enabled = false;
                     this.viewer.scene.postProcessStages.bloom.enabled = false;
