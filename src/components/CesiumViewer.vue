@@ -95,7 +95,7 @@ import {
 } from "cesium";
 
 import { DateTime } from "luxon";
-import tzlookup from "tz-lookup";
+import tzlookup from "@photostructure/tz-lookup";
 
 import { store } from "./Globals.js";
 import { DataflashDataExtractor } from "../tools/dataflashDataExtractor";
@@ -525,10 +525,14 @@ export default {
                         const latitude =
                             (cameraPosition.latitude * 180) / Math.PI;
 
-                        const timezone = tzlookup(latitude, longitude);
-                        dateTime = dateTime.setZone(timezone);
-                        // If you want to set a specific timezone
-                        // dateTime = dateTime.setZone("America/Chicago");
+                        // a zone newer than the browser's time zone data would give an invalid
+                        // date: keep the browser's own zone then
+                        const zoned = dateTime.setZone(
+                            tzlookup(latitude, longitude),
+                        );
+                        if (zoned.isValid) {
+                            dateTime = zoned;
+                        }
                         const offset =
                             dateTime.offsetNameShort || dateTime.offsetNameLong;
                         return `${dateTime.toLocaleString(
