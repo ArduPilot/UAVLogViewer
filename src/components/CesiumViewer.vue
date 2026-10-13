@@ -2740,6 +2740,12 @@ input#collapsible {
 .cesium-toolbar-button {
     background-color: rgb(61 58 56);
     border-radius: 3px;
+
+    /* the icon in the middle of the button (the Font Awesome ones sat lower right) */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
 .cesium-toolbar-button:hover {
