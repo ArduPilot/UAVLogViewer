@@ -154,6 +154,17 @@ function getMaxTime(data) {
     return data.reduce((max, p) => Math.max(p[3], max), data[0][3]);
 }
 
+// Time zone at the start of the trajectory ([lon, lat, alt, time] points), or null
+function zoneOfFlight(points) {
+    const [longitude, latitude] = points[0] ?? [];
+    try {
+        return tzlookup(latitude, longitude);
+    } catch {
+        // no usable position
+        return null;
+    }
+}
+
 // Fence descriptor: circular fences (single point + radius) become closed cylinders,
 // polygon fences walls (a closed vertical tube). Exclusion fences are tagged by the
 // extractor; everything else is treated as an inclusion fence.
@@ -241,6 +252,8 @@ export default {
             selectedColorCoder: "Mode",
             scaleBarLabel: "",
             scaleBarWidth: 0,
+            // the 3D clock shows local time at the flight, not where the camera happens to be
+            flightTimeZone: null,
         };
     },
     computed: {
@@ -517,19 +530,12 @@ export default {
                     this.viewer.animation.viewModel.timeFormatter = (date) => {
                         const isoString = JulianDate.toIso8601(date);
                         let dateTime = DateTime.fromISO(isoString);
-                        // get zone from current cesium location
-                        const cameraPosition =
-                            this.viewer.camera.positionCartographic;
-                        const longitude =
-                            (cameraPosition.longitude * 180) / Math.PI;
-                        const latitude =
-                            (cameraPosition.latitude * 180) / Math.PI;
-
-                        // a zone newer than the browser's time zone data would give an invalid
-                        // date: keep the browser's own zone then
-                        const zoned = dateTime.setZone(
-                            tzlookup(latitude, longitude),
-                        );
+                        // local time where the flight is (see flightTimeZone); a zone newer
+                        // than the browser's time zone data would give an invalid date: keep
+                        // the browser's own zone then
+                        const zoned = this.flightTimeZone
+                            ? dateTime.setZone(this.flightTimeZone)
+                            : dateTime;
                         if (zoned.isValid) {
                             dateTime = zoned;
                         }
@@ -1432,6 +1438,7 @@ export default {
                     Cartographic.fromDegrees(pos[0], pos[1], pos[2]),
                 );
             }
+            this.flightTimeZone = zoneOfFlight(this.points);
             // process time_boot_ms into cesium time
             this.startTimeMs = getMinTime(this.points);
             const timespan = getMaxTime(this.points) - this.startTimeMs;
