@@ -96,7 +96,7 @@ import {
 
 import { DateTime } from "luxon";
 
-import { store } from "./Globals.js";
+import { keepRaw, store } from "./Globals.js";
 import { DataflashDataExtractor } from "../tools/dataflashDataExtractor";
 import { MavlinkDataExtractor } from "../tools/mavlinkDataExtractor";
 import { DjiDataExtractor } from "../tools/djiDataExtractor";
@@ -434,7 +434,7 @@ export default {
         this.state.mapLoading = true;
         this.state.mapError = null;
     },
-    beforeDestroy() {
+    beforeUnmount() {
         // asyncSetup/setup2 may still be waiting for terrain or tiles: let them stop
         this.tornDown = true;
         // they return early without clearing the loading spinner
@@ -645,7 +645,7 @@ export default {
         async updateColor() {
             const newCoder = this.availableColorCoders[this.selectedColorCoder];
             await this.waitForMessages(newCoder.requiredMessages);
-            this.colorCoder = newCoder;
+            this.colorCoder = keepRaw(newCoder);
         },
         createViewer(online) {
             if (online) {
@@ -1108,7 +1108,7 @@ export default {
             });
         },
         onCameraUpdate() {
-            const query = Object.create(this.$route.query); // clone it
+            const query = { ...this.$route.query };
             const cam = this.viewer.camera;
             query.cam = [
                 cam.position.x.toFixed(2),

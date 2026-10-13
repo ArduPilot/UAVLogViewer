@@ -30,7 +30,6 @@
 
 <script>
 export default {
-    model: { prop: "modelValue", event: "update:modelValue" },
     props: {
         modelValue: { type: String, default: "" },
         suggestions: {
@@ -38,6 +37,7 @@ export default {
             default: () => [],
         },
     },
+    emits: ["update:modelValue"],
     data() {
         return {
             filteredSuggestions: [],
@@ -58,7 +58,7 @@ export default {
     mounted() {
         window.addEventListener("scroll", this.updateCursorPosition, true);
     },
-    beforeDestroy() {
+    beforeUnmount() {
         window.removeEventListener("scroll", this.updateCursorPosition, true);
     },
     methods: {

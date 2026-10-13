@@ -1,7 +1,6 @@
+<!-- mounted into index.html's #app -->
 <template>
-    <div id="app" style="height: 100%">
-        <router-view />
-    </div>
+    <router-view />
 </template>
 
 <script>
@@ -14,6 +13,7 @@ export default {
 @import url("https://fonts.googleapis.com/css?family=Nunito+Sans&display=swap");
 
 #app {
+    height: 100%;
     font-family: "Nunito Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

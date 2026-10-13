@@ -116,7 +116,7 @@ import ParamViewer from "@/components/widgets/ParamViewer.vue";
 import MessageViewer from "@/components/widgets/MessageViewer.vue";
 import DeviceIDViewer from "@/components/widgets/DeviceIDViewer.vue";
 import AttitudeViewer from "@/components/widgets/AttitudeWidget.vue";
-import { store } from "@/components/Globals.js";
+import { keepRaw, store } from "@/components/Globals.js";
 import { AtomSpinner } from "epic-spinners";
 import { Color } from "cesium";
 import colormap from "colormap";
@@ -126,7 +126,6 @@ import { DjiDataExtractor } from "../tools/djiDataExtractor";
 import { zoneOfFlight } from "../tools/flightTime.js";
 import MagFitTool from "@/components/widgets/MagFitTool.vue";
 import EkfHelperTool from "@/components/widgets/EkfHelperTool.vue";
-import Vue from "vue";
 
 // any other log type is DataFlash
 const EXTRACTORS = { tlog: MavlinkDataExtractor, dji: DjiDataExtractor };
@@ -183,7 +182,7 @@ export default {
     created() {
         this.$eventHub.$on("messagesDoneLoading", this.extractFlightData);
         this.$eventHub.$on("cesium-time-changed", this.seekParams);
-        this.state.messages = {};
+        this.state.messages = keepRaw({});
         this.state.timeAttitude = [];
         this.state.timeAttitudeQ = [];
         this.state.currentTrajectory = [];
@@ -191,7 +190,7 @@ export default {
             this.state.isOnline = a;
         });
     },
-    beforeDestroy() {
+    beforeUnmount() {
         this.$eventHub.$off("messagesDoneLoading", this.extractFlightData);
         this.$eventHub.$off("cesium-time-changed", this.seekParams);
     },
@@ -213,7 +212,7 @@ export default {
                 this.state.textMessages =
                     this.dataExtractor.extractTextMessages(this.state.messages);
             }
-            Vue.delete(this.state.messages, "MSG");
+            delete this.state.messages.MSG;
 
             if (this.state.colors.length === 0) {
                 this.generateColorMMap();
@@ -221,9 +220,9 @@ export default {
             this.extractAttitudeData();
             this.extractTrajectoryData();
             this.extractMetadata();
-            Vue.delete(this.state.messages, "AHR2");
-            Vue.delete(this.state.messages, "POS");
-            Vue.delete(this.state.messages, "GPS");
+            delete this.state.messages.AHR2;
+            delete this.state.messages.POS;
+            delete this.state.messages.GPS;
 
             this.state.fences = this.dataExtractor.extractFences(
                 this.state.messages,
@@ -251,22 +250,22 @@ export default {
                 this.state.flightModeChanges =
                     this.dataExtractor.extractFlightModes(this.state.messages);
             }
-            Vue.delete(this.state.messages, "MODE");
+            delete this.state.messages.MODE;
 
             if (this.state.events.length === 0) {
                 this.state.events = this.dataExtractor.extractEvents(
                     this.state.messages,
                 );
             }
-            Vue.delete(this.state.messages, "STAT");
-            Vue.delete(this.state.messages, "EV");
+            delete this.state.messages.STAT;
+            delete this.state.messages.EV;
 
             if (this.state.mission.length === 0) {
                 this.state.mission = this.dataExtractor.extractMission(
                     this.state.messages,
                 );
             }
-            Vue.delete(this.state.messages, "CMD");
+            delete this.state.messages.CMD;
         },
 
         // parameter values at the playback time
@@ -279,8 +278,8 @@ export default {
                 this.state.messages,
             );
             if (this.state.params === undefined) {
-                this.state.params = this.dataExtractor.extractParams(
-                    this.state.messages,
+                this.state.params = keepRaw(
+                    this.dataExtractor.extractParams(this.state.messages),
                 );
                 if (this.state.params !== undefined) {
                     this.state.defaultParams =
@@ -301,15 +300,19 @@ export default {
             const { quaternions, eulers } = this.state.attitudeSources;
             if (quaternions.length > 0) {
                 this.state.attitudeSource = quaternions[0];
-                this.state.timeAttitudeQ = this.dataExtractor.extractAttitudeQ(
-                    this.state.messages,
-                    quaternions[0],
+                this.state.timeAttitudeQ = keepRaw(
+                    this.dataExtractor.extractAttitudeQ(
+                        this.state.messages,
+                        quaternions[0],
+                    ),
                 );
             } else if (eulers.length > 0) {
                 this.state.attitudeSource = eulers[0];
-                this.state.timeAttitude = this.dataExtractor.extractAttitude(
-                    this.state.messages,
-                    eulers[0],
+                this.state.timeAttitude = keepRaw(
+                    this.dataExtractor.extractAttitude(
+                        this.state.messages,
+                        eulers[0],
+                    ),
                 );
             }
             const list = Object.keys(this.state.timeAttitude);
@@ -326,15 +329,19 @@ export default {
             }
             const first = this.state.trajectorySources[0];
             this.state.trajectorySource = first;
-            this.state.trajectories = this.dataExtractor.extractTrajectory(
-                this.state.messages,
-                first,
+            this.state.trajectories = keepRaw(
+                this.dataExtractor.extractTrajectory(
+                    this.state.messages,
+                    first,
+                ),
             );
             try {
-                this.state.currentTrajectory =
-                    this.state.trajectories[first].trajectory;
-                this.state.timeTrajectory =
-                    this.state.trajectories[first].timeTrajectory;
+                this.state.currentTrajectory = keepRaw(
+                    this.state.trajectories[first].trajectory,
+                );
+                this.state.timeTrajectory = keepRaw(
+                    this.state.trajectories[first].timeTrajectory,
+                );
             } catch {
                 console.log("unable to load trajectory");
             }
@@ -384,12 +391,11 @@ export default {
 
             // colormap used on Cesium
             colorMapOptions.format = "float";
-            this.state.colors = [];
-            // this.translucentColors = []
-            for (const rgba of colormap(colorMapOptions)) {
-                this.state.colors.push(new Color(rgba[0], rgba[1], rgba[2]));
-                // this.translucentColors.push(new Cesium.Color(rgba[0], rgba[1], rgba[2], 0.1))
-            }
+            this.state.colors = keepRaw(
+                colormap(colorMapOptions).map(
+                    (rgba) => new Color(rgba[0], rgba[1], rgba[2]),
+                ),
+            );
         },
     },
 };

@@ -158,7 +158,7 @@ export default {
             this.state.comparisonTrajectories.splice(idx, 1);
         },
         updateComparison(idx, value) {
-            this.$set(this.state.comparisonTrajectories, idx, value);
+            this.state.comparisonTrajectories[idx] = value;
         },
     },
 };

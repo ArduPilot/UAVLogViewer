@@ -7,7 +7,7 @@ import { styleLoaders, assetsPath } from "./utils.js";
 import webpack from "webpack";
 import { build } from "../config/index.js";
 import { merge } from "webpack-merge";
-import baseWebpackConfig from "./webpack.base.conf.js";
+import baseWebpackConfig, { vueFeatureFlags } from "./webpack.base.conf.js";
 import CopyWebpackPlugin from "copy-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
@@ -52,6 +52,7 @@ const webpackConfig = merge(baseWebpackConfig, {
         new webpack.DefinePlugin({
             // Define relative base path in cesium for loading assets
             CESIUM_BASE_URL: JSON.stringify(""),
+            ...vueFeatureFlags,
             _COMMIT_: JSON.stringify(gitRevisionPlugin.commithash()),
             _BUILDDATE_: JSON.stringify(new Date().toString()),
         }),

@@ -13,8 +13,11 @@
         <Collapse name="plotsetupcontent" class="menu-content" visible>
             <ul class="colorpicker plot-wrapper">
                 <template v-if="state.expressions.length">
-                    <template v-for="(field, index) in state.expressions">
-                        <li :key="'field' + index" class="field plotsetup">
+                    <template
+                        v-for="(field, index) in state.expressions"
+                        :key="'field' + index"
+                    >
+                        <li class="field plotsetup">
                             <expression-editor
                                 v-model="field.name"
                                 :suggestions="completionOptions"
@@ -67,11 +70,7 @@
                                 ></i>
                             </a>
                         </li>
-                        <li
-                            v-if="state.expressionErrors[index]"
-                            :key="'field' + index + 'err'"
-                            class="error"
-                        >
+                        <li v-if="state.expressionErrors[index]" class="error">
                             <i
                                 class="fa-solid fa-circle-exclamation error"
                                 :title="state.expressionErrors[index]"

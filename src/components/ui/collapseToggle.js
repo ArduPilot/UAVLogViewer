@@ -1,7 +1,7 @@
 import { eventHub } from "../../eventHub.js";
 
 // v-collapse-toggle="'name'": clicking the element opens or closes the <Collapse name="name">
-// panels. It has both Vue 2 (bind/update/unbind) and Vue 3 (mounted/updated/unmounted) hooks.
+// panels.
 function attach(el, { value }) {
     el.collapseName = value;
     el.collapseToggle = () =>
@@ -18,9 +18,6 @@ function detach(el) {
 }
 
 export const collapseToggle = {
-    bind: attach,
-    update,
-    unbind: detach,
     mounted: attach,
     updated: update,
     unmounted: detach,

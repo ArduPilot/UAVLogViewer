@@ -11,13 +11,15 @@
         </li>
         <template v-if="nodes.length === undefined">
             <Collapse :name="cleanName">
-                <template v-for="(newNode, nodeName) in nodes">
+                <template
+                    v-for="(newNode, nodeName) in nodes"
+                    :key="cleanNodeName(nodeName)"
+                >
                     <tree-menu
                         v-if="
                             newNode.length === undefined &&
                             newNode.messages === undefined
                         "
-                        :key="cleanNodeName(nodeName)"
                         :label="nodeName"
                         :nodes="newNode"
                         :level="level + 1"
@@ -30,7 +32,6 @@
                             newNode.messages !== undefined &&
                             newNode.messages.length !== undefined
                         "
-                        :key="cleanNodeName(nodeName)"
                         :style="{ 'margin-left': '' + (level + 1) * 15 + 'px' }"
                         class="type"
                     >

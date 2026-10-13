@@ -1,6 +1,6 @@
 <template>
-    <!-- HEADER -->
     <div class="nav-side-menu col-lg-2">
+        <!-- HEADER -->
         <h1 class="brand">
             <a class="github" href="https://github.com/ardupilot/uavlogviewer">
                 <img :src="githubIcon" alt="UAV Log Viewer on GitHub" />
@@ -239,7 +239,7 @@ export default {
     created() {
         this.$eventHub.$on("set-selected", this.setSelected);
     },
-    beforeDestroy() {
+    beforeUnmount() {
         this.$eventHub.$off("set-selected", this.setSelected);
     },
     methods: {

@@ -5,9 +5,9 @@
 <script>
 // only the scatter trace is used: the core build includes it
 import Plotly from "plotly.js/lib/core";
-import { store, firstFreeAxis, firstFreeColor } from "./Globals.js";
+import { store, firstFreeAxis, firstFreeColor, keepRaw } from "./Globals.js";
 import { faWindowRestore } from "@fortawesome/free-solid-svg-icons";
-import Vue from "vue";
+import { toRaw } from "vue";
 
 import { darken } from "../tools/cssColor.js";
 import { downloadData } from "../tools/download.js";
@@ -285,7 +285,7 @@ export default {
         this.$eventHub.$on("addPlots", this.addPlots);
         this.$eventHub.$on("plot", this.plot);
     },
-    beforeDestroy() {
+    beforeUnmount() {
         this.$eventHub.$off("cesium-time-changed", this.setCursorTime);
         this.$eventHub.$off("hoveredTime", this.setCursorTime);
         this.$eventHub.$off("force-resize-plotly", this.resize);
@@ -326,9 +326,10 @@ export default {
                             newWindow.setTimeOrigin(this.timeOrigin);
                             newWindow.setPlotData(gd.data);
                             newWindow.setPlotOptions(gd.layout);
-                            newWindow.setCssColors(this.state.cssColors);
+                            // plain arrays: the window has its own Vue
+                            newWindow.setCssColors(toRaw(this.state.cssColors));
                             newWindow.setFlightModeChanges(
-                                this.state.flightModeChanges,
+                                toRaw(this.state.flightModeChanges),
                             );
                             console.log(this.$eventHub);
                             newWindow.setEventHub(this.$eventHub);
@@ -725,7 +726,7 @@ export default {
                 x,
                 y,
             });
-            Vue.set(this.state.plotCache, expression1, data);
+            this.state.plotCache[expression1] = keepRaw(data);
             console.log("Evaluation took " + (Date.now() - start) + "ms");
             this.cleanupCache();
             return data;

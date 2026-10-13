@@ -106,7 +106,7 @@ export default {
             return this.height * (69 / 150);
         },
     },
-    beforeDestroy() {
+    beforeUnmount() {
         this.closed = true;
         this.$eventHub.$off("cesium-time-changed", this.setTime);
         this.$eventHub.$off("hoveredTime", this.setTime);

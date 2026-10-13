@@ -1221,8 +1221,7 @@ export default {
                 c.diag = new Vector3(1.0, 1.0, 1.0);
                 c.offdiag = new Vector3(0.0, 0.0, 0.0);
                 c.cmot = new Vector3(0.0, 0.0, 0.0);
-                // use $set so Vue detects the array index change (reactivity)
-                this.$set(this.newCorrections, instance, c);
+                this.newCorrections[instance] = c;
 
                 const newMessage = {
                     time_boot_ms: [],

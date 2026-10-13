@@ -2,7 +2,6 @@
 import { join, resolve as _resolve } from "node:path";
 import { assetsPath } from "./utils.js";
 import { dev, build } from "../config/index.js";
-import vueLoaderConfig from "./vue-loader.conf.js";
 import { createRequire } from "node:module";
 import CssMinimizerPlugin from "css-minimizer-webpack-plugin";
 
@@ -23,6 +22,14 @@ function asset(test, dir) {
 function resolveDir(dir) {
     return join(import.meta.dirname, "..", dir);
 }
+
+// Vue 3's compile-time flags: the app uses the Options API; no devtools or hydration details
+// in the production bundle
+export const vueFeatureFlags = {
+    __VUE_OPTIONS_API__: JSON.stringify(true),
+    __VUE_PROD_DEVTOOLS__: JSON.stringify(false),
+    __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: JSON.stringify(false),
+};
 
 export const context = _resolve(import.meta.dirname, "../");
 export const entry = {
@@ -54,7 +61,6 @@ export const module = {
         {
             test: /\.vue$/,
             loader: "vue-loader",
-            options: vueLoaderConfig,
         },
         asset(/\.(png|jpe?g|gif|svg)$/i, "img"),
         asset(/\.(woff2?|eot|ttf|otf)$/i, "fonts"),
@@ -67,7 +73,6 @@ export const resolve = {
         buffer: require.resolve("buffer/"),
     },
     alias: {
-        vue$: "vue/dist/vue.esm.js",
         "@": resolveDir("src"),
     },
 };

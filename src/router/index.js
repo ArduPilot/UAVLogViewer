@@ -1,12 +1,10 @@
-import Vue from "vue";
-import Router from "vue-router";
-// import HelloWorld from '@/components/HelloWorld'
-import Home from "../../src/components/Home.vue";
-import PlotlyPopup from "../../src/components/PlotlyPopup.vue";
+import { createRouter, createWebHashHistory } from "vue-router";
+import Home from "../components/Home.vue";
+import PlotlyPopup from "../components/PlotlyPopup.vue";
 
-Vue.use(Router);
-
-export default new Router({
+// hash URLs (/#/, /#/plot) as with Vue Router 3's default mode
+export default createRouter({
+    history: createWebHashHistory(),
     routes: [
         {
             path: "/",

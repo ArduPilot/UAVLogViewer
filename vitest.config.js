@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
-import vue from "@vitejs/plugin-vue2";
+import vue from "@vitejs/plugin-vue";
 
 export default defineConfig({
     plugins: [vue()],
@@ -17,7 +17,6 @@ export default defineConfig({
         // describe, test, expect and vi without imports, as with Jest
         globals: true,
         include: ["test/unit/specs/**/*.spec.js"],
-        setupFiles: ["test/unit/setup.js"],
         // the parser specs read whole flight logs
         testTimeout: 30000,
         coverage: {

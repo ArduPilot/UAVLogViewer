@@ -1,8 +1,17 @@
 import "../mavextra/mavextra";
 import "../mavextra/mymavextra";
+import { markRaw, reactive } from "vue";
 import { eventHub } from "../eventHub.js";
 
-export const store = {
+// Log data the app only replaces, never edits in place (messages, trajectories, attitudes,
+// parameters, plot data, Cesium colors): Vue keeps it as it is instead of proxying every object
+// and array in it. Assigning it to the store still updates whatever shows it.
+export function keepRaw(value) {
+    return value !== null && typeof value === "object" ? markRaw(value) : value;
+}
+
+// The app's shared state. Components use it as "state: store" in data() and change it directly.
+export const store = reactive({
     // currentTrajectory: [],
     trajectorySource: "",
     trajectories: {},
@@ -79,7 +88,7 @@ export const store = {
     /* global _BUILDDATE_ */
     buildDate: _BUILDDATE_,
     childPlots: [],
-};
+});
 
 // Everything derived from the loaded log. Cleared before a new log is parsed (e.g. a second log
 // sent by an embedding page), so nothing carries over from the previous one: flight modes,

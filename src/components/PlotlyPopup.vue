@@ -7,6 +7,7 @@
 <script>
 // only the scatter trace is used: the core build includes it
 import Plotly from "plotly.js/lib/core";
+import { markRaw } from "vue";
 import { store } from "./Globals.js";
 
 import { darken } from "../tools/cssColor.js";
@@ -151,10 +152,10 @@ export default {
         };
         // copies: Plotly changes the traces and layout it draws, and these are the main plot's
         globalThis.setPlotData = (data) => {
-            this.plotData = structuredClone(data);
+            this.plotData = markRaw(structuredClone(data));
         };
         globalThis.setPlotOptions = (options) => {
-            this.plotOptions = structuredClone(options);
+            this.plotOptions = markRaw(structuredClone(options));
         };
         globalThis.setFlightModeChanges = (modes) => {
             this.flightModeChanges = modes;
@@ -168,14 +169,14 @@ export default {
         globalThis.setEventHub = (eventHub) => {
             this.parentHub = eventHub;
             this.listenToParent("$on");
-            // beforeDestroy does not run when the popup window closes
+            // beforeUnmount does not run when the popup window closes
             window.addEventListener("pagehide", () =>
                 this.listenToParent("$off"),
             );
         };
         this.gd = this.$refs.line;
     },
-    beforeDestroy() {
+    beforeUnmount() {
         this.listenToParent("$off");
         clearInterval(this.interval);
     },

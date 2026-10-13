@@ -8,7 +8,7 @@ import { dev } from "../config/index.js";
 import devEnv from "../config/dev.env.js";
 import { merge } from "webpack-merge";
 import { posix, resolve as _resolve } from "node:path";
-import baseWebpackConfig from "./webpack.base.conf.js";
+import baseWebpackConfig, { vueFeatureFlags } from "./webpack.base.conf.js";
 import CopyWebpackPlugin from "copy-webpack-plugin";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import { getPort } from "portfinder";
@@ -98,6 +98,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
         new webpack.DefinePlugin({
             // Define relative base path in cesium for loading assets
             CESIUM_BASE_URL: JSON.stringify(""),
+            ...vueFeatureFlags,
         }),
         new VueLoaderPlugin(),
     ],

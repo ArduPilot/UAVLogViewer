@@ -48,10 +48,9 @@
 <script>
 import VProgress from "./SideBarFileManagerProgressBar.vue";
 import sampleLog from "../assets/vtol.tlog";
-import { store, resetLogState } from "./Globals";
+import { toRaw } from "vue";
+import { keepRaw, store, resetLogState } from "./Globals";
 import { downloadObjectUrl } from "../tools/download.js";
-
-import { MAVLink20Processor as MAVLink } from "../libs/mavlink";
 
 // webpack 5 and Vite both bundle a worker created this way
 const worker = new Worker(
@@ -90,7 +89,11 @@ function forwardWorkerRequests(eventHub) {
         worker.postMessage({ action: "loadType", type });
     });
     eventHub.$on("trimFile", () => {
-        worker.postMessage({ action: "trimFile", time: store.timeRange });
+        // a plain array: the worker can't receive Vue's proxy of it
+        worker.postMessage({
+            action: "trimFile",
+            time: toRaw(store.timeRange),
+        });
     });
 }
 
@@ -101,7 +104,6 @@ export default {
     },
     data: function () {
         return {
-            mavlinkParser: new MAVLink(),
             uploadpercentage: -1,
             sampleLoaded: false,
             shared: false,
@@ -127,7 +129,7 @@ export default {
             } else if (event.data.metadata) {
                 this.state.metadata = event.data.metadata;
             } else if (event.data.messages) {
-                this.state.messages = event.data.messages;
+                this.state.messages = keepRaw(event.data.messages);
                 this.$eventHub.$emit("messages");
             } else if (event.data.messagesDoneLoading) {
                 this.$eventHub.$emit("messagesDoneLoading");
@@ -136,7 +138,7 @@ export default {
                     event.data.messageList;
                 this.$eventHub.$emit("messages");
             } else if (event.data.files) {
-                this.state.files = event.data.files;
+                this.state.files = keepRaw(event.data.files);
                 this.$eventHub.$emit("messages");
             } else if (event.data.url) {
                 this.downloadFileFromURL(event.data.url);

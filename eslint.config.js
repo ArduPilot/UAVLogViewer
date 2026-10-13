@@ -24,7 +24,7 @@ export default [
     js.configs.recommended,
     // neostandard only covers .js/.cjs/.mjs unless told otherwise
     ...neostandard({ noStyle: true, files: ["**/*.vue"] }),
-    ...pluginVue.configs["flat/vue2-recommended"],
+    ...pluginVue.configs["flat/recommended"],
     sonarjs.configs.recommended,
     {
         languageOptions: {
@@ -47,6 +47,11 @@ export default [
             "vue/no-reserved-component-names": "off",
             "vue/no-v-html": "error",
         },
+    },
+    {
+        // The widgets share the Options API mixin in baseWidget.js until it becomes a composable
+        files: ["src/components/widgets/*.vue"],
+        rules: { "sonarjs/no-vue-mixins": "off" },
     },
     {
         // Plot expressions are user-entered JavaScript by design (see src/mavextra/)

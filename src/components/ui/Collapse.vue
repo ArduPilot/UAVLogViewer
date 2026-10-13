@@ -42,7 +42,7 @@ export default {
         this.$el.addEventListener("shown.bs.collapse", this.apply);
         this.$el.addEventListener("hidden.bs.collapse", this.apply);
     },
-    beforeDestroy() {
+    beforeUnmount() {
         eventHub.$off("collapse-toggle", this.onToggle);
         this.$el.removeEventListener("shown.bs.collapse", this.apply);
         this.$el.removeEventListener("hidden.bs.collapse", this.apply);

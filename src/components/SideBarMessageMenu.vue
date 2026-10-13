@@ -30,8 +30,11 @@
                     />
                 </li>
             </ul>
-            <template v-for="key of Object.keys(messageTypesFiltered).sort()">
-                <ul :key="key">
+            <template
+                v-for="key of Object.keys(messageTypesFiltered).sort()"
+                :key="key"
+            >
+                <ul>
                     <li class="type">
                         <div
                             v-collapse-toggle="'type' + key"
@@ -59,12 +62,14 @@
                     </li>
                 </ul>
                 <Collapse
-                    :key="key + '1'"
                     :name="'type' + key"
                     :visible="filter !== ''"
                     :sync-key="filter"
                 >
-                    <template v-for="item in messageTypes[key].complexFields">
+                    <template
+                        v-for="item in messageTypes[key].complexFields"
+                        :key="key + '.' + item.name"
+                    >
                         <li
                             v-if="
                                 isPlottable(key, item.name) &&
@@ -72,7 +77,6 @@
                                     .toLowerCase()
                                     .includes(filter.toLowerCase())
                             "
-                            :key="key + '.' + item.name"
                             class="field"
                             :title="fieldDoc(key, item.name)"
                             @click="toggle(key, item.name)"
@@ -233,7 +237,7 @@ export default {
         this.messageDocs = this.loadXmlDocs();
         this.loadLocalPresets();
     },
-    beforeDestroy() {
+    beforeUnmount() {
         this.$eventHub.$off("messageTypes", this.handleMessageTypes);
         this.$eventHub.$off("presetsChanged", this.loadLocalPresets);
     },
@@ -316,11 +320,8 @@ export default {
                 if (messageTypes[messageType].instances !== undefined) {
                     continue;
                 }
-                this.$set(
-                    this.checkboxes,
-                    messageType,
-                    messageTypes[messageType].expressions.expressions,
-                );
+                this.checkboxes[messageType] =
+                    messageTypes[messageType].expressions.expressions;
                 newMessages[messageType] = messageTypes[messageType];
             }
             // populate checkbox status
@@ -342,7 +343,7 @@ export default {
                 }
             }
             this.messageTypes = newMessages;
-            this.$set(this.state, "messageTypes", newMessages);
+            this.state.messageTypes = newMessages;
         },
         fieldDoc(msgtype, field) {
             // Message types can carry an instance suffix (e.g. GPYW[1]) which the

@@ -8,6 +8,7 @@ export const baseWidget = {
         aspectRatio: { type: Number, default: 2 },
         resizeable: { type: Boolean, default: true },
     },
+    emits: ["close"],
     data() {
         return {
             name: "baseWidgetMixin",
@@ -161,7 +162,7 @@ export const baseWidget = {
         this.setup();
         this.$eventHub.$on("paramsUpdated", this.onParamsUpdated);
     },
-    beforeDestroy() {
+    beforeUnmount() {
         this.$eventHub.$off("paramsUpdated", this.onParamsUpdated);
     },
 };
