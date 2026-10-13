@@ -202,9 +202,10 @@ div #paneEkfHelperViewer::after {
 }
 
 div#paneContent {
+    box-sizing: border-box;
     height: 100%;
     overflow: auto;
-    margin: 20px;
+    padding: 20px;
     user-select: none;
 }
 
