@@ -38,6 +38,29 @@
 import { store } from "../Globals.js";
 import { useWidget, widgetProps } from "./useWidget.js";
 
+// The EKF solution status bits, bit 0 first (nav_filter_status in ArduPilot)
+const SOLUTION_FLAGS = [
+    "attitude",
+    "horizVel",
+    "vertVel",
+    "horizPosRel",
+    "horizPosAbs",
+    "vertPos",
+    "terrainAlt",
+    "constPosMode",
+    "predHorizPosRel",
+    "predHorizPosAbs",
+    "takeoffDetected",
+    "takeoff",
+    "touchdown",
+    "usingGps",
+    "gpsGlitching",
+    "gpsQualityGood",
+    "initialized",
+    "rejectingAirspeed",
+    "deadReckoning",
+];
+
 export default {
     name: "EkfHelperViewer",
     props: widgetProps,
@@ -84,27 +107,12 @@ export default {
         },
         decodedSolution() {
             const solution = this.solutionValue;
-            return {
-                attitude: !!(solution & (1 << 0)),
-                horizVel: !!(solution & (1 << 1)),
-                vertVel: !!(solution & (1 << 2)),
-                horizPosRel: !!(solution & (1 << 3)),
-                horizPosAbs: !!(solution & (1 << 4)),
-                vertPos: !!(solution & (1 << 5)),
-                terrainAlt: !!(solution & (1 << 6)),
-                constPosMode: !!(solution & (1 << 7)),
-                predHorizPosRel: !!(solution & (1 << 8)),
-                predHorizPosAbs: !!(solution & (1 << 9)),
-                takeoffDetected: !!(solution & (1 << 10)),
-                takeoff: !!(solution & (1 << 11)),
-                touchdown: !!(solution & (1 << 12)),
-                usingGps: !!(solution & (1 << 13)),
-                gpsGlitching: !!(solution & (1 << 14)),
-                gpsQualityGood: !!(solution & (1 << 15)),
-                initialized: !!(solution & (1 << 16)),
-                rejectingAirspeed: !!(solution & (1 << 17)),
-                deadReckoning: !!(solution & (1 << 18)),
-            };
+            return Object.fromEntries(
+                SOLUTION_FLAGS.map((name, bit) => [
+                    name,
+                    Boolean(solution & (2 ** bit)),
+                ]),
+            );
         },
     },
     created() {
@@ -125,26 +133,26 @@ export default {
         waitForMessage(fieldname) {
             this.$eventHub.$emit("loadType", fieldname.split(".")[0]);
             let interval;
-            const _this = this;
+            // gives up after 7 tries (it counted only after success, so it polled forever)
             let counter = 0;
             return new Promise((resolve, reject) => {
-                interval = setInterval(function () {
-                    if (_this.state.messages[fieldname.split(".")[0]]) {
+                interval = setInterval(() => {
+                    if (this.state.messages[fieldname.split(".")[0]]) {
                         clearInterval(interval);
-                        counter += 1;
                         resolve();
-                    } else {
-                        if (counter > 6) {
-                            console.log("not resolving");
-                            clearInterval(interval);
-                            reject(new Error("Could not load messageType"));
-                        }
+                    } else if (++counter > 6) {
+                        console.log("not resolving");
+                        clearInterval(interval);
+                        reject(new Error("Could not load messageType"));
                     }
                 }, 2000);
             });
         },
         init() {
-            this.waitForMessage("EKF4.SS");
+            // a log without EKF status leaves the table empty
+            this.waitForMessage("EKF4.SS").catch((e) =>
+                console.warn("EKF helper:", e.message),
+            );
         },
     },
 };
