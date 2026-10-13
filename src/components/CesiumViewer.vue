@@ -842,8 +842,11 @@ export default {
                         this.terrainSampled && takeoffLevel >= 0
                             ? updatedPositions[0].height
                             : 0;
+                    // to the centimetre: the settings field shows it
                     this.state.heightOffset =
-                        ground - this.state.currentTrajectory[0][2];
+                        Math.round(
+                            (ground - this.state.currentTrajectory[0][2]) * 100,
+                        ) / 100;
                     this.terrainHeights = null;
                 }
                 this.processTrajectory(this.state.currentTrajectory);
