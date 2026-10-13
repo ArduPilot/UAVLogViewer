@@ -110,7 +110,7 @@
 import { store } from "./Globals.js";
 import TreeMenu from "./widgets/TreeMenu.vue";
 import Collapse from "./ui/Collapse.vue";
-import fastXmlParser from "fast-xml-parser";
+import { XMLParser } from "fast-xml-parser";
 import mavgraphs from "../assets/mavgraphs.xml?raw";
 import mavgraphs2 from "../assets/mavgraphs2.xml?raw";
 import ekfGraphs from "../assets/ekfGraphs.xml?raw";
@@ -120,6 +120,9 @@ import copterDocs from "../assets/logmetadata/copter.xml?raw";
 import trackerDocs from "../assets/logmetadata/tracker.xml?raw";
 import roverDocs from "../assets/logmetadata/rover.xml?raw";
 import subDocs from "../assets/logmetadata/sub.xml?raw";
+// attributes (graph and field names) come back as "@_name"
+const xmlParser = new XMLParser({ ignoreAttributes: false });
+
 
 // "MSG.field:2" goes on the second axis
 function presetFields(expression) {
@@ -253,9 +256,7 @@ export default {
             const graphs = {};
             const files = [mavgraphs, mavgraphs2, ekfGraphs, ekf3Graphs];
             for (const contents of files) {
-                const result = fastXmlParser.parse(contents, {
-                    ignoreAttributes: false,
-                });
+                const result = xmlParser.parse(contents);
                 for (const graph of result.graphs.graph) {
                     const name = graph["@_name"];
                     const expressions = Array.isArray(graph.expression)
@@ -291,9 +292,7 @@ export default {
                 subDocs,
             ];
             for (const contents of files) {
-                const result = fastXmlParser.parse(contents, {
-                    ignoreAttributes: false,
-                });
+                const result = xmlParser.parse(contents);
                 const igraphs = result.loggermessagefile;
                 for (const graph of igraphs.logformat) {
                     logDocs[graph["@_name"]] = { doc: graph.description };
