@@ -130,11 +130,11 @@ import {
 const ESRI_WORLD_IMAGERY_URL =
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 const ESRI_CREDIT = "Imagery © Esri, Maxar, Earthstar Geographics";
-// Self-hosted ArduPilot SRTM quantized-mesh terrain (scripts/terrain). Same origin first:
-// plot.ardupilot.org, the dev server proxy, or a tileset mounted into the Docker image (works
-// offline). Without one, use plot.ardupilot.org's tileset when online (it allows CORS).
-const LOCAL_TERRAIN_URL = "/quantized/";
-const PUBLIC_TERRAIN_URL = "https://plot.ardupilot.org/quantized/";
+// Self-hosted ArduPilot SRTM quantized-mesh terrain (scripts/terrain), always from the app's own
+// origin: plot.ardupilot.org serves its tileset there, the dev server proxies to it, and a Docker
+// container serves a mounted one (works offline). Never plot.ardupilot.org directly: deployed
+// there it is the same server, and anywhere else it would make production serve every copy.
+const TERRAIN_URL = "/quantized/";
 // Terrain detail level that counts as real terrain data at a location (level 10 tiles are
 // ~20 km wide). Regional tilesets only have coarse levels outside their area.
 const MIN_TERRAIN_LEVEL = 10;
@@ -458,16 +458,10 @@ export default {
                 return null;
             }
         },
-        async loadTerrainProvider(online) {
-            const local = await this.tryTerrainProvider(LOCAL_TERRAIN_URL);
-            if (local) {
-                return local;
-            }
-            const remote = online
-                ? await this.tryTerrainProvider(PUBLIC_TERRAIN_URL)
-                : null;
-            if (remote) {
-                return remote;
+        async loadTerrainProvider() {
+            const terrain = await this.tryTerrainProvider(TERRAIN_URL);
+            if (terrain) {
+                return terrain;
             }
             // Fall back to the ellipsoid so the 3D view still works.
             console.warn("no quantized terrain available, using ellipsoid");
@@ -478,9 +472,8 @@ export default {
                 if (this.viewer == null) {
                     this.viewer = this.createViewer(this.state.isOnline);
                     if (this.state.vehicle !== "boat") {
-                        const terrainProvider = await this.loadTerrainProvider(
-                            this.state.isOnline,
-                        );
+                        const terrainProvider =
+                            await this.loadTerrainProvider();
                         if (this.tornDown) {
                             return;
                         }
