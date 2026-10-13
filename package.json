@@ -47,6 +47,7 @@
         "cross-spawn": "^5.1.0",
         "css-loader": "^6.7.2",
         "css-minimizer-webpack-plugin": "^4.2.2",
+        "culori": "^4.0.2",
         "dji-log-parser-js": "^0.5.7",
         "epic-spinners": "^1.1.0",
         "eslint": "^10.12.0",
