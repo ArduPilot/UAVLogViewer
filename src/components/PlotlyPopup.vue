@@ -9,7 +9,7 @@
 import Plotly from "plotly.js/lib/core";
 import { store } from "./Globals.js";
 
-import Color from "color";
+import { darken } from "../tools/cssColor.js";
 
 const timeformat = ":02,2f";
 let annotationsEvents = [];
@@ -421,7 +421,7 @@ export default {
             return this.cssColors[this.setOfModes.indexOf(this.getMode(time))];
         },
         darker(color) {
-            return Color(color).darken(0.2).string();
+            return darken(color, 0.2);
         },
         addModeShapes() {
             const shapes = [];

@@ -39,7 +39,6 @@
         "bootstrap": "^5.3.8",
         "buffer": "^6.0.3",
         "cesium": "^1.100.0",
-        "color": "^3.2.1",
         "colormap": "^2.3.2",
         "compression-webpack-plugin": "^10.0.0",
         "copy-webpack-plugin": "^11.0.0",

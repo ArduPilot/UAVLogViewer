@@ -9,7 +9,7 @@ import { store, firstFreeAxis, firstFreeColor } from "./Globals.js";
 import { faWindowRestore } from "@fortawesome/free-solid-svg-icons";
 import Vue from "vue";
 
-import Color from "color";
+import { darken } from "../tools/cssColor.js";
 
 const timeformat = ":02,2f";
 let annotationsEvents = [];
@@ -1022,7 +1022,7 @@ export default {
             ];
         },
         darker(color) {
-            return Color(color).darken(0.2).string();
+            return darken(color, 0.2);
         },
         addModeShapes() {
             const shapes = [];
