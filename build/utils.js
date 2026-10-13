@@ -1,10 +1,6 @@
 "use strict";
-import { posix, join } from "node:path";
+import { posix } from "node:path";
 import { build, dev } from "../config/index.js";
-import { createRequire } from "node:module";
-import notifier from "node-notifier";
-
-const { name } = createRequire(import.meta.url)("../package.json");
 
 export function assetsPath(_path) {
     const assetsSubDirectory =
@@ -57,11 +53,6 @@ export function cssLoaders(options) {
     return {
         css: generateLoaders(),
         postcss: generateLoaders(),
-        less: generateLoaders("less"),
-        sass: generateLoaders("sass", { indentedSyntax: true }),
-        scss: generateLoaders("sass"),
-        stylus: generateLoaders("stylus"),
-        styl: generateLoaders("stylus"),
     };
 }
 
@@ -79,20 +70,4 @@ export function styleLoaders(options) {
     }
 
     return output;
-}
-
-export function createNotifierCallback() {
-    return (severity, errors) => {
-        if (severity !== "error") return;
-
-        const error = errors[0];
-        const filename = error.file?.split("!").pop();
-
-        notifier.notify({
-            title: name,
-            message: severity + ": " + error.name,
-            subtitle: filename || "",
-            icon: join(import.meta.dirname, "logo.png"),
-        });
-    };
 }

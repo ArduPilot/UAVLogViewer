@@ -8,7 +8,6 @@ import Plotly from "plotly.js/lib/core";
 import { store, firstFreeAxis, firstFreeColor } from "./Globals.js";
 import { faWindowRestore } from "@fortawesome/free-solid-svg-icons";
 import Vue from "vue";
-import { isNumber } from "underscore";
 
 import Color from "color";
 
@@ -782,7 +781,7 @@ export default {
                 } catch (e) {
                     return { error: e };
                 }
-                if (!isNumber(val)) {
+                if (typeof val !== "number") {
                     console.log(val);
                     return {
                         error: new Error(

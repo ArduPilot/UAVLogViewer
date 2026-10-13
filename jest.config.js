@@ -19,7 +19,6 @@ export default {
         _BUILDDATE_: "test",
     },
     testPathIgnorePatterns: ["<rootDir>/test/e2e"],
-    snapshotSerializers: ["jest-serializer-vue"],
     setupFiles: ["<rootDir>/test/unit/setup"],
     setupFilesAfterEnv: ["<rootDir>/test/unit/jest.setup.js"],
     coverageDirectory: "<rootDir>/test/unit/coverage",
