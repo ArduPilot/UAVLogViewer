@@ -11,6 +11,7 @@ import { store } from "./Globals.js";
 
 import { darken } from "../tools/cssColor.js";
 import { downloadData } from "../tools/download.js";
+import { plotCsv } from "../tools/plotCsv.js";
 import {
     dataEnd,
     relayoutRange,
@@ -201,51 +202,8 @@ export default {
                 title: "Download data as csv",
                 icon: Plotly.Icons.disk,
                 click: () => {
-                    console.log(this.gd.data);
-                    const data = this.gd.data;
-                    const header = ["timestamp(ms)"];
-                    for (const series of data) {
-                        header.push(series.name.split(" |")[0]);
-                    }
-
-                    const indexes = [];
-                    const times = data.map((series) =>
-                        series.x.map(this.axis.fromAxis),
-                    );
-
-                    const interval = 100;
-                    let lasttime = Infinity;
-                    let finaltime = 0;
-
-                    for (const series in data) {
-                        indexes.push(0);
-                        const x = times[series];
-                        lasttime = Math.min(lasttime, x[0]);
-                        finaltime = Math.max(finaltime, x[x.length - 1]);
-                    }
-                    const [from, to] = this.timeRange ?? [-Infinity, Infinity];
-                    finaltime = Math.min(finaltime, to);
-                    lasttime = Math.max(lasttime, from);
-
-                    const csv = [header];
-                    while (lasttime < finaltime - interval) {
-                        const line = [lasttime];
-                        for (const series in data) {
-                            let index = indexes[series];
-                            let x = times[series][index];
-                            while (x < lasttime) {
-                                indexes[series] += 1;
-                                index = indexes[series];
-                                x = times[series][index];
-                            }
-                            line.push(data[series].y[index]);
-                        }
-                        csv.push(line);
-                        lasttime = lasttime + interval;
-                    }
-                    const csvContent = csv.map((e) => e.join(",")).join("\n");
                     downloadData(
-                        csvContent,
+                        plotCsv(this.gd.data, this.axis, this.timeRange),
                         "data.csv",
                         "text/csv;charset=utf-8;",
                     );

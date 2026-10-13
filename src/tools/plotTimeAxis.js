@@ -14,6 +14,12 @@ const ELAPSED_BASE = Date.UTC(2000, 0, 1);
 const DATE_RE =
     /^(-?\d+)-(\d\d)-(\d\d)(?:[ T](\d\d):(\d\d)(?::(\d\d(?:\.\d*)?))?)?$/;
 
+// log times have microsecond resolution (DataFlash TimeUS, tlog timestamps); rounding to it drops
+// the float error of converting them to and from the large clock numbers
+function toMicroseconds(ms) {
+    return Math.round(ms * 1000) / 1000;
+}
+
 // Plotly reads a number on a date axis as a time in the browser's time zone: it shows the number
 // minus this offset
 function browserOffset(ms) {
@@ -64,6 +70,7 @@ export function timeAxis({
 } = {}) {
     let base = ELAPSED_BASE;
     let zoneName = null;
+    let offset = null;
     if (Number.isFinite(start)) {
         // a zone newer than the browser's time zone data gives an invalid date: the browser's zone then.
         // The offset at the start holds for the whole log, so the time runs on through a clock change.
@@ -74,6 +81,7 @@ export function timeAxis({
         }
         base = start + dateTime.offset * MINUTE;
         zoneName = dateTime.offsetNameShort || dateTime.toFormat("'UTC'ZZ");
+        offset = dateTime.toFormat("ZZ");
     }
     // the number Plotly shows as the clock time of a log time
     const toAxis = (time) => {
@@ -86,18 +94,26 @@ export function timeAxis({
         // a trace's times: one offset for all, unless the browser's clock changes inside them
         toAxisArray(times) {
             const shift = (time) => toAxis(time) - (base + time);
-            const offset = shift(times[0]);
-            if (times.length === 0 || offset !== shift(times.at(-1))) {
+            const first = shift(times[0]);
+            if (times.length === 0 || first !== shift(times.at(-1))) {
                 return times.map(toAxis);
             }
-            return times.map((time) => base + time + offset);
+            return times.map((time) => base + time + first);
         },
         // the log time of a Plotly position: a date string, or a number given to Plotly
         fromAxis(value) {
             if (typeof value === "string") {
-                return parseDate(value) - base;
+                return toMicroseconds(parseDate(value) - base);
             }
-            return value - browserOffset(value) - base;
+            return toMicroseconds(value - browserOffset(value) - base);
+        },
+        // the clock time the axis shows for a log time, as ISO 8601 with the flight's UTC offset
+        // (e.g. 2026-07-08T11:49:15.123-05:00), or null when the log has no absolute time
+        clockTime(time) {
+            if (offset === null) {
+                return null;
+            }
+            return new Date(base + time).toISOString().replace("Z", offset);
         },
         // type, title and labels; end is the last plotted time
         layout(end) {

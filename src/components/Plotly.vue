@@ -11,6 +11,7 @@ import Vue from "vue";
 
 import { darken } from "../tools/cssColor.js";
 import { downloadData } from "../tools/download.js";
+import { plotCsv } from "../tools/plotCsv.js";
 import { logStartTime } from "../tools/flightTime.js";
 import {
     dataEnd,
@@ -348,78 +349,13 @@ export default {
                 title: "Download data as csv",
                 icon: Plotly.Icons.disk,
                 click: () => {
-                    console.log(this.gd.data);
-                    const data = this.gd.data;
-                    const header = ["timestamp(ms)"];
-                    for (const series of data) {
-                        header.push(series.name.split(" |")[0]);
-                    }
-
-                    const indexes = [];
-                    const times = data.map((series) =>
-                        series.x.map(this.axis.fromAxis),
-                    );
-
-                    const interval = 100;
-                    let currentTime = Infinity;
-                    let finaltime = 0;
-
-                    for (const series in data) {
-                        indexes.push(0);
-                        const x = times[series];
-                        currentTime = Math.min(currentTime, x[0]);
-                        finaltime = Math.max(finaltime, x[x.length - 1]);
-                    }
-                    const [from, to] = this.state.timeRange ?? [
-                        -Infinity,
-                        Infinity,
-                    ];
-                    finaltime = Math.min(finaltime, to);
-                    currentTime = Math.max(currentTime, from);
-                    // replace commas with semicolons so csv headers dont break, check #412
-                    const csv = [header.map((e) => e.replace(",", ";"))];
-                    while (currentTime < finaltime - interval) {
-                        const line = [currentTime];
-                        for (const series in data) {
-                            let index = indexes[series];
-                            let x = times[series][index];
-                            while (x < currentTime) {
-                                indexes[series] += 1;
-                                index = indexes[series];
-                                x = times[series][index];
-                            }
-                            const y = data[series].y[index];
-                            const prevX = times[series][index - 1];
-                            const prevY = data[series].y[index - 1];
-                            const interpolatedY = this.interpolateY(
-                                prevY,
-                                y,
-                                prevX,
-                                x,
-                                currentTime,
-                            );
-                            line.push(interpolatedY);
-                        }
-                        csv.push(line);
-                        currentTime = currentTime + interval;
-                    }
-                    const csvContent = csv.map((e) => e.join(",")).join("\n");
                     downloadData(
-                        csvContent,
+                        plotCsv(this.gd.data, this.axis, this.state.timeRange),
                         "data.csv",
                         "text/csv;charset=utf-8;",
                     );
                 },
             };
-        },
-        interpolateY(y1, y2, x1, x2, x) {
-            const dx = x2 - x1;
-            if (dx <= 0) {
-                throw new Error("x2 must be greater than x1");
-            }
-            const dy = y2 - y1;
-            const slope = dy / dx;
-            return y1 + slope * (x - x1);
         },
         resize() {
             Plotly.Plots.resize(this.gd);
