@@ -14,6 +14,9 @@ const CHECK_INTERVAL_MS = 1000;
 // the background is sampled in a ring this far outside the vehicle (CSS pixels)
 const RING_GAP = 6;
 const RING_WIDTH = 24;
+// the area around the vehicle is scaled down to at most this many pixels a side before it is read,
+// so a large vehicle on screen costs no more than a small one
+const SAMPLE_SIZE = 64;
 
 // Keeps the vehicle visible in the 3D view.
 // Lighting: with the log's real time and place, the sun lights the vehicle and the ground as it
@@ -117,29 +120,56 @@ export class VehicleVisibility {
                 canvas.width,
                 canvas.height,
             );
+            // 0 with the camera inside the vehicle's bounding sphere (a large wingspan, close up)
+            if (!Number.isFinite(metersPerPixel) || metersPerPixel <= 0) {
+                return null;
+            }
             radius = this.sphere.radius / metersPerPixel / scale;
         }
         const inner = (radius + RING_GAP) * scale;
         const outer = inner + RING_WIDTH * scale;
+        // a ring larger than the view: the vehicle fills it, there is no background to measure
+        if (
+            !Number.isFinite(outer) ||
+            outer >= Math.hypot(canvas.width, canvas.height)
+        ) {
+            return null;
+        }
         const size = Math.ceil(2 * outer);
         const left = Math.round(center.x * scale - outer);
         const top = Math.round(center.y * scale - outer);
-        this.sample.width = size;
-        this.sample.height = size;
+        // the same ring, in the scaled-down sample (at least a pixel and a half wide)
+        const sampleSize = Math.min(size, SAMPLE_SIZE);
+        const k = sampleSize / size;
+        const middle = outer * k;
+        const sampleInner = inner * k;
+        const sampleOuter = Math.max(middle, sampleInner + 1.5);
+        this.sample.width = sampleSize;
+        this.sample.height = sampleSize;
         const context = this.sample.getContext("2d", {
             willReadFrequently: true,
         });
         // the WebGL drawing buffer still holds this frame during postRender
-        context.drawImage(canvas, left, top, size, size, 0, 0, size, size);
-        const pixels = context.getImageData(0, 0, size, size).data;
+        context.drawImage(
+            canvas,
+            left,
+            top,
+            size,
+            size,
+            0,
+            0,
+            sampleSize,
+            sampleSize,
+        );
+        const pixels = context.getImageData(0, 0, sampleSize, sampleSize).data;
         let sum = 0;
         let count = 0;
-        for (let y = 0; y < size; y++) {
-            for (let x = 0; x < size; x++) {
-                const d = Math.hypot(x - outer, y - outer);
-                const i = 4 * (y * size + x);
+        for (let y = 0; y < sampleSize; y++) {
+            for (let x = 0; x < sampleSize; x++) {
+                const d = Math.hypot(x - middle, y - middle);
+                const i = 4 * (y * sampleSize + x);
                 // pixels outside the canvas come back transparent: skip them
-                if (d >= inner && d <= outer && pixels[i + 3] > 0) {
+                if (d >= sampleInner && d <= sampleOuter && pixels[i + 3] > 0) {
                     sum +=
                         (0.2126 * pixels[i] +
                             0.7152 * pixels[i + 1] +
