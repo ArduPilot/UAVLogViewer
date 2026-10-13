@@ -479,8 +479,10 @@ div .atom-spinner {
 }
 </style>
 <style>
-a {
-    color: #fff !important;
+/* links are white unless a rule says otherwise: Bootstrap reads its link colors from these */
+#app {
+    --bs-link-color-rgb: 255, 255, 255;
+    --bs-link-hover-color-rgb: 255, 255, 255;
 }
 
 #app a {

@@ -3,14 +3,16 @@
     <div class="nav-side-menu col-lg-2">
         <h1 class="brand">
             <a class="github" href="https://github.com/ardupilot/uavlogviewer">
-                <img :src="githubIcon" />
+                <img :src="githubIcon" alt="UAV Log Viewer on GitHub" />
             </a>
             <a href="/"
                 ><b>UAV</b> Log Viewer<i class="fa-solid fa-plane"></i></a
             ><a
                 class="github"
                 href="https://ardupilot.org/copter/docs/common-uavlogviewer.html"
-                ><img :src="wikiIcon"
+                ><img
+                    :src="wikiIcon"
+                    alt="UAV Log Viewer in the ArduPilot wiki"
             /></a>
         </h1>
         <!-- TABHOLDER -->
@@ -113,27 +115,39 @@
                             />
                             <a class="check-font"> Attitude </a>
                         </label>
-                        <label v-if="!recording" @click="startCapture">
+                        <button
+                            v-if="!recording"
+                            type="button"
+                            class="menu-action"
+                            @click="startCapture"
+                        >
                             <i class="fa-solid fa-play circle"></i>
                             <a class="check-font"> Record </a>
-                        </label>
-                        <label v-if="recording" @click="stopCapture">
+                        </button>
+                        <button
+                            v-if="recording"
+                            type="button"
+                            class="menu-action"
+                            @click="stopCapture"
+                        >
                             <i class="fa-solid fa-stop circle"></i>
                             <a class="check-font"> End Rec </a>
-                        </label>
-                        <label v-if="chunks" @click="download">
+                        </button>
+                        <a
+                            v-if="chunks"
+                            class="menu-action"
+                            :href="downloadURL"
+                            :download="fileName"
+                        >
                             <i class="fa-solid fa-download circle"></i>
-                            <a
-                                ref="downloadFile"
-                                class="check-font download-text"
-                                :href="downloadURL"
-                                :download="fileName"
-                            >
+                            <span class="check-font download-text">
                                 Download
-                            </a>
-                        </label>
-                        <label
+                            </span>
+                        </a>
+                        <button
                             v-if="state.logType === 'tlog'"
+                            type="button"
+                            class="menu-action"
                             @click="downloadTrimmed"
                         >
                             <i
@@ -142,7 +156,7 @@
                             >
                             </i>
                             <a class="check-font"> Trimmed log </a>
-                        </label>
+                        </button>
                         <label>
                             <i
                                 class="fa-solid fa-microchip circle"
@@ -171,11 +185,15 @@
                         </ul>
                     </div>
                     <div>
-                        <label
+                        <label for="radio-mode"
                             ><i class="fa-solid fa-gamepad"></i> Radio
                             Mode</label
                         >
-                        <select v-model="state.radioMode" class="cesium-button">
+                        <select
+                            id="radio-mode"
+                            v-model="state.radioMode"
+                            class="cesium-button"
+                        >
                             <option value="1">1</option>
                             <option value="2">2</option>
                         </select>
@@ -265,9 +283,6 @@ export default {
             };
         },
 
-        download() {
-            this.$refs.downloadFile.click();
-        },
         downloadTrimmed() {
             this.$eventHub.$emit("trimFile");
         },
@@ -303,8 +318,8 @@ a.centered-section {
     display: block;
 }
 
-.col-lg-2 {
-    padding: 0 !important;
+.nav-side-menu.col-lg-2 {
+    padding: 0;
 }
 
 /* NAV SIDE MENU */
@@ -313,7 +328,7 @@ a.centered-section {
     overflow-x: hidden;
     padding: 0;
     background: linear-gradient(0deg, rgb(20 25 36) 51%, rgb(37 47 71) 100%);
-    position: fixed !important;
+    position: fixed;
     top: 0;
     height: 100%;
     color: rgb(255 255 255);
@@ -409,15 +424,23 @@ i {
     box-shadow: 0 0 12px 0 rgb(24 106 173 / 28.1%);
 }
 
+.show-hide .menu-action {
+    display: inline-block;
+    padding: 6px;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-decoration: none;
+}
+
 .show-hide input[type="checkbox"] {
     display: none;
     visibility: hidden;
 }
 
 .check-font {
-    padding: 0 !important;
+    padding: 0;
     font-size: 13px;
-    color: rgb(146 143 143);
 }
 
 /* SCROLLBAR */
@@ -447,14 +470,14 @@ i {
     padding-left: 0;
     line-height: 50px;
     margin-bottom: 0;
-    color: rgb(54 72 114) !important;
+    color: rgb(54 72 114);
     background-color: rgb(248 248 248 / 91.8%);
     display: block;
 }
 
 .brand a {
     text-decoration: none;
-    color: rgb(54 72 114) !important;
+    color: rgb(54 72 114);
 }
 
 .github img {
@@ -465,7 +488,7 @@ i {
 }
 
 a:hover {
-    text-decoration: none !important;
+    text-decoration: none;
 }
 
 /* TABHOLDER */
@@ -489,7 +512,7 @@ a:hover {
 }
 
 a.selected {
-    color: rgb(247 248 248) !important;
+    color: rgb(247 248 248);
     box-shadow: 0 0 12px 0 rgb(125 125 125 / 55%);
 }
 
@@ -530,7 +553,7 @@ label {
         right: 10px;
         margin: 0;
         top: 5px;
-        z-index: 10 !important;
+        z-index: 10;
         padding: 3px;
         background-color: rgb(248 248 248 / 76.9%);
         color: rgb(58 58 58);
@@ -550,20 +573,20 @@ label {
     }
 
     .col-md-9 {
-        max-width: 100% !important;
+        max-width: 100%;
     }
 }
 
 /* MIN */
 
 @media only screen and (min-width: 991px) and (max-width: 1439px) {
-    .nav-side-menu {
-        width: 27% !important;
-        max-width: 27% !important;
+    .nav-side-menu.col-lg-2 {
+        width: 27%;
+        max-width: 27%;
     }
 
     .col-lg-10 {
-        max-width: 73% !important;
+        max-width: 73%;
     }
 
     main {
@@ -572,9 +595,9 @@ label {
 }
 
 @media only screen and (min-width: 1440px) and (max-width: 2000px) {
-    .nav-side-menu {
-        width: 20% !important;
-        max-width: 20% !important;
+    .nav-side-menu.col-lg-2 {
+        width: 20%;
+        max-width: 20%;
     }
 
     main {
@@ -582,14 +605,14 @@ label {
     }
 
     .col-lg-10 {
-        max-width: 80% !important;
+        max-width: 80%;
     }
 }
 
 @media only screen and (min-width: 2000px) {
-    .nav-side-menu {
-        width: 15% !important;
-        max-width: 15% !important;
+    .nav-side-menu.col-lg-2 {
+        width: 15%;
+        max-width: 15%;
     }
 
     main {
@@ -597,7 +620,7 @@ label {
     }
 
     .col-lg-10 {
-        max-width: 85% !important;
+        max-width: 85%;
     }
 }
 
