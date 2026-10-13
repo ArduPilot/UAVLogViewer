@@ -90,8 +90,6 @@ function getModeString(mavtype, cmode, basemode) {
     } catch {}
 }
 
-let instance;
-
 export class MavlinkParser {
     constructor() {
         this.messages = {};
@@ -99,9 +97,11 @@ export class MavlinkParser {
         this.lastPercentage = 0;
 
         this.mavlinkParser = new MAVLink();
-        this.mavlinkParser.on("message", this.onMessage);
+        // the emitter calls its listeners with itself as `this`
+        this.mavlinkParser.on("message", (messages) =>
+            this.onMessage(messages),
+        );
         this.maxPercentageInterval = 0.1;
-        instance = this;
     }
 
     static fixData(message) {
@@ -134,7 +134,7 @@ export class MavlinkParser {
         // parseType() emits all messages of one type at once
         const name = messages[0]._name;
         // for percentage calculation
-        instance.totalSize ??= this.buf.byteLength;
+        this.totalSize ??= this.mavlinkParser.buf.byteLength;
         for (const message of messages) {
             if (message._id !== -1) {
                 MavlinkParser.fixData(message);
@@ -159,8 +159,8 @@ export class MavlinkParser {
                 mergedData[field].push(message[field]);
             }
         }
-        instance.messages[name] = mergedData;
-        self.postMessage({ messages: instance.messages });
+        this.messages[name] = mergedData;
+        self.postMessage({ messages: this.messages });
     }
 
     extractStartTime() {
@@ -217,7 +217,7 @@ export class MavlinkParser {
         self.postMessage({ availableMessages: messageTypes });
         self.postMessage({ messagesDoneLoading: true });
         // self.postMessage({done: true})
-        return { types: messageTypes, messages: instance.messages };
+        return { types: messageTypes, messages: this.messages };
     }
 
     trimFile(time) {
