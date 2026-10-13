@@ -12,9 +12,8 @@ RUN apt-get update && \
 
 WORKDIR /usr/src/app
 
-# Copy package manifests and the patch-package patches applied on postinstall
+# Copy package manifests
 COPY package.json package-lock.json ./
-COPY patches ./patches
 
 # Install dependencies and update browserslist database
 RUN npm ci && \

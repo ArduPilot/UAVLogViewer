@@ -8,11 +8,11 @@ UAV Log Viewer is a browser-only Vue 2.7 + webpack 5 app (live at plot.ardupilot
 
 ## Setup and commands
 
-Node >= 20.11 (CI uses Node 24).
+Node >= 22 (Plotly 4 requires it; CI uses Node 24).
 
 ```bash
 git submodule update --init --recursive   # required: the DataFlash parser is a submodule
-npm install                               # postinstall runs patch-package (patches/plotly.js+2.12.1.patch)
+npm install
 
 npm run dev           # dev server with hot reload on 0.0.0.0:8080
 npm run build         # production build into dist/
@@ -30,7 +30,7 @@ npx jest -t "parse"                            # filter by test name
 ```
 
 - The parser specs need real logs. They read `$TEST_LOG_DIR`, else `<os tmpdir>/testlogs` (filled by `test/testlogfiles/logdownloader.sh` from the current autotest logs), else `test/testlogfiles/`. Without logs both suites are skipped, not failed. Use full flight logs: the assertions expect more than 50 attitude samples.
-- Specs can import `.vue` components (`@vue/vue2-jest` with template `prettify: false`, as in webpack; `_COMMIT_`/`_BUILDDATE_` are Jest globals). A spec importing `Plotly.vue` must `jest.mock("plotly.js")` and `jest.mock("d3")` (d3 is ESM-only).
+- Specs can import `.vue` components (`@vue/vue2-jest` with template `prettify: false`, as in webpack; `_COMMIT_`/`_BUILDDATE_` are Jest globals). A spec importing `Plotly.vue` must `jest.mock("plotly.js/lib/core")`.
 - CI (`.github/workflows/nodejs.yml`) has a lint job: `npm run lint:all`, Ruff (pinned to 0.17.0, its default rules change between releases), ShellCheck, hadolint and actionlint. Keep all of them clean.
 - `npm run e2e` builds, serves `dist/` on port 8089 and runs Nightwatch 3 in headless Chrome; use `npm run e2e -- --env edgeHeadless` where only Edge is installed. Nightwatch starts the browser driver itself; `selenium-webdriver` is overridden in package.json because the version Nightwatch pins can no longer download Edge drivers. On Windows its startup prints a harmless `wmic.exe` not-found message.
 - The dev server runs `ESLintPlugin({ fix: true })`, so **it rewrites source files while it runs**. Check `git status` after a dev session.
@@ -61,7 +61,7 @@ npx jest -t "parse"                            # filter by test name
       Parsers talk back only through `self.postMessage` with keyed payloads: `percentage`, `availableMessages`, `metadata`, `messages`, `messageType`+`messageList`, `messagesDoneLoading`, `files`, `url`. `SideBarFileManager`'s `worker.onmessage` maps each key onto the store and emits event-bus events. Keep to this message contract when adding parser features. Both parsers' `processData()` also return `{ types, messages }`, which the specs use.
 3. **Store** — `components/Globals.js` exports a plain reactive `store` object (no Vuex). Components get it as `state: store` in `data()` and mutate it directly. `state.messages` is columnar: `messages[TYPE][field]` is an array, and `time_boot_ms` is the shared time axis (ms since boot for DataFlash, since the first packet or frame for tlog and DJI). `state.metadata.startTime` is the absolute time at time 0 for every log type, `state.metadata.timeZone` the zone where the flight was (`tools/flightTime.js`). Instanced DataFlash messages are stored as `TYPE[n]` (e.g. `RFND[0]`).
 4. **Extraction** — once `messagesDoneLoading` fires, `components/Home.vue#extractFlightData` picks an extractor from `state.logType` (`tools/dataflashDataExtractor.js`, `mavlinkDataExtractor.js`, `djiDataExtractor.js`). All three expose the same static API (`extractFlightModes`, `extractEvents`, `extractMission`, `extractParams`, `extractAttitudeSources` + `extractAttitude(Q)(messages, source)`, `extractTrajectorySources` + `extractTrajectory(messages, source)`, `extractFences`, `extractStartTime`, …). New log-derived features need a method on **each** extractor.
-5. **Views** — `Plotly.vue` (time-series plots; mounted only while `state.plotOn`), `CesiumViewer.vue` (3D map and vehicle playback, split into small helpers for bathymetry, sampled position/orientation, model entity and trajectory segments; extra helpers in `components/cesiumExtra/`). Terrain comes from same-origin `/quantized/`, else plot.ardupilot.org when online, else the flat ellipsoid. Heights are absolute AMSL over real terrain; where the terrain has no detailed level at the takeoff (`terrainLevelAt` < `MIN_TERRAIN_LEVEL`), `state.heightOffset` puts the takeoff on the visible ground instead, and floating tool windows in `components/widgets/` (all extend `widgets/baseWidget.js`, toggled by `state.show*` flags). `PlotlyPopup.vue` is the `/plot` route for detached plot windows. Routes: `/`, `/plot` and `/v/:id` (see `src/router/index.js`).
+5. **Views** — `Plotly.vue` (time-series plots; mounted only while `state.plotOn`; the x axis is a Plotly date axis showing the flight's local time, or the elapsed time from 00:00:00 without an absolute time. Store values, events and `state.timeRange` stay in log ms: convert only at Plotly's boundary with `timeAxis()` from `tools/plotTimeAxis.js`, `toAxis` for data, shapes and ranges, `fromAxis` for the date strings Plotly reports), `CesiumViewer.vue` (3D map and vehicle playback, split into small helpers for bathymetry, sampled position/orientation, model entity and trajectory segments; extra helpers in `components/cesiumExtra/`). Terrain comes from same-origin `/quantized/`, else plot.ardupilot.org when online, else the flat ellipsoid. Heights are absolute AMSL over real terrain; where the terrain has no detailed level at the takeoff (`terrainLevelAt` < `MIN_TERRAIN_LEVEL`), `state.heightOffset` puts the takeoff on the visible ground instead, and floating tool windows in `components/widgets/` (all extend `widgets/baseWidget.js`, toggled by `state.show*` flags). `PlotlyPopup.vue` is the `/plot` route for detached plot windows. Routes: `/`, `/plot` and `/v/:id` (see `src/router/index.js`).
 
 ### Event bus
 

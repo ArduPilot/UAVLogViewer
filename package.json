@@ -19,8 +19,7 @@
         "lint:all": "npm run lint && npm run lint:css && npm run lint:md && npm run format:check",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "build": "cross-env NODE_ENV=production node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js --config build/webpack.prod.conf.js",
-        "postinstall": "patch-package"
+        "build": "cross-env NODE_ENV=production node --max_old_space_size=4096 node_modules/webpack/bin/webpack.js --config build/webpack.prod.conf.js"
     },
     "dependencies": {
         "serve": "^14.2.5"
@@ -70,8 +69,7 @@
         "mini-css-extract-plugin": "^2.7.1",
         "neostandard": "^0.14.0",
         "nightwatch": "^3.16.0",
-        "patch-package": "^8.0.1",
-        "plotly.js": "^2.12.1",
+        "plotly.js": "^4.1.2",
         "portfinder": "^1.0.28",
         "postcss-html": "^2.0.0",
         "postcss-import": "^15.1.0",
@@ -95,7 +93,7 @@
         "webpack-merge": "^5.8.0"
     },
     "engines": {
-        "node": ">=20.11",
+        "node": ">=22",
         "npm": ">=9"
     },
     "browserslist": [

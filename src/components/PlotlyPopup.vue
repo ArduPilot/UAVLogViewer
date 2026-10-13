@@ -11,8 +11,13 @@ import { store } from "./Globals.js";
 
 import { darken } from "../tools/cssColor.js";
 import { downloadData } from "../tools/download.js";
+import {
+    dataEnd,
+    relayoutRange,
+    sameRange,
+    timeAxis,
+} from "../tools/plotTimeAxis.js";
 
-const timeformat = ":02,2f";
 let annotationsEvents = [];
 const annotationsModes = [];
 let annotationsParams = [];
@@ -68,6 +73,7 @@ export default {
             plotData: [],
             plotOptions: {},
             flightModeChanges: [],
+            cssColors: [],
             externalTimeRange: null,
             cursor: null,
         };
@@ -99,6 +105,13 @@ export default {
         },
     },
     watch: {
+        // the main window sends its modes and colours, possibly after this plot was drawn
+        flightModeChanges() {
+            this.redrawModes();
+        },
+        cssColors() {
+            this.redrawModes();
+        },
         timeRange(range) {
             console.log("timeRange", range);
 
@@ -107,12 +120,8 @@ export default {
             }
             this.zoomInterval = setTimeout(() => {
                 Plotly.relayout(this.gd, {
-                    xaxis: {
-                        title: "Time since boot",
-                        range,
-                        domain: this.calculateXAxisDomain(),
-                        tickformat: timeformat,
-                    },
+                    "xaxis.range": range.map(this.axis.toAxis),
+                    "xaxis.domain": this.calculateXAxisDomain(),
                 });
             }, 500);
             return range; // make linter happy, it says this is a computed property(?)
@@ -127,6 +136,8 @@ export default {
     created() {
         this.zoomInterval = null;
         this.cache = {};
+        // the main window sends the log's (see setTimeOrigin)
+        this.axis = timeAxis();
     },
     mounted() {
         console.log("mounted");
@@ -134,11 +145,15 @@ export default {
         globalThis.plot = () => {
             this.plot();
         };
+        globalThis.setTimeOrigin = (origin) => {
+            this.axis = timeAxis(origin);
+        };
+        // copies: Plotly changes the traces and layout it draws, and these are the main plot's
         globalThis.setPlotData = (data) => {
-            this.plotData = data;
+            this.plotData = structuredClone(data);
         };
         globalThis.setPlotOptions = (options) => {
-            this.plotOptions = options;
+            this.plotOptions = structuredClone(options);
         };
         globalThis.setFlightModeChanges = (modes) => {
             this.flightModeChanges = modes;
@@ -194,6 +209,9 @@ export default {
                     }
 
                     const indexes = [];
+                    const times = data.map((series) =>
+                        series.x.map(this.axis.fromAxis),
+                    );
 
                     const interval = 100;
                     let lasttime = Infinity;
@@ -201,23 +219,24 @@ export default {
 
                     for (const series in data) {
                         indexes.push(0);
-                        const x = data[series].x;
+                        const x = times[series];
                         lasttime = Math.min(lasttime, x[0]);
                         finaltime = Math.max(finaltime, x[x.length - 1]);
                     }
-                    finaltime = Math.min(finaltime, this.state.timeRange[1]);
-                    lasttime = Math.max(lasttime, this.state.timeRange[0]);
+                    const [from, to] = this.timeRange ?? [-Infinity, Infinity];
+                    finaltime = Math.min(finaltime, to);
+                    lasttime = Math.max(lasttime, from);
 
                     const csv = [header];
                     while (lasttime < finaltime - interval) {
                         const line = [lasttime];
                         for (const series in data) {
                             let index = indexes[series];
-                            let x = data[series].x[index];
+                            let x = times[series][index];
                             while (x < lasttime) {
                                 indexes[series] += 1;
                                 index = indexes[series];
-                                x = data[series].x[index];
+                                x = times[series][index];
                             }
                             line.push(data[series].y[index]);
                         }
@@ -267,33 +286,20 @@ export default {
         },
         onRangeChanged(event) {
             this.addMaxMinMeanToTitles();
-            if (event !== undefined) {
-                // this.$router.push({query: query})
-                if (event["xaxis.range"]) {
-                    this.setTimeRange(event["xaxis.range"]);
-                    this.hub().$emit("child-zoomed", this.timeRange);
-                }
-                if (event["xaxis.range[0]"]) {
-                    this.setTimeRange([
-                        event["xaxis.range[0]"],
-                        event["xaxis.range[1]"],
-                    ]);
-                    this.hub().$emit("child-zoomed", this.timeRange);
-                }
-                if (event["xaxis.autorange"]) {
-                    this.setTimeRange([
-                        this.gd.layout.xaxis.range[0],
-                        this.gd.layout.xaxis.range[1],
-                    ]);
-                    this.hub().$emit("child-zoomed", this.timeRange);
-                }
+            const range = relayoutRange(event, this.gd, this.axis);
+            if (range && !sameRange(range, this.timeRange)) {
+                this.setTimeRange(range);
+                this.hub().$emit("child-zoomed", range);
             }
         },
         addMaxMinMeanToTitles() {
             const average = (arr) =>
                 arr.reduce((p, c) => p + c, 0) / arr.length;
             const gd = this.gd;
-            const xRange = gd.layout.xaxis.range;
+            // the visible range as the traces' x values
+            const xRange = gd.layout.xaxis.range.map((value) =>
+                this.axis.toAxis(this.axis.fromAxis(value)),
+            );
 
             let needsRelayout = false;
 
@@ -329,7 +335,11 @@ export default {
                 modeBarButtonsToAdd: [this.csvButton()],
                 scrollZoom: true,
                 editable: true,
+                // the mode bands are background: titles and legend stay editable, the bands do not move
+                edits: { shapePosition: false },
                 responsive: true,
+                // Plotly 4 shows an "upload to cloud" button by default
+                showSendToCloud: false,
             };
             if (this.plotInstance === null) {
                 this.plotInstance = Plotly.newPlot(
@@ -350,11 +360,9 @@ export default {
             console.log("plotting done in " + (Date.now() - start) + "ms");
             this.gd.on("plotly_relayout", this.onRangeChanged);
             this.gd.on("plotly_hover", (data) => {
-                const infotext = data.points.map(function (d) {
-                    return d.x;
-                });
-                this.hub().$emit("hoveredTime", infotext[0]);
-                this.setCursorTime(infotext[0]);
+                const time = this.axis.fromAxis(data.points[0].x);
+                this.hub().$emit("hoveredTime", time);
+                this.setCursorTime(time);
             });
 
             this.addModeShapes();
@@ -390,10 +398,10 @@ export default {
                 const rect = bglayer.childNodes[0];
                 const x = Number.parseInt(rect.getAttribute("x"));
                 const width = Number.parseInt(rect.getAttribute("width"));
-                const percTime =
-                    (time - this.gd.layout.xaxis.range[0]) /
-                    (this.gd.layout.xaxis.range[1] -
-                        this.gd.layout.xaxis.range[0]);
+                const [first, last] = this.gd.layout.xaxis.range.map(
+                    this.axis.fromAxis,
+                );
+                const percTime = (time - first) / (last - first);
                 const newx = x + width * percTime;
                 this.cursor.setAttribute("x1", newx);
                 this.cursor.setAttribute("x2", newx);
@@ -418,10 +426,19 @@ export default {
         darker(color) {
             return darken(color, 0.2);
         },
+        redrawModes() {
+            if (this.gd?.data?.length) {
+                this.addModeShapes();
+                this.addEvents();
+            }
+        },
         addModeShapes() {
             const shapes = [];
             const modeChanges = [...this.flightModeChanges];
-            modeChanges.push([this.gd.layout.xaxis.range[1], null]);
+            modeChanges.push([
+                this.axis.fromAxis(dataEnd(this.plotData)),
+                null,
+            ]);
 
             for (let i = 0; i < modeChanges.length - 1; i++) {
                 shapes.push({
@@ -430,9 +447,9 @@ export default {
                     xref: "x",
                     // y-reference is assigned to the plot paper [0,1]
                     yref: "paper",
-                    x0: modeChanges[i][0],
+                    x0: this.axis.toAxis(modeChanges[i][0]),
                     y0: 0,
-                    x1: modeChanges[i + 1][0],
+                    x1: this.axis.toAxis(modeChanges[i + 1][0]),
                     y1: 1,
                     fillcolor: this.getModeColor(modeChanges[i][0] + 1),
                     opacity: 0.15,
@@ -467,12 +484,13 @@ export default {
         },
         addEvents() {
             annotationsEvents = [];
+            annotationsModes.length = 0;
             let i = -300;
             for (const event of this.state.events) {
                 annotationsEvents.push({
                     xref: "x",
                     yref: "paper",
-                    x: event[0],
+                    x: this.axis.toAxis(event[0]),
                     y: 0,
                     yanchor: "bottom",
                     text: event[1].toLowerCase(),
@@ -488,13 +506,16 @@ export default {
                 }
             }
             const modeChanges = [...this.flightModeChanges];
-            modeChanges.push([this.gd.layout.xaxis.range[1], null]);
+            modeChanges.push([
+                this.axis.fromAxis(dataEnd(this.plotData)),
+                null,
+            ]);
             for (let i = 0; i < modeChanges.length - 1; i++) {
                 annotationsModes.push({
                     xref: "x",
                     // y-reference is assigned to the plot paper [0,1]
                     yref: "paper",
-                    x: modeChanges[i][0],
+                    x: this.axis.toAxis(modeChanges[i][0]),
                     xanchor: "left",
                     y: 0,
                     textangle: 90,
@@ -556,7 +577,7 @@ export default {
                 annotationsParams.push({
                     xref: "x",
                     yref: "paper",
-                    x: change[0],
+                    x: this.axis.toAxis(change[0]),
                     y: 0,
                     yanchor: "bottom",
                     text: change[1] + "->" + change[2].toFixed(4),
@@ -588,12 +609,3 @@ export default {
     },
 };
 </script>
-<style>
-.js-plotly-plot {
-    margin-left: 0 !important;
-}
-
-.shapelayer path {
-    pointer-events: none !important;
-}
-</style>
