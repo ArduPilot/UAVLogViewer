@@ -101,7 +101,7 @@
                     @click="clearExpressions(state)"
                 >
                     <i class="fa-solid fa-ban" aria-hidden="true"></i>
-                    clear
+                    Clear
                 </button>
             </div>
         </Collapse>
@@ -315,9 +315,9 @@ select option:hover {
 
 .btns-wrapper {
     display: flex;
-    flex-flow: row wrap;
-    justify-content: space-evenly;
-    margin: 10px;
+    flex-direction: column;
+    gap: 8px;
+    margin: 10px 20px;
 }
 
 /* SAVE PRESET BUTTON */
