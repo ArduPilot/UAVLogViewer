@@ -41,13 +41,13 @@
                             {{
                                 isDefaultParam(param)
                                     ? "→"
-                                    : printParam(state.params.values[param])
+                                    : printParam(paramValue(param))
                             }}
                         </td>
                         <td>{{ printParam(state.defaultParams[param]) }}</td>
                     </template>
                     <template v-else>
-                        <td>{{ printParam(state.params.values[param]) }}</td>
+                        <td>{{ printParam(paramValue(param)) }}</td>
                     </template>
                 </tr>
             </table>
@@ -86,7 +86,7 @@ export default {
         },
         filteredData() {
             this.dependOnParams();
-            return Object.keys(this.state.params.values)
+            return Object.keys(this.state.params?.values ?? {})
                 .filter((key) => key.indexOf(this.filter.toUpperCase()) !== -1)
                 .filter((key) => {
                     if (this.showdiff) {
@@ -127,26 +127,26 @@ export default {
 
             // Sort parameters alphabetically
             // We take advantage of sort to also calculate the parameter name maximum size
-            const parameters = Object.entries(this.state.params.values).sort(
-                (first, second) => {
-                    parameterNameMaxSize = Math.max(
-                        parameterNameMaxSize,
-                        first[0].length,
-                    );
-                    parameterNameMaxSize = Math.max(
-                        parameterNameMaxSize,
-                        second[0].length,
-                    );
+            const parameters = Object.entries(
+                this.state.params?.values ?? {},
+            ).sort((first, second) => {
+                parameterNameMaxSize = Math.max(
+                    parameterNameMaxSize,
+                    first[0].length,
+                );
+                parameterNameMaxSize = Math.max(
+                    parameterNameMaxSize,
+                    second[0].length,
+                );
 
-                    if (first[0] < second[0]) {
-                        return -1;
-                    }
-                    if (first[0] > second[0]) {
-                        return 1;
-                    }
-                    return 0;
-                },
-            );
+                if (first[0] < second[0]) {
+                    return -1;
+                }
+                if (first[0] > second[0]) {
+                    return 1;
+                }
+                return 0;
+            });
 
             let content = "";
 
@@ -175,11 +175,12 @@ export default {
                 ),
             );
         },
+        // undefined while the next log loads (resetLogState clears params)
+        paramValue(param) {
+            return this.state.params?.values[param];
+        },
         isDefaultParam(param) {
-            return (
-                this.state.params.values[param] ===
-                this.state.defaultParams[param]
-            );
+            return this.paramValue(param) === this.state.defaultParams[param];
         },
     },
 };

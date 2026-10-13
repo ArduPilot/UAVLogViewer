@@ -1,5 +1,6 @@
 import "../mavextra/mavextra";
 import "../mavextra/mymavextra";
+import { eventHub } from "../eventHub.js";
 
 export const store = {
     // currentTrajectory: [],
@@ -140,4 +141,7 @@ export function resetLogState() {
         colors: [],
         cssColors: [],
     });
+    // params is not reactive: widgets that list it recompute on this event, and would otherwise
+    // keep rendering the previous log's parameters from a cache
+    eventHub.$emit("paramsUpdated");
 }

@@ -677,7 +677,7 @@ export default {
             });
         },
         parameters() {
-            return this.state.params.values;
+            return this.state.params?.values ?? {};
         },
     },
     methods: {
