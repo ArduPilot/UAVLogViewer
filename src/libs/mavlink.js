@@ -28434,18 +28434,18 @@ class MAVLink20Processor extends events.EventEmitter {
     trimFile(start, end) {
         let startOffset = null;
         let endOffset = null;
-        let startTimestamp = null;
         for (let offsets of this.bufmap[mavlink20.nameMap["HEARTBEAT"]]) {
             // The 8 bytes preceding the mavlink message are actually a very useful timestamp saved by the GCS!
             let timestamp =
                 this.tlogTimestamp(offsets[0]) / 1000 - this.startTime;
             // arbitrary huge number we'll cap our results at to cope with corrupt timestamps
             if (timestamp > 21796250065390) continue;
+            // cut before the packet's own tlog timestamp, so each packet keeps its timestamp
             if (timestamp > start && startOffset === null) {
-                startOffset = offsets[0];
+                startOffset = Math.max(offsets[0] - 8, 0);
             }
             if (timestamp > end && endOffset === null) {
-                endOffset = offsets[0];
+                endOffset = Math.max(offsets[0] - 8, 0);
                 break;
             }
         }
