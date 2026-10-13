@@ -123,6 +123,7 @@ import colormap from "colormap";
 import { DataflashDataExtractor } from "../tools/dataflashDataExtractor";
 import { MavlinkDataExtractor } from "../tools/mavlinkDataExtractor";
 import { DjiDataExtractor } from "../tools/djiDataExtractor";
+import { zoneOfFlight } from "../tools/flightTime.js";
 import MagFitTool from "@/components/widgets/MagFitTool.vue";
 import EkfHelperTool from "@/components/widgets/EkfHelperTool.vue";
 import Vue from "vue";
@@ -354,6 +355,11 @@ export default {
                 console.log("unable to load metadata");
                 console.log(error);
             }
+            // where the flight was (also without GPS messages): the plots show the local time there
+            this.state.metadata = {
+                ...this.state.metadata,
+                timeZone: zoneOfFlight(this.state.currentTrajectory),
+            };
             try {
                 this.state.namedFloats =
                     this.dataExtractor.extractNamedValueFloatNames(

@@ -95,7 +95,6 @@ import {
 } from "cesium";
 
 import { DateTime } from "luxon";
-import tzlookup from "@photostructure/tz-lookup";
 
 import { store } from "./Globals.js";
 import { DataflashDataExtractor } from "../tools/dataflashDataExtractor";
@@ -117,6 +116,7 @@ import ColorCoderMode from "./cesiumExtra/colorCoderMode.js";
 import ColorCoderRange from "./cesiumExtra/colorCoderRange.js";
 import ColorCoderPlot from "./cesiumExtra/colorCoderPlot.js";
 import { VehicleVisibility } from "./cesiumExtra/vehicleVisibility.js";
+import { logStartTime, zoneOfFlight } from "../tools/flightTime.js";
 
 import {
     generateHull,
@@ -153,17 +153,6 @@ function getMinTime(data) {
 function getMaxTime(data) {
     // returns the maximum time in   the array. Used to define the time range
     return data.reduce((max, p) => Math.max(p[3], max), data[0][3]);
-}
-
-// Time zone at the start of the trajectory ([lon, lat, alt, time] points), or null
-function zoneOfFlight(points) {
-    const [longitude, latitude] = points[0] ?? [];
-    try {
-        return tzlookup(latitude, longitude);
-    } catch {
-        // no usable position
-        return null;
-    }
 }
 
 // Fence descriptor: circular fences (single point + radius) become closed cylinders,
@@ -1136,7 +1125,6 @@ export default {
             this.$router.push({ query });
         },
 
-        // the log's start time: a Date (DataFlash, tlog) or milliseconds since 1970 (DJI)
         // the real sun needs the log's absolute time and the flight's position
         applyLighting() {
             this.vehicleVisibility?.setRealLighting(
@@ -1144,9 +1132,10 @@ export default {
             );
         },
 
+        // the absolute time at the first trajectory point (startTimeMs)
         getTimeStart() {
             const start = new Date(
-                this.state.metadata?.startTime ?? Number.NaN,
+                logStartTime(this.state.metadata) + this.startTimeMs,
             );
             this.hasLogTime = !Number.isNaN(start.getTime());
             if (!this.hasLogTime) {

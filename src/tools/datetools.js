@@ -16,6 +16,7 @@ function leapSecondsTAI(year, month) {
     return 0;
 }
 
+// The absolute time at boot (the log's time 0), from the first GPS sample with a GPS time
 export default function extractStartTime(msgs) {
     for (const i in msgs.time_boot_ms) {
         if (msgs.GWk[i] > 2000) {
@@ -31,8 +32,8 @@ export default function extractStartTime(msgs) {
                     leapSecondsGPS(d.getUTCFullYear(), d.getUTCMonth() + 1) *
                         1000,
             );
-            console.log(d);
-            return d;
+            // the sample's GPS time less the time since boot it was logged at
+            return new Date(d.getTime() - msgs.time_boot_ms[i]);
         }
     }
 }
