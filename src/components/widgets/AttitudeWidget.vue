@@ -53,7 +53,7 @@ export default {
     computed: {
         filteredData() {
             this.dependOnParams();
-            return Object.keys(this.state.params.values).filter(
+            return Object.keys(this.state.params?.values ?? {}).filter(
                 (key) => key.indexOf(this.filter.toUpperCase()) !== -1,
             );
         },

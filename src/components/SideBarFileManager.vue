@@ -56,9 +56,15 @@ import { MAVLink20Processor as MAVLink } from "../libs/mavlink";
 
 const worker = new Worker();
 
+// the app's event bus, kept by forwardWorkerRequests (this module runs outside any component)
+let appEventHub = null;
+
 // Start parsing a log; clears everything left from a previous log first
 function parseLog(file, { isTlog, isDji }) {
     resetLogState();
+    // params is not reactive: widgets that list it recompute on this event, and would otherwise
+    // keep rendering the previous log's parameters from a cache
+    appEventHub?.$emit("paramsUpdated");
     worker.postMessage({ action: "parse", file, isTlog, isDji });
 }
 
@@ -67,14 +73,20 @@ function parseLog(file, { isTlog, isDji }) {
 // the first time the component is created and never removed (per-instance listeners would either
 // stop working once the component is destroyed or pile up each time it is recreated).
 let workerRequestsForwarded = false;
+// A ?file= log loads once per page: this component mounts again each time the home tab shows,
+// and loading it again would discard the plots and reset the widgets
+let urlFileLoaded = false;
 function forwardWorkerRequests(eventHub) {
     if (workerRequestsForwarded) {
         return;
     }
     workerRequestsForwarded = true;
+    appEventHub = eventHub;
     // logs sent by an embedding page
     window.addEventListener("message", (event) => {
         if (event.data.type === "arrayBuffer") {
+            // embedding pages send DataFlash logs; the previous log may have been a tlog
+            store.logType = "bin";
             parseLog(event.data.data, { isTlog: false, isDji: false });
         }
     });
@@ -135,7 +147,8 @@ export default {
             }
         };
         const url = document.location.search.split("?file=")[1];
-        if (url) {
+        if (url && !urlFileLoaded) {
+            urlFileLoaded = true;
             this.onLoadSample(decodeURIComponent(url));
         }
     },

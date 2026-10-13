@@ -162,7 +162,7 @@ export default {
     methods: {
         update() {
             this.devices = [];
-            const devids = Object.keys(this.state.params.values).filter(
+            const devids = Object.keys(this.state.params?.values ?? {}).filter(
                 (param) =>
                     param.indexOf("DEVID") !== -1 ||
                     param.indexOf("DEV_ID") !== -1 ||
