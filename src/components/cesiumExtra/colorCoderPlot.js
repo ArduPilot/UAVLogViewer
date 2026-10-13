@@ -66,26 +66,24 @@ export default class ColorCoderPlot {
             return new Color(0, 0, 0);
         }
         if (time < data.x[this.lastindex] - 1000) {
-            console.log(
-                `t${time} < ${data.x[this.lastindex]}, [${this.lastindex}]resetting index`,
-            );
             this.lastindex = 0;
         }
-        console.log(this.lastindex);
         while (
             data.x[this.lastindex] < time &&
             this.lastindex < data.x.length - 1
         ) {
             this.lastindex++;
         }
-        console.log(this.lastindex, data.y[this.lastindex]);
         const value = data.y[this.lastindex];
         if (value === null) {
             return new Color(0, 0, 0);
         }
-        // constrain new value between min/max, then map it to 0-255
+        // 0 at the minimum to 1 at the maximum: low is yellow, high is blue, as in the legend
+        const span = this.stats.max - this.stats.min;
         const color =
-            (value - this.stats.min) / (this.stats.max - this.stats.min);
-        return new Color(255 - color, 255 - color, color);
+            span > 0
+                ? Math.min(Math.max((value - this.stats.min) / span, 0), 1)
+                : 0;
+        return new Color(1 - color, 1 - color, color);
     }
 }

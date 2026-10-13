@@ -72,13 +72,14 @@ export default class ColorCoderRange {
             this.stats.avg + this.stats.std * 3,
             this.stats.max,
         );
+        // 0 (shallow) to 1 (deep): red to blue, as in the legend
         const color = Math.max(
             Math.min(
                 this.state.messages.RFND.Dist[this.lastindex] / maxDist,
-                255,
+                1,
             ),
             0,
         );
-        return new Color(255 - color, 255 - color, color);
+        return new Color(1 - color, 0, color);
     }
 }
