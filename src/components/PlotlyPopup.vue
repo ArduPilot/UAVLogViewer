@@ -330,24 +330,27 @@ export default {
             console.log("plot()");
             const start = new Date();
             delete this.plotOptions.xaxis.rangeslider;
+            const config = {
+                modeBarButtonsToAdd: [this.csvButton()],
+                scrollZoom: true,
+                editable: true,
+                responsive: true,
+            };
             if (this.plotInstance === null) {
                 this.plotInstance = Plotly.newPlot(
                     this.gd,
                     this.plotData,
                     this.plotOptions,
-                    {
-                        modeBarButtonsToAdd: [this.csvButton()],
-                        scrollZoom: true,
-                        editable: true,
-                        responsive: true,
-                    },
+                    config,
                 );
             } else {
                 this.plotOptions.xaxis.range = this.gd._fullLayout.xaxis.range;
-                Plotly.newPlot(this.gd, this.plotData, this.plotOptions, {
-                    scrollZoom: true,
-                    responsive: true,
-                });
+                Plotly.newPlot(
+                    this.gd,
+                    this.plotData,
+                    this.plotOptions,
+                    config,
+                );
             }
             console.log("plotting done in " + (Date.now() - start) + "ms");
             this.gd.on("plotly_relayout", this.onRangeChanged);

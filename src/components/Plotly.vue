@@ -929,27 +929,22 @@ export default {
                 title: "time_boot (ms)",
                 tickformat: ":04,2f",
             };
+            const config = {
+                modeBarButtonsToAdd: [this.csvButton(), this.popupButton()],
+                scrollZoom: true,
+                editable: true,
+                responsive: true,
+            };
             if (this.plotInstance === null) {
                 this.plotInstance = Plotly.newPlot(
                     this.gd,
                     plotData,
                     plotOptions,
-                    {
-                        modeBarButtonsToAdd: [
-                            this.csvButton(),
-                            this.popupButton(),
-                        ],
-                        scrollZoom: true,
-                        editable: true,
-                        responsive: true,
-                    },
+                    config,
                 );
             } else {
                 plotOptions.xaxis.range = this.gd._fullLayout.xaxis.range;
-                Plotly.newPlot(this.gd, plotData, plotOptions, {
-                    scrollZoom: true,
-                    responsive: true,
-                });
+                Plotly.newPlot(this.gd, plotData, plotOptions, config);
             }
             console.log("plotting done in " + (Date.now() - start) + "ms");
             start = new Date();
