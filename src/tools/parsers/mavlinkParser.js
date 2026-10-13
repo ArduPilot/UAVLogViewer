@@ -137,10 +137,10 @@ export class MavlinkParser {
         if (!fields.includes("time_boot_ms")) {
             fields.push("time_boot_ms");
         }
+        // fixData adds these; SYSTEM_TIME's time_unix_usec is one of its own fields already (adding
+        // it again pushed every value twice)
         if (messages[0]._name === "HEARTBEAT") {
             fields.push("asText", "craft");
-        } else if (messages[0]._name === "SYSTEM_TIME") {
-            fields.push("time_unix_usec");
         }
         const mergedData = {};
         for (const field of fields) {

@@ -47,6 +47,13 @@ suite("parse tlogs", () => {
             expect(trajectory[sources[0]].trajectory.length).toBeGreaterThan(
                 10,
             );
+            // one value per message in every column
+            for (const [type, columns] of Object.entries(messages)) {
+                const count = columns.time_boot_ms.length;
+                for (const [field, values] of Object.entries(columns)) {
+                    expect(values.length, `${type}.${field}`).toBe(count);
+                }
+            }
         },
     );
 });
