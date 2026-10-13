@@ -108,6 +108,7 @@
                     class="form-control"
                     placeholder="Attitude/OtherRoll"
                     required
+                    autofocus
                 />
             </form>
         </Modal>
@@ -193,7 +194,6 @@ export default {
         openSaveModal() {
             this.name = "";
             this.saveModalOpen = true;
-            this.$nextTick(() => this.$refs.nameInput?.focus());
         },
         handleOk() {
             if (this.name.length > 0) {
