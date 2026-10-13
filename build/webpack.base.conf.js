@@ -20,8 +20,6 @@ function asset(test, dir) {
     };
 }
 
-// The path to the Cesium source code
-
 function resolveDir(dir) {
     return join(import.meta.dirname, "..", dir);
 }
@@ -57,16 +55,6 @@ export const module = {
             test: /\.vue$/,
             loader: "vue-loader",
             options: vueLoaderConfig,
-        },
-        {
-            test: /\.js$/,
-            loader: "babel-loader",
-            include: [
-                resolveDir("src"),
-                resolveDir("test"),
-                resolveDir("node_modules/webpack-dev-server/client"),
-                resolveDir("node_modules/mavlink_common_v1.0/parsers"),
-            ],
         },
         asset(/\.(png|jpe?g|gif|svg)$/i, "img"),
         asset(/\.(woff2?|eot|ttf|otf)$/i, "fonts"),

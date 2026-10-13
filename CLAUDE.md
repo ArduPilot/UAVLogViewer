@@ -41,7 +41,7 @@ npx vitest run -t "parse"                            # filter by test name
 
 ## Module system and build
 
-- `package.json` has `"type": "module"`: every `.js` file is an ES module. Configs whose tools load them synchronously stay CommonJS with a `.cjs` name: `babel.config.cjs`, `test/e2e/nightwatch.conf.cjs`. Everything else (`build/`, `config/`, `.postcssrc.js`, `eslint.config.js`, `stylelint.config.js`, `vitest.config.js`, `scripts/`) uses `import`/`export`.
+- `package.json` has `"type": "module"`: every `.js` file is an ES module. Configs whose tools load them synchronously stay CommonJS with a `.cjs` name: `test/e2e/nightwatch.conf.cjs`. Everything else (`build/`, `config/`, `.postcssrc.js`, `eslint.config.js`, `stylelint.config.js`, `vitest.config.js`, `scripts/`) uses `import`/`export`.
 - In build configs, use `createRequire(import.meta.url)` for `require.resolve`, and `fileURLToPath(new URL(..., import.meta.url))` for paths. `import.meta.resolve` returns a `file://` URL, not a path.
 - ESM imports are hoisted, so `NODE_ENV` is set in the npm scripts with `cross-env`, before any config module runs.
 - webpack keeps resolving extensionless imports in `src/` (`resolve.fullySpecified: false` for `.m?js`).

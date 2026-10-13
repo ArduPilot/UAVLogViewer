@@ -25,7 +25,7 @@ COPY build ./build
 COPY config ./config
 COPY src ./src
 COPY static ./static
-COPY .gitmodules .postcssrc.js babel.config.cjs index.html ./
+COPY .gitmodules .postcssrc.js index.html ./
 
 # Initialise submodules only if .gitmodules exists (network required),
 # build production assets and drop the dev dependencies
