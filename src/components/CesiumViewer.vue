@@ -690,7 +690,6 @@ export default {
         createAdditionalProviders() {
             // Base layer picker options. All keyless / non-ion. Esri satellite is the
             // default (this.esriProvider); StatKart, MapTiler, Eniro and OpenSeaMap follow.
-            const imageryProviders = [];
             this.esriProvider = new ProviderViewModel({
                 name: "Satellite (Esri)",
                 iconUrl: maptilerIcon,
@@ -706,8 +705,8 @@ export default {
                     });
                 },
             });
-            imageryProviders.push(this.esriProvider);
-            imageryProviders.push(
+            return [
+                this.esriProvider,
                 new ProviderViewModel({
                     name: "StatKart",
                     iconUrl: statkartIcon,
@@ -734,8 +733,6 @@ export default {
                         });
                     },
                 }),
-            );
-            imageryProviders.push(
                 new ProviderViewModel({
                     name: "Eniro",
                     iconUrl: eniroIcon,
@@ -769,8 +766,7 @@ export default {
                         ];
                     },
                 }),
-            );
-            return imageryProviders;
+            ];
         },
         // Resolve once the globe has no tiles left to load (or after timeoutMs, so a slow
         // or failing tile server never blocks the UI). Never rejects.
@@ -1122,7 +1118,11 @@ export default {
             }
             const cartesians = [];
             for (const p of this.points) {
-                if (isFinite(p[0]) && isFinite(p[1]) && isFinite(p[2])) {
+                if (
+                    Number.isFinite(p[0]) &&
+                    Number.isFinite(p[1]) &&
+                    Number.isFinite(p[2])
+                ) {
                     cartesians.push(Cartesian3.fromDegrees(p[0], p[1], p[2]));
                 }
             }
@@ -1145,10 +1145,10 @@ export default {
             const height = scene.canvas.clientHeight;
             const globe = scene.globe;
             const left = scene.camera.getPickRay(
-                new Cartesian2((width / 2) | 0, height - 1),
+                new Cartesian2(Math.trunc(width / 2), height - 1),
             );
             const right = scene.camera.getPickRay(
-                new Cartesian2(1 + ((width / 2) | 0), height - 1),
+                new Cartesian2(1 + Math.trunc(width / 2), height - 1),
             );
             const leftPos = left && globe.pick(left, scene);
             const rightPos = right && globe.pick(right, scene);
@@ -2186,13 +2186,7 @@ export default {
             // raw alt. Our terrain is orthometric (same datum as AMSL), so absolute alt renders
             // at the right height above the visible ground (geoid cancels) just like the track.
             // Home altitude (AMSL) for relative frames is the home waypoint (seq 0).
-            let homeAlt = 0;
-            for (let i = 0; i < points.length; i++) {
-                if (points[i][5] === 0) {
-                    homeAlt = points[i][2];
-                    break;
-                }
-            }
+            const homeAlt = points.find((point) => point[5] === 0)?.[2] ?? 0;
             for (let i = 0; i < cesiumPointsOrig.length; i++) {
                 const frame = points[i][6];
                 const alt = points[i][2];
@@ -2254,7 +2248,8 @@ export default {
                 const v = this.state.params?.values
                     ? this.state.params.values.FENCE_ALT_MAX
                     : undefined;
-                if (v !== undefined && v !== null && !isNaN(v) && v > 0) {
+                // a positive number (null, undefined, NaN and text that is no number are not)
+                if (Number(v) > 0) {
                     return v;
                 }
             } catch {
