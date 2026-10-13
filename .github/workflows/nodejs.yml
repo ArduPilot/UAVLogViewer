@@ -4,26 +4,25 @@ on: [push, pull_request]
 
 jobs:
     build:
-
         runs-on: ubuntu-latest
 
         strategy:
             matrix:
-                node-version: [18.x]
+                node-version: [24.x]
 
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v7
               with:
-                submodules: true
+                  submodules: true
 
-            - uses: actions/cache@v3
+            - uses: actions/cache@v6
               with:
                   path: ~/.npm
                   key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
                   restore-keys: |
                       ${{ runner.os }}-node-
 
-            - uses: actions/cache@v3
+            - uses: actions/cache@v6
               with:
                   path: /tmp/testlogs
                   key: ${{ runner.os }}-testlogs-${{ hashFiles('**/logdownloader.sh') }}
@@ -31,12 +30,52 @@ jobs:
                       ${{ runner.os }}-testlogs-
 
             - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v7
               with:
                   node-version: ${{ matrix.node-version }}
             - run: npm install
             - run: npm run build --if-present
-            # - run: ./test/testlogfiles/logdownloader.sh
-            # - run: npm run unit
+            - run: bash test/testlogfiles/logdownloader.sh
+            - run: npm run unit
               env:
                   CI: true
+
+    lint:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  submodules: true
+
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: 24.x
+                  cache: npm
+            - run: npm ci
+
+            # ESLint, Stylelint, markdownlint and the prettier check
+            - run: npm run lint:all
+
+            # Ruff's default rules change between releases: keep the version pinned
+            - name: Ruff
+              uses: astral-sh/ruff-action@v4.1.0
+              with:
+                  version: "0.17.0"
+            - name: Ruff format
+              uses: astral-sh/ruff-action@v4.1.0
+              with:
+                  version: "0.17.0"
+                  args: format --check
+
+            - name: ShellCheck
+              run: git ls-files -z '*.sh' | xargs -0 shellcheck
+
+            - name: Hadolint
+              uses: hadolint/hadolint-action@v3.5.0
+              with:
+                  dockerfile: Dockerfile
+                  failure-threshold: style
+
+            - name: actionlint
+              run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color

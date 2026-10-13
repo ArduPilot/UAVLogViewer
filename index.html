@@ -1,36 +1,41 @@
-<!DOCTYPE html>
-<html lang="en" style="height: 100%;">
-  <head>
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
-    <meta charset="utf-8">
-    <meta name="description" content="online viewer for UAV log files">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UAV Log Viewer</title>
+<!doctype html>
+<html lang="en" style="height: 100%">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="description" content="online viewer for UAV log files" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>UAV Log Viewer</title>
+    </head>
+    <!-- Google tag (gtag.js) -->
+    <script
+        async
+        src="https://www.googletagmanager.com/gtag/js?id=G-CVQXD7KT3F"
+    ></script>
     <script>
-      window.__APP_CONFIG__ = window.__APP_CONFIG__ || {};
+        globalThis.dataLayer = globalThis.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag("js", new Date());
+
+        gtag("config", "G-CVQXD7KT3F");
     </script>
-    <script src="./runtime-config.js"></script>
-  </head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CVQXD7KT3F"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+    <!-- Google tag (gtag.js) -->
+    <script
+        async
+        src="https://www.googletagmanager.com/gtag/js?id=G-YTKXG38B06"
+    ></script>
+    <script>
+        globalThis.dataLayer = globalThis.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag("js", new Date());
 
-    gtag('config', 'G-CVQXD7KT3F');
-  </script>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YTKXG38B06"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-YTKXG38B06');
-  </script>
-  <body style="background-color: black; height: 100%">
-    <div id="app"></div>
-    <!-- built files will be auto injected -->
-  </body>
+        gtag("config", "G-YTKXG38B06");
+    </script>
+    <body style="background-color: black; height: 100%">
+        <div id="app"></div>
+        <!-- built files will be auto injected -->
+    </body>
 </html>

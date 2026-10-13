@@ -1,0 +1,9 @@
+dist/
+node_modules/
+src/tools/parsers/JsDataflashParser/
+test/unit/coverage/
+test/e2e/reports/
+src/assets/**/*.xml
+package-lock.json
+runtime-config.js
+.idea/

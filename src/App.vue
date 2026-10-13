@@ -1,28 +1,26 @@
 <template>
-    <div id="app" style="height: 100%;">
-        <router-view/>
+    <div id="app" style="height: 100%">
+        <router-view />
     </div>
 </template>
 
 <script>
 export default {
-    name: 'App'
-}
+    name: "App",
+};
 </script>
 
 <style>
+@import url("https://fonts.googleapis.com/css?family=Nunito+Sans&display=swap");
 
-@import url('https://fonts.googleapis.com/css?family=Nunito+Sans&display=swap');
-
- #app {
-    font-family: 'Nunito Sans', sans-serif;
+#app {
+    font-family: "Nunito Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
- }
+}
 
- html,
+html,
 body {
     overscroll-behavior-y: contain;
 }
-
 </style>

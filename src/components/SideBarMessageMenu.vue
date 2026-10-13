@@ -1,6 +1,5 @@
 <template>
     <div v-if="hasMessages">
-
         <!--<li v-if="state.plotOn" @click="state.plotOn=!state.plotOn">-->
         <!--<a class="section">-->
         <!--<i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>-->
@@ -10,50 +9,90 @@
             :nodes="availableMessagePresets"
             :label="'Presets'"
             :clean-name="'Presets'"
-            :level="0">
-
+            :level="0"
+        >
         </tree-menu>
-        <li v-b-toggle="'messages'">
-            <a class="section">
-                Plot Individual Field
-                <i class="fas fa-caret-down"></i></a>
-        </li>
+        <ul>
+            <li v-b-toggle="'messages'">
+                <a class="section">
+                    Plot Individual Field
+                    <i class="fas fa-caret-down"></i
+                ></a>
+            </li>
+        </ul>
 
         <b-collapse id="messages">
-            <li class="input-li">
-                <input id="filterbox" placeholder=" Type here to filter..." v-model="filter">
-            </li>
-            <template v-for="key of Object.keys(this.messageTypesFiltered).sort()">
-                <li class="type" v-bind:key="key">
-                    <div
-                        v-b-toggle="'type' + key"
-                        :title="messageDocs[key.split('[')[0]] ? messageDocs[key.split('[')[0]].doc : ''"
-                    >
-                        <a class="section">{{key}} <span v-if="messageTypes[key].isArray">{{"[...]"}}</span>
-                            <i class="expand fas fa-caret-down"></i>
-                            <span class="description">
-                              {{ messageDocs[key.split('[')[0]] ? messageDocs[key.split('[')[0]].doc : '' }}
-                            </span>
-                        </a>
-                    </div>
+            <ul>
+                <li class="input-li">
+                    <input
+                        id="filterbox"
+                        v-model="filter"
+                        placeholder=" Type here to filter..."
+                    />
                 </li>
-                <b-collapse :id="'type' + key" v-bind:key="key+'1'">
+            </ul>
+            <template v-for="key of Object.keys(messageTypesFiltered).sort()">
+                <ul :key="key">
+                    <li class="type">
+                        <div
+                            v-b-toggle="'type' + key"
+                            :title="
+                                messageDocs[key.split('[')[0]]
+                                    ? messageDocs[key.split('[')[0]].doc
+                                    : ''
+                            "
+                        >
+                            <a class="section"
+                                >{{ key }}
+                                <span v-if="messageTypes[key].isArray">{{
+                                    "[...]"
+                                }}</span>
+                                <i class="expand fas fa-caret-down"></i>
+                                <span class="description">
+                                    {{
+                                        messageDocs[key.split("[")[0]]
+                                            ? messageDocs[key.split("[")[0]].doc
+                                            : ""
+                                    }}
+                                </span>
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+                <b-collapse :id="'type' + key" :key="key + '1'">
                     <template v-for="item in messageTypes[key].complexFields">
-                        <li @click="toggle(key, item.name)"
+                        <li
+                            v-if="
+                                isPlottable(key, item.name) &&
+                                item.name
+                                    .toLowerCase()
+                                    .includes(filter.toLowerCase())
+                            "
+                            :key="key + '.' + item.name"
                             class="field"
                             :title="fieldDoc(key, item.name)"
-                            v-bind:key="key+'.'+item.name"
-                            v-if="isPlottable(key,item.name)
-                                && item.name.toLowerCase().indexOf(filter.toLowerCase()) !== -1">
-                            <a> {{item.name}}
-                                <span v-if="item.units!=='?' && item.units!==''"> ({{item.units}})</span>
+                            @click="toggle(key, item.name)"
+                        >
+                            <a>
+                                {{ item.name }}
+                                <span
+                                    v-if="
+                                        item.units !== '?' && item.units !== ''
+                                    "
+                                >
+                                    ({{ item.units }})</span
+                                >
                             </a>
                             <span class="description">
-                              {{ fieldDoc(key, item.name) }}
+                                {{ fieldDoc(key, item.name) }}
                             </span>
 
-                            <a @click="$eventHub.$emit('togglePlot', field.name)" v-if="isPlotted(key,item.name)">
-                                <i class="remove-icon fas fa-trash" title="Remove data"></i>
+                            <!-- clicking anywhere on the item (also this icon) toggles the plot -->
+                            <a v-if="isPlotted(key, item.name)">
+                                <i
+                                    class="remove-icon fas fa-trash"
+                                    title="Remove data"
+                                ></i>
                             </a>
                         </li>
                     </template>
@@ -63,395 +102,412 @@
     </div>
 </template>
 <script>
-import { isArray } from 'underscore'
-import { store } from './Globals.js'
-import TreeMenu from './widgets/TreeMenu.vue'
-import fastXmlParser from 'fast-xml-parser'
+import { store } from "./Globals.js";
+import TreeMenu from "./widgets/TreeMenu.vue";
+import fastXmlParser from "fast-xml-parser";
+import mavgraphs from "../assets/mavgraphs.xml";
+import mavgraphs2 from "../assets/mavgraphs2.xml";
+import ekfGraphs from "../assets/ekfGraphs.xml";
+import ekf3Graphs from "../assets/ekf3Graphs.xml";
+import planeDocs from "../assets/logmetadata/plane.xml";
+import copterDocs from "../assets/logmetadata/copter.xml";
+import trackerDocs from "../assets/logmetadata/tracker.xml";
+import roverDocs from "../assets/logmetadata/rover.xml";
+import subDocs from "../assets/logmetadata/sub.xml";
+
+// "MSG.field:2" goes on the second axis
+function presetFields(expression) {
+    return expression
+        .split(" ")
+        .map((exp) =>
+            exp.includes(":") ? [exp.replace(":2", ""), 1] : [exp, 0],
+        );
+}
+
+// presets keyed "Folder/Sub/Name" as nested objects, for the tree menu
+function presetTree(presets) {
+    const tree = {};
+    for (const [key, value] of Object.entries(presets)) {
+        let current = tree;
+        const fields = key.trim().split("/");
+        const lastField = fields.pop();
+        for (const field of fields) {
+            if (!(field in current)) {
+                console.log("overwriting " + field);
+                current[field] = {};
+            }
+            current = current[field];
+        }
+        current[lastField] = value;
+    }
+    return tree;
+}
 
 export default {
-    name: 'message-menu',
+    name: "MessageMenu",
     components: { TreeMenu },
-    data () {
+    data() {
         return {
-            filter: '',
+            filter: "",
             checkboxes: {},
             state: store,
             messages: {},
             messageTypes: [],
             hiddenTypes: [
-                'MISSION_CURRENT',
-                'SYSTEM_TIME', 'HEARTBEAT', 'STATUSTEXT',
-                'COMMAND_ACK', 'PARAM_VALUE', 'AUTOPILOT_VERSION',
-                'TIMESYNC', 'MISSION_COUNT', 'MISSION_ITEM_INT',
-                'MISSION_ITEM', 'MISSION_ITEM_REACHED', 'MISSION_ACK',
-                'HOME_POSITION',
-                'STRT',
-                'FMT',
-                'PARM',
-                'MSG',
-                'FMTU',
-                'UNIT',
-                'MULT'
+                "MISSION_CURRENT",
+                "SYSTEM_TIME",
+                "HEARTBEAT",
+                "STATUSTEXT",
+                "COMMAND_ACK",
+                "PARAM_VALUE",
+                "AUTOPILOT_VERSION",
+                "TIMESYNC",
+                "MISSION_COUNT",
+                "MISSION_ITEM_INT",
+                "MISSION_ITEM",
+                "MISSION_ITEM_REACHED",
+                "MISSION_ACK",
+                "HOME_POSITION",
+                "STRT",
+                "FMT",
+                "PARM",
+                "MSG",
+                "FMTU",
+                "UNIT",
+                "MULT",
             ],
-            // TODO: lists are nor clear, use objects instead
-            messagePresets: {
-            },
+            // Preset fields are positional arrays (https://github.com/igoutta/UAVLogViewer/issues/4)
+            messagePresets: {},
             userPresets: {},
-            messageDocs: {}
-        }
+            messageDocs: {},
+        };
     },
-    created () {
-        this.$eventHub.$on('messageTypes', this.handleMessageTypes)
-        this.$eventHub.$on('presetsChanged', this.loadLocalPresets)
-        this.messagePresets = this.loadXmlPresets()
-        this.messageDocs = this.loadXmlDocs()
-        this.loadLocalPresets()
-    },
-    beforeDestroy () {
-        this.$eventHub.$off('messageTypes')
-    },
-    methods: {
-        loadXmlPresets () {
-            // eslint-disable-next-line
-            const graphs = {}
-            const files = [
-                require('../assets/mavgraphs.xml'),
-                require('../assets/mavgraphs2.xml'),
-                require('../assets/ekfGraphs.xml'),
-                require('../assets/ekf3Graphs.xml')
-            ]
-            for (const contents of files) {
-                const result = fastXmlParser.parse(contents.default, { ignoreAttributes: false })
-                const igraphs = result.graphs
-                for (const graph of igraphs.graph) {
-                    let i = ''
-                    const name = graph['@_name']
-                    if (!Array.isArray(graph.expression)) {
-                        graph.expression = [graph.expression]
+    computed: {
+        hasMessages() {
+            return Object.keys(this.messageTypes).length > 0;
+        },
+        messageTypesFiltered() {
+            const filtered = {};
+            for (const key of Object.keys(this.messageTypes)) {
+                if (!this.hiddenTypes.includes(key)) {
+                    if (this.filter === "") {
+                        this.collapse("type" + key);
+                        filtered[key] = this.messageTypes[key];
+                        continue;
                     }
-                    for (const expression of graph.expression) {
-                        const fields = []
-                        for (let exp of expression.split(' ')) {
-                            if (exp.indexOf(':') >= 0) {
-                                exp = exp.replace(':2', '')
-                                fields.push([exp, 1])
-                            } else {
-                                fields.push([exp, 0])
-                            }
-                        }
-                        graphs[name + i] = fields
-                        // workaround to avoid replacing a key
-                        // TODO: implement this in a way that doesn't need this hack
-                        i += ' '
+                    if (
+                        this.messageTypes[key].expressions.some((field) =>
+                            field
+                                .toLowerCase()
+                                .includes(this.filter.toLowerCase()),
+                        )
+                    ) {
+                        filtered[key] = this.messageTypes[key];
+                        // console.log('type' + key, document.getElementById('type' + key))
+                        this.expand("type" + key);
+                    } else {
+                        this.collapse("type" + key);
                     }
                 }
             }
-            return graphs
+            return filtered;
         },
-        loadLocalPresets () {
-            const saved = window.localStorage.getItem('savedFields')
+        availableMessagePresets() {
+            const dict = {};
+            // built-in presets only when the log has all of their fields
+            for (const [key, value] of Object.entries(this.messagePresets)) {
+                const fields = value.filter((field) => field[0] !== "");
+                if (!this.addPresetFields(dict, key, fields)) {
+                    delete dict[key];
+                }
+            }
+            // user presets keep the fields before the first one the log doesn't have
+            for (const [key, value] of Object.entries(this.userPresets)) {
+                this.addPresetFields(dict, key, value);
+            }
+            return presetTree(dict);
+        },
+    },
+    created() {
+        this.$eventHub.$on("messageTypes", this.handleMessageTypes);
+        this.$eventHub.$on("presetsChanged", this.loadLocalPresets);
+        this.messagePresets = this.loadXmlPresets();
+        this.messageDocs = this.loadXmlDocs();
+        this.loadLocalPresets();
+    },
+    beforeDestroy() {
+        this.$eventHub.$off("messageTypes");
+    },
+    methods: {
+        // adds the fields (each with a color index) to dict[key] up to the first one
+        // the log doesn't have; false if there was such a field
+        addPresetFields(dict, key, fields) {
+            let color = 0;
+            for (const field of fields) {
+                if (!this.isAvailable(field)) {
+                    return false;
+                }
+                dict[key] ??= { messages: [] };
+                dict[key].messages.push([...field, color++]);
+            }
+            return true;
+        },
+        loadXmlPresets() {
+            const graphs = {};
+            const files = [mavgraphs, mavgraphs2, ekfGraphs, ekf3Graphs];
+            for (const contents of files) {
+                const result = fastXmlParser.parse(contents, {
+                    ignoreAttributes: false,
+                });
+                for (const graph of result.graphs.graph) {
+                    const name = graph["@_name"];
+                    const expressions = Array.isArray(graph.expression)
+                        ? graph.expression
+                        : [graph.expression];
+                    // graphs with several expressions share a name: pad it so each keeps its own key
+                    expressions.forEach((expression, i) => {
+                        graphs[name + " ".repeat(i)] = presetFields(expression);
+                    });
+                }
+            }
+            return graphs;
+        },
+        loadLocalPresets() {
+            const saved = globalThis.localStorage.getItem("savedFields");
             if (saved !== null) {
-                this.userPresets = JSON.parse(saved)
+                this.userPresets = JSON.parse(saved);
                 for (const preset in this.userPresets) {
                     for (const message in this.userPresets[preset]) {
                         // Field 3 means it is a user preset and can be deleted
-                        this.userPresets[preset][message][3] = 1
+                        this.userPresets[preset][message][3] = 1;
                     }
                 }
             }
         },
-        loadXmlDocs () {
-            const logDocs = {}
+        loadXmlDocs() {
+            const logDocs = {};
             const files = [
-                require('../assets/logmetadata/plane.xml'),
-                require('../assets/logmetadata/copter.xml'),
-                require('../assets/logmetadata/tracker.xml'),
-                require('../assets/logmetadata/rover.xml'),
-                require('../assets/logmetadata/sub.xml')
-            ]
+                planeDocs,
+                copterDocs,
+                trackerDocs,
+                roverDocs,
+                subDocs,
+            ];
             for (const contents of files) {
-                const result = fastXmlParser.parse(contents.default, { ignoreAttributes: false })
-                const igraphs = result.loggermessagefile
+                const result = fastXmlParser.parse(contents, {
+                    ignoreAttributes: false,
+                });
+                const igraphs = result.loggermessagefile;
                 for (const graph of igraphs.logformat) {
-                    logDocs[graph['@_name']] = { doc: graph.description }
-                    if (!isArray(graph.fields.field)) {
-                        continue
+                    logDocs[graph["@_name"]] = { doc: graph.description };
+                    if (!Array.isArray(graph.fields.field)) {
+                        continue;
                     }
                     for (const field of graph.fields.field) {
-                        logDocs[graph['@_name']][field['@_name']] = field.description
+                        logDocs[graph["@_name"]][field["@_name"]] =
+                            field.description;
                     }
                 }
             }
-            return logDocs
+            return logDocs;
         },
-        handleMessageTypes (messageTypes) {
+        handleMessageTypes(messageTypes) {
             if (this.$route.query.plots) {
-                this.state.plotOn = true
+                this.state.plotOn = true;
             }
-            const newMessages = {}
+            const newMessages = {};
             // populate list of message types
             for (const messageType of Object.keys(messageTypes)) {
                 if (messageTypes[messageType].instances !== undefined) {
-                    continue
+                    continue;
                 }
-                this.$set(this.checkboxes, messageType, messageTypes[messageType].expressions.expressions)
-                newMessages[messageType] = messageTypes[messageType]
+                this.$set(
+                    this.checkboxes,
+                    messageType,
+                    messageTypes[messageType].expressions.expressions,
+                );
+                newMessages[messageType] = messageTypes[messageType];
             }
             // populate checkbox status
             for (const messageType of Object.keys(messageTypes)) {
                 if (messageTypes[messageType].instances !== undefined) {
-                    continue
+                    continue;
                 }
-                this.checkboxes[messageType] = { expressions: {} }
+                this.checkboxes[messageType] = { expressions: {} };
                 // for (let field of this.getMessageNumericField(this.state.messages[messageType][0])) {
                 for (const field of messageTypes[messageType].expressions) {
                     if (this.state.plotOn) {
                         this.checkboxes[messageType].expressions[field] =
-                            this.$route.query?.plots?.indexOf(messageType + '.' + field) !== -1
+                            this.$route.query?.plots?.indexOf(
+                                messageType + "." + field,
+                            ) !== -1;
                     } else {
-                        this.checkboxes[messageType].expressions[field] = false
+                        this.checkboxes[messageType].expressions[field] = false;
                     }
                 }
             }
-            this.messageTypes = newMessages
-            this.$set(this.state, 'messageTypes', newMessages)
+            this.messageTypes = newMessages;
+            this.$set(this.state, "messageTypes", newMessages);
         },
-        fieldDoc (msgtype, field) {
+        fieldDoc(msgtype, field) {
             // Message types can carry an instance suffix (e.g. GPYW[1]) which the
             // metadata is not keyed by, so strip it before looking the docs up.
-            const docs = this.messageDocs[msgtype.split('[')[0]]
-            return docs ? docs[field.split('[')[0]] || '' : ''
+            const docs = this.messageDocs[msgtype.split("[")[0]];
+            return docs ? docs[field.split("[")[0]] || "" : "";
         },
-        isPlotted (message, field) {
-            const fullname = message + '.' + field
+        isPlotted(message, field) {
+            const fullname = message + "." + field;
             for (const field of this.state.expressions) {
                 if (field.name === fullname) {
-                    return true
+                    return true;
                 }
             }
-            return false
+            return false;
         },
-        getMessageNumericField (message) {
-            const numberFields = []
+        getMessageNumericField(message) {
+            const numberFields = [];
             if (message && message.fieldnames) {
                 for (const field of message.fieldnames) {
-                    if (!isNaN(message[field])) {
-                        numberFields.push(field)
+                    if (!Number.isNaN(Number(message[field]))) {
+                        numberFields.push(field);
                     }
                 }
             }
-            return numberFields
+            return numberFields;
         },
-        toggle (message, item) {
-            this.state.plotOn = true
+        toggle(message, item) {
+            this.state.plotOn = true;
             this.$nextTick(function () {
-                this.$eventHub.$emit('togglePlot', message + '.' + item)
-            })
+                this.$eventHub.$emit("togglePlot", message + "." + item);
+            });
         },
-        isPlottable (msgtype, item) {
-            return item !== 'TimeUS'
+        isPlottable(msgtype, item) {
+            return item !== "TimeUS";
         },
-        collapse (name) {
-            if (document.getElementById(name) &&
+        collapse(name) {
+            if (
+                document.getElementById(name) &&
                 document.getElementById(name).style &&
-                document.getElementById(name).style.display !== 'none') {
-                this.$root.$emit('bv::toggle::collapse', name)
+                document.getElementById(name).style.display !== "none"
+            ) {
+                this.$root.$emit("bv::toggle::collapse", name);
             }
         },
-        expand (name) {
-            if (document.getElementById(name) &&
+        expand(name) {
+            if (
+                document.getElementById(name) &&
                 document.getElementById(name).style &&
-                document.getElementById(name).style.display === 'none') {
-                this.$root.$emit('bv::toggle::collapse', name)
+                document.getElementById(name).style.display === "none"
+            ) {
+                this.$root.$emit("bv::toggle::collapse", name);
             }
         },
-        findMessagesInExpression (expression) {
+        findMessagesInExpression(expression) {
             // delete all expressions after dots (and dots)
-            const toDelete = /\.[A-Za-z-0-9_]+/g
-            const name = expression.replace(toDelete, '')
-            const RE = /[A-Z][A-Z0-9_]+(\[0-9\])?/g
-            const fields = name.match(RE)
+            const toDelete = /\.[A-Za-z-0-9_]+/g;
+            const name = expression.replace(toDelete, "");
+            const RE = /[A-Z][A-Z0-9_]+(\[0-9\])?/g;
+            const fields = name.match(RE);
             if (fields === null) {
-                return []
+                return [];
             }
-            return fields
+            return fields;
         },
-        isAvailable (msg) {
-            const msgRe = /[A-Z][A-Z0-9_]+(\[[0-9]\])?(\.[a-zA-Z0-9_]+)?/g
-            const match = msg[0].match(msgRe)
+        isAvailable(msg) {
+            const msgRe = /[A-Z][A-Z0-9_]+(\[\d\])?(\.\w+)?/g;
+            const match = msg[0].match(msgRe);
             if (!match) {
-                return true
+                return true;
             }
-            const msgName = match[0].split('.')[0]
+            const msgName = match[0].split(".")[0];
             if (!this.messageTypes[msgName]) {
-                return false
+                return false;
             }
-            const fieldName = match[0].split('.')[1]
+            const fieldName = match[0].split(".")[1];
             if (fieldName === undefined) {
-                return true
+                return true;
             }
             if (!this.messageTypes[msgName].complexFields[fieldName]) {
-                console.log('missing field ' + msgName + '.' + fieldName)
-                return false
+                console.log("missing field " + msgName + "." + fieldName);
+                return false;
             }
-            return true
-        }
+            return true;
+        },
     },
-    computed: {
-        hasMessages () {
-            return Object.keys(this.messageTypes).length > 0
-        },
-        messageTypesFiltered () {
-            const filtered = {}
-            for (const key of Object.keys(this.messageTypes)) {
-                if (this.hiddenTypes.indexOf(key) === -1) {
-                    if (this.filter === '') {
-                        this.collapse('type' + key)
-                        filtered[key] = this.messageTypes[key]
-                        continue
-                    }
-                    if (this.messageTypes[key].expressions
-                        .filter(field => field.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1).length > 0) {
-                        filtered[key] = this.messageTypes[key]
-                        // console.log('type' + key, document.getElementById('type' + key))
-                        this.expand('type' + key)
-                    } else {
-                        this.collapse('type' + key)
-                    }
-                }
-            }
-            return filtered
-        },
-        availableMessagePresets () {
-            const dict = {}
-            // do it for default messages
-            for (const [key, value] of Object.entries(this.messagePresets)) {
-                let missing = false
-                let color = 0
-                for (const field of value) {
-                    // If all of the expressions match, add this and move on
-                    if (field[0] === '') {
-                        continue
-                    }
-                    missing = missing || !this.isAvailable(field)
-                    if (!missing) {
-                        if (!(key in dict)) {
-                            dict[key] = { messages: [[...field, color++]] }
-                        } else {
-                            dict[key].messages.push([...field, color++])
-                        }
-                    }
-                }
-                if (missing) {
-                    delete dict[key]
-                }
-            }
-            // And again for user presets
-            for (const [key, value] of Object.entries(this.userPresets)) {
-                let missing = false
-                let color = 0
-                for (const field of value) {
-                    // If all of the expressions match, add this and move on
-                    missing = missing || !this.isAvailable(field)
-                    if (!missing) {
-                        if (!(key in dict)) {
-                            dict[key] = { messages: [[...field, color++]] }
-                        } else {
-                            dict[key].messages.push([...field, color++])
-                        }
-                    }
-                }
-            }
-            const newDict = {}
-            for (const [key, value] of Object.entries(dict)) {
-                let current = newDict
-                const fields = key.trim().split('/')
-                const lastField = fields.pop()
-                for (const field of fields) {
-                    if (!(field in current)) {
-                        console.log('overwriting ' + field)
-                        current[field] = {}
-                    }
-                    current = current[field]
-                }
-                current[lastField] = value
-            }
-            return newDict
-        }
-    }
-}
+};
 </script>
 <style scoped>
-    i {
-        margin: 5px;
-    }
-    i.expand {
-        float: right;
-    }
-    li > div {
-        display: inline-block;
-        width: 100%;
-    }
-    li.field {
-        line-height: 29px;
-        padding-left: 40px;
-        font-size: 90%;
-        display: inline-block;
-        vertical-align: middle;
-        width: 100%;
-    }
-    li.type {
-        line-height: 30px;
-        padding-left: 10px;
-        font-size: 85%;
-    }
-    input {
-        margin: 12px 12px 15px 10px;
-        border: 2px solid #ccc;
-        -webkit-border-radius: 4px;
-        -moz-border-radius: 4px;
-        border-radius: 4px;
-        background-color: rgba(255, 255, 255, 0.897);
-        color: rgb(51, 51, 51);
-        width: 92%;
-    }
-    input:focus {
-        outline: none;
-        border: 2px solid #135388;
-    }
-    .input-li:hover {
-        background-color: rgba(30, 37, 54, 0.205);
-        border-left: 3px solid rgba(24, 30, 44, 0.212);
-    }
-    ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
-        color: rgb(148, 147, 147);
-        opacity: 1; /* Firefox */
-    }
-    :-ms-input-placeholder { /* Internet Explorer 10-11 */
-        color: #2e2e2e;
-    }
-    ::-ms-input-placeholder { /* Microsoft Edge */
-        color: #2e2e2e;
-    }
-    i.remove-icon {
-        float: right;
-    }
+i {
+    margin: 5px;
+}
 
-    @media (min-width: 575px) and (max-width: 992px) {
-       a {
+i.expand {
+    float: right;
+}
+
+li > div {
+    display: inline-block;
+    width: 100%;
+}
+
+li.field {
+    line-height: 29px;
+    padding-left: 40px;
+    font-size: 90%;
+    display: inline-block;
+    vertical-align: middle;
+    width: 100%;
+}
+
+li.type {
+    line-height: 30px;
+    padding-left: 10px;
+    font-size: 85%;
+}
+
+input {
+    margin: 12px 12px 15px 10px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background-color: rgb(255 255 255 / 89.7%);
+    color: rgb(51 51 51);
+    width: 92%;
+}
+
+input:focus {
+    outline: none;
+    border: 2px solid #135388;
+}
+
+.input-li:hover {
+    background-color: rgb(30 37 54 / 20.5%);
+    border-left: 3px solid rgb(24 30 44 / 21.2%);
+}
+
+::placeholder {
+    /* Chrome, Firefox, Opera, Safari 10.1+ */
+    color: rgb(148 147 147);
+    opacity: 1; /* Firefox */
+}
+
+i.remove-icon {
+    float: right;
+}
+
+@media (min-width: 575px) and (max-width: 992px) {
+    a {
         padding: 2px 60px 2px 55px !important;
-       }
     }
+}
 
-    span.description {
-      opacity: 70%;
-      font-size: 80%;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      display: inline-block;
-      max-width: 180px;
-      vertical-align: top;
-    }
-
+span.description {
+    opacity: 0.7;
+    font-size: 80%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 180px;
+    vertical-align: top;
+}
 </style>

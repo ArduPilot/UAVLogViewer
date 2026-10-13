@@ -1,23 +1,22 @@
 on:
-  push:
-    # Sequence of patterns matched against refs/tags
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+    push:
+        # Sequence of patterns matched against refs/tags
+        tags:
+            - "v*" # Push events to matching v*, i.e. v1.0, v20.15.10
 
 jobs:
     build:
-
         runs-on: ubuntu-latest
 
         strategy:
             matrix:
-                node-version: [18.x]
+                node-version: [24.x]
 
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v7
               with:
-                submodules: true
-            - uses: actions/cache@v1
+                  submodules: true
+            - uses: actions/cache@v6
               with:
                   path: ~/.npm
                   key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -25,7 +24,7 @@ jobs:
                       ${{ runner.os }}-node-
 
             - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v7
               with:
                   node-version: ${{ matrix.node-version }}
 
@@ -35,5 +34,5 @@ jobs:
             - name: Upload Release
               uses: ncipollo/release-action@v1
               with:
-                artifacts: "logviewer.tar.gz"
-                token: ${{ secrets.GITHUB_TOKEN }}
+                  artifacts: "logviewer.tar.gz"
+                  token: ${{ secrets.GITHUB_TOKEN }}

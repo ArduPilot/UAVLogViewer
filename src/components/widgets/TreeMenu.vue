@@ -1,105 +1,116 @@
 <template>
     <div>
-        <li v-b-toggle="cleanName"  :style="{'margin-left': ''+level*15+'px'}">
+        <li
+            v-b-toggle="cleanName"
+            :style="{ 'margin-left': '' + level * 15 + 'px' }"
+        >
             <a class="section">
-                {{label}}
-                <i class="fas fa-caret-down"></i></a>
+                {{ label }}
+                <i class="fas fa-caret-down"></i
+            ></a>
         </li>
         <template v-if="nodes.length === undefined">
             <b-collapse :id="cleanName">
                 <template v-for="(newNode, nodeName) in nodes">
                     <tree-menu
-                        v-if="newNode.length === undefined && newNode.messages === undefined"
+                        v-if="
+                            newNode.length === undefined &&
+                            newNode.messages === undefined
+                        "
+                        :key="cleanNodeName(nodeName)"
                         :label="nodeName"
                         :nodes="newNode"
-                        :level="level+1"
-                        :name="name+nodeName+ '/'"
+                        :level="level + 1"
+                        :name="name + nodeName + '/'"
                         :clean-name="cleanNodeName(nodeName)"
-                        :key="cleanNodeName(nodeName)">
+                    >
                     </tree-menu>
-                    <li :style="{'margin-left': ''+(level+1)*15+'px'}"
-                        v-if="newNode.messages !== undefined && newNode.messages.length !== undefined"
+                    <li
+                        v-if="
+                            newNode.messages !== undefined &&
+                            newNode.messages.length !== undefined
+                        "
+                        :key="cleanNodeName(nodeName)"
+                        :style="{ 'margin-left': '' + (level + 1) * 15 + 'px' }"
                         class="type"
-                        :key="cleanNodeName(nodeName)">
+                    >
                         <a
-                            @click="openPreset(newNode.messages)"
                             class="section"
+                            @click="openPreset(newNode.messages)"
                         >
-                            {{nodeName}}
+                            {{ nodeName }}
                         </a>
-                        <!-- TODO: remove this hacky check when presets use a better data sctructure -->
-                        <a @click="deletePreset(name+nodeName)" v-if="newNode[Object.keys(newNode)[0]][0][3] === 1">
-                            <i class="remove-icon fas fa-trash" title="Delete preset"></i>
+                        <!-- user presets (deletable) are flagged at index 3 of their first field (https://github.com/igoutta/UAVLogViewer/issues/4) -->
+                        <a
+                            v-if="newNode[Object.keys(newNode)[0]][0][3] === 1"
+                            @click="deletePreset(name + nodeName)"
+                        >
+                            <i
+                                class="remove-icon fas fa-trash"
+                                title="Delete preset"
+                            ></i>
                         </a>
-
                     </li>
-
                 </template>
             </b-collapse>
         </template>
-
     </div>
 </template>
 
 <script>
-import { store } from '../Globals.js'
+import { store } from "../Globals.js";
 
 export default {
+    name: "TreeMenu",
     props: {
-        label: String,
-        nodes: Object,
-        level: Number,
+        label: { type: String, required: true },
+        nodes: { type: Object, required: true },
+        level: { type: Number, required: true },
         name: {
             type: String,
-            default: ''
+            default: "",
         },
         cleanName: {
             type: String,
-            default: ''
-        }
+            default: "",
+        },
     },
-    name: 'tree-menu',
-    data () {
+    data() {
         return {
-            state: store
-        }
+            state: store,
+        };
     },
     methods: {
-        cleanNodeName (name) {
-            return name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
+        cleanNodeName(name) {
+            return name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
         },
-        deletePreset (preset) {
-            const text = `Are you sure you want to delete the preset "${preset}"?`
+        deletePreset(preset) {
+            const text = `Are you sure you want to delete the preset "${preset}"?`;
             if (confirm(text) === false) {
-                return
+                return;
             }
-            const myStorage = window.localStorage
-            let saved = myStorage.getItem('savedFields')
+            const myStorage = window.localStorage;
+            let saved = myStorage.getItem("savedFields");
             if (saved === null) {
-                return
+                return;
             } else {
-                saved = JSON.parse(saved)
+                saved = JSON.parse(saved);
             }
-            delete saved[preset]
-            myStorage.setItem('savedFields', JSON.stringify(saved))
-            this.$eventHub.$emit('presetsChanged')
+            delete saved[preset];
+            myStorage.setItem("savedFields", JSON.stringify(saved));
+            this.$eventHub.$emit("presetsChanged");
         },
-        openPreset (preset) {
-            this.$eventHub.$emit('clearPlot')
-            this.state.plotOn = true
+        openPreset(preset) {
+            this.$eventHub.$emit("clearPlot");
+            this.state.plotOn = true;
             this.$nextTick(function () {
-                const msgs = []
+                const msgs = [];
                 for (const msg of preset) {
-                    msgs.push([msg[0], msg[1], msg[2]])
+                    msgs.push([msg[0], msg[1], msg[2]]);
                 }
-                this.$eventHub.$emit('addPlots', msgs)
-            })
-        }
-    }
-}
-
+                this.$eventHub.$emit("addPlots", msgs);
+            });
+        },
+    },
+};
 </script>
-
-<style scoped>
-
-</style>

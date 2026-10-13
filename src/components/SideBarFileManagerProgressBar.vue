@@ -1,8 +1,10 @@
 <template>
-    <div class="progress1" v-bind:id="[percent > 99 ? 'hideMe' : '']">
+    <div :id="[percent > 99 ? 'hideMe' : '']" class="progress1">
         <b-progress :max="100" height="30px">
             <b-progress-bar :value="percent">
-                <strong>{{ percent < 100 ? percent.toFixed(1): complete }}</strong>
+                <strong>{{
+                    percent < 100 ? percent.toFixed(1) : complete
+                }}</strong>
             </b-progress-bar>
         </b-progress>
     </div>
@@ -10,51 +12,42 @@
 
 <script>
 export default {
-    name: 'Progress',
-    props: ['percent', 'complete']
-}
+    name: "Progress",
+    props: {
+        percent: { type: Number, required: true },
+        complete: { type: String, default: "" },
+    },
+};
 </script>
 
 <style scoped>
-    .progress1 {
-        margin: 20px;
-    }
+.progress1 {
+    margin: 20px;
+}
 
-    strong {
-        font-size: 150%;
-    }
+strong {
+    font-size: 150%;
+}
 
-    .progress .progress-bar {
-        background: rgba(0, 50, 168, 0.63);
-        background: linear-gradient(0deg, rgba(30,37,53,1) 51%, rgba(51,62,88,1) 100%);
-        -webkit-transition: none;
-        -o-transition: none;
-        transition: none;
-    }
+.progress .progress-bar {
+    background: rgb(0 50 168 / 63%);
+    background: linear-gradient(
+        0deg,
+        rgb(30 37 53 / 100%) 51%,
+        rgb(51 62 88 / 100%) 100%
+    );
+    transition: none;
+}
 
-    #hideMe {
-        -moz-animation: cssAnimation 5s ease-in 5s forwards;
-        /* Firefox */
-        -webkit-animation: cssAnimation 5s ease-in 5s forwards;
-        /* Safari and Chrome */
-        -o-animation: cssAnimation 5s ease-in 5s forwards;
-        /* Opera */
-        animation: cssAnimation 5s ease-in 5s forwards;
-        -webkit-animation-fill-mode: forwards;
-        animation-fill-mode: forwards;
-    }
+#hideMe {
+    animation: fade-out 5s ease-in 5s forwards;
+    animation-fill-mode: forwards;
+}
 
-    @keyframes cssAnimation {
-        to {
-            opacity: 0;
-            overflow: hidden;
-        }
+@keyframes fade-out {
+    to {
+        opacity: 0;
+        overflow: hidden;
     }
-
-    @-webkit-keyframes cssAnimation {
-        to {
-            opacity: 0;
-            height: 0;
-        }
-    }
+}
 </style>
