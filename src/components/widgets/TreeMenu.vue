@@ -6,7 +6,7 @@
         >
             <a class="section">
                 {{ label }}
-                <i class="fas fa-caret-down"></i
+                <i class="fa-solid fa-caret-down"></i
             ></a>
         </li>
         <template v-if="nodes.length === undefined">
@@ -46,7 +46,7 @@
                             @click="deletePreset(name + nodeName)"
                         >
                             <i
-                                class="remove-icon fas fa-trash"
+                                class="remove-icon fa-solid fa-trash"
                                 title="Delete preset"
                             ></i>
                         </a>

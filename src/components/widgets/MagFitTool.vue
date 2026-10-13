@@ -115,7 +115,7 @@
                                         processing &&
                                         processingInstance === index
                                     "
-                                    class="fas fa-spinner fa-spin"
+                                    class="fa-solid fa-spinner fa-spin"
                                 ></i>
                                 <span v-else>Fit</span>
                             </button>
@@ -138,7 +138,7 @@
                         </td>
                     </tr>
                 </table>
-                <i v-else class="fas fa-spinner fa-spin"> </i>
+                <i v-else class="fa-solid fa-spinner fa-spin"> </i>
             </div>
             <div v-if="compassMessageNames.length >= 2" class="section">
                 <h6>Consistency</h6>
@@ -249,7 +249,8 @@
                 </table>
                 <div class="section-footer">
                     <span v-if="processing"
-                        ><i class="fas fa-spinner fa-spin"></i> Fitting...</span
+                        ><i class="fa-solid fa-spinner fa-spin"></i>
+                        Fitting...</span
                     >
                     <button v-else @click="downloadParams()">
                         Download Params file

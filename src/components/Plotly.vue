@@ -282,10 +282,11 @@ export default {
                 icon: {
                     title: "test",
                     name: "iconFS",
-                    width: 600,
-                    height: 600,
+                    // the icon's own box, so Plotly scales it to the button
+                    width: faWindowRestore.icon[0],
+                    height: faWindowRestore.icon[1],
                     path: faWindowRestore.icon[4],
-                }, // Use any icon available
+                },
                 click: (gd) => {
                     // const plotData = JSON.parse(JSON.stringify(gd.data))
                     // const plotLayout = JSON.parse(JSON.stringify(gd.layout))

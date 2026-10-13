@@ -5,7 +5,8 @@
             <a class="github" href="https://github.com/ardupilot/uavlogviewer">
                 <img :src="githubIcon" />
             </a>
-            <a href="/"><b>UAV</b> Log Viewer<i class="fas fa-plane"></i></a
+            <a href="/"
+                ><b>UAV</b> Log Viewer<i class="fa-solid fa-plane"></i></a
             ><a
                 class="github"
                 href="https://ardupilot.org/copter/docs/common-uavlogviewer.html"
@@ -15,7 +16,7 @@
         <!-- TABHOLDER -->
         <i
             v-collapse-toggle="'menucontent'"
-            class="fa fa-bars fa-2x toggle-btn"
+            class="fa-solid fa-bars fa-2x toggle-btn"
         ></i>
         <Collapse name="menucontent" class="menu-content" visible>
             <span v-if="state.file" class="filename"
@@ -28,7 +29,7 @@
                     :class="selected === 'home' ? 'selected' : ''"
                     @click="selected = 'home'"
                 >
-                    <i class="fas fa-home"></i>Home</a
+                    <i class="fa-solid fa-house"></i>Home</a
                 >
                 <!-- Plot -->
                 <a
@@ -36,7 +37,7 @@
                     :class="selected === 'plot' ? 'selected' : ''"
                     @click="selected = 'plot'"
                 >
-                    <i class="fas fa-chart-line"></i>Plot</a
+                    <i class="fa-solid fa-chart-line"></i>Plot</a
                 >
                 <!-- 3D: reopens the 3D view after its close button -->
                 <a
@@ -44,7 +45,7 @@
                     title="Show the 3D view"
                     @click="state.showMap = true"
                 >
-                    <i class="fas fa-cube"></i>3D</a
+                    <i class="fa-solid fa-cube"></i>3D</a
                 >
                 <!-- more -->
                 <a
@@ -52,7 +53,7 @@
                     :class="selected === 'other' ? 'selected' : ''"
                     @click="selected = 'other'"
                 >
-                    <i class="fas fa-ellipsis-v"></i>
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
                 </a>
             </div>
         </Collapse>
@@ -74,22 +75,22 @@
                     <a class="centered-section"> Show / hide </a>
                     <div v-if="state.processDone" class="show-hide">
                         <label v-if="state.params">
-                            <i class="fa fa-cogs circle"></i>
+                            <i class="fa-solid fa-gears circle"></i>
                             <input v-model="state.showParams" type="checkbox" />
                             <a class="check-font"> Parameters </a>
                         </label>
                         <label>
-                            <i class="fa fa-gamepad circle"></i>
+                            <i class="fa-solid fa-gamepad circle"></i>
                             <input v-model="state.showRadio" type="checkbox" />
                             <a class="check-font"> Radio Sticks </a>
                         </label>
                         <label>
-                            <i class="fa fa-compass circle"></i>
+                            <i class="fa-solid fa-compass circle"></i>
                             <input v-model="state.showMagfit" type="checkbox" />
                             <a class="check-font"> Mag Fit Tool </a>
                         </label>
                         <label>
-                            <i class="fa fa-compass circle"></i>
+                            <i class="fa-solid fa-compass circle"></i>
                             <input
                                 v-model="state.showEkfHelper"
                                 type="checkbox"
@@ -97,7 +98,7 @@
                             <a class="check-font"> EKF helper </a>
                         </label>
                         <label v-if="state.textMessages">
-                            <i class="fa fa-comment circle"></i>
+                            <i class="fa-solid fa-comment circle"></i>
                             <input
                                 v-model="state.showMessages"
                                 type="checkbox"
@@ -105,7 +106,7 @@
                             <a class="check-font"> Messages </a>
                         </label>
                         <label>
-                            <i class="fa fa-plane-departure circle"></i>
+                            <i class="fa-solid fa-plane-departure circle"></i>
                             <input
                                 v-model="state.showAttitude"
                                 type="checkbox"
@@ -113,15 +114,15 @@
                             <a class="check-font"> Attitude </a>
                         </label>
                         <label v-if="!recording" @click="startCapture">
-                            <i class="fa fa-play circle"></i>
+                            <i class="fa-solid fa-play circle"></i>
                             <a class="check-font"> Record </a>
                         </label>
                         <label v-if="recording" @click="stopCapture">
-                            <i class="fa fa-stop circle"></i>
+                            <i class="fa-solid fa-stop circle"></i>
                             <a class="check-font"> End Rec </a>
                         </label>
                         <label v-if="chunks" @click="download">
-                            <i class="fa fa-download circle"></i>
+                            <i class="fa-solid fa-download circle"></i>
                             <a
                                 ref="downloadFile"
                                 class="check-font download-text"
@@ -136,7 +137,7 @@
                             @click="downloadTrimmed"
                         >
                             <i
-                                class="fa fa-download circle"
+                                class="fa-solid fa-download circle"
                                 title="Download a log with starting and end time matching the current views"
                             >
                             </i>
@@ -144,7 +145,7 @@
                         </label>
                         <label>
                             <i
-                                class="fa fa-microchip circle"
+                                class="fa-solid fa-microchip circle"
                                 title="Show a widget with the detected sensors"
                             >
                             </i>
@@ -164,13 +165,16 @@
                                 href="#"
                                 @click="downloadFile(filename)"
                             >
-                                <i class="fa fa-file-download"></i>
+                                <i class="fa-solid fa-file-arrow-down"></i>
                                 {{ filename }}
                             </li>
                         </ul>
                     </div>
                     <div>
-                        <label><i class="fas fa-gamepad"></i> Radio Mode</label>
+                        <label
+                            ><i class="fa-solid fa-gamepad"></i> Radio
+                            Mode</label
+                        >
                         <select v-model="state.radioMode" class="cesium-button">
                             <option value="1">1</option>
                             <option value="2">2</option>
@@ -388,7 +392,10 @@ i {
 
 .circle {
     cursor: pointer;
-    display: block;
+
+    /* the icon is the circle: Font Awesome 7 gives icons a width through this variable */
+    --fa-width: 52px;
+
     margin-left: 8px;
     background-color: rgb(47 60 83 / 63%);
     width: 52px;

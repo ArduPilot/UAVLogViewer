@@ -2,18 +2,18 @@
     <div>
         <li v-if="file == null && !sampleLoaded">
             <a class="section" @click="onLoadSample('sample')"
-                ><i class="fas fa-play"></i> Open Sample
+                ><i class="fa-solid fa-play"></i> Open Sample
             </a>
         </li>
         <li v-if="url">
             <a class="section" @click="share"
-                ><i class="fas fa-share-alt"></i>
+                ><i class="fa-solid fa-share-nodes"></i>
                 {{ shared ? "Copied to clipboard!" : "Share link" }}</a
             >
         </li>
         <li v-if="url">
             <a :href="'/uploaded/' + url" class="section" target="_blank"
-                ><i class="fas fa-download"></i> Download</a
+                ><i class="fa-solid fa-download"></i> Download</a
             >
         </li>
         <div

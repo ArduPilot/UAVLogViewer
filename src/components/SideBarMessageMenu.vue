@@ -12,7 +12,7 @@
             <li v-collapse-toggle="'messages'">
                 <a class="section">
                     Plot Individual Field
-                    <i class="fas fa-caret-down"></i
+                    <i class="fa-solid fa-caret-down"></i
                 ></a>
             </li>
         </ul>
@@ -46,7 +46,7 @@
                                 <span v-if="messageTypes[key].isArray">{{
                                     "[...]"
                                 }}</span>
-                                <i class="expand fas fa-caret-down"></i>
+                                <i class="expand fa-solid fa-caret-down"></i>
                                 <span class="description">
                                     {{
                                         messageDocs[key.split("[")[0]]
@@ -94,7 +94,7 @@
                             <!-- clicking anywhere on the item (also this icon) toggles the plot -->
                             <a v-if="isPlotted(key, item.name)">
                                 <i
-                                    class="remove-icon fas fa-trash"
+                                    class="remove-icon fa-solid fa-trash"
                                     title="Remove data"
                                 ></i>
                             </a>

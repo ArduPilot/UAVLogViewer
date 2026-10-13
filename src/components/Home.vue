@@ -69,7 +69,7 @@
                             ref="cesiumViewer"
                         />
                         <div v-if="state.mapError" class="map-error-container">
-                            <i class="fas fa-exclamation-triangle"></i>
+                            <i class="fa-solid fa-triangle-exclamation"></i>
                             <h3>Map Initialization Failed</h3>
                             <p>{{ state.mapError }}</p>
                             <button
@@ -86,7 +86,7 @@
                             v-else-if="!(state.mapAvailable && mapOk)"
                             class="map-error-container"
                         >
-                            <i class="fas fa-map-marked-alt"></i>
+                            <i class="fa-solid fa-map-location-dot"></i>
                             <h3>No Map Data</h3>
                             <p>
                                 This log file does not contain enough GPS or

@@ -5,7 +5,7 @@
                 <div v-collapse-toggle="'plotsetupcontent'">
                     <a class="section">
                         Plots Setup
-                        <i class="expand fas fa-caret-down"></i>
+                        <i class="expand fa-solid fa-caret-down"></i>
                     </a>
                 </div>
             </li>
@@ -19,7 +19,15 @@
                                 v-model="field.name"
                                 :suggestions="completionOptions"
                             />
-                            <select v-model.number="field.axis">
+                            <label
+                                :for="'plot-axis-' + index"
+                                class="visually-hidden"
+                                >Plot axis</label
+                            >
+                            <select
+                                :id="'plot-axis-' + index"
+                                v-model.number="field.axis"
+                            >
                                 <option
                                     v-for="axis in state.allAxis"
                                     :key="'axisnumber' + axis"
@@ -28,7 +36,13 @@
                                     {{ axis }}
                                 </option>
                             </select>
+                            <label
+                                :for="'plot-color-' + index"
+                                class="visually-hidden"
+                                >Plot color</label
+                            >
                             <select
+                                :id="'plot-color-' + index"
                                 v-model="field.color"
                                 :style="{ color: field.color }"
                             >
@@ -48,7 +62,7 @@
                                 "
                             >
                                 <i
-                                    class="expand fas fa-trash"
+                                    class="expand fa-solid fa-trash"
                                     title="Remove data"
                                 ></i>
                             </a>
@@ -59,7 +73,7 @@
                             class="error"
                         >
                             <i
-                                class="fas fa-exclamation-circle error"
+                                class="fa-solid fa-circle-exclamation error"
                                 :title="state.expressionErrors[index]"
                             ></i>
                             {{ state.expressionErrors[index] }}
@@ -71,22 +85,23 @@
             <!-- BUTTONS -->
             <div class="btns-wrapper">
                 <button class="add-expression" @click="createNewExpression">
-                    <i class="fa fa-plus" aria-hidden="true"></i>Add Expression
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>Add
+                    Expression
                 </button>
                 <button
                     v-if="state.expressions.length > 0"
                     class="save-preset"
                     @click="openSaveModal"
                 >
-                    <i class="fa fa-check-circle" aria-hidden="true"></i>Save
-                    Preset
+                    <i class="fa-solid fa-circle-check" aria-hidden="true"></i
+                    >Save Preset
                 </button>
                 <button
                     v-if="state.expressions.length > 0"
                     class="save-preset"
                     @click="clearExpressions(state)"
                 >
-                    <i class="fa fa-ban" aria-hidden="true"></i>
+                    <i class="fa-solid fa-ban" aria-hidden="true"></i>
                     clear
                 </button>
             </div>

@@ -1030,7 +1030,7 @@ export default {
                 'id="cesium-bathymetry-button" ' +
                 'class="cesium-button cesium-toolbar-button"' +
                 'title="Toggle Bathymetry">' +
-                '<i class="fas fa-ship" style="font-style: unset;"></i>' +
+                '<i class="fa-solid fa-ship" style="font-style: unset;"></i>' +
                 "</button>".trim();
             toolbar.append(bathymetryButton);
             bathymetryButton = document.getElementById(
@@ -1065,7 +1065,7 @@ export default {
                 'id="cesium-fit-button" ' +
                 'class="cesium-button cesium-toolbar-button"' +
                 'title="Re-center view">' +
-                '<i class="fas fa-solid fa-expand" style="font-style: unset;"></i>' +
+                '<i class="fa-solid fa-expand" style="font-style: unset;"></i>' +
                 "</svg>" +
                 "</button>".trim();
             toolbar.append(closeButton);
@@ -1099,7 +1099,7 @@ export default {
                 'id="cesium-center-vehicle-button" ' +
                 'class="cesium-button cesium-toolbar-button"' +
                 'title="Center vehicle">' +
-                '<i class="fas fa-solid fa-car" style="font-style: unset;"></i>' +
+                '<i class="fa-solid fa-car" style="font-style: unset;"></i>' +
                 "</svg>" +
                 "</button>".trim();
             toolbar.append(closeButton);
