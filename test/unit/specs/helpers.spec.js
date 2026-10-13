@@ -8,7 +8,7 @@ import ExpressionEditor from "../../../src/components/ExpressionEditor.vue";
 import Plotly from "../../../src/components/Plotly.vue";
 
 // the plot component is only needed for its expression parsing
-jest.mock("plotly.js/lib/core", () => ({}));
+vi.mock("plotly.js/lib/core", () => ({ default: {} }));
 
 describe("free plot axis and color", () => {
     const state = (expressions) => ({

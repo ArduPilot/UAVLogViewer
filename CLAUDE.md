@@ -24,13 +24,13 @@ npm run lint:all      # the three above + format:check
 ruff check && ruff format --check   # Python tooling (scripts/terrain, src/assets/parse_mavgraph.py)
 npm run format        # prettier --write .
 npm run format:check  # prettier --check .
-npm run unit          # Jest 29 with coverage
-npx jest test/unit/specs/mavlinklogs.spec.js   # single spec file (jest.config.js is at the root)
-npx jest -t "parse"                            # filter by test name
+npm run unit          # Vitest with coverage (vitest.config.js)
+npx vitest run test/unit/specs/mavlinklogs.spec.js   # single spec file
+npx vitest run -t "parse"                            # filter by test name
 ```
 
 - The parser specs need real logs. They read `$TEST_LOG_DIR`, else `<os tmpdir>/testlogs` (filled by `test/testlogfiles/logdownloader.sh` from the current autotest logs), else `test/testlogfiles/`. Without logs both suites are skipped, not failed. Use full flight logs: the assertions expect more than 50 attitude samples.
-- Specs can import `.vue` components (`@vue/vue2-jest` with template `prettify: false`, as in webpack; `_COMMIT_`/`_BUILDDATE_` are Jest globals). A spec importing `Plotly.vue` must `jest.mock("plotly.js/lib/core")`.
+- Specs can import `.vue` components (`@vitejs/plugin-vue2`) and `?raw` files; `vitest.config.js` defines `_COMMIT_`/`_BUILDDATE_`, and `describe`/`test`/`expect`/`vi` are globals. A spec importing `Plotly.vue` must `vi.mock("plotly.js/lib/core", () => ({ default: {} }))`. `vi.mock` calls are hoisted above everything else in the file, so their factories can't use the file's own variables.
 - CI (`.github/workflows/nodejs.yml`) has a lint job: `npm run lint:all`, Ruff (pinned to 0.17.0, its default rules change between releases), ShellCheck, hadolint and actionlint. Keep all of them clean.
 - `npm run e2e` builds, serves `dist/` on port 8089 and runs Nightwatch 3 in headless Chrome; use `npm run e2e -- --env edgeHeadless` where only Edge is installed. Nightwatch starts the browser driver itself; `selenium-webdriver` is overridden in package.json because the version Nightwatch pins can no longer download Edge drivers. On Windows its startup prints a harmless `wmic.exe` not-found message.
 - The dev server runs `ESLintPlugin({ fix: true })`, so **it rewrites source files while it runs**. Check `git status` after a dev session.
@@ -41,7 +41,7 @@ npx jest -t "parse"                            # filter by test name
 
 ## Module system and build
 
-- `package.json` has `"type": "module"`: every `.js` file is an ES module. Configs whose tools load them synchronously stay CommonJS with a `.cjs` name: `babel.config.cjs`, `test/e2e/nightwatch.conf.cjs`. Everything else (`build/`, `config/`, `.postcssrc.js`, `eslint.config.js`, `stylelint.config.js`, `jest.config.js`, `scripts/`) uses `import`/`export`.
+- `package.json` has `"type": "module"`: every `.js` file is an ES module. Configs whose tools load them synchronously stay CommonJS with a `.cjs` name: `babel.config.cjs`, `test/e2e/nightwatch.conf.cjs`. Everything else (`build/`, `config/`, `.postcssrc.js`, `eslint.config.js`, `stylelint.config.js`, `vitest.config.js`, `scripts/`) uses `import`/`export`.
 - In build configs, use `createRequire(import.meta.url)` for `require.resolve`, and `fileURLToPath(new URL(..., import.meta.url))` for paths. `import.meta.resolve` returns a `file://` URL, not a path.
 - ESM imports are hoisted, so `NODE_ENV` is set in the npm scripts with `cross-env`, before any config module runs.
 - webpack keeps resolving extensionless imports in `src/` (`resolve.fullySpecified: false` for `.m?js`).
