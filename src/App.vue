@@ -19,6 +19,12 @@ export default {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* the floating tool windows' scrolling content (components/widgets): a thin bar in their colour */
+#paneContent {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(38 53 71 / 60%) transparent;
+}
+
 html,
 body {
     overscroll-behavior-y: contain;

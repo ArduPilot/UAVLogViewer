@@ -163,7 +163,8 @@ div #paneMessageViewer::after {
 }
 
 div#paneContent {
-    height: 100%;
+    /* ends above the resize handle in the bottom-right corner */
+    height: calc(100% - 22px);
     overflow: auto;
     user-select: none;
 }

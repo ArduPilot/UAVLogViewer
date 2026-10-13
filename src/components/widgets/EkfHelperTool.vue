@@ -202,10 +202,11 @@ div #paneEkfHelperViewer::after {
 }
 
 div#paneContent {
+    /* ends above the resize handle in the bottom-right corner */
+    height: calc(100% - 22px);
     box-sizing: border-box;
-    height: 100%;
     overflow: auto;
-    padding: 20px;
+    padding: 20px 20px 0;
     user-select: none;
 }
 
