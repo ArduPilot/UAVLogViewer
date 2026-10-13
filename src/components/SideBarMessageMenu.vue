@@ -1,9 +1,5 @@
 <template>
     <div v-if="hasMessages">
-        <!--<li v-if="state.plotOn" @click="state.plotOn=!state.plotOn">-->
-        <!--<a class="section">-->
-        <!--<i class="fas fa-eye-slash fa-lg"></i> Toggle Plot</a>-->
-        <!--</li>-->
         <tree-menu
             v-if="Object.keys(availableMessagePresets).length > 0"
             :nodes="availableMessagePresets"
@@ -24,6 +20,9 @@
         <Collapse name="messages">
             <ul>
                 <li class="input-li">
+                    <label for="filterbox" class="visually-hidden"
+                        >Filter message types</label
+                    >
                     <input
                         id="filterbox"
                         v-model="filter"
@@ -120,9 +119,9 @@ import copterDocs from "../assets/logmetadata/copter.xml?raw";
 import trackerDocs from "../assets/logmetadata/tracker.xml?raw";
 import roverDocs from "../assets/logmetadata/rover.xml?raw";
 import subDocs from "../assets/logmetadata/sub.xml?raw";
+
 // attributes (graph and field names) come back as "@_name"
 const xmlParser = new XMLParser({ ignoreAttributes: false });
-
 
 // "MSG.field:2" goes on the second axis
 function presetFields(expression) {
@@ -470,12 +469,6 @@ input:focus {
 
 i.remove-icon {
     float: right;
-}
-
-@media (min-width: 575px) and (max-width: 992px) {
-    a {
-        padding: 2px 60px 2px 55px !important;
-    }
 }
 
 span.description {
