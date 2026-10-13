@@ -1,7 +1,6 @@
 <template>
     <div class="cesium-settings-defaultContainer">
-        <div class="gear-icon" @click="toggleSettings">⚙</div>
-        <div v-show="isSettingsVisible" class="cesium-settings-display">
+        <div class="cesium-settings-display">
             <label>Camera</label>
             <select v-model="state.cameraType" class="cesium-button">
                 <option value="free">Free</option>
@@ -115,15 +114,9 @@ import { store } from "../Globals.js";
 
 export default {
     name: "CesiumSettingsWidget",
-    props: {
-        snappable: { type: Boolean, default: false },
-        fixedAspectRatio: { type: Boolean, default: false },
-        aspectRatio: { type: Number, default: 2 },
-    },
     data() {
         return {
             state: store,
-            isSettingsVisible: false,
         };
     },
     computed: {
@@ -135,9 +128,6 @@ export default {
         },
     },
     methods: {
-        toggleSettings() {
-            this.isSettingsVisible = !this.isSettingsVisible;
-        },
         comparisonColor(idx) {
             const colors = this.state.comparisonTrajectoryColors;
             return colors[idx % colors.length];
@@ -165,16 +155,6 @@ export default {
 </script>
 
 <style scoped>
-/* Gear Icon styling */
-.gear-icon {
-    cursor: pointer;
-    font-size: 30px;
-    position: absolute;
-    top: -10px;
-    left: 7px;
-    z-index: 2;
-}
-
 .cesium-settings-defaultContainer {
     z-index: 1;
     height: fit-content;
@@ -185,12 +165,9 @@ export default {
     font-family: sans-serif;
     font-size: 16px;
     box-sizing: border-box;
-    min-width: 30px; /* Width of gear icon + padding */
-    min-height: 30px; /* Height of gear icon + padding */
     overflow: hidden;
     background-color: rgb(40 40 40 / 70%);
-    padding: 7px;
-    padding-left: 25px;
+    padding: 8px 10px;
     border-radius: 5px;
     border: 1px solid #444;
 }

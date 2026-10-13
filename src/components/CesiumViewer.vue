@@ -31,8 +31,9 @@
                     </tbody>
                 </table>
             </div>
-            <CesiumSettingsWidget />
         </div>
+        <!-- opened by the gear on Cesium's toolbar; under the toolbar, on the right -->
+        <CesiumSettingsWidget v-show="settingsOpen" class="settings-panel" />
         <div id="cesiumContainer"></div>
         <div v-show="scaleBarLabel" id="distanceLegend">
             <div class="distanceLegendLabel">{{ scaleBarLabel }}</div>
@@ -244,6 +245,7 @@ export default {
             scaleBarWidth: 0,
             // the 3D clock shows local time at the flight, not where the camera happens to be
             flightTimeZone: null,
+            settingsOpen: false,
         };
     },
     computed: {
@@ -590,10 +592,7 @@ export default {
                     this.viewer.scene.globe.undergroundColorAlphaByDistance.nearValue = 0.2;
                     this.viewer.scene.globe.undergroundColorAlphaByDistance.farValue = 1;
                 }
-                this.addBathymetryButton();
-                this.addCenterVehicleButton();
-                this.addFitContentsButton();
-                this.addCloseButton();
+                this.addToolbarButtons();
 
                 for (const pos of this.state.currentTrajectory) {
                     this.correctedTrajectory.push(
@@ -965,139 +964,84 @@ export default {
                 promise.then(update).catch(() => {});
             }
         },
-        addCloseButton() {
-            /* Creates the close button on the Cesium toolbar */
+        // A button on Cesium's toolbar (top right), styled like Cesium's own; icon is its HTML
+        addToolbarButton({ id, title, icon, onClick, className = "" }) {
             const toolbar = this.viewer.container.querySelector(
                 ".cesium-viewer-toolbar",
             );
-
-            let closeButton = document.createElement("span");
-            if (closeButton.classList) {
-                closeButton.classList.add(
-                    "cesium-navigationHelpButton-wrapper",
-                );
-            } else {
-                closeButton.className +=
-                    " " + "cesium-navigationHelpButton-wrapper";
-            }
-            closeButton.innerHTML =
-                "" +
-                '<button type="button" ' +
-                'id="cesium-close-button" ' +
-                'class="cesium-button cesium-toolbar-button cesium-close-button" ' +
-                'title="Close 3D view">' +
-                '<svg viewbox="0 0 40 40">' +
-                '<path class="close-x" d="M 10,10 L 30,30 M 30,10 L 10,30" />' +
-                "</svg>" +
-                "</button>".trim();
-            toolbar.append(closeButton);
-            closeButton = document.getElementById("cesium-close-button");
-            closeButton.addEventListener("click", () => {
-                this.state.showMap = false;
-            });
+            const wrapper = document.createElement("span");
+            wrapper.classList.add("cesium-navigationHelpButton-wrapper");
+            const button = document.createElement("button");
+            button.type = "button";
+            button.id = id;
+            button.className =
+                `cesium-button cesium-toolbar-button ${className}`.trim();
+            button.title = title;
+            button.innerHTML = icon;
+            button.addEventListener("click", onClick);
+            wrapper.append(button);
+            toolbar.append(wrapper);
         },
-        addBathymetryButton() {
-            /* Creates the bathymetry button on the Cesium toolbar */
-            const toolbar = this.viewer.container.querySelector(
-                ".cesium-viewer-toolbar",
-            );
-
-            let bathymetryButton = document.createElement("span");
-            if (bathymetryButton.classList) {
-                bathymetryButton.classList.add(
-                    "cesium-navigationHelpButton-wrapper",
-                );
-            } else {
-                bathymetryButton.className +=
-                    " " + "cesium-navigationHelpButton-wrapper";
-            }
-            bathymetryButton.innerHTML =
-                "" +
-                '<button type="button" ' +
-                'id="cesium-bathymetry-button" ' +
-                'class="cesium-button cesium-toolbar-button"' +
-                'title="Toggle Bathymetry">' +
-                '<i class="fa-solid fa-ship" style="font-style: unset;"></i>' +
-                "</button>".trim();
-            toolbar.append(bathymetryButton);
-            bathymetryButton = document.getElementById(
-                "cesium-bathymetry-button",
-            );
-            bathymetryButton.addEventListener("click", () => {
-                this.plotBathymetry()
-                    .catch((e) =>
-                        console.warn("Could not plot bathymetry:", e.message),
-                    )
-                    .finally(() => this.viewer.scene.requestRender());
+        addToolbarButtons() {
+            const fontAwesome = (name) =>
+                `<i class="fa-solid fa-${name}" style="font-style: unset;"></i>`;
+            this.addToolbarButton({
+                id: "cesium-bathymetry-button",
+                title: "Toggle Bathymetry",
+                icon: fontAwesome("ship"),
+                onClick: () => {
+                    this.plotBathymetry()
+                        .catch((e) =>
+                            console.warn(
+                                "Could not plot bathymetry:",
+                                e.message,
+                            ),
+                        )
+                        .finally(() => this.viewer.scene.requestRender());
+                },
             });
-        },
-        addFitContentsButton() {
-            /* Creates the close button on the Cesium toolbar */
-            const toolbar = this.viewer.container.querySelector(
-                ".cesium-viewer-toolbar",
-            );
-
-            let closeButton = document.createElement("span");
-            if (closeButton.classList) {
-                closeButton.classList.add(
-                    "cesium-navigationHelpButton-wrapper",
-                );
-            } else {
-                closeButton.className +=
-                    " " + "cesium-navigationHelpButton-wrapper";
-            }
-            closeButton.innerHTML =
-                "" +
-                '<button type="button" ' +
-                'id="cesium-fit-button" ' +
-                'class="cesium-button cesium-toolbar-button"' +
-                'title="Re-center view">' +
-                '<i class="fa-solid fa-expand" style="font-style: unset;"></i>' +
-                "</svg>" +
-                "</button>".trim();
-            toolbar.append(closeButton);
-            closeButton = document.getElementById("cesium-fit-button");
-            closeButton.addEventListener("click", () => {
-                this.$nextTick(() => {
-                    this.state.cameraType = "free";
-                    this.changeCamera();
-                    this.fitTrajectoryBounds();
-                });
+            this.addToolbarButton({
+                id: "cesium-center-vehicle-button",
+                title: "Center vehicle",
+                icon: fontAwesome("car"),
+                onClick: () => {
+                    this.$nextTick(() => {
+                        this.state.cameraType = "follow";
+                        this.changeCamera();
+                    });
+                },
             });
-        },
-        addCenterVehicleButton() {
-            /* Creates the close button on the Cesium toolbar */
-            const toolbar = this.viewer.container.querySelector(
-                ".cesium-viewer-toolbar",
-            );
-
-            let closeButton = document.createElement("span");
-            if (closeButton.classList) {
-                closeButton.classList.add(
-                    "cesium-navigationHelpButton-wrapper",
-                );
-            } else {
-                closeButton.className +=
-                    " " + "cesium-navigationHelpButton-wrapper";
-            }
-            closeButton.innerHTML =
-                "" +
-                '<button type="button" ' +
-                'id="cesium-center-vehicle-button" ' +
-                'class="cesium-button cesium-toolbar-button"' +
-                'title="Center vehicle">' +
-                '<i class="fa-solid fa-car" style="font-style: unset;"></i>' +
-                "</svg>" +
-                "</button>".trim();
-            toolbar.append(closeButton);
-            closeButton = document.getElementById(
-                "cesium-center-vehicle-button",
-            );
-            closeButton.addEventListener("click", () => {
-                this.$nextTick(() => {
-                    this.state.cameraType = "follow";
-                    this.changeCamera();
-                });
+            this.addToolbarButton({
+                id: "cesium-fit-button",
+                title: "Re-center view",
+                icon: fontAwesome("expand"),
+                onClick: () => {
+                    this.$nextTick(() => {
+                        this.state.cameraType = "free";
+                        this.changeCamera();
+                        this.fitTrajectoryBounds();
+                    });
+                },
+            });
+            this.addToolbarButton({
+                id: "cesium-settings-button",
+                title: "3D view settings",
+                icon: fontAwesome("gear"),
+                onClick: () => {
+                    this.settingsOpen = !this.settingsOpen;
+                },
+            });
+            this.addToolbarButton({
+                id: "cesium-close-button",
+                title: "Close 3D view",
+                className: "cesium-close-button",
+                icon:
+                    '<svg viewbox="0 0 40 40">' +
+                    '<path class="close-x" d="M 10,10 L 30,30 M 30,10 L 10,30" />' +
+                    "</svg>",
+                onClick: () => {
+                    this.state.showMap = false;
+                },
             });
         },
         onCameraUpdate() {
@@ -2689,6 +2633,13 @@ export default {
 
 .mode {
     padding: 0 4px;
+}
+
+.settings-panel {
+    position: absolute;
+    top: 42px;
+    right: 5px;
+    z-index: 2;
 }
 
 .cesium-button {
