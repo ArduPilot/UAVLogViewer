@@ -4,18 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-UAV Log Viewer is a browser-only Vue 3.5 + webpack 5 app (live at plot.ardupilot.org) for viewing drone logs: ArduPilot DataFlash `.bin`, MAVLink telemetry `.tlog`, and DJI `.txt` logs. Logs are parsed client-side in a Web Worker, then plotted with Plotly and rendered in 3D with Cesium. There is no backend. The 3D view needs no Cesium ion token: terrain is a self-hosted quantized-mesh tileset served at `/quantized/` (the dev server proxies it to plot.ardupilot.org, see `config/index.js`), and imagery is keyless (Esri by default).
+UAV Log Viewer is a browser-only Vue 3.5 + Vite 8 app (live at plot.ardupilot.org) for viewing drone logs: ArduPilot DataFlash `.bin`, MAVLink telemetry `.tlog`, and DJI `.txt` logs. Logs are parsed client-side in a Web Worker, then plotted with Plotly and rendered in 3D with Cesium. There is no backend. The 3D view needs no Cesium ion token: terrain is a self-hosted quantized-mesh tileset served at `/quantized/` (the dev server proxies it to plot.ardupilot.org, see `vite.config.js`), and imagery is keyless (Esri by default).
 
 ## Setup and commands
 
-Node >= 22 (Plotly 4 requires it; CI uses Node 24).
+Node >= 22.12 (Vite 8 and Plotly 4 require it; CI uses Node 24).
 
 ```bash
 git submodule update --init --recursive   # required: the DataFlash parser is a submodule
 npm install
 
-npm run dev           # dev server with hot reload on 0.0.0.0:8080
-npm run build         # production build into dist/
+npm run dev           # Vite dev server with hot reload on 0.0.0.0:8080
+npm run build         # production build into dist/ (vite build)
 npm start             # serve dist/ on :8080
 npm run lint          # ESLint (eslint.config.js); npm run lint:fix applies the autofixes
 npm run lint:css      # Stylelint on the component styles
@@ -33,7 +33,7 @@ npx vitest run -t "parse"                            # filter by test name
 - Specs can import `.vue` components (`@vitejs/plugin-vue`) and `?raw` files; `vitest.config.js` defines `_COMMIT_`/`_BUILDDATE_`, and `describe`/`test`/`expect`/`vi` are globals. A spec importing `Plotly.vue` must `vi.mock("plotly.js/lib/core", () => ({ default: {} }))`. `vi.mock` calls are hoisted above everything else in the file, so their factories can't use the file's own variables.
 - CI (`.github/workflows/nodejs.yml`) has a lint job: `npm run lint:all`, Ruff (pinned to 0.17.0, its default rules change between releases), ShellCheck, hadolint and actionlint. Keep all of them clean.
 - `npm run e2e` builds, serves `dist/` on port 8089 and runs Nightwatch 3 in headless Chrome; use `npm run e2e -- --env edgeHeadless` where only Edge is installed. Nightwatch starts the browser driver itself; `selenium-webdriver` is overridden in package.json because the version Nightwatch pins can no longer download Edge drivers. On Windows its startup prints a harmless `wmic.exe` not-found message.
-- The dev server runs `ESLintPlugin({ fix: true })`, so **it rewrites source files while it runs**. Check `git status` after a dev session.
+- The dev server runs ESLint with `fix: true` (`vite-plugin-eslint2`), so **it rewrites source files while it runs**. Check `git status` after a dev session.
 - `serve` is the only entry in `dependencies`; everything else, browser libraries included, is a devDependency because it is bundled at build time. Add packages with `npm install -D`, so the Docker runtime image (`npm prune --omit=dev`) keeps only the static server.
 - The Dockerfile is a two-stage build (build stage with git, runtime stage running as a non-root user with `USER_UID`/`USER_GID` build args). Keep it clean under `hadolint --failure-threshold style`; CI runs hadolint.
 - `scripts/terrain` (Python): `uv venv scripts/terrain/.venv` then `uv pip install --python scripts/terrain/.venv -r scripts/terrain/requirements.txt` also works on Windows (the rasterio wheel bundles GDAL). Pass `--coarse-dem` (from `build_coarse.py`) for the low zooms, or one worker reads gigabytes for a long time. Tiles are gzipped with the write time in the header, so compare tilesets after decompressing.
@@ -41,19 +41,19 @@ npx vitest run -t "parse"                            # filter by test name
 
 ## Module system and build
 
-- `package.json` has `"type": "module"`: every `.js` file is an ES module. Configs whose tools load them synchronously stay CommonJS with a `.cjs` name: `test/e2e/nightwatch.conf.cjs`. Everything else (`build/`, `config/`, `.postcssrc.js`, `eslint.config.js`, `stylelint.config.js`, `vitest.config.js`, `scripts/`) uses `import`/`export`.
-- In build configs, use `createRequire(import.meta.url)` for `require.resolve`, and `fileURLToPath(new URL(..., import.meta.url))` for paths. `import.meta.resolve` returns a `file://` URL, not a path.
-- ESM imports are hoisted, so `NODE_ENV` is set in the npm scripts with `cross-env`, before any config module runs.
-- webpack keeps resolving extensionless imports in `src/` (`resolve.fullySpecified: false` for `.m?js`).
-- Assets are webpack 5 asset modules (`asset()` in `webpack.base.conf.js`; files under 10 kB become data URLs). Components `import` them (`import icon from "../assets/x.png"`), and the XML presets and docs as text with `?raw` (`import graphs from "../assets/mavgraphs.xml?raw"`), the forms Vite also understands. Jest maps `.xml?raw` to the plain `.xml` path, which specs mock.
-- vue-loader 17 compiles the templates, so `vue` resolves to its runtime-only build. `webpack.base.conf.js` exports `vueFeatureFlags` (Options API on, no production devtools), which both configs pass to `DefinePlugin`.
-- `webpack.dev.conf.js` and `webpack.prod.conf.js` define `_COMMIT_` and `_BUILDDATE_` (used in `Globals.js`); `webpack.base.conf.js` sets the `resolve.fallback` polyfill for Node's `buffer`, which the MAVLink parser uses.
+- `package.json` has `"type": "module"`: every `.js` file is an ES module. Configs whose tools load them synchronously stay CommonJS with a `.cjs` name: `test/e2e/nightwatch.conf.cjs`. Everything else (`vite.config.js`, `vitest.config.js`, `.postcssrc.js`, `eslint.config.js`, `stylelint.config.js`, `scripts/`) uses `import`/`export`.
+- In configs, use `fileURLToPath(new URL(..., import.meta.url))` for paths. `import.meta.resolve` returns a `file://` URL, not a path.
+- `vite.config.js` holds the whole build; `vitest.config.js` merges it, so tests see the same plugins, defines and aliases (`@` is `src/`). `index.html` at the root is the entry (`<script type="module" src="/src/main.js">`).
+- `define`: `_COMMIT_` (read from `.git`, also in a worktree, without running git) and `_BUILDDATE_` (used in `Globals.js`), `CESIUM_BASE_URL`, and `global` as `globalThis` (Plotly's `has-hover` uses Node's name). `@vitejs/plugin-vue` sets Vue's feature flags.
+- Cesium's `Workers`, `ThirdParty`, `Assets` and `Widgets` are copied to the root of `dist/` (`vite-plugin-static-copy`); Cesium loads them at runtime. Built files go to `dist/static/`; Cesium, Plotly, Vue and the other libraries are separate chunks from the app's, so a new app version does not download them again. `base: "./"` keeps every URL relative.
+- Assets are imported as URLs (`import icon from "../assets/x.png"`; `.glb` and `.tlog` through `assetsInclude`; files under 10 kB become data URLs), the XML presets and docs as text with `?raw`. The parser is a module worker (`worker.format: "es"`). The `buffer` and `events` packages stand in for Node's modules in the MAVLink code, which imports them.
+- Vite empties `dist/` on every build, so a terrain tileset belongs in the container mount (`dist/quantized`), not in a local `dist/`.
 
 ## Architecture
 
 ### Data flow: file → worker → global store → extractors → views
 
-1. **Loading** — `components/SideBarFileManager.vue` owns a single `parser.worker.js` instance, created with `new Worker(new URL(..., import.meta.url), { type: "module" })`, which webpack 5 bundles by itself. It posts `{action: 'parse', file, isTlog, isDji}`, later `{action: 'loadType', type}` (lazy per-message decoding) and `{action: 'trimFile', time}`. Logs can also come from drag and drop, a URL (`?file=<url>`, or `?file=sample` for the bundled `vtol.tlog`), or `window.postMessage({type: 'arrayBuffer'})` from an embedding page. The file manager is only mounted while the sidebar's "home" tab is selected.
+1. **Loading** — `components/SideBarFileManager.vue` owns a single `parser.worker.js` instance, created with `new Worker(new URL(..., import.meta.url), { type: "module" })`, which Vite bundles by itself. It posts `{action: 'parse', file, isTlog, isDji}`, later `{action: 'loadType', type}` (lazy per-message decoding) and `{action: 'trimFile', time}`. Logs can also come from drag and drop, a URL (`?file=<url>`, or `?file=sample` for the bundled `vtol.tlog`), or `window.postMessage({type: 'arrayBuffer'})` from an embedding page. The file manager is only mounted while the sidebar's "home" tab is selected.
 2. **Parsing (worker)** — `tools/parsers/parser.worker.js` dispatches to one of three parsers:
     - `JsDataflashParser/parser.js` (git submodule. It comes from the fork igoutta/JsDataflashParser for now, which adds newer flight modes: switch `.gitmodules` back to Williangalvani/JsDataflashParser once Williangalvani/JsDataflashParser#26 is merged) for `.bin`. It eagerly decodes only a fixed list of message types (MODE, ATT, GPS, PARM, …); everything else is decoded on demand through `loadType`.
     - `mavlinkParser.js` for `.tlog`, built on the generated MAVLink binding in `src/libs/mavlink.js` (hand-converted to ES classes: message types `extend mavlink20.message`; regenerating it with mavgen would undo that).

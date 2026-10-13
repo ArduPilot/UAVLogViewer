@@ -8,6 +8,6 @@
         },
         "checkJs": false
     },
-    "include": ["src/**/*", "test/**/*", "build/**/*", "config/**/*"],
+    "include": ["src/**/*", "test/**/*", "*.js"],
     "exclude": ["node_modules", "dist"]
 }

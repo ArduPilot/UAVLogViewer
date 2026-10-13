@@ -10,69 +10,81 @@
             <div class="section">
                 <h6>Location</h6>
                 <table>
-                    <tr v-if="GpsPosition">
-                        <td>Lat</td>
-                        <td>
-                            <input
-                                v-model="GpsPosition.lat"
-                                type="text"
-                                disabled
-                                readonly
-                                size="10"
-                            />
-                        </td>
-                    </tr>
-                    <tr v-if="GpsPosition">
-                        <td>Lon</td>
-                        <td>
-                            <input
-                                v-model="GpsPosition.lon"
-                                type="text"
-                                disabled
-                                readonly
-                                size="10"
-                            />
-                        </td>
-                    </tr>
-                    <tr v-if="!GpsPosition">
-                        <td>Lat</td>
-                        <td>
-                            <input v-model="userLat" type="text" size="10" />
-                        </td>
-                    </tr>
-                    <tr v-if="!GpsPosition">
-                        <td>Lon</td>
-                        <td>
-                            <input v-model="userLon" type="text" size="10" />
-                        </td>
-                    </tr>
-                    <tr v-if="!GpsPosition">
-                        <td></td>
-                        <td>
-                            <button
-                                :disabled="fetchingLocation"
-                                @click="getLocationFromIp()"
-                            >
-                                {{
-                                    fetchingLocation
-                                        ? "Locating..."
-                                        : "Get from IP"
-                                }}
-                            </button>
-                        </td>
-                    </tr>
-                    <tr v-if="!GpsPosition && locationError">
-                        <td></td>
-                        <td style="color: #b00">{{ locationError }}</td>
-                    </tr>
-                    <tr v-if="!positionValid">
-                        <td></td>
-                        <td class="hint">Enter lat/lon to enable fitting</td>
-                    </tr>
-                    <tr>
-                        <td>Earth Field</td>
-                        <td>{{ printEarthField }}</td>
-                    </tr>
+                    <tbody>
+                        <tr v-if="GpsPosition">
+                            <td>Lat</td>
+                            <td>
+                                <input
+                                    v-model="GpsPosition.lat"
+                                    type="text"
+                                    disabled
+                                    readonly
+                                    size="10"
+                                />
+                            </td>
+                        </tr>
+                        <tr v-if="GpsPosition">
+                            <td>Lon</td>
+                            <td>
+                                <input
+                                    v-model="GpsPosition.lon"
+                                    type="text"
+                                    disabled
+                                    readonly
+                                    size="10"
+                                />
+                            </td>
+                        </tr>
+                        <tr v-if="!GpsPosition">
+                            <td>Lat</td>
+                            <td>
+                                <input
+                                    v-model="userLat"
+                                    type="text"
+                                    size="10"
+                                />
+                            </td>
+                        </tr>
+                        <tr v-if="!GpsPosition">
+                            <td>Lon</td>
+                            <td>
+                                <input
+                                    v-model="userLon"
+                                    type="text"
+                                    size="10"
+                                />
+                            </td>
+                        </tr>
+                        <tr v-if="!GpsPosition">
+                            <td></td>
+                            <td>
+                                <button
+                                    :disabled="fetchingLocation"
+                                    @click="getLocationFromIp()"
+                                >
+                                    {{
+                                        fetchingLocation
+                                            ? "Locating..."
+                                            : "Get from IP"
+                                    }}
+                                </button>
+                            </td>
+                        </tr>
+                        <tr v-if="!GpsPosition && locationError">
+                            <td></td>
+                            <td style="color: #b00">{{ locationError }}</td>
+                        </tr>
+                        <tr v-if="!positionValid">
+                            <td></td>
+                            <td class="hint">
+                                Enter lat/lon to enable fitting
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Earth Field</td>
+                            <td>{{ printEarthField }}</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
             <div class="section">
@@ -81,62 +93,68 @@
                     v-if="Object.keys(compassOffsets).length"
                     class="results"
                 >
-                    <tr>
-                        <th>Compass</th>
-                        <th>ofsx</th>
-                        <th>ofsy</th>
-                        <th>ofsz</th>
-                        <th>scale</th>
-                        <th>Fitness</th>
-                        <th colspan="3"></th>
-                    </tr>
-                    <tr
-                        v-for="(value, index) in compassOffsets"
-                        :key="'param' + index"
-                    >
-                        <td>{{ index }}</td>
-                        <td>{{ value.offsets.x.toFixed(2) }}</td>
-                        <td>{{ value.offsets.y.toFixed(2) }}</td>
-                        <td>{{ value.offsets.z.toFixed(2) }}</td>
-                        <td>{{ value.scaling.toFixed(2) }}</td>
-                        <td>{{ fitnessesPreCalibration[index].toFixed(0) }}</td>
-                        <td class="actions">
-                            <button
-                                :disabled="processing || !positionValid"
-                                :title="
-                                    positionValid
-                                        ? ''
-                                        : 'Enter a latitude and longitude first'
-                                "
-                                @click="fitWmm(index)"
-                            >
-                                <i
-                                    v-if="
-                                        processing &&
-                                        processingInstance === index
+                    <thead>
+                        <tr>
+                            <th>Compass</th>
+                            <th>ofsx</th>
+                            <th>ofsy</th>
+                            <th>ofsz</th>
+                            <th>scale</th>
+                            <th>Fitness</th>
+                            <th colspan="3"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="(value, index) in compassOffsets"
+                            :key="'param' + index"
+                        >
+                            <td>{{ index }}</td>
+                            <td>{{ value.offsets.x.toFixed(2) }}</td>
+                            <td>{{ value.offsets.y.toFixed(2) }}</td>
+                            <td>{{ value.offsets.z.toFixed(2) }}</td>
+                            <td>{{ value.scaling.toFixed(2) }}</td>
+                            <td>
+                                {{ fitnessesPreCalibration[index].toFixed(0) }}
+                            </td>
+                            <td class="actions">
+                                <button
+                                    :disabled="processing || !positionValid"
+                                    :title="
+                                        positionValid
+                                            ? ''
+                                            : 'Enter a latitude and longitude first'
                                     "
-                                    class="fa-solid fa-spinner fa-spin"
-                                ></i>
-                                <span v-else>Fit</span>
-                            </button>
-                        </td>
-                        <td class="actions">
-                            <button
-                                v-if="value?.offsets"
-                                @click="plotOldRaw(index)"
-                            >
-                                Plot Raw
-                            </button>
-                        </td>
-                        <td class="actions">
-                            <button
-                                v-if="value?.offsets"
-                                @click="plotOldHeading(index)"
-                            >
-                                Plot Heading
-                            </button>
-                        </td>
-                    </tr>
+                                    @click="fitWmm(index)"
+                                >
+                                    <i
+                                        v-if="
+                                            processing &&
+                                            processingInstance === index
+                                        "
+                                        class="fa-solid fa-spinner fa-spin"
+                                    ></i>
+                                    <span v-else>Fit</span>
+                                </button>
+                            </td>
+                            <td class="actions">
+                                <button
+                                    v-if="value?.offsets"
+                                    @click="plotOldRaw(index)"
+                                >
+                                    Plot Raw
+                                </button>
+                            </td>
+                            <td class="actions">
+                                <button
+                                    v-if="value?.offsets"
+                                    @click="plotOldHeading(index)"
+                                >
+                                    Plot Heading
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
                 <i v-else class="fa-solid fa-spinner fa-spin"> </i>
             </div>
@@ -205,47 +223,52 @@
             <div v-if="newCorrections.length > 0 || processing" class="section">
                 <h6>New</h6>
                 <table class="results">
-                    <tr>
-                        <th>Compass</th>
-                        <th>ofsx</th>
-                        <th>ofsy</th>
-                        <th>ofsz</th>
-                        <th>scale</th>
-                        <th>fitness</th>
-                        <th colspan="2"></th>
-                    </tr>
-                    <tr
-                        v-for="(value, index) in newCorrections"
-                        :key="'param' + index"
-                    >
-                        <td>{{ index }}</td>
-                        <td>{{ value?.offsets?.x?.toFixed(2) }}</td>
-                        <td>{{ value?.offsets?.y?.toFixed(2) }}</td>
-                        <td>{{ value?.offsets?.z?.toFixed(2) }}</td>
-                        <td>{{ value?.scaling?.toFixed(2) }}</td>
-                        <td :class="fitnessClass(index)">
-                            {{
-                                fitnessesPostCalibration[index]?.toFixed(0) ??
-                                "--"
-                            }}
-                        </td>
-                        <td class="actions">
-                            <button
-                                v-if="value?.offsets"
-                                @click="plotRaw(index)"
-                            >
-                                Plot Raw
-                            </button>
-                        </td>
-                        <td class="actions">
-                            <button
-                                v-if="value?.offsets"
-                                @click="plotNewHeading(index)"
-                            >
-                                Plot Heading
-                            </button>
-                        </td>
-                    </tr>
+                    <thead>
+                        <tr>
+                            <th>Compass</th>
+                            <th>ofsx</th>
+                            <th>ofsy</th>
+                            <th>ofsz</th>
+                            <th>scale</th>
+                            <th>fitness</th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="(value, index) in newCorrections"
+                            :key="'param' + index"
+                        >
+                            <td>{{ index }}</td>
+                            <td>{{ value?.offsets?.x?.toFixed(2) }}</td>
+                            <td>{{ value?.offsets?.y?.toFixed(2) }}</td>
+                            <td>{{ value?.offsets?.z?.toFixed(2) }}</td>
+                            <td>{{ value?.scaling?.toFixed(2) }}</td>
+                            <td :class="fitnessClass(index)">
+                                {{
+                                    fitnessesPostCalibration[index]?.toFixed(
+                                        0,
+                                    ) ?? "--"
+                                }}
+                            </td>
+                            <td class="actions">
+                                <button
+                                    v-if="value?.offsets"
+                                    @click="plotRaw(index)"
+                                >
+                                    Plot Raw
+                                </button>
+                            </td>
+                            <td class="actions">
+                                <button
+                                    v-if="value?.offsets"
+                                    @click="plotNewHeading(index)"
+                                >
+                                    Plot Heading
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
                 <div class="section-footer">
                     <span v-if="processing"

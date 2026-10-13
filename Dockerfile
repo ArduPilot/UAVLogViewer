@@ -21,11 +21,8 @@ RUN npm ci && \
 
 # Copy only what the build needs (.git and .gitmodules for submodules and the commit hash)
 COPY .git ./.git
-COPY build ./build
-COPY config ./config
 COPY src ./src
-COPY static ./static
-COPY .gitmodules .postcssrc.js index.html ./
+COPY .gitmodules .postcssrc.js index.html vite.config.js ./
 
 # Initialise submodules only if .gitmodules exists (network required),
 # build production assets and drop the dev dependencies

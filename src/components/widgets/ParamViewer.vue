@@ -29,27 +29,33 @@
                 </label>
             </div>
             <table id="params">
-                <tr>
-                    <th>Param</th>
-                    <th>Value</th>
-                    <th v-if="haveDefaults">Default</th>
-                </tr>
-                <tr v-for="param in filteredData" :key="param">
-                    <td>{{ param }}</td>
-                    <template v-if="haveDefaults">
-                        <td>
-                            {{
-                                isDefaultParam(param)
-                                    ? "→"
-                                    : printParam(paramValue(param))
-                            }}
-                        </td>
-                        <td>{{ printParam(state.defaultParams[param]) }}</td>
-                    </template>
-                    <template v-else>
-                        <td>{{ printParam(paramValue(param)) }}</td>
-                    </template>
-                </tr>
+                <thead>
+                    <tr>
+                        <th>Param</th>
+                        <th>Value</th>
+                        <th v-if="haveDefaults">Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="param in filteredData" :key="param">
+                        <td>{{ param }}</td>
+                        <template v-if="haveDefaults">
+                            <td>
+                                {{
+                                    isDefaultParam(param)
+                                        ? "→"
+                                        : printParam(paramValue(param))
+                                }}
+                            </td>
+                            <td>
+                                {{ printParam(state.defaultParams[param]) }}
+                            </td>
+                        </template>
+                        <template v-else>
+                            <td>{{ printParam(paramValue(param)) }}</td>
+                        </template>
+                    </tr>
+                </tbody>
             </table>
         </div>
     </div>

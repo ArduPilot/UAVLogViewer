@@ -1,10 +1,8 @@
-// https://github.com/michael-ciniawsky/postcss-load-config
+// https://github.com/postcss/postcss-load-config (Vite reads it; it resolves @import and url() itself)
 
 export default {
     plugins: {
-        "postcss-import": {},
-        "postcss-url": {},
-        // to edit target browsers: use "browserslist" field in package.json
+        // vendor prefixes for the browsers in package.json's "browserslist"
         autoprefixer: {},
     },
 };

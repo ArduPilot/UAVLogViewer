@@ -11,7 +11,6 @@ export default [
     {
         ignores: [
             "dist/",
-            "static/",
             "test/unit/coverage/",
             "test/e2e/reports/",
             // Python virtual environments (scripts/terrain/.venv)
@@ -59,14 +58,7 @@ export default [
         languageOptions: { globals: globals.worker },
     },
     {
-        files: [
-            "build/**/*.js",
-            "config/**/*.js",
-            "scripts/**/*.js",
-            "*.js",
-            "*.cjs",
-            "test/e2e/*.js",
-        ],
+        files: ["scripts/**/*.js", "*.js", "*.cjs", "test/e2e/*.js"],
         languageOptions: { globals: globals.node },
     },
     {

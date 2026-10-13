@@ -5,6 +5,8 @@
         <meta name="description" content="online viewer for UAV log files" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>UAV Log Viewer</title>
+        <!-- no icon yet: without this the browser requests a /favicon.ico that does not exist -->
+        <link rel="icon" href="data:," />
         <!-- Google tag (gtag.js): one loader, one config call per property -->
         <script
             async
@@ -24,6 +26,6 @@
     <!-- inline, so that Bootstrap's body background does not override it -->
     <body style="background-color: black; height: 100%">
         <div id="app"></div>
-        <!-- built files will be auto injected -->
+        <script type="module" src="/src/main.js"></script>
     </body>
 </html>
