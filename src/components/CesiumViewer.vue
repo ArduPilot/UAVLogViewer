@@ -23,7 +23,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="mode in colorCodeLegend" :key="mode[0]">
+                        <tr v-for="mode in colorCodeLegend" :key="mode.name">
                             <td class="mode" :style="{ color: mode.color }">
                                 {{ mode.name }}
                             </td>
