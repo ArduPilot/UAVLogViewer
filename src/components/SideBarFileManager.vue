@@ -24,10 +24,13 @@
             @drop="onDrop"
         >
             <p>Drop *.tlog or *.bin file here or click to browse</p>
-            <label for="choosefile">Choose a log file</label>
+            <!-- the drop zone opens the file picker; screen readers get the input with its label -->
+            <label for="choosefile" class="visually-hidden"
+                >Choose a log file</label
+            >
             <input
                 id="choosefile"
-                style="opacity: 0"
+                class="visually-hidden"
                 type="file"
                 @change="onChange"
             />

@@ -503,6 +503,11 @@ a:hover {
     font-size: 16px;
 }
 
+/* without a log there is no file name above the tabs to keep them off the header */
+.tabholder:first-child {
+    padding-top: 12px;
+}
+
 .tabholder a {
     background: rgb(41 51 75);
     float: left;
