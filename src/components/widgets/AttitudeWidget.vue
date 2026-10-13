@@ -9,12 +9,7 @@
         }"
     >
         <div id="paneContent">
-            <span
-                style="float: right; margin: 3px; cursor: pointer"
-                @click="close()"
-            >
-                X
-            </span>
+            <span class="close" @click="close()"> X </span>
             <Attitude :roll="roll" :pitch="pitch" />
         </div>
     </div>
@@ -31,13 +26,14 @@ export default {
     components: {
         Attitude: AttitudeIndicator,
     },
-    props: widgetProps,
+    // the indicator does not scale: the window moves but does not resize
+    props: { ...widgetProps, resizeable: { type: Boolean, default: false } },
     emits: ["close"],
     setup(props, { emit }) {
         return useWidget(props, emit, {
             name: "AttitudeViewer",
-            width: 256,
-            height: 256,
+            width: 250,
+            height: 250,
             left: 500,
             top: 12,
         });
@@ -112,24 +108,6 @@ div #paneAttitudeViewer {
     user-select: none;
 }
 
-div #paneAttitudeViewer::before {
-    content: "\25e2";
-    color: #fff;
-    background-color: rgb(38 53 71);
-    position: absolute;
-    bottom: -1px;
-    right: 0;
-    width: 17px;
-    height: 21px;
-    padding: 2px 3px;
-    border-radius: 10px 0 1px;
-    box-sizing: border-box;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    cursor: se-resize;
-}
-
 div #paneAttitudeViewer::after {
     content: "\2725";
     color: #2e3f54;
@@ -149,8 +127,16 @@ div #paneAttitudeViewer::after {
 
 div#paneContent {
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
     user-select: none;
+}
+
+.close {
+    position: absolute;
+    top: 3px;
+    right: 6px;
+    z-index: 1;
+    cursor: pointer;
 }
 
 div#paneContent ul {
