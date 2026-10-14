@@ -12,10 +12,11 @@ Everything still open on the `upgrade` branch (local, not pushed). Phases 1–4 
 - [ ] Drop zone text: does not mention DJI `.txt` logs, and the text touches the box's right border.
 - [ ] Message viewer looked empty in a test with the real `.bin`: check whether that is expected.
 - [ ] `?plots=` with an instance the log lacks (e.g. `GPS[0]`) shows a blocking `alert()`: use a non-blocking message.
+- [ ] The radius system of the UI should be consistent. Is not doable to have comboboxes almost squared alongside the semi-circle textboxes por plots, for example.
+- [ ] Make animations consistent between menus of the sidebar, right now they all differs.
 
 ## Decisions pending (yours)
 
-- [ ] The radius system and animation timing above.
 - [ ] Load Google Analytics only on plot.ardupilot.org, so dev servers, containers, forks and tests stop counting as visits (changes upstream behaviour).
 - [ ] Tell ArduPilot that plot.ardupilot.org's nginx sends the app (about 13 MB of JS) and the 3.5 MB terrain `layer.json` uncompressed: `gzip on` would cut it to about a third. Outside this repo.
 
@@ -38,6 +39,10 @@ Everything still open on the `upgrade` branch (local, not pushed). Phases 1–4 
 - [ ] One shared stylesheet for the widgets (each repeats the pane, handle and content CSS).
 - [ ] Cognitive complexity: lower SonarJS's limit once the splits are done.
 - [ ] Performance tests: a repeatable benchmark (parse time, 3D ready, heap after GC, frame time, plot redraw) from `perf-pre.js`/`perf-eval.js`, run offline with the local terrain, before and after each change. Known cost: the date axis adds about 1 µs per plotted point per redraw.
+
+## Improvements
+
+- [ ] Search tool should allow me to search throught index like GPS\[0\] or CTUN.
 
 ## Phase 6: finish
 
