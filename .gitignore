@@ -83,3 +83,6 @@ fabric.properties
 .venv/
 __pycache__/
 .eslintcache
+
+# vscode
+.vscode/
