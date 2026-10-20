@@ -739,7 +739,6 @@ export default {
                     continue;
                 }
                 index = Number.parseFloat(index);
-                console.log(corr);
                 params.push(
                     [this.paramName("OFS", index + 1) + "_X", corr.offsets.x],
                     [this.paramName("OFS", index + 1) + "_Y", corr.offsets.y],
@@ -747,7 +746,6 @@ export default {
                     [this.paramName("SCALE", index + 1), corr.scaling],
                 );
             }
-            console.log(params);
 
             let content = "";
             content += `# Compass-fit params from file: ${this.state.file}\n`;
@@ -1027,7 +1025,6 @@ export default {
             return `COMPASS_${name}${index}`;
         },
         getCompassParams(compassIndex) {
-            console.log("getting compass params");
             const oldCorrections = {};
             if ("COMPASS_OFS_X" in this.parameters) {
                 this.newParamFormat = false;
@@ -1132,7 +1129,6 @@ export default {
         },
         wmmErrorOnce(origdata, corrections) {
             const data = { ...origdata };
-            console.log(data, corrections);
 
             let ret = 0;
             for (let i = 0; i < data.time.length; i++) {
@@ -1259,9 +1255,7 @@ export default {
                     [-ofs, ofs],
                     [this.minScale, this.maxScale],
                 ];
-                console.log(bounds);
 
-                console.log("optimizing");
                 const result = await geneticOptimizer(
                     (corrections) => this.wmmError(corrections, data),
                     optimizationParams,
@@ -1273,7 +1267,6 @@ export default {
                         },
                     },
                 );
-                console.log("Optimization result: ", result);
                 const c = { ...oldCorrections };
                 c.offsets = new Vector3(result[0], result[1], result[2]);
                 c.scaling = result[3];
@@ -1343,7 +1336,6 @@ export default {
                 if (this.state.messages[message]) {
                     data.push(this.state.messages[message]);
                 } else {
-                    console.log("no message", message);
                 }
             }
             return data;

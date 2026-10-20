@@ -13,7 +13,6 @@
         <span class="uav-widget__resize"></span>
         <span class="uav-widget__close" @click="close()"></span>
         <div class="uav-widget__content">
-            {{ solutionValue }} {{ closestIndex }}
             <table>
                 <thead>
                     <tr>
@@ -82,7 +81,6 @@ export default {
     computed: {
         closestIndex() {
             const messages = this.state.messages["XKF4[0]"];
-            console.log(messages);
             if (!messages) {
                 return 0;
             }
@@ -91,9 +89,6 @@ export default {
                     return index;
                 }
             }
-            console.log(
-                messages.time_boot_ms[messages.time_boot_ms.length - 1],
-            );
             return 0;
         },
         solutionValue() {

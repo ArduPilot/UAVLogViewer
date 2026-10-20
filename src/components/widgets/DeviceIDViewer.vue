@@ -171,7 +171,6 @@ export default {
                     param.includes("DEV_ID") ||
                     param.includes("_ID"),
             );
-            console.log(devids);
             devids.forEach((device) => this.decode(device));
         },
         decode(device) {
@@ -215,10 +214,7 @@ export default {
                 address,
                 devtype,
             });
-            console.log(
-                `${device}: ${decodedDevname}, ${busType}(${bus}), ${address}, ${devtype}`,
-            );
-        },
+                    },
         init() {
             this.update();
         },
