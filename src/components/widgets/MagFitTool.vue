@@ -1,20 +1,31 @@
 <template>
-    <div :id="getDivName()" :style="{ top: top + 'px', left: left + 'px' }">
-        <div id="paneContent">
+    <div
+        :id="getDivName()"
+        class="uav-widget uav-widget--no-resize uav-widget--auto"
+        :style="{ top: top + 'px', left: left + 'px' }"
+    >
+        <span class="uav-widget__move"></span>
+        <span class="uav-widget__resize"></span>
+        <span class="uav-widget__close" @click="close()"></span>
+        <div class="uav-widget__content uav-widget__content--dense">
             <div class="header">
                 <h5>Mag Fit Tool</h5>
-                <span class="close-btn" title="Close" @click="close()"
-                    >&times;</span
-                >
             </div>
             <div class="section">
                 <h6>Location</h6>
                 <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Field</th>
+                            <th scope="col">Value</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         <tr v-if="GpsPosition">
-                            <td>Lat</td>
+                            <td><label for="gps-position-lat">Lat</label></td>
                             <td>
                                 <input
+                                    id="gps-position-lat"
                                     v-model="GpsPosition.lat"
                                     type="text"
                                     disabled
@@ -24,9 +35,10 @@
                             </td>
                         </tr>
                         <tr v-if="GpsPosition">
-                            <td>Lon</td>
+                            <td><label for="gps-position-lon">Lon</label></td>
                             <td>
                                 <input
+                                    id="gps-position-lon"
                                     v-model="GpsPosition.lon"
                                     type="text"
                                     disabled
@@ -36,9 +48,10 @@
                             </td>
                         </tr>
                         <tr v-if="!GpsPosition">
-                            <td>Lat</td>
+                            <td><label for="user-lat">Lat</label></td>
                             <td>
                                 <input
+                                    id="user-lat"
                                     v-model="userLat"
                                     type="text"
                                     size="10"
@@ -46,9 +59,10 @@
                             </td>
                         </tr>
                         <tr v-if="!GpsPosition">
-                            <td>Lon</td>
+                            <td><label for="user-lon">Lon</label></td>
                             <td>
                                 <input
+                                    id="user-lon"
                                     v-model="userLon"
                                     type="text"
                                     size="10"
@@ -161,8 +175,8 @@
             <div v-if="compassMessageNames.length >= 2" class="section">
                 <h6>Consistency</h6>
                 <div style="margin-bottom: 6px">
-                    Compare
-                    <select v-model.number="diffCompassA">
+                    <label for="diff-compass-a">Compare</label>
+                    <select id="diff-compass-a" v-model.number="diffCompassA">
                         <option
                             v-for="(compassName, index) in compassMessageNames"
                             :key="'a' + index"
@@ -171,8 +185,8 @@
                             {{ index }}
                         </option>
                     </select>
-                    vs
-                    <select v-model.number="diffCompassB">
+                    <label for="diff-compass-b">vs</label>
+                    <select id="diff-compass-b" v-model.number="diffCompassB">
                         <option
                             v-for="(compassName, index) in compassMessageNames"
                             :key="'b' + index"
@@ -319,16 +333,20 @@ async function geneticOptimizer(
         onProgress = null,
     } = {},
 ) {
-    let population = Array(populationSize - 1)
+    let population = new Array(populationSize - 1)
         .fill()
         .map(() =>
             bounds.map(
-                (bound) => Math.random() * (bound[1] - bound[0]) + bound[0],
+                (bound) => optimizerRandom() * (bound[1] - bound[0]) + bound[0],
             ),
         );
     population.push(xStart);
 
-    for (let generation = 0; generation < maxGenerations; generation++) {
+    function runGeneration(generation) {
+        if (generation >= maxGenerations) {
+            return Promise.resolve();
+        }
+
         const scores = population.map(f);
         const minScore = Math.min(...scores);
         const maxScore = Math.max(...scores);
@@ -341,12 +359,11 @@ async function geneticOptimizer(
         const totalFitness = fitness.reduce((a, b) => a + b, 0);
         const probs = fitness.map((fit) => fit / totalFitness);
 
-        const newPopulation = [];
-        for (let i = 0; i < populationSize; i++) {
-            const parents = await selectParentsAsync(population, probs);
+        const newPopulation = Array.from({ length: populationSize }, () => {
+            const parents = selectParents(population, probs);
 
             // Crossover
-            const point = Math.floor(Math.random() * bounds.length);
+            const point = Math.floor(optimizerRandom() * bounds.length);
             let child = [
                 ...parents[0].slice(0, point),
                 ...parents[1].slice(point),
@@ -354,9 +371,9 @@ async function geneticOptimizer(
 
             // Mutation
             child = child.map((val, index) => {
-                if (Math.random() < mutationRate) {
+                if (optimizerRandom() < mutationRate) {
                     const delta =
-                        (Math.random() - 0.5) *
+                        (optimizerRandom() - 0.5) *
                         mutationSize *
                         (bounds[index][1] - bounds[index][0]);
                     return Math.min(
@@ -368,14 +385,17 @@ async function geneticOptimizer(
                 }
             });
 
-            newPopulation.push(child);
-        }
+            return child;
+        });
 
         population = newPopulation;
         if (generation < maxGenerations - 1) {
-            await sleep(10); // Introduce a delay between generations
+            return sleep(10).then(() => runGeneration(generation + 1));
         }
+        return Promise.resolve();
     }
+
+    await runGeneration(0);
 
     const bestIndex = population
         .map(f)
@@ -387,22 +407,19 @@ function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function selectParentsAsync(population, probs) {
-    const parents = [];
-    for (let j = 0; j < 2; j++) {
-        const parent = await selectParentAsync(population, probs);
-        parents.push(parent);
-    }
-    return parents;
+function optimizerRandom() {
+    return Math.random(); // NOSONAR - randomness is only used for optimization, not security.
 }
 
-async function selectParentAsync(population, probs) {
-    return new Promise((resolve) => {
-        let r = Math.random();
-        let index = 0;
-        while ((r -= probs[index]) > 0) index++;
-        resolve(population[index]);
-    });
+function selectParents(population, probs) {
+    return [selectParent(population, probs), selectParent(population, probs)];
+}
+
+function selectParent(population, probs) {
+    let r = optimizerRandom();
+    let index = 0;
+    while (index < probs.length - 1 && (r -= probs[index]) > 0) index++;
+    return population[index];
 }
 export default {
     name: "MagFitTool",
@@ -516,8 +533,8 @@ export default {
             if (this.GpsPosition) {
                 return true;
             }
-            const lat = parseFloat(this.userLat);
-            const lon = parseFloat(this.userLon);
+            const lat = Number.parseFloat(this.userLat);
+            const lon = Number.parseFloat(this.userLon);
             if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
                 return false;
             }
@@ -574,7 +591,7 @@ export default {
         filteredCompassData() {
             // returns the compassData, but with the data filtered to only include the data that is used
             // that means we will only pass through the following fields (MAVLink, then DataFlash):
-            const wantedFields = [
+            const wantedFields = new Set([
                 "time_boot_ms",
                 "xmag",
                 "ymag",
@@ -582,7 +599,7 @@ export default {
                 "MagX",
                 "MagY",
                 "MagZ",
-            ];
+            ]);
             const filtered = [];
             const nameMap = {
                 xmag: "xmag",
@@ -597,7 +614,7 @@ export default {
                 const filteredMessage = {};
                 // for each key, value in message, filter it down:
                 for (const [key, values] of Object.entries(message)) {
-                    if (wantedFields.includes(key)) {
+                    if (wantedFields.has(key)) {
                         filteredMessage[nameMap[key]] = values;
                     }
                 }
@@ -633,7 +650,9 @@ export default {
                 return offsets;
             }
             for (const compass in this.sampledCompassData) {
-                offsets.push(this.getCompassParams(parseFloat(compass) + 1));
+                offsets.push(
+                    this.getCompassParams(Number.parseFloat(compass) + 1),
+                );
             }
             return offsets;
         },
@@ -668,7 +687,7 @@ export default {
             // iterates on index of compassDataRemovedOffsets.time_boot_ms, finds the nearest ATT message
             // with the closes time_boot_ms, and adds that to the compassDataRemovedOffsets message
             return this.compassDataRemovedOffsets.map((message) => {
-                const augmentedMessage = Object.assign({}, message);
+                const augmentedMessage = { ...message };
                 augmentedMessage.roll = [];
                 augmentedMessage.pitch = [];
                 augmentedMessage.yaw = [];
@@ -719,21 +738,14 @@ export default {
                     // filtering weird data coming though... we should switch to TS
                     continue;
                 }
-                index = parseFloat(index);
+                index = Number.parseFloat(index);
                 console.log(corr);
-                params.push([
-                    this.paramName("OFS", index + 1) + "_X",
-                    corr.offsets.x,
-                ]);
-                params.push([
-                    this.paramName("OFS", index + 1) + "_Y",
-                    corr.offsets.y,
-                ]);
-                params.push([
-                    this.paramName("OFS", index + 1) + "_Z",
-                    corr.offsets.z,
-                ]);
-                params.push([this.paramName("SCALE", index + 1), corr.scaling]);
+                params.push(
+                    [this.paramName("OFS", index + 1) + "_X", corr.offsets.x],
+                    [this.paramName("OFS", index + 1) + "_Y", corr.offsets.y],
+                    [this.paramName("OFS", index + 1) + "_Z", corr.offsets.z],
+                    [this.paramName("SCALE", index + 1), corr.scaling],
+                );
             }
             console.log(params);
 
@@ -880,26 +892,24 @@ export default {
                 this.$eventHub.$emit("loadType", message);
             }
             let interval;
-            const _this = this;
             let counter = 0;
             return new Promise((resolve, reject) => {
-                interval = setInterval(function () {
+                interval = setInterval(() => {
                     for (const message of messages) {
                         if (
-                            !_this
-                                .loadedMessages()
-                                .includes(message.split("[")[0])
+                            !this.loadedMessages().includes(
+                                message.split("[")[0],
+                            )
                         ) {
                             counter += 1;
                             if (counter > 10) {
                                 // 10 * 300ms = 3 s timeout
                                 console.log("not resolving");
                                 clearInterval(interval);
-                                reject(
-                                    new Error(
-                                        `Could not load messageType ${message}`,
-                                    ),
+                                console.warn(
+                                    `Message type not in log: ${message} (continuing)`,
                                 );
+                                resolve(); // resolve, don't reject — missing optional messages are normal
                             }
                             return;
                         }
@@ -925,13 +935,32 @@ export default {
                 });
         },
         computeData() {
-            this.compassData = this.getCompassData();
-            // state.messages keys are added non-reactively as types stream in, so
-            // derive the names here (after the data is loaded) instead of in a
-            // computed that would never recompute.
-            this.compassMessageNames = COMPASS_MESSAGE_CANDIDATES.filter(
-                (message) => this.state.messages[message],
-            );
+            // Only include messages that actually have compass fields. Messages
+            // without any of them filter down to `{}` and crash sampledCompassData.
+            const wantedFields = [
+                "time_boot_ms",
+                "xmag",
+                "ymag",
+                "zmag",
+                "MagX",
+                "MagY",
+                "MagZ",
+            ];
+            this.compassData = [];
+            this.compassMessageNames = [];
+            for (const message of COMPASS_MESSAGE_CANDIDATES) {
+                const m = this.state.messages[message];
+                if (!m) continue;
+                if (!wantedFields.some((field) => field in m)) {
+                    console.log(
+                        "skipping message without compass fields:",
+                        message,
+                    );
+                    continue;
+                }
+                this.compassData.push(m);
+                this.compassMessageNames.push(message);
+            }
         },
         removeOffsets(data, offsets) {
             /* remove all corrections to get raw sensor data */
@@ -1102,7 +1131,7 @@ export default {
             return field;
         },
         wmmErrorOnce(origdata, corrections) {
-            const data = Object.assign({}, origdata);
+            const data = { ...origdata };
             console.log(data, corrections);
 
             let ret = 0;
@@ -1215,7 +1244,7 @@ export default {
             try {
                 const data = this.compassDataAugmentedWithATT[instance];
                 const oldCorrections = this.compassOffsets[instance];
-                const corr = Object.assign({}, oldCorrections);
+                const corr = { ...oldCorrections };
                 const optimizationParams = [
                     corr.offsets.x,
                     corr.offsets.y,
@@ -1245,7 +1274,7 @@ export default {
                     },
                 );
                 console.log("Optimization result: ", result);
-                const c = Object.assign({}, oldCorrections);
+                const c = { ...oldCorrections };
                 c.offsets = new Vector3(result[0], result[1], result[2]);
                 c.scaling = result[3];
                 c.diag = new Vector3(1.0, 1.0, 1.0);
@@ -1367,7 +1396,6 @@ export default {
 .header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     margin: 0 0 8px;
     padding-left: 16px;
 }
@@ -1385,18 +1413,6 @@ h6 {
     font-size: 11px;
     letter-spacing: 0.5px;
     color: #2e3f54;
-}
-
-.close-btn {
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 1;
-    padding: 0 4px;
-    color: #6b7280;
-}
-
-.close-btn:hover {
-    color: #b00;
 }
 
 div.section {
@@ -1520,59 +1536,5 @@ select {
     font-size: 11px;
     background: #fff;
     cursor: pointer;
-}
-
-.input {
-    margin: 5px;
-}
-
-.data {
-    display: block;
-}
-
-div #paneMagFitTool {
-    padding: 10px;
-    width: max-content;
-    height: auto;
-    position: absolute;
-    background: rgb(253 254 255 / 85.6%);
-    color: #141924;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    z-index: 10000;
-    box-shadow: 9px 9px 3px -6px rgb(26 26 26 / 69.9%);
-    border-radius: 5px;
-    user-select: none;
-}
-
-div #paneMagFitTool::after {
-    content: "\2725";
-    color: #2e3f54;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 18px;
-    height: 17px;
-    margin-top: -3px;
-    padding: 0 2px;
-    box-sizing: border-box;
-    align-items: center;
-    justify-content: center;
-    font-size: 17px;
-    cursor: grab;
-}
-
-div#paneContent {
-    height: auto;
-    overflow: visible;
-    user-select: none;
-}
-
-div#paneContent ul {
-    list-style: none;
-    line-height: 22px;
-    padding: 16px;
-    margin: 0;
 }
 </style>

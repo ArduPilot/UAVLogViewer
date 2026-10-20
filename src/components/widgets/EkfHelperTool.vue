@@ -1,6 +1,7 @@
 <template>
     <div
         :id="getDivName()"
+        class="uav-widget"
         :style="{
             width: width + 'px',
             height: height + 'px',
@@ -8,14 +9,11 @@
             left: left + 'px',
         }"
     >
-        <div id="paneContent">
+        <span class="uav-widget__move"></span>
+        <span class="uav-widget__resize"></span>
+        <span class="uav-widget__close" @click="close()"></span>
+        <div class="uav-widget__content">
             {{ solutionValue }} {{ closestIndex }}
-            <span
-                style="float: right; margin: 3px; cursor: pointer"
-                @click="close()"
-            >
-                X
-            </span>
             <table>
                 <thead>
                     <tr>
@@ -159,69 +157,6 @@ export default {
 </script>
 
 <style scoped>
-div #paneEkfHelperViewer {
-    min-width: 220px;
-    min-height: 150px;
-    position: absolute;
-    background: rgb(253 254 255 / 85.6%);
-    color: #141924;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    z-index: 10000;
-    box-shadow: 9px 9px 3px -6px rgb(26 26 26 / 69.9%);
-    border-radius: 5px;
-    user-select: none;
-}
-
-div #paneEkfHelperViewer::before {
-    content: "\25e2";
-    color: #fff;
-    background-color: rgb(38 53 71);
-    position: absolute;
-    bottom: -1px;
-    right: 0;
-    width: 17px;
-    height: 21px;
-    padding: 2px 3px;
-    border-radius: 10px 0 1px;
-    box-sizing: border-box;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    cursor: se-resize;
-}
-
-div #paneEkfHelperViewer::after {
-    content: "\2725";
-    color: #2e3f54;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 18px;
-    height: 17px;
-    margin-top: -3px;
-    padding: 0 2px;
-    box-sizing: border-box;
-    align-items: center;
-    justify-content: center;
-    font-size: 17px;
-    cursor: grab;
-}
-
-div#paneContent {
-    /* ends above the resize handle in the bottom-right corner */
-    height: calc(100% - 22px);
-    box-sizing: border-box;
-    overflow: auto;
-    padding: 20px 20px 0;
-    user-select: none;
-}
-
-div#paneContent ul {
-    list-style: none;
-    line-height: 22px;
-    padding: 16px;
-    margin: 0;
-}
+/* All shell rules, handles, close button, and content layout come
+   from src/styles/widget.css. */
 </style>
