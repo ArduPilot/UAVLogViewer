@@ -11,9 +11,10 @@
                 />
             </div>
         </template>
-        <TxInputs
+        <TxInputsViewer
             v-if="state.mapAvailable && state.showMap && state.showRadio"
-        ></TxInputs>
+            @close="state.showRadio = false"
+        ></TxInputsViewer>
         <ParamViewer
             v-if="state.showParams"
             @close="state.showParams = false"
@@ -110,7 +111,7 @@ import isOnline from "is-online";
 import Plotly from "@/components/Plotly.vue";
 import CesiumViewer from "@/components/CesiumViewer.vue";
 import Sidebar from "@/components/Sidebar.vue";
-import TxInputs from "@/components/widgets/TxInputs.vue";
+import TxInputsViewer from "@/components/widgets/TxInputsViewer.vue";
 import ParamViewer from "@/components/widgets/ParamViewer.vue";
 import MessageViewer from "@/components/widgets/MessageViewer.vue";
 import DeviceIDViewer from "@/components/widgets/DeviceIDViewer.vue";
@@ -136,7 +137,7 @@ export default {
         Plotly,
         CesiumViewer,
         AtomSpinner,
-        TxInputs,
+        TxInputsViewer,
         ParamViewer,
         MessageViewer,
         DeviceIDViewer,

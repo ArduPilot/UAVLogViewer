@@ -1,6 +1,7 @@
 <template>
     <div
         :id="getDivName()"
+        class="uav-widget uav-widget--radio uav-widget--no-resize"
         :style="{
             width: width + 'px',
             height: height + 'px',
@@ -8,25 +9,29 @@
             left: left + 'px',
         }"
     >
-        <div class="circle">
-            <div
-                id="left"
-                class="stick"
-                :style="{
-                    'margin-left': leftStickLeft - 3 + 'px',
-                    'margin-top': leftStickTop - 3 + 'px',
-                }"
-            ></div>
-        </div>
-        <div class="circle">
-            <div
-                id="right"
-                class="stick"
-                :style="{
-                    'margin-left': rightStickLeft - 3 + 'px',
-                    'margin-top': rightStickTop - 3 + 'px',
-                }"
-            ></div>
+        <span class="uav-widget__move"></span>
+        <span class="uav-widget__close" @click="close()"></span>
+        <div class="uav-widget__content uav-widget__content--fixed">
+            <div class="circle">
+                <div
+                    id="left"
+                    class="stick"
+                    :style="{
+                        'margin-left': leftStickLeft - 3 + 'px',
+                        'margin-top': leftStickTop - 3 + 'px',
+                    }"
+                ></div>
+            </div>
+            <div class="circle">
+                <div
+                    id="right"
+                    class="stick"
+                    :style="{
+                        'margin-left': rightStickLeft - 3 + 'px',
+                        'margin-top': rightStickTop - 3 + 'px',
+                    }"
+                ></div>
+            </div>
         </div>
     </div>
 </template>
@@ -37,12 +42,12 @@ import { useWidget, widgetProps } from "./useWidget.js";
 import { Interpolator } from "./interpolator.js";
 
 export default {
-    name: "TxInputs",
-    props: widgetProps,
+    name: "TxInputsViewer",
+    props: { ...widgetProps, resizeable: { type: Boolean, default: false } },
     emits: ["close"],
     setup(props, { emit }) {
         return useWidget(props, emit, {
-            name: "inputViewer",
+            name: "TxInputsViewer",
             width: 294,
             height: 150,
             left: 50,
@@ -118,20 +123,17 @@ export default {
         waitForMessage(fieldname) {
             this.$eventHub.$emit("loadType", fieldname.split(".")[0]);
             let interval;
-            const _this = this;
             let counter = 0;
             return new Promise((resolve, reject) => {
-                interval = setInterval(function () {
-                    if (_this.state.messages[fieldname.split(".")[0]]) {
+                interval = setInterval(() => {
+                    if (this.state.messages[fieldname.split(".")[0]]) {
                         clearInterval(interval);
                         counter += 1;
                         resolve();
-                    } else {
-                        if (counter > 6) {
-                            console.log("not resolving");
-                            clearInterval(interval);
-                            reject(new Error("Could not load messageType"));
-                        }
+                    } else if (counter > 6) {
+                        console.log("not resolving");
+                        clearInterval(interval);
+                        reject(new Error("Could not load messageType"));
                     }
                 }, 2000);
             });
@@ -142,10 +144,10 @@ export default {
                 let reverses = [1, 1, 1, 1];
                 if (this.state.params.get("RC1_REV") !== undefined) {
                     reverses = [
-                        parseFloat(this.state.params.get("RC1_REV")),
-                        parseFloat(this.state.params.get("RC2_REV")),
-                        parseFloat(this.state.params.get("RC3_REV")),
-                        parseFloat(this.state.params.get("RC4_REV")),
+                        Number.parseFloat(this.state.params.get("RC1_REV")),
+                        Number.parseFloat(this.state.params.get("RC2_REV")),
+                        Number.parseFloat(this.state.params.get("RC3_REV")),
+                        Number.parseFloat(this.state.params.get("RC4_REV")),
                     ];
                 }
                 let trims = [1500, 1500, 1500, 1500];
@@ -164,14 +166,21 @@ export default {
                         this.state.params.get("RCMAP_ROLL") < 4
                     ) {
                         this.rollMap =
-                            parseInt(this.state.params.get("RCMAP_ROLL")) - 1;
+                            Number.parseInt(
+                                this.state.params.get("RCMAP_ROLL"),
+                            ) - 1;
                         this.pitchMap =
-                            parseInt(this.state.params.get("RCMAP_PITCH")) - 1;
+                            Number.parseInt(
+                                this.state.params.get("RCMAP_PITCH"),
+                            ) - 1;
                         this.throttleMap =
-                            parseInt(this.state.params.get("RCMAP_THROTTLE")) -
-                            1;
+                            Number.parseInt(
+                                this.state.params.get("RCMAP_THROTTLE"),
+                            ) - 1;
                         this.yawMap =
-                            parseInt(this.state.params.get("RCMAP_YAW")) - 1;
+                            Number.parseInt(
+                                this.state.params.get("RCMAP_YAW"),
+                            ) - 1;
                     }
                 }
                 this.channels = [
@@ -185,11 +194,10 @@ export default {
             }
         },
         init() {
-            const _this = this;
-            this.waitForMessage("RC_CHANNELS.*").then(function () {
-                const x = _this.state.messages.RC_CHANNELS.time_boot_ms;
+            this.waitForMessage("RC_CHANNELS.*").then(() => {
+                const x = this.state.messages.RC_CHANNELS.time_boot_ms;
                 const y = [];
-                const msg = _this.state.messages.RC_CHANNELS;
+                const msg = this.state.messages.RC_CHANNELS;
                 for (const i in msg.time_boot_ms) {
                     y.push([
                         msg.chan1_raw[i],
@@ -198,26 +206,26 @@ export default {
                         msg.chan4_raw[i],
                     ]);
                 }
-                if (_this.closed) {
+                if (this.closed) {
                     return;
                 }
-                _this.interpolated = new Interpolator(x, y);
-                _this.$eventHub.$on("cesium-time-changed", _this.setTime);
+                this.interpolated = new Interpolator(x, y);
+                this.$eventHub.$on("cesium-time-changed", this.setTime);
             });
-            this.waitForMessage("RCIN.*").then(function () {
-                const x = _this.state.messages.RCIN.time_boot_ms;
+            this.waitForMessage("RCIN.*").then(() => {
+                const x = this.state.messages.RCIN.time_boot_ms;
                 const y = [];
 
-                const msg = _this.state.messages.RCIN;
+                const msg = this.state.messages.RCIN;
                 for (const i in msg.time_boot_ms) {
                     y.push([msg.C1[i], msg.C2[i], msg.C3[i], msg.C4[i]]);
                 }
-                if (_this.closed) {
+                if (this.closed) {
                     return;
                 }
-                _this.interpolated = new Interpolator(x, y);
-                _this.$eventHub.$on("cesium-time-changed", _this.setTime);
-                _this.$eventHub.$on("hoveredTime", _this.setTime);
+                this.interpolated = new Interpolator(x, y);
+                this.$eventHub.$on("cesium-time-changed", this.setTime);
+                this.$eventHub.$on("hoveredTime", this.setTime);
             });
         },
     },
@@ -225,55 +233,57 @@ export default {
 </script>
 
 <style scoped>
-div #paneinputViewer {
-    position: absolute;
-    width: 100px;
-    height: 100px;
-    overflow: hidden;
+.uav-widget--radio {
+    min-width: 294px;
+    min-height: 150px;
     background: rgb(1 160 139);
+    border: 3px groove rgb(1 133 111 / 54.1%);
+    border-radius: 20px;
+    box-shadow: inset 0 0 8px 6px rgb(0 87 72 / 41.1%);
     font-size: 10px;
     text-transform: uppercase;
-    z-index: 10000;
-    border-radius: 20px;
-    border: 3px groove rgb(1 133 111 / 54.1%);
-    box-shadow: inset 0 0 8px 6px rgb(0 87 72 / 41.1%);
-    user-select: none;
-}
-
-div #paneinputViewer::before {
-    content: "\25e2";
-    color: rgb(255 255 255 / 91.8%);
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 22px;
-    height: 21px;
-    padding: 2px 6px;
-    background: rgb(0 36 27 / 21.2%);
+    overflow: visible; /* was hidden — clipping killed the corner handles */
     box-sizing: border-box;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    border-radius: 15px 0;
-    cursor: se-resize;
 }
 
-div #paneinputViewer::after {
-    content: "\2725";
-    color: rgb(255 255 255 / 91.8%);
-    position: absolute;
+/* Content keeps the pill shape even though the widget's overflow is now visible */
+.uav-widget--radio .uav-widget__content {
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+/* Move — flush top-left corner, border-radius mirrors the 20px widget corner */
+.uav-widget--radio .uav-widget__move {
     top: 0;
     left: 0;
-    width: 25px;
-    height: 23px;
-    padding: 0 5px;
-    background: rgb(0 36 27 / 21.2%);
-    box-sizing: border-box;
-    align-items: center;
-    justify-content: center;
-    font-size: 17px;
-    border-radius: 15px 0;
-    cursor: grab;
+    width: 26px;
+    height: 24px;
+    border-radius: 20px 0 20px 0;
+    background: rgb(0 36 27 / 25%);
+    color: rgb(255 255 255 / 92%);
+    font-size: 14px;
+}
+
+.uav-widget--radio .uav-widget__move:hover {
+    background: rgb(0 36 27 / 55%);
+    color: #fff;
+}
+
+/* Close — flush top-right corner, mirrored border-radius */
+.uav-widget--radio .uav-widget__close {
+    top: 0;
+    right: 0;
+    width: 26px;
+    height: 24px;
+    border-radius: 0 20px 0 20px;
+    background: rgb(0 36 27 / 25%);
+    color: rgb(255 255 255 / 92%);
+    font-size: 12px;
+}
+
+.uav-widget--radio .uav-widget__close:hover {
+    background: rgb(0 36 27 / 55%);
+    color: #fff;
 }
 
 div.circle {
@@ -305,8 +315,6 @@ div.circle {
     float: left;
     box-shadow: 0 0 14px -1px rgb(1 82 65 / 61%);
 }
-
-/* STICK */
 
 div.stick {
     border-radius: 50%;
