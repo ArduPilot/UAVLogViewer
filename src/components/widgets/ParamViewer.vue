@@ -1,6 +1,7 @@
 <template>
     <div
         :id="getDivName()"
+        class="uav-widget"
         :style="{
             width: width + 'px',
             height: height + 'px',
@@ -8,23 +9,23 @@
             left: left + 'px',
         }"
     >
-        <div id="paneContent">
-            <span
-                style="float: right; margin: 3px; cursor: pointer"
-                @click="close()"
-            >
-                X
-            </span>
-            <input id="filterbox" v-model="filter" placeholder="Filter" />
-            <button @click="saveParametersToFile">save</button>
-            <div v-if="haveDefaults" class="form-check">
+        <span class="uav-widget__move"></span>
+        <span class="uav-widget__resize"></span>
+        <span class="uav-widget__close" @click="close()"></span>
+        <div class="uav-widget__content">
+            <div class="filter-row">
+                <label for="filterbox">Filter</label>
+                <input id="filterbox" v-model="filter" placeholder="Filter" />
+                <button @click="saveParametersToFile">save</button>
+            </div>
+            <div v-if="haveDefaults" class="param-check">
                 <input
                     id="showdiff"
                     v-model="showdiff"
-                    class="form-check-input"
+                    class="param-check__box"
                     type="checkbox"
                 />
-                <label class="form-check-label" for="showdiff">
+                <label class="param-check__label" for="showdiff">
                     Show only changed
                 </label>
             </div>
@@ -73,7 +74,7 @@ export default {
     setup(props, { emit }) {
         return useWidget(props, emit, {
             name: "ParamViewer",
-            width: 220,
+            width: 300,
             height: 215,
             left: 540,
             top: 0,
@@ -97,7 +98,7 @@ export default {
         filteredData() {
             this.dependOnParams();
             return Object.keys(this.state.params?.values ?? {})
-                .filter((key) => key.indexOf(this.filter.toUpperCase()) !== -1)
+                .filter((key) => key.includes(this.filter.toUpperCase()))
                 .filter((key) => {
                     if (this.showdiff) {
                         return (
@@ -114,20 +115,17 @@ export default {
         waitForMessage(fieldname) {
             this.$eventHub.$emit("loadType", fieldname.split(".")[0]);
             let interval;
-            const _this = this;
             let counter = 0;
             return new Promise((resolve, reject) => {
-                interval = setInterval(function () {
-                    if (_this.state.messages[fieldname.split(".")[0]]) {
+                interval = setInterval(() => {
+                    if (this.state.messages[fieldname.split(".")[0]]) {
                         clearInterval(interval);
                         counter += 1;
                         resolve();
-                    } else {
-                        if (counter > 6) {
-                            console.log("not resolving");
-                            clearInterval(interval);
-                            reject(new Error("Could not load messageType"));
-                        }
+                    } else if (counter > 6) {
+                        console.log("not resolving");
+                        clearInterval(interval);
+                        reject(new Error("Could not load messageType"));
                     }
                 }, 2000);
             });
@@ -167,7 +165,7 @@ export default {
 
             for (const param of parameters) {
                 // Calculate space between name and value to make it pretty
-                const space = Array(
+                const space = new Array(
                     parameterNameMaxSize - param[0].length + 2,
                 ).join(" ");
                 content += `${param[0]}${space}${param[1]}\n`;
@@ -177,7 +175,7 @@ export default {
         },
         printParam(param) {
             // prints number with just enough decimal places, up to 3, ommiting trailing zeroes
-            return parseFloat(param).toFixed(
+            return Number.parseFloat(param).toFixed(
                 Math.min(
                     3,
                     Math.max(0, 3 - Math.floor(param).toString().length),
@@ -196,68 +194,28 @@ export default {
 </script>
 
 <style scoped>
-div #paneParamViewer {
-    min-width: 220px;
-    min-height: 150px;
-    position: absolute;
-    background: rgb(253 254 255 / 85.6%);
-    color: #141924;
-    font-size: 11px;
-    font-weight: 600;
-    z-index: 10000;
-    box-shadow: 9px 9px 3px -6px rgb(26 26 26 / 69.9%);
-    border-radius: 5px;
-    user-select: none;
+#paneParamViewer {
+    min-width: 300px;
 }
 
-div #paneParamViewer::before {
-    content: "\25e2";
-    color: #fff;
-    background-color: rgb(38 53 71);
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 20px;
-    height: 20px;
-    padding: 2px 5px;
-    box-sizing: border-box;
+.filter-row {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    border-radius: 10px 0 1px;
-    cursor: se-resize;
+    gap: 6px;
+    margin: 0 0 10px 0;
 }
 
-div #paneParamViewer::after {
-    content: "\2725";
-    color: #141924;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 18px;
-    height: 17px;
-    margin-top: -3px;
-    padding: 0 2px;
-    box-sizing: border-box;
-    align-items: center;
-    justify-content: center;
-    font-size: 17px;
-    cursor: grab;
-}
-
-div#paneContent {
-    /* ends above the resize handle in the bottom-right corner */
-    height: calc(100% - 22px);
-    overflow: auto;
-    margin: 0;
+.filter-row input#filterbox {
+    flex: 1;
+    min-width: 0;
 }
 
 input#filterbox {
-    margin: 23px 0 0 10px;
-    padding: 4px;
+    padding: 4px 8px;
     background-color: rgb(255 255 255 / 83.6%);
     border: 1px solid rgb(133 133 133);
     border-radius: 3px;
+    box-sizing: border-box;
 }
 
 input#filterbox:focus {
@@ -265,9 +223,83 @@ input#filterbox:focus {
     border: 1px solid #162442;
 }
 
-ul#params {
-    padding: 12px;
-    list-style: none;
+button {
+    padding: 0 10px;
+    height: 26px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #263547;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+button:hover {
+    background-color: #3a4f6b;
+}
+
+button:active {
+    background-color: #162442;
+}
+
+button:focus-visible {
+    outline: 2px solid #162442;
+    outline-offset: 2px;
+}
+
+.param-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 10px 0;
+    padding: 0;
+}
+
+.param-check__box {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+    padding: 0;
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #263547;
+    border-radius: 3px;
+    background-color: #fff;
+    cursor: pointer;
+    box-sizing: border-box;
+    display: block;
+}
+
+.param-check__box:checked {
+    background-color: #263547;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6 L5 8 L9 4' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+.param-check__box:focus-visible {
+    outline: 2px solid #162442;
+    outline-offset: 1px;
+}
+
+.param-check__label {
+    line-height: 1;
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+}
+
+table#params {
+    padding: 0;
     line-height: 22px;
     user-select: none;
 }
