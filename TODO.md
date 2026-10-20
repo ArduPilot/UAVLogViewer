@@ -50,16 +50,13 @@ registration time makes that class of bug impossible by construction.
       (b) expose the visual handle size as CSS vars and read them from
       `useWidget.js` at mount.
 
-### Pending: debug output
+### Done: debug output
 
-- [ ] `DeviceIDViewer.vue`: `console.log(devids)` in `update()`,
-      multi-line `console.log` inside `decode()`.
-- [ ] `MagFitTool.vue`: `console.log("getting compass params")`,
-      `console.log(bounds)`, `console.log("optimizing")`,
-      `console.log("Optimization result: ", result)`,
-      `console.log(data, corrections)` in `wmmErrorOnce`.
-- [ ] `EkfHelperTool.vue`: unlabeled `{{ solutionValue }} {{ closestIndex }}`
-      at the top of the template. Replace with a labelled readout or delete.
+- [x] `DeviceIDViewer.vue`: removed `console.log(devids)` and the decode dump.
+- [x] `MagFitTool.vue`: removed the `getCompassParams`, `fitWmm` and
+      `wmmErrorOnce` dumps. Kept real error paths.
+- [x] `EkfHelperTool.vue`: removed the unlabeled `{{ solutionValue }}
+      {{ closestIndex }}` readout and its two `console.log`s.
 
 ### Pending: orphaned ids
 
