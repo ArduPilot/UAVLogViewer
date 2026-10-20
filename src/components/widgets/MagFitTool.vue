@@ -1330,16 +1330,6 @@ export default {
                 this.processingInstance = null;
             }
         },
-        getCompassData() {
-            const data = [];
-            for (const message of COMPASS_MESSAGE_CANDIDATES) {
-                if (this.state.messages[message]) {
-                    data.push(this.state.messages[message]);
-                } else {
-                }
-            }
-            return data;
-        },
         headingDiffExpression(compass0, compass1) {
             // build an angle_diff() expression comparing the headings of two compasses
             const headingFunction = this.isTlog
