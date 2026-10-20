@@ -1,0 +1,15 @@
+services:
+    uavlogviewer-dev:
+        build:
+            context: .
+            dockerfile: Containerfile.dev
+        image: localhost/uavlogviewer-dev:dev
+        ports:
+            - "5173:8080"
+        volumes:
+            - .:/usr/src/app:Z
+            - /usr/src/app/node_modules
+        environment:
+            - VITE_USE_POLLING=true
+        stdin_open: true
+        tty: true

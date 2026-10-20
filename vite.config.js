@@ -114,5 +114,9 @@ export default defineConfig(({ command, mode }) => ({
             "/uploaded": "http://localhost:8001",
             "/eniro": "http://localhost:8001",
         },
+        watch:
+            process.env.VITE_USE_POLLING === "true"
+                ? { usePolling: true, interval: 500 }
+                : undefined,
     },
 }));

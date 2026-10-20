@@ -1,0 +1,23 @@
+FROM node:24-trixie-slim
+
+# git is required by vite.config.js (commit hash) — mirrors the production Dockerfile
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates git && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/app
+
+# Only manifests — source comes from the bind mount at runtime
+COPY --chown=node:node package.json package-lock.json ./
+
+# Run the development server and npm as the unprivileged node user.
+USER node
+
+# Bind-mounted .git may be owned by the host user — tell git to trust it
+RUN git config --global --add safe.directory /usr/src/app && \
+    npm ci
+
+EXPOSE 8080
+
+# --host 0.0.0.0 so Podman can publish the port
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
