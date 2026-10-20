@@ -6,7 +6,7 @@ adding or converting a widget and the tracking file for the remaining rework.
 
 ## Directory map
 
-```
+```plain
 src/
 ├── styles/
 │   └── widget.css                    shared shell, handles, content, modifiers
@@ -131,28 +131,11 @@ Layered on top of `.uav-widget`. Pick only what a widget needs.
 
 ## Pending rework
 
-### Pending 1 — `Containerfile.dev` user model
-
-Current state: `USER node` sits before `npm ci`, so `/usr/src/app`
-(created by `WORKDIR` as root) can't be written by `node`, and the build
-fails with EACCES on `node_modules/`.
-
-Decide between two outcomes:
-
-- **A — run as root inside the container.** Delete `USER node`. Under
-  rootless Podman this maps to the host user, not system root. This is what
-  the container has effectively been doing for the bind-mounted files anyway.
-  Recommended.
-- **B — keep non-root.** Reorder to `npm ci && chown -R node:node /usr/src/app`,
-  then `USER node`. At run time, add `--userns=keep-id` on `podman run`
-  (otherwise UID 1000 inside the container does not map back to your host
-  user, and the bind mount becomes unwritable).
-
 ### Pending 2 — split `src/components/widgets/`
 
 Three kinds of files currently live in the same folder. Move them:
 
-```
+```plain
 src/components/
 ├── widgets/        ← only files that call useWidget()
 │   ├── AttitudeWidget.vue
@@ -263,7 +246,6 @@ stays clean.
 | Widget content starts at a different top/left than other widgets | Content padding is set on the widget's children (e.g. `<ul>` padding) instead of `.uav-widget__content`. Move it up. |
 | Horizontal scrollbar across the bottom of the widget | Content is allowed `overflow-x: auto`. Use `.uav-widget__content` (which is `overflow-x: hidden`) and make long tokens wrap with `overflow-wrap: break-word`. |
 | Two widgets open at once → one stops receiving input | Both still use `id="paneContent"` (duplicate id). Use the `.uav-widget__content` class instead. |
-| Build fails with EACCES on `node_modules/` | `USER node` before `npm ci` in `Containerfile.dev`, with `/usr/src/app` created as root by `WORKDIR`. See Pending 1. |
 | `podman-compose up --build` builds the production Dockerfile silently | Python `podman-compose` ignores the `dockerfile:` key on the build path. Use `podman build -f Containerfile.dev` directly. See README "Troubleshooting". |
 
 ## Diagnosis aids

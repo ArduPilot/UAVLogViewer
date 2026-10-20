@@ -16,13 +16,6 @@ pending rework plan.
 `TxInputs`). See [`docs/widgets.md`](docs/widgets.md) for what the shared
 shell provides. The five items below are what remains.
 
-### Pending: `Containerfile.dev` user model
-
-- [ ] Remove `USER node` (currently at line 14, before `npm ci` — the build
-      fails with EACCES on `node_modules/`). See README "Troubleshooting →
-      Container runs as root" for the reasoning and the non-root alternative
-      (chown after `npm ci` + `--userns=keep-id`).
-
 ### Pending: split `src/components/widgets/`
 
 Move non-widgets out of the folder:
