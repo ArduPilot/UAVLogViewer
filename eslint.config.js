@@ -67,7 +67,7 @@ export default [
     },
     {
         // Plot expressions are user-entered JavaScript by design (see src/shared/lib/mavextra/)
-        files: ["src/components/Plotly.vue"],
+        files: ["src/features/plot/components/Plotly.vue"],
         rules: { "sonarjs/code-eval": "off", "no-new-func": "off" },
     },
     {

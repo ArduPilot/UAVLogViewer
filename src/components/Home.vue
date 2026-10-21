@@ -108,7 +108,7 @@
 
 <script>
 import isOnline from "is-online";
-import Plotly from "@/components/Plotly.vue";
+import Plotly from "@/features/plot/components/Plotly.vue";
 import CesiumViewer from "@/features/scene/components/CesiumViewer.vue";
 import Sidebar from "@/components/Sidebar.vue";
 import TxInputsViewer from "@/features/widgets/instances/TxInputsViewer.vue";

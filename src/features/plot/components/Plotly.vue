@@ -5,20 +5,25 @@
 <script>
 // only the scatter trace is used: the core build includes it
 import Plotly from "plotly.js/lib/core";
-import { store, firstFreeAxis, firstFreeColor, keepRaw } from "@/shared/stores/index.js";
+import {
+    store,
+    firstFreeAxis,
+    firstFreeColor,
+    keepRaw,
+} from "@/shared/stores/index.js";
 import { faWindowRestore } from "@fortawesome/free-solid-svg-icons";
 import { toRaw } from "vue";
 
 import { darken } from "@/shared/lib/cssColor.js";
 import { downloadData } from "@/shared/lib/download.js";
-import { plotCsv } from "@/tools/plotCsv.js";
+import { plotCsv } from "@/features/plot/lib/plotCsv.js";
 import { logStartTime } from "@/shared/lib/flightTime.js";
 import {
     dataEnd,
     relayoutRange,
     sameRange,
     timeAxis,
-} from "@/tools/plotTimeAxis.js";
+} from "@/features/plot/lib/plotTimeAxis.js";
 
 let annotationsEvents = [];
 const annotationsModes = [];

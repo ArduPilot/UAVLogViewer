@@ -1,5 +1,5 @@
-import { plotCsv } from "../../../src/tools/plotCsv.js";
-import { timeAxis } from "../../../src/tools/plotTimeAxis.js";
+import { plotCsv } from "@/features/plot/lib/plotCsv.js";
+import { timeAxis } from "@/features/plot/lib/plotTimeAxis.js";
 
 // traces as the plot has them: x on the time axis
 const traces = (axis) => [

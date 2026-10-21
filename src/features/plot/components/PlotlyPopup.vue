@@ -12,13 +12,13 @@ import { store } from "@/shared/stores/index.js";
 
 import { darken } from "@/shared/lib/cssColor.js";
 import { downloadData } from "@/shared/lib/download.js";
-import { plotCsv } from "@/tools/plotCsv.js";
+import { plotCsv } from "@/features/plot/lib/plotCsv.js";
 import {
     dataEnd,
     relayoutRange,
     sameRange,
     timeAxis,
-} from "@/tools/plotTimeAxis.js";
+} from "@/features/plot/lib/plotTimeAxis.js";
 
 let annotationsEvents = [];
 const annotationsModes = [];

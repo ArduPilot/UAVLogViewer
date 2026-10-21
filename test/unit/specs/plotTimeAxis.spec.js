@@ -3,7 +3,7 @@ import {
     dataEnd,
     relayoutRange,
     sameRange,
-} from "../../../src/tools/plotTimeAxis.js";
+} from "@/features/plot/lib/plotTimeAxis.js";
 
 const DAY = 86400000;
 

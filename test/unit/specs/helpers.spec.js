@@ -1,11 +1,7 @@
-import {
-    store,
-    firstFreeAxis,
-    firstFreeColor,
-} from "@/shared/stores/index.js";
+import { store, firstFreeAxis, firstFreeColor } from "@/shared/stores/index.js";
 import { Interpolator } from "@/shared/lib/interpolator.js";
-import ExpressionEditor from "../../../src/components/ExpressionEditor.vue";
-import Plotly from "../../../src/components/Plotly.vue";
+import ExpressionEditor from "@/features/plot/components/ExpressionEditor.vue";
+import Plotly from "@/features/plot/components/Plotly.vue";
 
 // the plot component is only needed for its expression parsing
 vi.mock("plotly.js/lib/core", () => ({ default: {} }));
