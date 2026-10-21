@@ -301,8 +301,8 @@
 <script>
 import { store } from "../Globals.js";
 import { useWidget, widgetProps } from "./useWidget.js";
-import { Vector3 } from "../../mavextra/vector3";
-import { Matrix3 } from "../../mavextra/matrix3";
+import { Vector3 } from "@/shared/lib/mavextra/vector3";
+import { Matrix3 } from "@/shared/lib/mavextra/matrix3";
 import { downloadData } from "../../tools/download.js";
 
 // Candidate compass message keys, in priority order. Covers tlogs (RAW_IMU,

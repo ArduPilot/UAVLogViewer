@@ -1,4 +1,4 @@
-import { mavlink20 as mavlink } from "../libs/mavlink";
+import { mavlink20 as mavlink } from "@/shared/lib/mavlink.js";
 import { ParamSeeker } from "../tools/paramseeker.js";
 
 // Vehicle types: their heartbeats carry the flight mode and the armed state. A GCS, gimbal,

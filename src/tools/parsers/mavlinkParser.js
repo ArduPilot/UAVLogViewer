@@ -1,7 +1,7 @@
 import {
     mavlink20 as mavlink,
     MAVLink20Processor as MAVLink,
-} from "../../libs/mavlink";
+} from "@/shared/lib/mavlink.js";
 import {
     modeMappingAcm,
     modeMappingApm,

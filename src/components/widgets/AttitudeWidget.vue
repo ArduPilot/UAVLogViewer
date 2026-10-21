@@ -22,7 +22,7 @@
 import { store } from "../Globals.js";
 import { useWidget, widgetProps } from "./useWidget.js";
 import AttitudeIndicator from "./flightIndicators/AttitudeIndicator.vue";
-import { Interpolator } from "./interpolator.js";
+import { Interpolator } from "@/shared/lib/interpolator.js";
 
 export default {
     name: "AttitudeViewer",

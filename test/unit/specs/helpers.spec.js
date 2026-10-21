@@ -3,7 +3,7 @@ import {
     firstFreeAxis,
     firstFreeColor,
 } from "../../../src/components/Globals.js";
-import { Interpolator } from "../../../src/components/widgets/interpolator.js";
+import { Interpolator } from "@/shared/lib/interpolator.js";
 import ExpressionEditor from "../../../src/components/ExpressionEditor.vue";
 import Plotly from "../../../src/components/Plotly.vue";
 

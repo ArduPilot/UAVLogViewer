@@ -26,10 +26,10 @@ class mavlink20 {
     constructor() {}
     // Implement the CRC-16/MCRF4XX function (present in the Python version through the mavutil.py package)
     static x25Crc(buffer, crcIN) {
-        var bytes = buffer;
-        var crcOUT = crcIN || 0xffff;
+        const bytes = buffer;
+        let crcOUT = crcIN || 0xffff;
         for (const e of bytes) {
-            var tmp = e ^ (crcOUT & 0xff);
+            let tmp = e ^ (crcOUT & 0xff);
             tmp = (tmp ^ (tmp << 4)) & 0xff;
             crcOUT = (crcOUT >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4);
             crcOUT = crcOUT & 0xffff;
@@ -103,7 +103,7 @@ mavlink20.message = class {
     set(args, verbose) {
         // inspect
         this.fieldnames.forEach((e, i) => {
-            var num = parseInt(i, 10);
+            const num = parseInt(i, 10);
             if (this.hasOwnProperty(e) && isNaN(num)) {
                 // asking for an attribure thats non-numeric is ok unless its already an attribute we have
                 console.log(
@@ -125,7 +125,7 @@ mavlink20.message = class {
     }
     // trying to be the same-ish as the python function of the same name
     sign_packet(mav) {
-        var h = noSigning();
+        const h = noSigning();
 
         //mav.signing.timestamp is a 48bit number, or 6 bytes.
         // due to js not being able to shift numbers  more than 32, we'll use this instead..
@@ -135,8 +135,8 @@ mavlink20.message = class {
             return number * Math.pow(2, shift);
         }
 
-        var thigh = shift(mav.signing.timestamp, -32); // 2 bytes from the top, shifted right by 32 bits
-        var tlow = mav.signing.timestamp & 0xfffffff; // 4 bytes from the bottom
+        const thigh = shift(mav.signing.timestamp, -32); // 2 bytes from the top, shifted right by 32 bits
+        const tlow = mav.signing.timestamp & 0xfffffff; // 4 bytes from the bottom
 
         // I means unsigned 4bytes, H means unsigned 2 bytes
         // first add the linkid(1 byte) and timestamp(6 bytes) that start the signature
@@ -146,7 +146,7 @@ mavlink20.message = class {
 
         h.update(mav.signing.secret_key); // secret is already a Buffer
         h.update(new Buffer.from(this._msgbuf));
-        var hashDigest = h.digest();
+        const hashDigest = h.digest();
         sig = hashDigest.slice(0, 6);
         this._msgbuf = this._msgbuf.concat(...sig);
 
@@ -156,7 +156,7 @@ mavlink20.message = class {
     // including header and message CRC.
     pack(mav, crc_extra, payload) {
         this._payload = payload;
-        var plen = this._payload.length;
+        let plen = this._payload.length;
         //in MAVLink2 we can strip trailing zeros off payloads. This allows for simple
         // variable length arrays and smaller packets
         while (
@@ -167,7 +167,7 @@ mavlink20.message = class {
         }
         this._payload = this._payload.slice(0, plen);
         // signing is our first incompat flag.
-        var incompat_flags = 0;
+        let incompat_flags = 0;
         if (mav.signing.sign_outgoing) {
             incompat_flags |= mavlink20.MAVLINK_IFLAG_SIGNED;
         }
@@ -184,7 +184,7 @@ mavlink20.message = class {
         // payload
         this._msgbuf = this._header.pack().concat(this._payload);
         // crc -  for now, assume always using crc_extra = True.  TODO: check/fix this.
-        var crc = mavlink20.x25Crc(this._msgbuf.slice(1));
+        let crc = mavlink20.x25Crc(this._msgbuf.slice(1));
         crc = mavlink20.x25Crc([crc_extra], crc);
         this._msgbuf = this._msgbuf.concat(jspack.Pack("<H", [crc]));
 
@@ -6424,7 +6424,7 @@ mavlink20.messages.sensor_offsets = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.mag_declination,
             this.raw_press,
             this.raw_temp,
@@ -6438,7 +6438,7 @@ mavlink20.messages.sensor_offsets = class extends mavlink20.message {
             this.mag_ofs_y,
             this.mag_ofs_z,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -6490,14 +6490,14 @@ mavlink20.messages.set_mag_offsets = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.mag_ofs_x,
             this.mag_ofs_y,
             this.mag_ofs_z,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -6535,8 +6535,8 @@ mavlink20.messages.meminfo = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.brkval, this.freemem, this.freemem32];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.brkval, this.freemem, this.freemem32];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -6577,7 +6577,7 @@ mavlink20.messages.ap_adc = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.adc1,
             this.adc2,
             this.adc3,
@@ -6585,7 +6585,7 @@ mavlink20.messages.ap_adc = class extends mavlink20.message {
             this.adc5,
             this.adc6,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -6655,7 +6655,7 @@ mavlink20.messages.digicam_configure = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.extra_value,
             this.shutter_speed,
             this.target_system,
@@ -6668,7 +6668,7 @@ mavlink20.messages.digicam_configure = class extends mavlink20.message {
             this.engine_cut_off,
             this.extra_param,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -6735,7 +6735,7 @@ mavlink20.messages.digicam_control = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.extra_value,
             this.target_system,
             this.target_component,
@@ -6747,7 +6747,7 @@ mavlink20.messages.digicam_control = class extends mavlink20.message {
             this.command_id,
             this.extra_param,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -6802,7 +6802,7 @@ mavlink20.messages.mount_configure = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.mount_mode,
@@ -6810,7 +6810,7 @@ mavlink20.messages.mount_configure = class extends mavlink20.message {
             this.stab_pitch,
             this.stab_yaw,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -6865,7 +6865,7 @@ mavlink20.messages.mount_control = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.input_a,
             this.input_b,
             this.input_c,
@@ -6873,7 +6873,7 @@ mavlink20.messages.mount_control = class extends mavlink20.message {
             this.target_component,
             this.save_position,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -6929,7 +6929,7 @@ mavlink20.messages.mount_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.pointing_a,
             this.pointing_b,
             this.pointing_c,
@@ -6937,7 +6937,7 @@ mavlink20.messages.mount_status = class extends mavlink20.message {
             this.target_component,
             this.mount_mode,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -6986,7 +6986,7 @@ mavlink20.messages.fence_point = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.lat,
             this.lng,
             this.target_system,
@@ -6994,7 +6994,7 @@ mavlink20.messages.fence_point = class extends mavlink20.message {
             this.idx,
             this.count,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7032,12 +7032,12 @@ mavlink20.messages.fence_fetch_point = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.idx,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7095,7 +7095,7 @@ mavlink20.messages.ahrs = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.omegaIx,
             this.omegaIy,
             this.omegaIz,
@@ -7104,7 +7104,7 @@ mavlink20.messages.ahrs = class extends mavlink20.message {
             this.error_rp,
             this.error_yaw,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7174,7 +7174,7 @@ mavlink20.messages.simstate = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.roll,
             this.pitch,
             this.yaw,
@@ -7187,7 +7187,7 @@ mavlink20.messages.simstate = class extends mavlink20.message {
             this.lat,
             this.lng,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7224,8 +7224,8 @@ mavlink20.messages.hwstatus = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.Vcc, this.I2Cerr];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.Vcc, this.I2Cerr];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7275,7 +7275,7 @@ mavlink20.messages.radio = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.rxerrors,
             this.fixed,
             this.rssi,
@@ -7284,7 +7284,7 @@ mavlink20.messages.radio = class extends mavlink20.message {
             this.noise,
             this.remnoise,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7349,7 +7349,7 @@ mavlink20.messages.limits_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.last_trigger,
             this.last_action,
             this.last_recovery,
@@ -7360,7 +7360,7 @@ mavlink20.messages.limits_status = class extends mavlink20.message {
             this.mods_required,
             this.mods_triggered,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7398,8 +7398,8 @@ mavlink20.messages.wind = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.direction, this.speed, this.speed_z];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.direction, this.speed, this.speed_z];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7437,8 +7437,8 @@ mavlink20.messages.data16 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.type, this.len, this.data];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.type, this.len, this.data];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7476,8 +7476,8 @@ mavlink20.messages.data32 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.type, this.len, this.data];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.type, this.len, this.data];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7515,8 +7515,8 @@ mavlink20.messages.data64 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.type, this.len, this.data];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.type, this.len, this.data];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7554,8 +7554,8 @@ mavlink20.messages.data96 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.type, this.len, this.data];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.type, this.len, this.data];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7592,8 +7592,8 @@ mavlink20.messages.rangefinder = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.distance, this.voltage];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.distance, this.voltage];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7666,7 +7666,7 @@ mavlink20.messages.airspeed_autocal = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.vx,
             this.vy,
             this.vz,
@@ -7680,7 +7680,7 @@ mavlink20.messages.airspeed_autocal = class extends mavlink20.message {
             this.Pby,
             this.Pcz,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7748,7 +7748,7 @@ mavlink20.messages.rally_point = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.lat,
             this.lng,
             this.alt,
@@ -7760,7 +7760,7 @@ mavlink20.messages.rally_point = class extends mavlink20.message {
             this.count,
             this.flags,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7799,12 +7799,12 @@ mavlink20.messages.rally_fetch_point = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.idx,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7859,7 +7859,7 @@ mavlink20.messages.compassmot_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.current,
             this.CompensationX,
             this.CompensationY,
@@ -7867,7 +7867,7 @@ mavlink20.messages.compassmot_status = class extends mavlink20.message {
             this.throttle,
             this.interference,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7908,7 +7908,7 @@ mavlink20.messages.ahrs2 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.roll,
             this.pitch,
             this.yaw,
@@ -7916,7 +7916,7 @@ mavlink20.messages.ahrs2 = class extends mavlink20.message {
             this.lat,
             this.lng,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -7980,7 +7980,7 @@ mavlink20.messages.camera_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.p1,
             this.p2,
@@ -7991,7 +7991,7 @@ mavlink20.messages.camera_status = class extends mavlink20.message {
             this.cam_idx,
             this.event_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8070,7 +8070,7 @@ mavlink20.messages.camera_feedback = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.lat,
             this.lng,
@@ -8086,7 +8086,7 @@ mavlink20.messages.camera_feedback = class extends mavlink20.message {
             this.flags,
             this.completed_captures,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8123,8 +8123,8 @@ mavlink20.messages.battery2 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.voltage, this.current_battery];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.voltage, this.current_battery];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8181,7 +8181,7 @@ mavlink20.messages.ahrs3 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.roll,
             this.pitch,
             this.yaw,
@@ -8193,7 +8193,7 @@ mavlink20.messages.ahrs3 = class extends mavlink20.message {
             this.v3,
             this.v4,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8230,8 +8230,8 @@ mavlink20.messages.autopilot_version_request = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.target_system, this.target_component];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.target_system, this.target_component];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8275,13 +8275,13 @@ mavlink20.messages.remote_log_data_block = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.seqno,
             this.target_system,
             this.target_component,
             this.data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8325,13 +8325,13 @@ mavlink20.messages.remote_log_block_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.seqno,
             this.target_system,
             this.target_component,
             this.status,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8386,7 +8386,7 @@ mavlink20.messages.led_control = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.instance,
@@ -8394,7 +8394,7 @@ mavlink20.messages.led_control = class extends mavlink20.message {
             this.custom_len,
             this.custom_bytes,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8458,7 +8458,7 @@ mavlink20.messages.mag_cal_progress = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.direction_x,
             this.direction_y,
             this.direction_z,
@@ -8469,7 +8469,7 @@ mavlink20.messages.mag_cal_progress = class extends mavlink20.message {
             this.completion_pct,
             this.completion_mask,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8527,7 +8527,7 @@ mavlink20.messages.ekf_status_report = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.velocity_variance,
             this.pos_horiz_variance,
             this.pos_vert_variance,
@@ -8536,7 +8536,7 @@ mavlink20.messages.ekf_status_report = class extends mavlink20.message {
             this.flags,
             this.airspeed_variance,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8590,7 +8590,7 @@ mavlink20.messages.pid_tuning = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.desired,
             this.achieved,
             this.FF,
@@ -8601,7 +8601,7 @@ mavlink20.messages.pid_tuning = class extends mavlink20.message {
             this.SRate,
             this.PDmod,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8668,7 +8668,7 @@ mavlink20.messages.deepstall = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.landing_lat,
             this.landing_lon,
             this.path_lat,
@@ -8680,7 +8680,7 @@ mavlink20.messages.deepstall = class extends mavlink20.message {
             this.cross_track_error,
             this.stage,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8753,7 +8753,7 @@ mavlink20.messages.gimbal_report = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.delta_time,
             this.delta_angle_x,
             this.delta_angle_y,
@@ -8767,7 +8767,7 @@ mavlink20.messages.gimbal_report = class extends mavlink20.message {
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8819,14 +8819,14 @@ mavlink20.messages.gimbal_control = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.demanded_rate_x,
             this.demanded_rate_y,
             this.demanded_rate_z,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8878,14 +8878,14 @@ mavlink20.messages.gimbal_torque_cmd_report = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.rl_torque_cmd,
             this.el_torque_cmd,
             this.az_torque_cmd,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8923,8 +8923,8 @@ mavlink20.messages.gopro_heartbeat = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.status, this.capture_mode, this.flags];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.status, this.capture_mode, this.flags];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -8962,12 +8962,12 @@ mavlink20.messages.gopro_get_request = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.cmd_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9005,8 +9005,8 @@ mavlink20.messages.gopro_get_response = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.cmd_id, this.status, this.value];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.cmd_id, this.status, this.value];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9050,13 +9050,13 @@ mavlink20.messages.gopro_set_request = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.cmd_id,
             this.value,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9093,8 +9093,8 @@ mavlink20.messages.gopro_set_response = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.cmd_id, this.status];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.cmd_id, this.status];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9131,8 +9131,8 @@ mavlink20.messages.rpm = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.rpm1, this.rpm2];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.rpm1, this.rpm2];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9199,7 +9199,7 @@ mavlink20.messages.device_op_read = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.request_id,
             this.target_system,
             this.target_component,
@@ -9211,7 +9211,7 @@ mavlink20.messages.device_op_read = class extends mavlink20.message {
             this.count,
             this.bank,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9259,7 +9259,7 @@ mavlink20.messages.device_op_read_reply = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.request_id,
             this.result,
             this.regstart,
@@ -9267,7 +9267,7 @@ mavlink20.messages.device_op_read_reply = class extends mavlink20.message {
             this.data,
             this.bank,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9337,7 +9337,7 @@ mavlink20.messages.device_op_write = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.request_id,
             this.target_system,
             this.target_component,
@@ -9350,7 +9350,7 @@ mavlink20.messages.device_op_write = class extends mavlink20.message {
             this.data,
             this.bank,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9387,8 +9387,8 @@ mavlink20.messages.device_op_write_reply = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.request_id, this.result];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.request_id, this.result];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9453,7 +9453,7 @@ mavlink20.messages.secure_command = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.sequence,
             this.operation,
             this.target_system,
@@ -9462,7 +9462,7 @@ mavlink20.messages.secure_command = class extends mavlink20.message {
             this.sig_length,
             this.data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9508,14 +9508,14 @@ mavlink20.messages.secure_command_reply = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.sequence,
             this.operation,
             this.result,
             this.data_length,
             this.data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9591,7 +9591,7 @@ mavlink20.messages.adap_tuning = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.desired,
             this.achieved,
             this.error,
@@ -9606,7 +9606,7 @@ mavlink20.messages.adap_tuning = class extends mavlink20.message {
             this.u,
             this.axis,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9658,14 +9658,14 @@ mavlink20.messages.vision_position_delta = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.time_delta_usec,
             this.angle_delta,
             this.position_delta,
             this.confidence,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9703,8 +9703,8 @@ mavlink20.messages.aoa_ssa = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_usec, this.AOA, this.SSA];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_usec, this.AOA, this.SSA];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9752,7 +9752,7 @@ mavlink20.messages.esc_telemetry_1_to_4 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.voltage,
             this.current,
             this.totalcurrent,
@@ -9760,7 +9760,7 @@ mavlink20.messages.esc_telemetry_1_to_4 = class extends mavlink20.message {
             this.count,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9808,7 +9808,7 @@ mavlink20.messages.esc_telemetry_5_to_8 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.voltage,
             this.current,
             this.totalcurrent,
@@ -9816,7 +9816,7 @@ mavlink20.messages.esc_telemetry_5_to_8 = class extends mavlink20.message {
             this.count,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9865,7 +9865,7 @@ mavlink20.messages.esc_telemetry_9_to_12 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.voltage,
             this.current,
             this.totalcurrent,
@@ -9873,7 +9873,7 @@ mavlink20.messages.esc_telemetry_9_to_12 = class extends mavlink20.message {
             this.count,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9940,7 +9940,7 @@ mavlink20.messages.osd_param_config = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.request_id,
             this.min_value,
             this.max_value,
@@ -9952,7 +9952,7 @@ mavlink20.messages.osd_param_config = class extends mavlink20.message {
             this.param_id,
             this.config_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -9989,8 +9989,8 @@ mavlink20.messages.osd_param_config_reply = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.request_id, this.result];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.request_id, this.result];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10042,14 +10042,14 @@ mavlink20.messages.osd_param_show_config = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.request_id,
             this.target_system,
             this.target_component,
             this.osd_screen,
             this.osd_index,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10109,7 +10109,7 @@ mavlink20.messages.osd_param_show_config_reply = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.request_id,
             this.min_value,
             this.max_value,
@@ -10118,7 +10118,7 @@ mavlink20.messages.osd_param_show_config_reply = class extends (
             this.param_id,
             this.config_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10182,7 +10182,7 @@ mavlink20.messages.obstacle_distance_3d = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.x,
             this.y,
@@ -10193,7 +10193,7 @@ mavlink20.messages.obstacle_distance_3d = class extends mavlink20.message {
             this.sensor_type,
             this.frame,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10263,7 +10263,7 @@ mavlink20.messages.water_depth = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.lat,
             this.lng,
@@ -10276,7 +10276,7 @@ mavlink20.messages.water_depth = class extends mavlink20.message {
             this.id,
             this.healthy,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10329,14 +10329,14 @@ mavlink20.messages.mcu_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.MCU_temperature,
             this.MCU_voltage,
             this.MCU_voltage_min,
             this.MCU_voltage_max,
             this.id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10385,7 +10385,7 @@ mavlink20.messages.esc_telemetry_13_to_16 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.voltage,
             this.current,
             this.totalcurrent,
@@ -10393,7 +10393,7 @@ mavlink20.messages.esc_telemetry_13_to_16 = class extends mavlink20.message {
             this.count,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10442,7 +10442,7 @@ mavlink20.messages.esc_telemetry_17_to_20 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.voltage,
             this.current,
             this.totalcurrent,
@@ -10450,7 +10450,7 @@ mavlink20.messages.esc_telemetry_17_to_20 = class extends mavlink20.message {
             this.count,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10499,7 +10499,7 @@ mavlink20.messages.esc_telemetry_21_to_24 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.voltage,
             this.current,
             this.totalcurrent,
@@ -10507,7 +10507,7 @@ mavlink20.messages.esc_telemetry_21_to_24 = class extends mavlink20.message {
             this.count,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10556,7 +10556,7 @@ mavlink20.messages.esc_telemetry_25_to_28 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.voltage,
             this.current,
             this.totalcurrent,
@@ -10564,7 +10564,7 @@ mavlink20.messages.esc_telemetry_25_to_28 = class extends mavlink20.message {
             this.count,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10613,7 +10613,7 @@ mavlink20.messages.esc_telemetry_29_to_32 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.voltage,
             this.current,
             this.totalcurrent,
@@ -10621,7 +10621,7 @@ mavlink20.messages.esc_telemetry_29_to_32 = class extends mavlink20.message {
             this.count,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10711,7 +10711,7 @@ mavlink20.messages.sys_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.onboard_control_sensors_present,
             this.onboard_control_sensors_enabled,
             this.onboard_control_sensors_health,
@@ -10726,7 +10726,7 @@ mavlink20.messages.sys_status = class extends mavlink20.message {
             this.errors_count4,
             this.battery_remaining,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10764,8 +10764,8 @@ mavlink20.messages.system_time = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_unix_usec, this.time_boot_ms];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_unix_usec, this.time_boot_ms];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10812,13 +10812,13 @@ mavlink20.messages.ping = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.seq,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10862,13 +10862,13 @@ mavlink20.messages.change_operator_control = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.control_request,
             this.version,
             this.passkey,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10908,12 +10908,12 @@ mavlink20.messages.change_operator_control_ack = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.gcs_system_id,
             this.control_request,
             this.ack,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10951,8 +10951,8 @@ mavlink20.messages.auth_key = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.key];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.key];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -10992,12 +10992,12 @@ mavlink20.messages.set_mode = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.custom_mode,
             this.target_system,
             this.base_mode,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11047,13 +11047,13 @@ mavlink20.messages.param_request_read = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param_index,
             this.target_system,
             this.target_component,
             this.param_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11092,8 +11092,8 @@ mavlink20.messages.param_request_list = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.target_system, this.target_component];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.target_system, this.target_component];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11143,14 +11143,14 @@ mavlink20.messages.param_value = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param_value,
             this.param_count,
             this.param_index,
             this.param_id,
             this.param_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11208,14 +11208,14 @@ mavlink20.messages.param_set = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param_value,
             this.target_system,
             this.target_component,
             this.param_id,
             this.param_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11303,7 +11303,7 @@ mavlink20.messages.gps_raw_int = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.lat,
             this.lon,
@@ -11321,7 +11321,7 @@ mavlink20.messages.gps_raw_int = class extends mavlink20.message {
             this.hdg_acc,
             this.yaw,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11380,7 +11380,7 @@ mavlink20.messages.gps_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.satellites_visible,
             this.satellite_prn,
             this.satellite_used,
@@ -11388,7 +11388,7 @@ mavlink20.messages.gps_status = class extends mavlink20.message {
             this.satellite_azimuth,
             this.satellite_snr,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11459,7 +11459,7 @@ mavlink20.messages.scaled_imu = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.xacc,
             this.yacc,
@@ -11472,7 +11472,7 @@ mavlink20.messages.scaled_imu = class extends mavlink20.message {
             this.zmag,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11547,7 +11547,7 @@ mavlink20.messages.raw_imu = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.xacc,
             this.yacc,
@@ -11561,7 +11561,7 @@ mavlink20.messages.raw_imu = class extends mavlink20.message {
             this.id,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11609,14 +11609,14 @@ mavlink20.messages.raw_pressure = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.press_abs,
             this.press_diff1,
             this.press_diff2,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11670,14 +11670,14 @@ mavlink20.messages.scaled_pressure = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.press_abs,
             this.press_diff,
             this.temperature,
             this.temperature_press_diff,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11736,7 +11736,7 @@ mavlink20.messages.attitude = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.roll,
             this.pitch,
@@ -11745,7 +11745,7 @@ mavlink20.messages.attitude = class extends mavlink20.message {
             this.pitchspeed,
             this.yawspeed,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11811,7 +11811,7 @@ mavlink20.messages.attitude_quaternion = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.q1,
             this.q2,
@@ -11822,7 +11822,7 @@ mavlink20.messages.attitude_quaternion = class extends mavlink20.message {
             this.yawspeed,
             this.repr_offset_q,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11866,7 +11866,7 @@ mavlink20.messages.local_position_ned = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.x,
             this.y,
@@ -11875,7 +11875,7 @@ mavlink20.messages.local_position_ned = class extends mavlink20.message {
             this.vy,
             this.vz,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -11932,7 +11932,7 @@ mavlink20.messages.global_position_int = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.lat,
             this.lon,
@@ -11943,7 +11943,7 @@ mavlink20.messages.global_position_int = class extends mavlink20.message {
             this.vz,
             this.hdg,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12014,7 +12014,7 @@ mavlink20.messages.rc_channels_scaled = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.chan1_scaled,
             this.chan2_scaled,
@@ -12027,7 +12027,7 @@ mavlink20.messages.rc_channels_scaled = class extends mavlink20.message {
             this.port,
             this.rssi,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12100,7 +12100,7 @@ mavlink20.messages.rc_channels_raw = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.chan1_raw,
             this.chan2_raw,
@@ -12113,7 +12113,7 @@ mavlink20.messages.rc_channels_raw = class extends mavlink20.message {
             this.port,
             this.rssi,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12211,7 +12211,7 @@ mavlink20.messages.servo_output_raw = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.servo1_raw,
             this.servo2_raw,
@@ -12231,7 +12231,7 @@ mavlink20.messages.servo_output_raw = class extends mavlink20.message {
             this.servo15_raw,
             this.servo16_raw,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12287,14 +12287,14 @@ mavlink20.messages.mission_request_partial_list = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.start_index,
             this.end_index,
             this.target_system,
             this.target_component,
             this.mission_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12351,14 +12351,14 @@ mavlink20.messages.mission_write_partial_list = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.start_index,
             this.end_index,
             this.target_system,
             this.target_component,
             this.mission_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12447,7 +12447,7 @@ mavlink20.messages.mission_item = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param1,
             this.param2,
             this.param3,
@@ -12464,7 +12464,7 @@ mavlink20.messages.mission_item = class extends mavlink20.message {
             this.autocontinue,
             this.mission_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12510,13 +12510,13 @@ mavlink20.messages.mission_request = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.seq,
             this.target_system,
             this.target_component,
             this.mission_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12556,12 +12556,12 @@ mavlink20.messages.mission_set_current = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.seq,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12601,13 +12601,13 @@ mavlink20.messages.mission_current = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.seq,
             this.total,
             this.mission_state,
             this.mission_mode,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12645,12 +12645,12 @@ mavlink20.messages.mission_request_list = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.mission_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12697,13 +12697,13 @@ mavlink20.messages.mission_count = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.count,
             this.target_system,
             this.target_component,
             this.mission_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12741,12 +12741,12 @@ mavlink20.messages.mission_clear_all = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.mission_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12784,8 +12784,8 @@ mavlink20.messages.mission_item_reached = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.seq];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.seq];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12831,13 +12831,13 @@ mavlink20.messages.mission_ack = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.type,
             this.mission_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12888,14 +12888,14 @@ mavlink20.messages.set_gps_global_origin = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.latitude,
             this.longitude,
             this.altitude,
             this.target_system,
             this.time_usec,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -12936,13 +12936,13 @@ mavlink20.messages.gps_global_origin = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.latitude,
             this.longitude,
             this.altitude,
             this.time_usec,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13007,7 +13007,7 @@ mavlink20.messages.param_map_rc = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param_value0,
             this.scale,
             this.param_value_min,
@@ -13018,7 +13018,7 @@ mavlink20.messages.param_map_rc = class extends mavlink20.message {
             this.param_id,
             this.parameter_rc_channel_index,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13064,13 +13064,13 @@ mavlink20.messages.mission_request_int = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.seq,
             this.target_system,
             this.target_component,
             this.mission_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13137,7 +13137,7 @@ mavlink20.messages.safety_set_allowed_area = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.p1x,
             this.p1y,
             this.p1z,
@@ -13148,7 +13148,7 @@ mavlink20.messages.safety_set_allowed_area = class extends mavlink20.message {
             this.target_component,
             this.frame,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13190,7 +13190,7 @@ mavlink20.messages.safety_allowed_area = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.p1x,
             this.p1y,
             this.p1z,
@@ -13199,7 +13199,7 @@ mavlink20.messages.safety_allowed_area = class extends mavlink20.message {
             this.p2z,
             this.frame,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13249,7 +13249,7 @@ mavlink20.messages.attitude_quaternion_cov = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.q,
             this.rollspeed,
@@ -13257,7 +13257,7 @@ mavlink20.messages.attitude_quaternion_cov = class extends mavlink20.message {
             this.yawspeed,
             this.covariance,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13318,7 +13318,7 @@ mavlink20.messages.nav_controller_output = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.nav_roll,
             this.nav_pitch,
             this.alt_error,
@@ -13328,7 +13328,7 @@ mavlink20.messages.nav_controller_output = class extends mavlink20.message {
             this.target_bearing,
             this.wp_dist,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13401,7 +13401,7 @@ mavlink20.messages.global_position_int_cov = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.lat,
             this.lon,
@@ -13413,7 +13413,7 @@ mavlink20.messages.global_position_int_cov = class extends mavlink20.message {
             this.covariance,
             this.estimator_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13488,7 +13488,7 @@ mavlink20.messages.local_position_ned_cov = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.x,
             this.y,
@@ -13502,7 +13502,7 @@ mavlink20.messages.local_position_ned_cov = class extends mavlink20.message {
             this.covariance,
             this.estimator_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13612,7 +13612,7 @@ mavlink20.messages.rc_channels = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.chan1_raw,
             this.chan2_raw,
@@ -13635,7 +13635,7 @@ mavlink20.messages.rc_channels = class extends mavlink20.message {
             this.chancount,
             this.rssi,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13687,14 +13687,14 @@ mavlink20.messages.request_data_stream = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.req_message_rate,
             this.target_system,
             this.target_component,
             this.req_stream_id,
             this.start_stop,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13732,8 +13732,8 @@ mavlink20.messages.data_stream = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.message_rate, this.stream_id, this.on_off];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.message_rate, this.stream_id, this.on_off];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13821,7 +13821,7 @@ mavlink20.messages.manual_control = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.x,
             this.y,
             this.z,
@@ -13839,7 +13839,7 @@ mavlink20.messages.manual_control = class extends mavlink20.message {
             this.aux5,
             this.aux6,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -13948,7 +13948,7 @@ mavlink20.messages.rc_channels_override = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.chan1_raw,
             this.chan2_raw,
             this.chan3_raw,
@@ -13970,7 +13970,7 @@ mavlink20.messages.rc_channels_override = class extends mavlink20.message {
             this.chan17_raw,
             this.chan18_raw,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14060,7 +14060,7 @@ mavlink20.messages.mission_item_int = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param1,
             this.param2,
             this.param3,
@@ -14077,7 +14077,7 @@ mavlink20.messages.mission_item_int = class extends mavlink20.message {
             this.autocontinue,
             this.mission_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14125,7 +14125,7 @@ mavlink20.messages.vfr_hud = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.airspeed,
             this.groundspeed,
             this.alt,
@@ -14133,7 +14133,7 @@ mavlink20.messages.vfr_hud = class extends mavlink20.message {
             this.heading,
             this.throttle,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14211,7 +14211,7 @@ mavlink20.messages.command_int = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param1,
             this.param2,
             this.param3,
@@ -14226,7 +14226,7 @@ mavlink20.messages.command_int = class extends mavlink20.message {
             this.current,
             this.autocontinue,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14298,7 +14298,7 @@ mavlink20.messages.command_long = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param1,
             this.param2,
             this.param3,
@@ -14311,7 +14311,7 @@ mavlink20.messages.command_long = class extends mavlink20.message {
             this.target_component,
             this.confirmation,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14368,7 +14368,7 @@ mavlink20.messages.command_ack = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.command,
             this.result,
             this.progress,
@@ -14376,7 +14376,7 @@ mavlink20.messages.command_ack = class extends mavlink20.message {
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14434,7 +14434,7 @@ mavlink20.messages.manual_setpoint = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.roll,
             this.pitch,
@@ -14443,7 +14443,7 @@ mavlink20.messages.manual_setpoint = class extends mavlink20.message {
             this.mode_switch,
             this.manual_override_switch,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14508,7 +14508,7 @@ mavlink20.messages.set_attitude_target = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.q,
             this.body_roll_rate,
@@ -14519,7 +14519,7 @@ mavlink20.messages.set_attitude_target = class extends mavlink20.message {
             this.target_component,
             this.type_mask,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14580,7 +14580,7 @@ mavlink20.messages.attitude_target = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.q,
             this.body_roll_rate,
@@ -14589,7 +14589,7 @@ mavlink20.messages.attitude_target = class extends mavlink20.message {
             this.thrust,
             this.type_mask,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14678,7 +14678,7 @@ mavlink20.messages.set_position_target_local_ned = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.x,
             this.y,
@@ -14696,7 +14696,7 @@ mavlink20.messages.set_position_target_local_ned = class extends (
             this.target_component,
             this.coordinate_frame,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14778,7 +14778,7 @@ mavlink20.messages.position_target_local_ned = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.x,
             this.y,
@@ -14794,7 +14794,7 @@ mavlink20.messages.position_target_local_ned = class extends mavlink20.message {
             this.type_mask,
             this.coordinate_frame,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14883,7 +14883,7 @@ mavlink20.messages.set_position_target_global_int = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.lat_int,
             this.lon_int,
@@ -14901,7 +14901,7 @@ mavlink20.messages.set_position_target_global_int = class extends (
             this.target_component,
             this.coordinate_frame,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -14985,7 +14985,7 @@ mavlink20.messages.position_target_global_int = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.lat_int,
             this.lon_int,
@@ -15001,7 +15001,7 @@ mavlink20.messages.position_target_global_int = class extends (
             this.type_mask,
             this.coordinate_frame,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15057,7 +15057,7 @@ mavlink20.messages.local_position_ned_system_global_offset = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.x,
             this.y,
@@ -15066,7 +15066,7 @@ mavlink20.messages.local_position_ned_system_global_offset = class extends (
             this.pitch,
             this.yaw,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15152,7 +15152,7 @@ mavlink20.messages.hil_state = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.roll,
             this.pitch,
@@ -15170,7 +15170,7 @@ mavlink20.messages.hil_state = class extends mavlink20.message {
             this.yacc,
             this.zacc,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15241,7 +15241,7 @@ mavlink20.messages.hil_controls = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.roll_ailerons,
             this.pitch_elevator,
@@ -15254,7 +15254,7 @@ mavlink20.messages.hil_controls = class extends mavlink20.message {
             this.mode,
             this.nav_mode,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15336,7 +15336,7 @@ mavlink20.messages.hil_rc_inputs_raw = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.chan1_raw,
             this.chan2_raw,
@@ -15352,7 +15352,7 @@ mavlink20.messages.hil_rc_inputs_raw = class extends mavlink20.message {
             this.chan12_raw,
             this.rssi,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15392,13 +15392,13 @@ mavlink20.messages.hil_actuator_controls = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.flags,
             this.controls,
             this.mode,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15465,7 +15465,7 @@ mavlink20.messages.optical_flow = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.flow_comp_m_x,
             this.flow_comp_m_y,
@@ -15477,7 +15477,7 @@ mavlink20.messages.optical_flow = class extends mavlink20.message {
             this.flow_rate_x,
             this.flow_rate_y,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15533,7 +15533,7 @@ mavlink20.messages.global_vision_position_estimate = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.usec,
             this.x,
             this.y,
@@ -15544,7 +15544,7 @@ mavlink20.messages.global_vision_position_estimate = class extends (
             this.covariance,
             this.reset_counter,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15598,7 +15598,7 @@ mavlink20.messages.vision_position_estimate = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.usec,
             this.x,
             this.y,
@@ -15609,7 +15609,7 @@ mavlink20.messages.vision_position_estimate = class extends mavlink20.message {
             this.covariance,
             this.reset_counter,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15657,7 +15657,7 @@ mavlink20.messages.vision_speed_estimate = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.usec,
             this.x,
             this.y,
@@ -15665,7 +15665,7 @@ mavlink20.messages.vision_speed_estimate = class extends mavlink20.message {
             this.covariance,
             this.reset_counter,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15717,7 +15717,7 @@ mavlink20.messages.vicon_position_estimate = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.usec,
             this.x,
             this.y,
@@ -15727,7 +15727,7 @@ mavlink20.messages.vicon_position_estimate = class extends mavlink20.message {
             this.yaw,
             this.covariance,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15812,7 +15812,7 @@ mavlink20.messages.highres_imu = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.xacc,
             this.yacc,
@@ -15830,7 +15830,7 @@ mavlink20.messages.highres_imu = class extends mavlink20.message {
             this.fields_updated,
             this.id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -15904,7 +15904,7 @@ mavlink20.messages.optical_flow_rad = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.integration_time_us,
             this.integrated_x,
@@ -15918,7 +15918,7 @@ mavlink20.messages.optical_flow_rad = class extends mavlink20.message {
             this.sensor_id,
             this.quality,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16003,7 +16003,7 @@ mavlink20.messages.hil_sensor = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.xacc,
             this.yacc,
@@ -16021,7 +16021,7 @@ mavlink20.messages.hil_sensor = class extends mavlink20.message {
             this.fields_updated,
             this.id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16134,7 +16134,7 @@ mavlink20.messages.sim_state = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.q1,
             this.q2,
             this.q3,
@@ -16159,7 +16159,7 @@ mavlink20.messages.sim_state = class extends mavlink20.message {
             this.lat_int,
             this.lon_int,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16209,7 +16209,7 @@ mavlink20.messages.radio_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.rxerrors,
             this.fixed,
             this.rssi,
@@ -16218,7 +16218,7 @@ mavlink20.messages.radio_status = class extends mavlink20.message {
             this.noise,
             this.remnoise,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16262,13 +16262,13 @@ mavlink20.messages.file_transfer_protocol = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_network,
             this.target_system,
             this.target_component,
             this.payload,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16305,8 +16305,8 @@ mavlink20.messages.timesync = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.tc1, this.ts1];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.tc1, this.ts1];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16343,8 +16343,8 @@ mavlink20.messages.camera_trigger = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_usec, this.seq];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_usec, this.seq];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16429,7 +16429,7 @@ mavlink20.messages.hil_gps = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.lat,
             this.lon,
@@ -16446,7 +16446,7 @@ mavlink20.messages.hil_gps = class extends mavlink20.message {
             this.id,
             this.yaw,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16520,7 +16520,7 @@ mavlink20.messages.hil_optical_flow = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.integration_time_us,
             this.integrated_x,
@@ -16534,7 +16534,7 @@ mavlink20.messages.hil_optical_flow = class extends mavlink20.message {
             this.sensor_id,
             this.quality,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16621,7 +16621,7 @@ mavlink20.messages.hil_state_quaternion = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.attitude_quaternion,
             this.rollspeed,
@@ -16639,7 +16639,7 @@ mavlink20.messages.hil_state_quaternion = class extends mavlink20.message {
             this.yacc,
             this.zacc,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16710,7 +16710,7 @@ mavlink20.messages.scaled_imu2 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.xacc,
             this.yacc,
@@ -16723,7 +16723,7 @@ mavlink20.messages.scaled_imu2 = class extends mavlink20.message {
             this.zmag,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16765,13 +16765,13 @@ mavlink20.messages.log_request_list = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.start,
             this.end,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16817,14 +16817,14 @@ mavlink20.messages.log_entry = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_utc,
             this.size,
             this.id,
             this.num_logs,
             this.last_log_num,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16870,14 +16870,14 @@ mavlink20.messages.log_request_data = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.ofs,
             this.count,
             this.id,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16916,8 +16916,8 @@ mavlink20.messages.log_data = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.ofs, this.id, this.count, this.data];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.ofs, this.id, this.count, this.data];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16954,8 +16954,8 @@ mavlink20.messages.log_erase = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.target_system, this.target_component];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.target_system, this.target_component];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -16992,8 +16992,8 @@ mavlink20.messages.log_request_end = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.target_system, this.target_component];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.target_system, this.target_component];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17032,13 +17032,13 @@ mavlink20.messages.gps_inject_data = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.len,
             this.data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17133,7 +17133,7 @@ mavlink20.messages.gps2_raw = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.lat,
             this.lon,
@@ -17153,7 +17153,7 @@ mavlink20.messages.gps2_raw = class extends mavlink20.message {
             this.vel_acc,
             this.hdg_acc,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17191,8 +17191,8 @@ mavlink20.messages.power_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.Vcc, this.Vservo, this.flags];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.Vcc, this.Vservo, this.flags];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17244,7 +17244,7 @@ mavlink20.messages.serial_control = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.baudrate,
             this.timeout,
             this.device,
@@ -17252,7 +17252,7 @@ mavlink20.messages.serial_control = class extends mavlink20.message {
             this.count,
             this.data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17329,7 +17329,7 @@ mavlink20.messages.gps_rtk = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_last_baseline_ms,
             this.tow,
             this.baseline_a_mm,
@@ -17344,7 +17344,7 @@ mavlink20.messages.gps_rtk = class extends mavlink20.message {
             this.nsats,
             this.baseline_coords_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17421,7 +17421,7 @@ mavlink20.messages.gps2_rtk = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_last_baseline_ms,
             this.tow,
             this.baseline_a_mm,
@@ -17436,7 +17436,7 @@ mavlink20.messages.gps2_rtk = class extends mavlink20.message {
             this.nsats,
             this.baseline_coords_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17507,7 +17507,7 @@ mavlink20.messages.scaled_imu3 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.xacc,
             this.yacc,
@@ -17520,7 +17520,7 @@ mavlink20.messages.scaled_imu3 = class extends mavlink20.message {
             this.zmag,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17574,7 +17574,7 @@ mavlink20.messages.data_transmission_handshake = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.size,
             this.width,
             this.height,
@@ -17583,7 +17583,7 @@ mavlink20.messages.data_transmission_handshake = class extends (
             this.payload,
             this.jpg_quality,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17621,8 +17621,8 @@ mavlink20.messages.encapsulated_data = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.seqnr, this.data];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.seqnr, this.data];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17695,7 +17695,7 @@ mavlink20.messages.distance_sensor = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.min_distance,
             this.max_distance,
@@ -17709,7 +17709,7 @@ mavlink20.messages.distance_sensor = class extends mavlink20.message {
             this.quaternion,
             this.signal_quality,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17749,8 +17749,8 @@ mavlink20.messages.terrain_request = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.mask, this.lat, this.lon, this.grid_spacing];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.mask, this.lat, this.lon, this.grid_spacing];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17792,14 +17792,14 @@ mavlink20.messages.terrain_data = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.lat,
             this.lon,
             this.grid_spacing,
             this.data,
             this.gridbit,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17838,8 +17838,8 @@ mavlink20.messages.terrain_check = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.lat, this.lon];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.lat, this.lon];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17900,7 +17900,7 @@ mavlink20.messages.terrain_report = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.lat,
             this.lon,
             this.terrain_height,
@@ -17909,7 +17909,7 @@ mavlink20.messages.terrain_report = class extends mavlink20.message {
             this.pending,
             this.loaded,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -17961,14 +17961,14 @@ mavlink20.messages.scaled_pressure2 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.press_abs,
             this.press_diff,
             this.temperature,
             this.temperature_press_diff,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18009,7 +18009,7 @@ mavlink20.messages.att_pos_mocap = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.q,
             this.x,
@@ -18017,7 +18017,7 @@ mavlink20.messages.att_pos_mocap = class extends mavlink20.message {
             this.z,
             this.covariance,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18071,14 +18071,14 @@ mavlink20.messages.set_actuator_control_target = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.controls,
             this.group_mlx,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18116,8 +18116,8 @@ mavlink20.messages.actuator_control_target = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_usec, this.controls, this.group_mlx];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_usec, this.controls, this.group_mlx];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18175,7 +18175,7 @@ mavlink20.messages.altitude = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.altitude_monotonic,
             this.altitude_amsl,
@@ -18184,7 +18184,7 @@ mavlink20.messages.altitude = class extends mavlink20.message {
             this.altitude_terrain,
             this.bottom_clearance,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18231,14 +18231,14 @@ mavlink20.messages.resource_request = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.request_id,
             this.uri_type,
             this.uri,
             this.transfer_type,
             this.storage,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18290,14 +18290,14 @@ mavlink20.messages.scaled_pressure3 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.press_abs,
             this.press_diff,
             this.temperature,
             this.temperature_press_diff,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18367,7 +18367,7 @@ mavlink20.messages.follow_target = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.timestamp,
             this.custom_state,
             this.lat,
@@ -18380,7 +18380,7 @@ mavlink20.messages.follow_target = class extends mavlink20.message {
             this.position_cov,
             this.est_capabilities,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18473,7 +18473,7 @@ mavlink20.messages.control_system_state = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.x_acc,
             this.y_acc,
@@ -18492,7 +18492,7 @@ mavlink20.messages.control_system_state = class extends mavlink20.message {
             this.pitch_rate,
             this.yaw_rate,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18571,7 +18571,7 @@ mavlink20.messages.battery_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.current_consumed,
             this.energy_consumed,
             this.temperature,
@@ -18587,7 +18587,7 @@ mavlink20.messages.battery_status = class extends mavlink20.message {
             this.mode,
             this.fault_bitmask,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18661,7 +18661,7 @@ mavlink20.messages.autopilot_version = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.capabilities,
             this.uid,
             this.flight_sw_version,
@@ -18675,7 +18675,7 @@ mavlink20.messages.autopilot_version = class extends mavlink20.message {
             this.os_custom_version,
             this.uid2,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18755,7 +18755,7 @@ mavlink20.messages.landing_target = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.angle_x,
             this.angle_y,
@@ -18771,7 +18771,7 @@ mavlink20.messages.landing_target = class extends mavlink20.message {
             this.type,
             this.position_valid,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18824,14 +18824,14 @@ mavlink20.messages.fence_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.breach_time,
             this.breach_count,
             this.breach_status,
             this.breach_type,
             this.breach_mitigation,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -18927,7 +18927,7 @@ mavlink20.messages.mag_cal_report = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.fitness,
             this.ofs_x,
             this.ofs_y,
@@ -18947,7 +18947,7 @@ mavlink20.messages.mag_cal_report = class extends mavlink20.message {
             this.new_orientation,
             this.scale_factor,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19047,7 +19047,7 @@ mavlink20.messages.efi_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.ecu_index,
             this.rpm,
             this.fuel_consumed,
@@ -19068,7 +19068,7 @@ mavlink20.messages.efi_status = class extends mavlink20.message {
             this.ignition_voltage,
             this.fuel_pressure,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19146,7 +19146,7 @@ mavlink20.messages.estimator_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.vel_ratio,
             this.pos_horiz_ratio,
@@ -19158,7 +19158,7 @@ mavlink20.messages.estimator_status = class extends mavlink20.message {
             this.pos_vert_accuracy,
             this.flags,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19222,7 +19222,7 @@ mavlink20.messages.wind_cov = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.wind_x,
             this.wind_y,
@@ -19233,7 +19233,7 @@ mavlink20.messages.wind_cov = class extends mavlink20.message {
             this.horiz_accuracy,
             this.vert_accuracy,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19334,7 +19334,7 @@ mavlink20.messages.gps_input = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.time_week_ms,
             this.lat,
@@ -19355,7 +19355,7 @@ mavlink20.messages.gps_input = class extends mavlink20.message {
             this.satellites_visible,
             this.yaw,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19393,8 +19393,8 @@ mavlink20.messages.gps_rtcm_data = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.flags, this.len, this.data];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.flags, this.len, this.data];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19512,7 +19512,7 @@ mavlink20.messages.high_latency = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.custom_mode,
             this.latitude,
             this.longitude,
@@ -19538,7 +19538,7 @@ mavlink20.messages.high_latency = class extends mavlink20.message {
             this.failsafe,
             this.wp_num,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19666,7 +19666,7 @@ mavlink20.messages.high_latency2 = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.timestamp,
             this.latitude,
             this.longitude,
@@ -19695,7 +19695,7 @@ mavlink20.messages.high_latency2 = class extends mavlink20.message {
             this.custom1,
             this.custom2,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19753,7 +19753,7 @@ mavlink20.messages.vibration = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.vibration_x,
             this.vibration_y,
@@ -19762,7 +19762,7 @@ mavlink20.messages.vibration = class extends mavlink20.message {
             this.clipping_1,
             this.clipping_2,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19841,7 +19841,7 @@ mavlink20.messages.home_position = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.latitude,
             this.longitude,
             this.altitude,
@@ -19854,7 +19854,7 @@ mavlink20.messages.home_position = class extends mavlink20.message {
             this.approach_z,
             this.time_usec,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19935,7 +19935,7 @@ mavlink20.messages.set_home_position = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.latitude,
             this.longitude,
             this.altitude,
@@ -19949,7 +19949,7 @@ mavlink20.messages.set_home_position = class extends mavlink20.message {
             this.target_system,
             this.time_usec,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -19988,8 +19988,8 @@ mavlink20.messages.message_interval = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.interval_us, this.message_id];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.interval_us, this.message_id];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20026,8 +20026,8 @@ mavlink20.messages.extended_sys_state = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.vtol_state, this.landed_state];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.vtol_state, this.landed_state];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20103,7 +20103,7 @@ mavlink20.messages.adsb_vehicle = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.ICAO_address,
             this.lat,
             this.lon,
@@ -20118,7 +20118,7 @@ mavlink20.messages.adsb_vehicle = class extends mavlink20.message {
             this.emitter_type,
             this.tslc,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20176,7 +20176,7 @@ mavlink20.messages.collision = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.id,
             this.time_to_minimum_delta,
             this.altitude_minimum_delta,
@@ -20185,7 +20185,7 @@ mavlink20.messages.collision = class extends mavlink20.message {
             this.action,
             this.threat_level,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20238,14 +20238,14 @@ mavlink20.messages.v2_extension = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.message_type,
             this.target_network,
             this.target_system,
             this.target_component,
             this.payload,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20286,8 +20286,8 @@ mavlink20.messages.memory_vect = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.address, this.ver, this.type, this.value];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.address, this.ver, this.type, this.value];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20327,8 +20327,8 @@ mavlink20.messages.debug_vect = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_usec, this.x, this.y, this.z, this.name];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_usec, this.x, this.y, this.z, this.name];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20368,8 +20368,8 @@ mavlink20.messages.named_value_float = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_boot_ms, this.value, this.name];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_boot_ms, this.value, this.name];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20409,8 +20409,8 @@ mavlink20.messages.named_value_int = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_boot_ms, this.value, this.name];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_boot_ms, this.value, this.name];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20453,8 +20453,8 @@ mavlink20.messages.statustext = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.severity, this.text, this.id, this.chunk_seq];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.severity, this.text, this.id, this.chunk_seq];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20493,8 +20493,8 @@ mavlink20.messages.debug = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_boot_ms, this.value, this.ind];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_boot_ms, this.value, this.ind];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20544,13 +20544,13 @@ mavlink20.messages.setup_signing = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.initial_timestamp,
             this.target_system,
             this.target_component,
             this.secret_key,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20588,12 +20588,12 @@ mavlink20.messages.button_change = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.last_change_ms,
             this.state,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20637,13 +20637,13 @@ mavlink20.messages.play_tune = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.tune,
             this.tune2,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20723,7 +20723,7 @@ mavlink20.messages.camera_information = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.firmware_version,
             this.focal_length,
@@ -20739,7 +20739,7 @@ mavlink20.messages.camera_information = class extends mavlink20.message {
             this.cam_definition_uri,
             this.gimbal_device_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20784,13 +20784,13 @@ mavlink20.messages.camera_settings = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.mode_id,
             this.zoomLevel,
             this.focusLevel,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20864,7 +20864,7 @@ mavlink20.messages.storage_information = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.total_capacity,
             this.used_capacity,
@@ -20877,7 +20877,7 @@ mavlink20.messages.storage_information = class extends mavlink20.message {
             this.type,
             this.name,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -20936,7 +20936,7 @@ mavlink20.messages.camera_capture_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.image_interval,
             this.recording_time_ms,
@@ -20945,7 +20945,7 @@ mavlink20.messages.camera_capture_status = class extends mavlink20.message {
             this.video_status,
             this.image_count,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21018,7 +21018,7 @@ mavlink20.messages.camera_image_captured = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_utc,
             this.time_boot_ms,
             this.lat,
@@ -21031,7 +21031,7 @@ mavlink20.messages.camera_image_captured = class extends mavlink20.message {
             this.capture_result,
             this.file_url,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21075,13 +21075,13 @@ mavlink20.messages.flight_information = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.arming_time_utc,
             this.takeoff_time_utc,
             this.flight_uuid,
             this.time_boot_ms,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21127,14 +21127,14 @@ mavlink20.messages.mount_orientation = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.roll,
             this.pitch,
             this.yaw,
             this.yaw_absolute,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21189,7 +21189,7 @@ mavlink20.messages.logging_data = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.sequence,
             this.target_system,
             this.target_component,
@@ -21197,7 +21197,7 @@ mavlink20.messages.logging_data = class extends mavlink20.message {
             this.first_message_offset,
             this.data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21253,7 +21253,7 @@ mavlink20.messages.logging_data_acked = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.sequence,
             this.target_system,
             this.target_component,
@@ -21261,7 +21261,7 @@ mavlink20.messages.logging_data_acked = class extends mavlink20.message {
             this.first_message_offset,
             this.data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21299,12 +21299,12 @@ mavlink20.messages.logging_ack = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.sequence,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21379,7 +21379,7 @@ mavlink20.messages.video_stream_information = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.framerate,
             this.bitrate,
             this.flags,
@@ -21393,7 +21393,7 @@ mavlink20.messages.video_stream_information = class extends mavlink20.message {
             this.name,
             this.uri,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21455,7 +21455,7 @@ mavlink20.messages.video_stream_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.framerate,
             this.bitrate,
             this.flags,
@@ -21465,7 +21465,7 @@ mavlink20.messages.video_stream_status = class extends mavlink20.message {
             this.hfov,
             this.stream_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21533,7 +21533,7 @@ mavlink20.messages.camera_fov_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.lat_camera,
             this.lon_camera,
@@ -21545,7 +21545,7 @@ mavlink20.messages.camera_fov_status = class extends mavlink20.message {
             this.hfov,
             this.vfov,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21615,7 +21615,7 @@ mavlink20.messages.camera_tracking_image_status = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.point_x,
             this.point_y,
             this.radius,
@@ -21627,7 +21627,7 @@ mavlink20.messages.camera_tracking_image_status = class extends (
             this.tracking_mode,
             this.target_data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21706,7 +21706,7 @@ mavlink20.messages.camera_tracking_geo_status = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.lat,
             this.lon,
             this.alt,
@@ -21721,7 +21721,7 @@ mavlink20.messages.camera_tracking_geo_status = class extends (
             this.hdg_acc,
             this.tracking_status,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21788,7 +21788,7 @@ mavlink20.messages.gimbal_manager_information = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.cap_flags,
             this.roll_min,
@@ -21799,7 +21799,7 @@ mavlink20.messages.gimbal_manager_information = class extends (
             this.yaw_max,
             this.gimbal_device_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21858,7 +21858,7 @@ mavlink20.messages.gimbal_manager_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.flags,
             this.gimbal_device_id,
@@ -21867,7 +21867,7 @@ mavlink20.messages.gimbal_manager_status = class extends mavlink20.message {
             this.secondary_control_sysid,
             this.secondary_control_compid,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -21932,7 +21932,7 @@ mavlink20.messages.gimbal_manager_set_attitude = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.flags,
             this.q,
             this.angular_velocity_x,
@@ -21942,7 +21942,7 @@ mavlink20.messages.gimbal_manager_set_attitude = class extends (
             this.target_component,
             this.gimbal_device_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22033,7 +22033,7 @@ mavlink20.messages.gimbal_device_information = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.uid,
             this.time_boot_ms,
             this.firmware_version,
@@ -22051,7 +22051,7 @@ mavlink20.messages.gimbal_device_information = class extends mavlink20.message {
             this.custom_name,
             this.gimbal_device_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22129,7 +22129,7 @@ mavlink20.messages.gimbal_device_set_attitude = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.q,
             this.angular_velocity_x,
             this.angular_velocity_y,
@@ -22138,7 +22138,7 @@ mavlink20.messages.gimbal_device_set_attitude = class extends (
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22237,7 +22237,7 @@ mavlink20.messages.gimbal_device_attitude_status = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_ms,
             this.q,
             this.angular_velocity_x,
@@ -22251,7 +22251,7 @@ mavlink20.messages.gimbal_device_attitude_status = class extends (
             this.delta_yaw_velocity,
             this.gimbal_device_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22334,7 +22334,7 @@ mavlink20.messages.autopilot_state_for_gimbal_device = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_boot_us,
             this.q,
             this.q_estimated_delay_us,
@@ -22349,7 +22349,7 @@ mavlink20.messages.autopilot_state_for_gimbal_device = class extends (
             this.landed_state,
             this.angular_velocity_z,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22417,7 +22417,7 @@ mavlink20.messages.gimbal_manager_set_pitchyaw = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.flags,
             this.pitch,
             this.yaw,
@@ -22427,7 +22427,7 @@ mavlink20.messages.gimbal_manager_set_pitchyaw = class extends (
             this.target_component,
             this.gimbal_device_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22494,7 +22494,7 @@ mavlink20.messages.gimbal_manager_set_manual_control = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.flags,
             this.pitch,
             this.yaw,
@@ -22504,7 +22504,7 @@ mavlink20.messages.gimbal_manager_set_manual_control = class extends (
             this.target_component,
             this.gimbal_device_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22543,8 +22543,8 @@ mavlink20.messages.wifi_config_ap = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.ssid, this.password];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.ssid, this.password];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22636,7 +22636,7 @@ mavlink20.messages.ais_vessel = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.MMSI,
             this.lat,
             this.lon,
@@ -22655,7 +22655,7 @@ mavlink20.messages.ais_vessel = class extends mavlink20.message {
             this.callsign,
             this.name,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22713,7 +22713,7 @@ mavlink20.messages.uavcan_node_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.uptime_sec,
             this.vendor_specific_status_code,
@@ -22721,7 +22721,7 @@ mavlink20.messages.uavcan_node_status = class extends mavlink20.message {
             this.mode,
             this.sub_mode,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22792,7 +22792,7 @@ mavlink20.messages.uavcan_node_info = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.uptime_sec,
             this.sw_vcs_commit,
@@ -22803,7 +22803,7 @@ mavlink20.messages.uavcan_node_info = class extends mavlink20.message {
             this.sw_version_major,
             this.sw_version_minor,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22849,13 +22849,13 @@ mavlink20.messages.param_ext_request_read = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param_index,
             this.target_system,
             this.target_component,
             this.param_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22893,8 +22893,8 @@ mavlink20.messages.param_ext_request_list = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.target_system, this.target_component];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.target_system, this.target_component];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -22943,14 +22943,14 @@ mavlink20.messages.param_ext_value = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param_count,
             this.param_index,
             this.param_id,
             this.param_value,
             this.param_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23007,14 +23007,14 @@ mavlink20.messages.param_ext_set = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.param_id,
             this.param_value,
             this.param_type,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23058,13 +23058,13 @@ mavlink20.messages.param_ext_ack = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.param_id,
             this.param_value,
             this.param_type,
             this.param_result,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23129,7 +23129,7 @@ mavlink20.messages.obstacle_distance = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.distances,
             this.min_distance,
@@ -23140,7 +23140,7 @@ mavlink20.messages.obstacle_distance = class extends mavlink20.message {
             this.angle_offset,
             this.frame,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23237,7 +23237,7 @@ mavlink20.messages.odometry = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.x,
             this.y,
@@ -23257,7 +23257,7 @@ mavlink20.messages.odometry = class extends mavlink20.message {
             this.estimator_type,
             this.quality,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23318,7 +23318,7 @@ mavlink20.messages.isbd_link_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.timestamp,
             this.last_heartbeat,
             this.failed_sessions,
@@ -23328,7 +23328,7 @@ mavlink20.messages.isbd_link_status = class extends mavlink20.message {
             this.tx_session_pending,
             this.rx_session_pending,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23365,8 +23365,8 @@ mavlink20.messages.raw_rpm = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.frequency, this.index];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.frequency, this.index];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23461,7 +23461,7 @@ mavlink20.messages.utm_global_position = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time,
             this.lat,
             this.lon,
@@ -23481,7 +23481,7 @@ mavlink20.messages.utm_global_position = class extends mavlink20.message {
             this.flight_state,
             this.flags,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23523,13 +23523,13 @@ mavlink20.messages.debug_float_array = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.array_id,
             this.name,
             this.data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23623,7 +23623,7 @@ mavlink20.messages.smart_battery_info = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.capacity_full_specification,
             this.capacity_full,
             this.cycle_count,
@@ -23642,7 +23642,7 @@ mavlink20.messages.smart_battery_info = class extends mavlink20.message {
             this.discharge_maximum_burst_current,
             this.manufacture_date,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23713,7 +23713,7 @@ mavlink20.messages.generator_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.status,
             this.battery_current,
             this.load_current,
@@ -23726,7 +23726,7 @@ mavlink20.messages.generator_status = class extends mavlink20.message {
             this.rectifier_temperature,
             this.generator_temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23765,8 +23765,8 @@ mavlink20.messages.actuator_output_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_usec, this.active, this.actuator];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_usec, this.active, this.actuator];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23805,8 +23805,8 @@ mavlink20.messages.relay_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_boot_ms, this.on, this.present];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_boot_ms, this.on, this.present];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23862,14 +23862,14 @@ mavlink20.messages.tunnel = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.payload_type,
             this.target_system,
             this.target_component,
             this.payload_length,
             this.payload,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23917,7 +23917,7 @@ mavlink20.messages.can_frame = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.id,
             this.target_system,
             this.target_component,
@@ -23925,7 +23925,7 @@ mavlink20.messages.can_frame = class extends mavlink20.message {
             this.len,
             this.data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -23975,7 +23975,7 @@ mavlink20.messages.canfd_frame = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.id,
             this.target_system,
             this.target_component,
@@ -23983,7 +23983,7 @@ mavlink20.messages.canfd_frame = class extends mavlink20.message {
             this.len,
             this.data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24036,7 +24036,7 @@ mavlink20.messages.can_filter_modify = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.ids,
             this.target_system,
             this.target_component,
@@ -24044,7 +24044,7 @@ mavlink20.messages.can_filter_modify = class extends mavlink20.message {
             this.operation,
             this.num_ids,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24082,8 +24082,8 @@ mavlink20.messages.wheel_distance = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.time_usec, this.distance, this.count];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.time_usec, this.distance, this.count];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24144,7 +24144,7 @@ mavlink20.messages.winch_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.time_usec,
             this.line_length,
             this.speed,
@@ -24154,7 +24154,7 @@ mavlink20.messages.winch_status = class extends mavlink20.message {
             this.status,
             this.temperature,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24215,7 +24215,7 @@ mavlink20.messages.open_drone_id_basic_id = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.id_or_mac,
@@ -24223,7 +24223,7 @@ mavlink20.messages.open_drone_id_basic_id = class extends mavlink20.message {
             this.ua_type,
             this.uas_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24325,7 +24325,7 @@ mavlink20.messages.open_drone_id_location = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.latitude,
             this.longitude,
             this.altitude_barometric,
@@ -24346,7 +24346,7 @@ mavlink20.messages.open_drone_id_location = class extends mavlink20.message {
             this.speed_accuracy,
             this.timestamp_accuracy,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24419,7 +24419,7 @@ mavlink20.messages.open_drone_id_authentication = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.timestamp,
             this.target_system,
             this.target_component,
@@ -24430,7 +24430,7 @@ mavlink20.messages.open_drone_id_authentication = class extends (
             this.length,
             this.authentication_data,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24488,14 +24488,14 @@ mavlink20.messages.open_drone_id_self_id = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.id_or_mac,
             this.description_type,
             this.description,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24580,7 +24580,7 @@ mavlink20.messages.open_drone_id_system = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.operator_latitude,
             this.operator_longitude,
             this.area_ceiling,
@@ -24597,7 +24597,7 @@ mavlink20.messages.open_drone_id_system = class extends mavlink20.message {
             this.category_eu,
             this.class_eu,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24650,14 +24650,14 @@ mavlink20.messages.open_drone_id_operator_id = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.id_or_mac,
             this.operator_id_type,
             this.operator_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24695,8 +24695,8 @@ mavlink20.messages.open_drone_id_arm_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.status, this.error];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.status, this.error];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24758,7 +24758,7 @@ mavlink20.messages.open_drone_id_message_pack = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.target_system,
             this.target_component,
             this.id_or_mac,
@@ -24766,7 +24766,7 @@ mavlink20.messages.open_drone_id_message_pack = class extends (
             this.msg_pack_size,
             this.messages,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24828,7 +24828,7 @@ mavlink20.messages.open_drone_id_system_update = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.operator_latitude,
             this.operator_longitude,
             this.operator_altitude_geo,
@@ -24836,7 +24836,7 @@ mavlink20.messages.open_drone_id_system_update = class extends (
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24874,8 +24874,8 @@ mavlink20.messages.hygrometer_sensor = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.temperature, this.humidity, this.id];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.temperature, this.humidity, this.id];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -24937,7 +24937,7 @@ mavlink20.messages.uavionix_adsb_out_cfg = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.ICAO,
             this.stallSpeed,
             this.callsign,
@@ -24947,7 +24947,7 @@ mavlink20.messages.uavionix_adsb_out_cfg = class extends mavlink20.message {
             this.gpsOffsetLon,
             this.rfSelect,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25032,7 +25032,7 @@ mavlink20.messages.uavionix_adsb_out_dynamic = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.utcTime,
             this.gpsLat,
             this.gpsLon,
@@ -25050,7 +25050,7 @@ mavlink20.messages.uavionix_adsb_out_dynamic = class extends mavlink20.message {
             this.numSats,
             this.emergencyStatus,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25089,8 +25089,8 @@ mavlink20.messages.uavionix_adsb_transceiver_health_report = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.rfHealth];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.rfHealth];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25128,8 +25128,8 @@ mavlink20.messages.uavionix_adsb_out_cfg_registration = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.registration];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.registration];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25167,8 +25167,8 @@ mavlink20.messages.uavionix_adsb_out_cfg_flightid = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.flight_id];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.flight_id];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25204,8 +25204,8 @@ mavlink20.messages.uavionix_adsb_get = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.ReqMessageId];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.ReqMessageId];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25253,7 +25253,7 @@ mavlink20.messages.uavionix_adsb_out_control = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.baroAltMSL,
             this.squawk,
             this.state,
@@ -25261,7 +25261,7 @@ mavlink20.messages.uavionix_adsb_out_control = class extends mavlink20.message {
             this.flight_id,
             this.x_bit,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25310,7 +25310,7 @@ mavlink20.messages.uavionix_adsb_out_status = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.squawk,
             this.state,
             this.NIC_NACp,
@@ -25318,7 +25318,7 @@ mavlink20.messages.uavionix_adsb_out_status = class extends mavlink20.message {
             this.fault,
             this.flight_id,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25354,8 +25354,8 @@ mavlink20.messages.icarous_heartbeat = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.status];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.status];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25440,7 +25440,7 @@ mavlink20.messages.icarous_kinematic_bands = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.min1,
             this.max1,
             this.min2,
@@ -25458,7 +25458,7 @@ mavlink20.messages.icarous_kinematic_bands = class extends mavlink20.message {
             this.type4,
             this.type5,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25573,7 +25573,7 @@ mavlink20.messages.loweheiser_gov_efi = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.volt_batt,
             this.curr_batt,
             this.curr_gen,
@@ -25598,7 +25598,7 @@ mavlink20.messages.loweheiser_gov_efi = class extends mavlink20.message {
             this.efi_status,
             this.efi_index,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25634,8 +25634,8 @@ mavlink20.messages.cubepilot_raw_rc = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.rc_raw];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.rc_raw];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25698,7 +25698,7 @@ mavlink20.messages.herelink_video_stream_information = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.framerate,
             this.bitrate,
             this.resolution_h,
@@ -25708,7 +25708,7 @@ mavlink20.messages.herelink_video_stream_information = class extends (
             this.status,
             this.uri,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25758,7 +25758,7 @@ mavlink20.messages.herelink_telem = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.rf_freq,
             this.link_bw,
             this.link_rate,
@@ -25767,7 +25767,7 @@ mavlink20.messages.herelink_telem = class extends mavlink20.message {
             this.board_temp,
             this.rssi,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25808,13 +25808,13 @@ mavlink20.messages.cubepilot_firmware_update_start = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.size,
             this.crc,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25854,12 +25854,12 @@ mavlink20.messages.cubepilot_firmware_update_resp = class extends (
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.offset,
             this.target_system,
             this.target_component,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25896,8 +25896,8 @@ mavlink20.messages.airlink_auth = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.login, this.password];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.login, this.password];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25933,8 +25933,8 @@ mavlink20.messages.airlink_auth_response = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [this.resp_type];
-        var j = jspack.Pack(this._format, orderedfields);
+        const orderedfields = [this.resp_type];
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -25994,7 +25994,7 @@ mavlink20.messages.heartbeat = class extends mavlink20.message {
         this.set(arguments, true);
     }
     pack(mav) {
-        var orderedfields = [
+        const orderedfields = [
             this.custom_mode,
             this.type,
             this.autopilot,
@@ -26002,7 +26002,7 @@ mavlink20.messages.heartbeat = class extends mavlink20.message {
             this.system_status,
             this.mavlink_version,
         ];
-        var j = jspack.Pack(this._format, orderedfields);
+        const j = jspack.Pack(this._format, orderedfields);
         if (j === false) throw new Error("jspack unable to handle this packet");
         return mavlink20.message.prototype.pack.call(
             this,
@@ -27895,7 +27895,7 @@ class MAVLink20Processor extends events.EventEmitter {
         // Test for a message prefix.
         if (this.buf.length >= 1 && this.buf[0] != this.protocol_marker) {
             // Strip the offending initial byte and throw an error.
-            var badPrefix = this.buf[0];
+            const badPrefix = this.buf[0];
             this.bufInError = this.buf.slice(0, 1);
             this.buf = this.buf.slice(1);
             this.expected_length = mavlink20.HEADER_LEN; //initially we 'expect' at least the length of the header, later parseLength corrects for this.
@@ -27908,8 +27908,8 @@ class MAVLink20Processor extends events.EventEmitter {
     // once successful, 'this.expected_length' is correctly set for the whole packet.
     parseLength() {
         if (this.buf.length >= 3) {
-            var unpacked = jspack.Unpack("BBB", this.buf.slice(0, 3));
-            var magic = unpacked[0]; // stx ie fd or fe etc
+            const unpacked = jspack.Unpack("BBB", this.buf.slice(0, 3));
+            const magic = unpacked[0]; // stx ie fd or fe etc
             this.expected_length = unpacked[1] + mavlink20.HEADER_LEN + 2; // length of message + header + CRC (ie non-signed length)
             this.incompat_flags = unpacked[2];
             // mavlink2 only..  in mavlink1, incompat_flags var above is actually the 'seq', but for this test its ok.
@@ -27923,7 +27923,7 @@ class MAVLink20Processor extends events.EventEmitter {
     }
     // input some data bytes, possibly returning a new message - python equiv function is called parse_char / __parse_char_legacy
     parseChar(c) {
-        var m = null;
+        let m = null;
 
         try {
             this.pushBuffer(c);
@@ -27938,7 +27938,7 @@ class MAVLink20Processor extends events.EventEmitter {
         }
 
         // emit a packet-specific message as well as a generic message, user/s can choose to use either or both of these.
-        if (null != m) {
+        if (m != null) {
             this.emit(m._name, m);
             this.emit("message", m);
         }
@@ -27947,7 +27947,7 @@ class MAVLink20Processor extends events.EventEmitter {
     }
     // continuation of python's  __parse_char_legacy
     parsePayload() {
-        var m = null;
+        let m = null;
 
         // tip: this.expected_length and this.incompat_flags both already set correctly by parseLength(..) above
         // If we have enough bytes to try and read it, read it.
@@ -27958,7 +27958,7 @@ class MAVLink20Processor extends events.EventEmitter {
             this.buf.length >= this.expected_length
         ) {
             // Slice off the expected packet length, reset expectation to be to find a header.
-            var mbuf = this.buf.slice(0, this.expected_length);
+            const mbuf = this.buf.slice(0, this.expected_length);
 
             // TODO: slicing off the buffer should depend on the error produced by the decode() function
             // - if we find a well formed message, cut-off the expected_length
@@ -27981,19 +27981,19 @@ class MAVLink20Processor extends events.EventEmitter {
     // input some data bytes, possibly returning an array of new messages
     parseBuffer(s) {
         // Get a message, if one is available in the stream.
-        var m = this.parseChar(s);
+        let m = this.parseChar(s);
 
         // No messages available, bail.
-        if (null === m) {
+        if (m === null) {
             return null;
         }
 
         // While more valid messages can be read from the existing buffer, add
         // them to the array of new messages and return them.
-        var ret = [m];
+        const ret = [m];
         while (true) {
             m = this.parseChar();
-            if (null === m) {
+            if (m === null) {
                 // No more messages left.
                 return ret;
             }
@@ -28010,16 +28010,16 @@ class MAVLink20Processor extends events.EventEmitter {
         }
 
         //timestamp_buf = msgbuf[-12:-6]
-        var timestamp_buf = msgbuf.slice(-12, -6);
+        const timestamp_buf = msgbuf.slice(-12, -6);
 
         //link_id = msgbuf[-13]
-        var link_id = new Buffer.from(msgbuf.slice(-13, -12)); // just a single byte really, but returned as a buffer
+        let link_id = new Buffer.from(msgbuf.slice(-13, -12)); // just a single byte really, but returned as a buffer
         link_id = link_id[0]; // get the first byte.
 
         //self.mav_sign_unpacker = jspack.Unpack('<IH')
         // (tlow, thigh) = self.mav_sign_unpacker.unpack(timestamp_buf)
         // I means unsigned 4bytes, H means unsigned 2 bytes
-        var t = jspack.Unpack("<IH", new Buffer.from(timestamp_buf));
+        const t = jspack.Unpack("<IH", new Buffer.from(timestamp_buf));
         const [tlow, thigh] = t;
 
         // due to js not being able to shift numbers  more than 32, we'll use this instead..
@@ -28027,12 +28027,12 @@ class MAVLink20Processor extends events.EventEmitter {
         function shift(number, shift) {
             return number * Math.pow(2, shift);
         }
-        var thigh_shifted = shift(thigh, 32);
-        var timestamp = tlow + thigh_shifted;
+        const thigh_shifted = shift(thigh, 32);
+        const timestamp = tlow + thigh_shifted;
 
         // see if the timestamp is acceptable
         // we'll use a STRING containing these three things in it as a unique key eg: '0,1,1'
-        stream_key = new Array(link_id, srcSystem, srcComponent).toString();
+        stream_key = [link_id, srcSystem, srcComponent].toString();
 
         if (stream_key in this.signing.stream_timestamps) {
             if (timestamp <= this.signing.stream_timestamps[stream_key]) {
@@ -28054,13 +28054,13 @@ class MAVLink20Processor extends events.EventEmitter {
         //   h = hashlib.new('sha256')
         //   h.update(this.signing.secret_key)
         //   h.update(msgbuf[:-6])
-        var h = noSigning();
+        const h = noSigning();
 
         // just the last 6 of 13 available are the actual sig . ie excluding the linkid(1) and timestamp(6)
-        var sigpart = msgbuf.slice(-6);
+        let sigpart = msgbuf.slice(-6);
         sigpart = new Buffer.from(sigpart);
         // not sig part 0- end-minus-6
-        var notsigpart = msgbuf.slice(0, -6);
+        let notsigpart = msgbuf.slice(0, -6);
         notsigpart = new Buffer.from(notsigpart);
 
         h.update(this.signing.secret_key); // secret is already a Buffer
@@ -28068,7 +28068,7 @@ class MAVLink20Processor extends events.EventEmitter {
         //var tmp = h.copy().digest();
         h.update(notsigpart);
         //var tmp2 = h.copy().digest()
-        var hashDigest = h.digest();
+        const hashDigest = h.digest();
         sig1 = hashDigest.slice(0, 6);
 
         //sig1 = str(h.digest())[:6]
@@ -28086,7 +28086,7 @@ class MAVLink20Processor extends events.EventEmitter {
     }
     /* decode a buffer as a MAVLink message */
     decode(msgbuf) {
-        var magic,
+        let magic,
             mlen,
             seq,
             srcSystem,
@@ -28157,7 +28157,7 @@ class MAVLink20Processor extends events.EventEmitter {
 
         // decode the payload
         // refs: (fmt, type, order_map, crc_extra) = mavlink20.map[msgId]
-        var decoder = mavlink20.map[msgId];
+        const decoder = mavlink20.map[msgId];
 
         // decode the checksum
         try {
@@ -28169,7 +28169,7 @@ class MAVLink20Processor extends events.EventEmitter {
             throw new Error("Unable to unpack MAVLink CRC: " + e.message);
         }
 
-        var messageChecksum = mavlink20.x25Crc(
+        let messageChecksum = mavlink20.x25Crc(
             msgbuf.slice(1, msgbuf.length - 2),
         );
 
@@ -28212,7 +28212,7 @@ class MAVLink20Processor extends events.EventEmitter {
         }
 
         // Reorder the fields to match the order map
-        var args = (t ?? []).map((e, i) => t[decoder.order_map[i]]);
+        const args = (t ?? []).map((e, i) => t[decoder.order_map[i]]);
 
         // construct the message object
         try {
@@ -28242,7 +28242,7 @@ class MAVLink20Processor extends events.EventEmitter {
     }
     /* decode a buffer as a MAVLink message */
     checkIfValidMessage(msgbuf) {
-        var magic,
+        let magic,
             mlen,
             seq,
             srcSystem,
@@ -28313,7 +28313,7 @@ class MAVLink20Processor extends events.EventEmitter {
 
         // decode the payload
         // refs: (fmt, type, order_map, crc_extra) = mavlink20.map[msgId]
-        var decoder = mavlink20.map[msgId];
+        const decoder = mavlink20.map[msgId];
 
         // decode the checksum
         try {
@@ -28325,7 +28325,7 @@ class MAVLink20Processor extends events.EventEmitter {
             throw new Error("Unable to unpack MAVLink CRC: " + e.message);
         }
 
-        var messageChecksum = mavlink20.x25Crc(
+        let messageChecksum = mavlink20.x25Crc(
             msgbuf.slice(1, msgbuf.length - 2),
         );
 
@@ -28350,15 +28350,15 @@ class MAVLink20Processor extends events.EventEmitter {
     }
     preParse() {
         let i = 0;
-        let countv1 = 0;
-        let countv2 = 0;
+        const countv1 = 0;
+        const countv2 = 0;
         while (countv1 < 10 && countv2 < 10 && i < this.buf.length) {
             if (this.buf[i] === 253) {
-                let length = this.buf[i + 1] + 12;
-                let msgbuf = this.buf.slice(i, i + length);
+                const length = this.buf[i + 1] + 12;
+                const msgbuf = this.buf.slice(i, i + length);
                 // console.log(this.buf[i+1], length)
                 try {
-                    let m = this.checkIfValidMessage(msgbuf);
+                    const m = this.checkIfValidMessage(msgbuf);
                     if (!this.bufmap[m]) {
                         this.bufmap[m] = [];
                     }
@@ -28370,11 +28370,11 @@ class MAVLink20Processor extends events.EventEmitter {
                 }
             }
             if (this.buf[i] === 254) {
-                let length = this.buf[i + 1] + 8;
-                let msgbuf = this.buf.slice(i, i + length);
+                const length = this.buf[i + 1] + 8;
+                const msgbuf = this.buf.slice(i, i + length);
                 // console.log(this.buf[i+1], length)
                 try {
-                    let m = this.checkIfValidMessage(msgbuf);
+                    const m = this.checkIfValidMessage(msgbuf);
                     if (!this.bufmap[m]) {
                         this.bufmap[m] = [];
                     }
@@ -28387,9 +28387,9 @@ class MAVLink20Processor extends events.EventEmitter {
             }
             i += 1;
         }
-        let nameList = [];
-        for (let id of Object.keys(this.bufmap)) {
-            for (let name of Object.keys(mavlink20.nameMap)) {
+        const nameList = [];
+        for (const id of Object.keys(this.bufmap)) {
+            for (const name of Object.keys(mavlink20.nameMap)) {
                 if (mavlink20.nameMap[name] == id) {
                     nameList.push(name);
                 }
@@ -28404,7 +28404,7 @@ class MAVLink20Processor extends events.EventEmitter {
         return offset >= 8 ? Number(this.buf.readBigUInt64BE(offset - 8)) : 0;
     }
     parseType(type) {
-        let messages = [];
+        const messages = [];
         if (!Object.keys(mavlink20.nameMap).includes(type)) {
             throw new Error("no message!! " + type);
         }
@@ -28412,10 +28412,10 @@ class MAVLink20Processor extends events.EventEmitter {
             console.log("could not find message: " + type);
             return;
         }
-        for (let offsets of this.bufmap[mavlink20.nameMap[type]]) {
-            let m = this.decode(this.buf.slice(offsets[0], offsets[1]));
+        for (const offsets of this.bufmap[mavlink20.nameMap[type]]) {
+            const m = this.decode(this.buf.slice(offsets[0], offsets[1]));
             // The 8 bytes preceding the mavlink message are actually a very useful timestamp saved by the GCS!
-            let timestamp = this.tlogTimestamp(offsets[0]);
+            const timestamp = this.tlogTimestamp(offsets[0]);
             if (this.startTime === null) {
                 this.startTime = timestamp / 1000;
             }
@@ -28434,9 +28434,9 @@ class MAVLink20Processor extends events.EventEmitter {
     trimFile(start, end) {
         let startOffset = null;
         let endOffset = null;
-        for (let offsets of this.bufmap[mavlink20.nameMap["HEARTBEAT"]]) {
+        for (const offsets of this.bufmap[mavlink20.nameMap["HEARTBEAT"]]) {
             // The 8 bytes preceding the mavlink message are actually a very useful timestamp saved by the GCS!
-            let timestamp =
+            const timestamp =
                 this.tlogTimestamp(offsets[0]) / 1000 - this.startTime;
             // arbitrary huge number we'll cap our results at to cope with corrupt timestamps
             if (timestamp > 21796250065390) continue;
@@ -28469,18 +28469,18 @@ MAVLink20Processor.prototype.log = function (level, message) {
 
 // from Buffer to ArrayBuffer
 function toArrayBuffer(buf) {
-    var ab = new ArrayBuffer(buf.length);
-    var view = new Uint8Array(ab);
-    for (var i = 0; i < buf.length; ++i) {
+    const ab = new ArrayBuffer(buf.length);
+    const view = new Uint8Array(ab);
+    for (let i = 0; i < buf.length; ++i) {
         view[i] = buf[i];
     }
     return ab;
 }
 // and back
 function toBuffer(ab) {
-    var buf = Buffer.alloc(ab.byteLength);
-    var view = new Uint8Array(ab);
-    for (var i = 0; i < buf.length; ++i) {
+    const buf = Buffer.alloc(ab.byteLength);
+    const view = new Uint8Array(ab);
+    for (let i = 0; i < buf.length; ++i) {
         buf[i] = view[i];
     }
     return buf;

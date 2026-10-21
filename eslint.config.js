@@ -15,8 +15,9 @@ export default [
             "test/e2e/reports/",
             // Python virtual environments (scripts/terrain/.venv)
             "**/.venv/",
-            // generated MAVLink binding and the DataFlash parser submodule
-            "src/libs/",
+            // generated MAVLink bindings
+            "src/shared/lib/mavlink.js",
+            // generated log parsers
             "src/tools/parsers/JsDataflashParser/",
         ],
     },
@@ -48,7 +49,7 @@ export default [
         },
     },
     {
-        // Plot expressions are user-entered JavaScript by design (see src/mavextra/)
+        // Plot expressions are user-entered JavaScript by design (see src/shared/lib/mavextra/)
         files: ["src/components/Plotly.vue"],
         rules: { "sonarjs/code-eval": "off", "no-new-func": "off" },
     },

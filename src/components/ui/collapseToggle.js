@@ -1,4 +1,4 @@
-import { eventHub } from "../../eventHub.js";
+import { eventHub } from "@/shared/lib/eventHub.js";
 
 // v-collapse-toggle="'name'": clicking the element opens or closes the <Collapse name="name">
 // panels.

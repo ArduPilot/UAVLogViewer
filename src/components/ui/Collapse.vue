@@ -4,7 +4,7 @@
 
 <script>
 import BsCollapse from "bootstrap/js/dist/collapse";
-import { eventHub } from "../../eventHub.js";
+import { eventHub } from "@/shared/lib/eventHub.js";
 
 // A panel that opens and closes when an element with v-collapse-toggle="name" is clicked.
 // Several panels may share a name; they toggle together. Bootstrap's Collapse opens and closes

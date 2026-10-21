@@ -39,7 +39,7 @@
 <script>
 import { store } from "../Globals.js";
 import { useWidget, widgetProps } from "./useWidget.js";
-import { Interpolator } from "./interpolator.js";
+import { Interpolator } from "@/shared/lib/interpolator.js";
 
 export default {
     name: "TxInputsViewer",

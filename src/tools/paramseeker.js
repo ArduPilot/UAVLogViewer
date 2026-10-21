@@ -1,4 +1,4 @@
-import { eventHub } from "../eventHub.js";
+import { eventHub } from "@/shared/lib/eventHub.js";
 
 export class ParamSeeker {
     // ..and an (optional) custom class constructor. If one is

@@ -1,7 +1,7 @@
-import "../mavextra/mavextra";
-import "../mavextra/mymavextra";
+import "@/shared/lib/mavextra/mavextra";
+import "@/shared/lib/mavextra/mymavextra";
 import { markRaw, reactive } from "vue";
-import { eventHub } from "../eventHub.js";
+import { eventHub } from "@/shared/lib/eventHub.js";
 
 // Log data the app only replaces, never edits in place (messages, trajectories, attitudes,
 // parameters, plot data, Cesium colors): Vue keeps it as it is instead of proxying every object

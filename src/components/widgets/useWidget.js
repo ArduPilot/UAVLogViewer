@@ -1,5 +1,5 @@
 import { onBeforeUnmount, onMounted, ref } from "vue";
-import { eventHub } from "../../eventHub.js";
+import { eventHub } from "@/shared/lib/eventHub.js";
 
 // The floating tool windows (div#pane<name>): moved by dragging their top-left corner, resized by
 // dragging their bottom-right one, closed with a "close" event. Widgets that list parameters call
