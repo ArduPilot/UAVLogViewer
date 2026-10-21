@@ -717,14 +717,15 @@ export default {
                     return { error: e };
                 }
                 if (typeof val !== "number") {
-                    console.log(val);
                     return {
                         error: new Error(
                             "Expression does not result in a number",
                         ),
                     };
                 }
-                y.push(val);
+                // NaN/Infinity → gap in the series.
+                // Handles: sqrt(negative) → NaN, 1/0 → Infinity, log(-1) → NaN, 0/0 → NaN.
+                y.push(Number.isFinite(val) ? val : null);
             }
             console.log("evaluated " + expression);
             const data = this.addGaps({
