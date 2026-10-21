@@ -50,7 +50,7 @@
 </template>
 <script>
 import VProgress from "./SideBarFileManagerProgressBar.vue";
-import sampleLog from "@/assets/vtol.tlog";
+import sampleLog from "@/assets/samples/vtol.tlog";
 import { toRaw } from "vue";
 import { keepRaw, store, resetLogState } from "@/shared/stores/index.js";
 import { downloadObjectUrl } from "@/shared/lib/download.js";

@@ -70,7 +70,7 @@ npx vitest run -t "parse"                            # filter by test name
 
 ### Plot expressions
 
-Plot series are user expressions such as `ATT.Roll * 2` or `lowpass(ATTITUDE.pitch, 0.9)`. `Plotly.vue#evaluateExpression` finds the uppercase message names in the expression (whole words not preceded by a dot, so `Math.PI` is not a message), rewrites them to `a[i].`, compiles the result with `new Function`, and evaluates it over time-aligned rows. Results are cached in `state.plotCache` by expression string. Expressions can call helpers that `src/shared/lib/mavextra/mavextra.js` and `mymavextra.js` attach to `globalThis` (a port of pymavlink's mavextra; uses `vector3.js` and `matrix3.js`). Their snake_case names are public API, used by saved expressions and by the preset graphs in `src/assets/mavgraphs*.xml` and `ekf*Graphs.xml` (MAVExplorer format; `parse_mavgraph.py` is the converter). Don't rename them.
+Plot series are user expressions such as `ATT.Roll * 2` or `lowpass(ATTITUDE.pitch, 0.9)`. `Plotly.vue#evaluateExpression` finds the uppercase message names in the expression (whole words not preceded by a dot, so `Math.PI` is not a message), rewrites them to `a[i].`, compiles the result with `new Function`, and evaluates it over time-aligned rows. Results are cached in `state.plotCache` by expression string. Expressions can call helpers that `src/shared/lib/mavextra/mavextra.js` and `mymavextra.js` attach to `globalThis` (a port of pymavlink's mavextra; uses `vector3.js` and `matrix3.js`). Their snake_case names are public API, used by saved expressions and by the preset graphs in `src/assets/xml/mavgraphs*.xml` and `xml/ekf*Graphs.xml` (MAVExplorer format; `parse_mavgraph.py` is the converter). Don't rename them.
 
 ## Code style
 

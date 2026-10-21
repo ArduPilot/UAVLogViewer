@@ -210,8 +210,8 @@ import { store } from "@/shared/stores/index.js";
 import { downloadData } from "@/shared/lib/download.js";
 import PlotSetup from "@/features/plot/components/PlotSetup.vue";
 import Collapse from "@/shared/ui/Collapse.vue";
-import githubIcon from "@/assets/GitHub-Mark-64px.png";
-import wikiIcon from "@/assets/wiki.svg";
+import githubIcon from "@/assets/images/GitHub-Mark-64px.png";
+import wikiIcon from "@/assets/images/wiki.svg";
 
 export default {
     name: "Sidebar",
