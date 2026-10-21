@@ -72,18 +72,14 @@ Feature-slice layout: `src/{app,features,shared,assets}`.
 - [x] Orphaned ids swept: `#paneContent` and `paneinputViewer` confirmed
       gone from all sources outside the widget files.
 
-### Pending: widget registry in `src/app/Layout.vue`
+### Closed: widget registry in `src/app/Layout.vue`
 
-Each widget currently has a hand-written `@close="state.showX = false"`.
-`TxInputsViewer` shipped without one before the reorg — its close button
-was a silent no-op. A registry that enumerates widgets and wires their
-close handlers at registration time makes that class of bug impossible
-by construction.
-
-- [ ] Introduce `state.widgets = { <key>: { component, show, gate? }, ... }`.
-- [ ] Migrate the 7 widget mounts in `src/app/Layout.vue`.
-- [ ] Decide `v-show` (keep state on hide) vs `v-if` (fresh widget on show).
-- [ ] Delete the per-widget `state.showX` flags.
+- [x] Not done as a v-for + :is registry — decided against for seven
+      widgets. The failure mode (a widget shipping without `@close`) is
+      covered by test/unit/specs/layout-widgets.spec.js instead, which
+      reads Layout.vue and asserts every widget tag has `@close`. Keeps
+      explicit tags, prevents the bug. Revisit the registry past ~10
+      widgets or 2+ maintainers.
 
 ### Done: hit zones vs. visual handles
 
