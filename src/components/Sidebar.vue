@@ -204,7 +204,7 @@
     </div>
 </template>
 <script>
-import Dropzone from "./SideBarFileManager.vue";
+import Dropzone from "@/features/loader/components/SideBarFileManager.vue";
 import MessageMenu from "./SideBarMessageMenu.vue";
 import { store } from "@/shared/stores/index.js";
 import { downloadData } from "@/shared/lib/download.js";

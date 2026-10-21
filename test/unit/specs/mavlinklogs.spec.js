@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import { MavlinkDataExtractor } from "../../../src/tools/mavlinkDataExtractor.js";
-import { MavlinkParser } from "../../../src/tools/parsers/mavlinkParser.js";
+import { MavlinkDataExtractor } from "@/features/loader/extractors/mavlinkDataExtractor.js";
+import { MavlinkParser } from "@/features/loader/parsers/mavlinkParser.js";
 import { findTestLogs } from "../testlogs.js";
 
 const files = findTestLogs(["tlog"]);

@@ -19,7 +19,7 @@ export default [
             // generated MAVLink bindings
             "src/shared/lib/mavlink.js",
             // generated log parsers
-            "src/tools/parsers/JsDataflashParser/",
+            "src/features/loader/parsers/JsDataflashParser/",
         ],
     },
     js.configs.recommended,
@@ -72,7 +72,7 @@ export default [
     },
     {
         // the log parsers run in a web worker
-        files: ["src/tools/parsers/**/*.js"],
+        files: ["src/features/loader/parsers/**/*.js"],
         languageOptions: { globals: globals.worker },
     },
     {

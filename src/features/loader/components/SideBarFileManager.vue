@@ -57,7 +57,7 @@ import { downloadObjectUrl } from "@/shared/lib/download.js";
 
 // webpack 5 and Vite both bundle a worker created this way
 const worker = new Worker(
-    new URL("../tools/parsers/parser.worker.js", import.meta.url),
+    new URL("../parsers/parser.worker.js", import.meta.url),
     { type: "module" },
 );
 

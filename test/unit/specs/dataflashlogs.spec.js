@@ -1,6 +1,6 @@
 import fs from "node:fs";
-import { DataflashDataExtractor } from "../../../src/tools/dataflashDataExtractor.js";
-import DataflashParser from "../../../src/tools/parsers/JsDataflashParser/parser.js";
+import { DataflashDataExtractor } from "@/features/loader/extractors/dataflashDataExtractor.js";
+import DataflashParser from "@/features/loader/parsers/JsDataflashParser/parser.js";
 import { findTestLogs } from "../testlogs.js";
 
 const files = findTestLogs(["bin"]);

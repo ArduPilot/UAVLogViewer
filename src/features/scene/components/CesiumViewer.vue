@@ -98,9 +98,9 @@ import {
 import { DateTime } from "luxon";
 
 import { keepRaw, store } from "@/shared/stores/index.js";
-import { DataflashDataExtractor } from "@/tools/dataflashDataExtractor";
-import { MavlinkDataExtractor } from "@/tools/mavlinkDataExtractor";
-import { DjiDataExtractor } from "@/tools/djiDataExtractor";
+import { DataflashDataExtractor } from "@/features/loader/extractors/dataflashDataExtractor";
+import { MavlinkDataExtractor } from "@/features/loader/extractors/mavlinkDataExtractor";
+import { DjiDataExtractor } from "@/features/loader/extractors/djiDataExtractor";
 import "cesium/Build/Cesium/Widgets/widgets.css";
 import CesiumSettingsPanel from "./CesiumSettingsPanel.vue";
 import homeIcon from "@/assets/home2.png";
