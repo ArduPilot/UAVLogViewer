@@ -1,6 +1,6 @@
 # Project reorganization — plan
 
-Status: **step 1 in progress** (moves done in working tree, uncommitted).
+Status: **complete** (2026-10-20).
 Steps 1b–7 not started. See §10 for current-state checklist.
 
 ## 1. Why
@@ -23,20 +23,20 @@ Six problems, all visible in the tree:
 
 ## 2. Decisions locked
 
-| Decision | Answer |
-| --- | --- |
-| Reorg shape | **Option A — feature slices.** Upstream rebase is not a concern. |
-| `ExpressionEditor.vue` | → `features/plot/components/` (only `PlotSetup` uses it) |
-| `SideBarMessageMenu.vue` | → `features/sidebar/components/` (sidebar's message list, not the widget) |
-| `CesiumSettingsWidget.vue` | → `features/scene/components/CesiumSettingsPanel.vue` (**renamed**) |
-| `interpolator.js` | → `shared/lib/` (time-interpolation helper) |
-| `assets/` | **Split** into `models/`, `images/`, `xml/`, `samples/` |
-| `parse_mavgraph.py` | → `scripts/` (it's a dev tool; `scripts/` already exists with `terrain/`) |
-| `Home.vue` | → `app/Layout.vue` (**renamed**) |
-| `TreeMenu.vue` | → `shared/ui/` |
-| `useWidget.js` / `widget.css` | Stay in `features/widgets/core/` |
-| `SideBarFileManager` file rename | **Deferred.** The move to `features/loader/components/` is step 4c; the file rename is a separate follow-up. |
-| Relative-import style | **Enforced by ESLint in step 1b.** Cross-directory imports use `@/`; sibling imports (`./X.js`) stay relative. |
+| Decision                         | Answer                                                                                                         |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Reorg shape                      | **Option A — feature slices.** Upstream rebase is not a concern.                                               |
+| `ExpressionEditor.vue`           | → `features/plot/components/` (only `PlotSetup` uses it)                                                       |
+| `SideBarMessageMenu.vue`         | → `features/sidebar/components/` (sidebar's message list, not the widget)                                      |
+| `CesiumSettingsWidget.vue`       | → `features/scene/components/CesiumSettingsPanel.vue` (**renamed**)                                            |
+| `interpolator.js`                | → `shared/lib/` (time-interpolation helper)                                                                    |
+| `assets/`                        | **Split** into `models/`, `images/`, `xml/`, `samples/`                                                        |
+| `parse_mavgraph.py`              | → `scripts/` (it's a dev tool; `scripts/` already exists with `terrain/`)                                      |
+| `Home.vue`                       | → `app/Layout.vue` (**renamed**)                                                                               |
+| `TreeMenu.vue`                   | → `shared/ui/`                                                                                                 |
+| `useWidget.js` / `widget.css`    | Stay in `features/widgets/core/`                                                                               |
+| `SideBarFileManager` file rename | **Deferred.** The move to `features/loader/components/` is step 4c; the file rename is a separate follow-up.   |
+| Relative-import style            | **Enforced by ESLint in step 1b.** Cross-directory imports use `@/`; sibling imports (`./X.js`) stay relative. |
 
 ## 3. Target tree
 
@@ -158,13 +158,13 @@ Every script is `dist`-relative or glob-based. `start`, `unit`, `e2e`,
 
 ### `src/main.js` — internal imports that change per step
 
-| Step | Import | Before | After |
-| --- | --- | --- | --- |
-| 1 | `@/shared/lib/eventHub.js` | already correct (done in working tree) | — |
-| 2 | `./components/ui/collapseToggle.js` | relative | `@/shared/ui/collapseToggle.js` |
-| 3 | `./styles/widget.css` | relative | `@/features/widgets/core/widget.css` |
-| 5 | `./App.vue` | relative | relative (both in `src/app/`, no change) |
-| 5 | `./router` | relative | relative (both in `src/app/`, no change) |
+| Step | Import                              | Before                                 | After                                    |
+| ---- | ----------------------------------- | -------------------------------------- | ---------------------------------------- |
+| 1    | `@/shared/lib/eventHub.js`          | already correct (done in working tree) | —                                        |
+| 2    | `./components/ui/collapseToggle.js` | relative                               | `@/shared/ui/collapseToggle.js`          |
+| 3    | `./styles/widget.css`               | relative                               | `@/features/widgets/core/widget.css`     |
+| 5    | `./App.vue`                         | relative                               | relative (both in `src/app/`, no change) |
+| 5    | `./router`                          | relative                               | relative (both in `src/app/`, no change) |
 
 ### `AttitudeIndicator.vue` — five relative img imports, all `./img/*.svg`
 
@@ -227,12 +227,12 @@ still applies nightwatch globals to `test/e2e/*.js` via the `files:` block
 
 ### `eslint.config.js`
 
-| Line | Before | After | Step |
-| --- | --- | --- | --- |
-| 21 | `"src/tools/parsers/JsDataflashParser/"` | `"src/features/loader/parsers/JsDataflashParser/"` | 4c |
-| 52 | comment `(see src/mavextra/)` | `(see src/shared/lib/mavextra/)` | 1 |
-| 53 | `"src/components/Plotly.vue"` | `"src/features/plot/components/Plotly.vue"` | 4b |
-| 58 | `"src/tools/parsers/**/*.js"` | `"src/features/loader/parsers/**/*.js"` | 4c |
+| Line | Before                                   | After                                              | Step |
+| ---- | ---------------------------------------- | -------------------------------------------------- | ---- |
+| 21   | `"src/tools/parsers/JsDataflashParser/"` | `"src/features/loader/parsers/JsDataflashParser/"` | 4c   |
+| 52   | comment `(see src/mavextra/)`            | `(see src/shared/lib/mavextra/)`                   | 1    |
+| 53   | `"src/components/Plotly.vue"`            | `"src/features/plot/components/Plotly.vue"`        | 4b   |
+| 58   | `"src/tools/parsers/**/*.js"`            | `"src/features/loader/parsers/**/*.js"`            | 4c   |
 
 **Why narrowing the ignore:** `"src/libs/"` becomes `"src/shared/lib/mavlink.js"`
 (step 1, already done). Replacing it with `"src/shared/lib/"` would also
@@ -249,16 +249,16 @@ linted.
 
 ### Files with **no changes at any step**
 
-| File | Why |
-| --- | --- |
-| `vite.config.js` | `resolve.alias["@"]`, `assetsInclude`, `optimizeDeps.entries` — layout-agnostic |
-| `vitest.config.js` | Merges `vite.config.js`; nothing hardcoded |
-| `stylelint.config.js` | Globs `src/**/*.{vue,css,scss}` |
-| `ruff.toml` | Globs; no hardcoded paths |
-| `package.json` scripts | `vite build`, `vite`, `serve -s dist`, `vitest run`, `eslint .` — layout-agnostic |
-| `Containerfile.dev`, `Dockerfile` | `COPY src ./src` — layout-agnostic |
-| `test/e2e/*` | Uses `test/e2e/runner.js`, not source paths |
-| `.github/workflows/nodejs.yml` | Runs npm scripts; no hardcoded source paths |
+| File                              | Why                                                                               |
+| --------------------------------- | --------------------------------------------------------------------------------- |
+| `vite.config.js`                  | `resolve.alias["@"]`, `assetsInclude`, `optimizeDeps.entries` — layout-agnostic   |
+| `vitest.config.js`                | Merges `vite.config.js`; nothing hardcoded                                        |
+| `stylelint.config.js`             | Globs `src/**/*.{vue,css,scss}`                                                   |
+| `ruff.toml`                       | Globs; no hardcoded paths                                                         |
+| `package.json` scripts            | `vite build`, `vite`, `serve -s dist`, `vitest run`, `eslint .` — layout-agnostic |
+| `Containerfile.dev`, `Dockerfile` | `COPY src ./src` — layout-agnostic                                                |
+| `test/e2e/*`                      | Uses `test/e2e/runner.js`, not source paths                                       |
+| `.github/workflows/nodejs.yml`    | Runs npm scripts; no hardcoded source paths                                       |
 
 ## 6. Migration steps
 
@@ -326,44 +326,46 @@ every later step starts chasing mixed relative and aliased imports.
 
 1. Install the plugin:
 
-   ```powershell
-   npm install -D eslint-plugin-no-relative-import-paths
-   ```
+    ```powershell
+    npm install -D eslint-plugin-no-relative-import-paths
+    ```
 
 2. Add to `eslint.config.js` — import at the top:
 
-   ```js
-   import noRelativeImportPaths from "eslint-plugin-no-relative-import-paths";
-   ```
+    ```js
+    import noRelativeImportPaths from "eslint-plugin-no-relative-import-paths";
+    ```
 
-   …and a scoped block near the other Vue rules:
+    …and a scoped block near the other Vue rules:
 
-   ```js
-   {
-       files: ["src/**/*.{js,vue}"],
-       plugins: { "no-relative-import-paths": noRelativeImportPaths },
-       rules: {
-           // Cross-directory imports use the @/ alias; sibling imports
-           // (./Collapse.vue) stay relative. --fix rewrites the rest.
-           // See the plugin README to confirm the option names.
-           "no-relative-import-paths/no-relative-import-paths": [
-               "error",
-               { allowSameFolder: true, rootDir: "src", prefix: "@" },
-           ],
-       },
-   }
-   ```
+    ```js
+    {
+        files: ["src/**/*.{js,vue}"],
+        plugins: { "no-relative-import-paths": noRelativeImportPaths },
+        rules: {
+            // Cross-directory imports use the @/ alias; sibling imports
+            // (./Collapse.vue) stay relative. --fix rewrites the rest.
+            // See the plugin README to confirm the option names.
+            "no-relative-import-paths/no-relative-import-paths": [
+                "error",
+                { allowSameFolder: true, rootDir: "src", prefix: "@" },
+            ],
+        },
+    }
+    ```
 
-   **Confirm option names against the plugin README before saving** — the
-   plugin has changed its option shape across versions.
+    **Confirm option names against the plugin README before saving** — the
+    plugin has changed its option shape across versions.
+
 3. Run the autofix over `src/`:
 
-   ```powershell
-   npx eslint --fix src/
-   ```
+    ```powershell
+    npx eslint --fix src/
+    ```
 
-   Expect ~40–60 files changed, each a mechanical single-line rewrite
-   (`../mavextra/vector3` → `@/shared/lib/mavextra/vector3`).
+    Expect ~40–60 files changed, each a mechanical single-line rewrite
+    (`../mavextra/vector3` → `@/shared/lib/mavextra/vector3`).
+
 4. Review 3 samples to confirm the pattern; trust the rest.
 
 **Verification gate:**
@@ -607,6 +609,7 @@ Also update `CLAUDE.md`:
 Update `docs/widgets.md` and `TODO.md` (see Appendix A, "docs/widgets.md
 and TODO.md"). Then update the top of this file.
 <!-- markdownlint-disable MD046 -->
+
 Replace:
 
     Status: **step 1 in progress** …
@@ -618,6 +621,7 @@ With:
 Do this as a 4-space indented block, not a fenced one — nested fences break
 renderers.
 <!-- markdownlint-disable MD046 -->
+
 ## 7. Verification protocol
 
 Run after each step before committing:
@@ -658,14 +662,7 @@ Not touched by this reorg:
 
 ## 10. Current state
 
-Track this before resuming:
-
-- **Step 1** — moves done in working tree, imports patched, uncommitted.
-  Verification gate (§6 step 1) not yet run. Commit next.
-- **Steps 1b–7** — not started.
-
-Before resuming, the plan's `Status` line at the top must match this
-section. If they drift, this section is the truth.
+All steps 1–7 complete. See git log for the commit sequence.
 
 ## Appendix A — path reference inventory
 
@@ -675,92 +672,92 @@ exactly as it does to `eslint.config.js`.
 
 ### `CLAUDE.md`
 
-| Line | Current | New | Step |
-| --- | --- | --- | --- |
-| 24 | `src/assets/parse_mavgraph.py` | `scripts/parse_mavgraph.py` | 2 |
-| 46 | `src="/src/main.js"` | `src="/src/app/main.js"` | 5 |
-| 49 | `../assets/x.png` (example) | `../assets/images/x.png` | 6 |
-| 56 | `components/SideBarFileManager.vue` | `features/loader/components/SideBarFileManager.vue` | 4c |
-| 56 | `parser.worker.js` (2×) | same name, new folder `features/loader/parsers/` | 4c |
-| 57 | `tools/parsers/parser.worker.js` | `features/loader/parsers/parser.worker.js` | 4c |
-| 59 | `src/libs/mavlink.js` | `src/shared/lib/mavlink.js` | 1 |
-| 62 | `components/Globals.js` | `shared/stores/index.js` | 2 |
-| 62 | `tools/flightTime.js` | `shared/lib/flightTime.js` | 1b |
-| 63 | `components/Home.vue#extractFlightData` | `app/Layout.vue#extractFlightData` | 5 |
-| 63 | `tools/dataflashDataExtractor.js` | `features/loader/extractors/dataflashDataExtractor.js` | 4c |
-| 63 | `mavlinkDataExtractor.js`, `djiDataExtractor.js` | same folder as above | 4c |
-| 64 | `tools/plotTimeAxis.js` | `features/plot/lib/plotTimeAxis.js` | 4b |
-| 64 | `components/cesiumExtra/` | `features/scene/lib/` | 4a |
-| 64 | `components/widgets/` | `features/widgets/instances/` | 3 |
-| 64 | `widgets/useWidget.js` | `features/widgets/core/useWidget.js` | 3 |
-| 64 | `src/router/index.js` | `src/app/router/index.js` | 5 |
-| 68 | `src/shared/lib/eventHub.js` | no change (already correct after step 1) | — |
-| 72 | `src/mavextra/mavextra.js`, `mymavextra.js`, `vector3.js`, `matrix3.js` | `src/shared/lib/mavextra/...` | 1 |
-| 72 | `src/assets/mavgraphs*.xml`, `ekf*Graphs.xml` | `src/assets/xml/mavgraphs*.xml`, `ekf*Graphs.xml` | 6 |
-| 72 | `parse_mavgraph.py` (second mention) | `scripts/parse_mavgraph.py` | 2 |
-| 77 | `src/libs/` (generated) | `src/shared/lib/mavlink.js` (generated) | 1 |
+| Line | Current                                                                 | New                                                    | Step |
+| ---- | ----------------------------------------------------------------------- | ------------------------------------------------------ | ---- |
+| 24   | `src/assets/parse_mavgraph.py`                                          | `scripts/parse_mavgraph.py`                            | 2    |
+| 46   | `src="/src/main.js"`                                                    | `src="/src/app/main.js"`                               | 5    |
+| 49   | `../assets/x.png` (example)                                             | `../assets/images/x.png`                               | 6    |
+| 56   | `components/SideBarFileManager.vue`                                     | `features/loader/components/SideBarFileManager.vue`    | 4c   |
+| 56   | `parser.worker.js` (2×)                                                 | same name, new folder `features/loader/parsers/`       | 4c   |
+| 57   | `tools/parsers/parser.worker.js`                                        | `features/loader/parsers/parser.worker.js`             | 4c   |
+| 59   | `src/libs/mavlink.js`                                                   | `src/shared/lib/mavlink.js`                            | 1    |
+| 62   | `components/Globals.js`                                                 | `shared/stores/index.js`                               | 2    |
+| 62   | `tools/flightTime.js`                                                   | `shared/lib/flightTime.js`                             | 1b   |
+| 63   | `components/Home.vue#extractFlightData`                                 | `app/Layout.vue#extractFlightData`                     | 5    |
+| 63   | `tools/dataflashDataExtractor.js`                                       | `features/loader/extractors/dataflashDataExtractor.js` | 4c   |
+| 63   | `mavlinkDataExtractor.js`, `djiDataExtractor.js`                        | same folder as above                                   | 4c   |
+| 64   | `tools/plotTimeAxis.js`                                                 | `features/plot/lib/plotTimeAxis.js`                    | 4b   |
+| 64   | `components/cesiumExtra/`                                               | `features/scene/lib/`                                  | 4a   |
+| 64   | `components/widgets/`                                                   | `features/widgets/instances/`                          | 3    |
+| 64   | `widgets/useWidget.js`                                                  | `features/widgets/core/useWidget.js`                   | 3    |
+| 64   | `src/router/index.js`                                                   | `src/app/router/index.js`                              | 5    |
+| 68   | `src/shared/lib/eventHub.js`                                            | no change (already correct after step 1)               | —    |
+| 72   | `src/mavextra/mavextra.js`, `mymavextra.js`, `vector3.js`, `matrix3.js` | `src/shared/lib/mavextra/...`                          | 1    |
+| 72   | `src/assets/mavgraphs*.xml`, `ekf*Graphs.xml`                           | `src/assets/xml/mavgraphs*.xml`, `ekf*Graphs.xml`      | 6    |
+| 72   | `parse_mavgraph.py` (second mention)                                    | `scripts/parse_mavgraph.py`                            | 2    |
+| 77   | `src/libs/` (generated)                                                 | `src/shared/lib/mavlink.js` (generated)                | 1    |
 
 ### `eslint.config.js` — step mapping
 
-| Line | Current | New | Step |
-| --- | --- | --- | --- |
-| 19 | `"src/libs/"` | `"src/shared/lib/mavlink.js"` (narrowed) | 1 |
-| 21 | `"src/tools/parsers/JsDataflashParser/"` | `"src/features/loader/parsers/JsDataflashParser/"` | 4c |
-| 52 | comment `(see src/mavextra/)` | `(see src/shared/lib/mavextra/)` | 1 |
-| 53 | `"src/components/Plotly.vue"` | `"src/features/plot/components/Plotly.vue"` | 4b |
-| 58 | `"src/tools/parsers/**/*.js"` | `"src/features/loader/parsers/**/*.js"` | 4c |
+| Line | Current                                  | New                                                | Step |
+| ---- | ---------------------------------------- | -------------------------------------------------- | ---- |
+| 19   | `"src/libs/"`                            | `"src/shared/lib/mavlink.js"` (narrowed)           | 1    |
+| 21   | `"src/tools/parsers/JsDataflashParser/"` | `"src/features/loader/parsers/JsDataflashParser/"` | 4c   |
+| 52   | comment `(see src/mavextra/)`            | `(see src/shared/lib/mavextra/)`                   | 1    |
+| 53   | `"src/components/Plotly.vue"`            | `"src/features/plot/components/Plotly.vue"`        | 4b   |
+| 58   | `"src/tools/parsers/**/*.js"`            | `"src/features/loader/parsers/**/*.js"`            | 4c   |
 
 ### `test/unit/specs/*.js`
 
-| Spec | Stale imports | Step |
-| --- | --- | --- |
-| `mavlinklogs.spec.js` | `src/tools/mavlinkDataExtractor.js`, `src/tools/parsers/mavlinkParser.js` | 4c |
-| `dataflashlogs.spec.js` | `src/tools/dataflashDataExtractor.js`, `src/tools/parsers/JsDataflashParser/parser.js` | 4c |
-| `helpers.spec.js` | `Globals.js` (2), `widgets/interpolator.js` (1), `ExpressionEditor.vue` + `Plotly.vue` (4b) | 1, 2, 4b |
-| `plotCsv.spec.js` | `tools/plotCsv.js`, `tools/plotTimeAxis.js` | 4b |
-| `flightTime.spec.js` | `tools/flightTime.js`, `tools/datetools.js` | 1b |
-| `plotTimeAxis.spec.js` | `tools/plotTimeAxis.js` | 4b |
+| Spec                    | Stale imports                                                                               | Step     |
+| ----------------------- | ------------------------------------------------------------------------------------------- | -------- |
+| `mavlinklogs.spec.js`   | `src/tools/mavlinkDataExtractor.js`, `src/tools/parsers/mavlinkParser.js`                   | 4c       |
+| `dataflashlogs.spec.js` | `src/tools/dataflashDataExtractor.js`, `src/tools/parsers/JsDataflashParser/parser.js`      | 4c       |
+| `helpers.spec.js`       | `Globals.js` (2), `widgets/interpolator.js` (1), `ExpressionEditor.vue` + `Plotly.vue` (4b) | 1, 2, 4b |
+| `plotCsv.spec.js`       | `tools/plotCsv.js`, `tools/plotTimeAxis.js`                                                 | 4b       |
+| `flightTime.spec.js`    | `tools/flightTime.js`, `tools/datetools.js`                                                 | 1b       |
+| `plotTimeAxis.spec.js`  | `tools/plotTimeAxis.js`                                                                     | 4b       |
 
 ### `docs/widgets.md` and `TODO.md`
 
 Post-reorg cleanup — step 7.
 
-| File | Fix |
-| --- | --- |
+| File                                               | Fix                                                    |
+| -------------------------------------------------- | ------------------------------------------------------ |
 | `docs/widgets.md` — "adding a new widget" examples | Path examples updated to `features/widgets/instances/` |
-| `docs/widgets.md` — "Pending 2 — split" section | Mark done |
-| `TODO.md` — folder-split section | Mark done, update completed bullet paths |
-| `docs/reorg-plan.md` — top of file | `## Status: complete` |
+| `docs/widgets.md` — "Pending 2 — split" section    | Mark done                                              |
+| `TODO.md` — folder-split section                   | Mark done, update completed bullet paths               |
+| `docs/reorg-plan.md` — top of file                 | `## Status: complete`                                  |
 
 ### Files that reference `src/` but need no change
 
-| File | Why |
-| --- | --- |
-| `vite.config.js` | `resolve.alias["@"]`, `assetsInclude`, `optimizeDeps.entries` — layout-agnostic |
-| `vitest.config.js` | Merges `vite.config.js`; nothing hardcoded |
-| `stylelint.config.js` | Globs `src/**/*.{vue,css,scss}` |
-| `ruff.toml` | Globs; no hardcoded paths |
-| `package.json` scripts | `vite build`, `vite`, `serve -s dist`, `vitest run`, `eslint .` — layout-agnostic |
-| `Containerfile.dev`, `Dockerfile` | `COPY src ./src` — layout-agnostic |
-| `test/e2e/*` | Uses `test/e2e/runner.js`, not source paths |
-| `.github/workflows/nodejs.yml` | Runs npm scripts; no hardcoded source paths |
+| File                              | Why                                                                               |
+| --------------------------------- | --------------------------------------------------------------------------------- |
+| `vite.config.js`                  | `resolve.alias["@"]`, `assetsInclude`, `optimizeDeps.entries` — layout-agnostic   |
+| `vitest.config.js`                | Merges `vite.config.js`; nothing hardcoded                                        |
+| `stylelint.config.js`             | Globs `src/**/*.{vue,css,scss}`                                                   |
+| `ruff.toml`                       | Globs; no hardcoded paths                                                         |
+| `package.json` scripts            | `vite build`, `vite`, `serve -s dist`, `vitest run`, `eslint .` — layout-agnostic |
+| `Containerfile.dev`, `Dockerfile` | `COPY src ./src` — layout-agnostic                                                |
+| `test/e2e/*`                      | Uses `test/e2e/runner.js`, not source paths                                       |
+| `.github/workflows/nodejs.yml`    | Runs npm scripts; no hardcoded source paths                                       |
 
 ## Appendix B — verification gates, condensed
 
 For quick reference when running steps. Full content in §6.
 
-| Step | rg pre-check (fast) | Test | Build |
-| --- | --- | --- | --- |
-| 1 | `libs/mavlink\|mavextra/\|widgets/interpolator\|shared/lib/eventHub` | `helpers.spec.js` | yes |
-| 1b | `tools/(cssColor\|datetools\|download\|flightTime\|paramseeker)` + `eslint --fix src/` | `flightTime.spec.js` | yes |
-| 2 | `components/Globals\|components/ui/\|widgets/TreeMenu\|widgets/flightIndicators\|parse_mavgraph` | `helpers.spec.js` | yes |
-| 3 | `widgets/\|widget.css` | — | yes |
-| 4a | `CesiumViewer\|CesiumSettingsWidget\|cesiumExtra` | — | yes |
-| 4b | `Plotly\|ExpressionEditor\|plotCsv\|plotTimeAxis` | `plotCsv.spec.js`, `plotTimeAxis.spec.js` | yes |
-| 4c | `SideBarFileManager\|parsers/\|DataExtractor` | `mavlinklogs.spec.js`, `dataflashlogs.spec.js` | yes |
-| 4d | `Sidebar\|SideBarMessageMenu` | — | yes |
-| 5 | `Home\.vue\|App\.vue\|src/main\.js` | — | yes + `npm start` |
-| 6 | `assets/` | — | yes + `npm start` |
+| Step | rg pre-check (fast)                                                                              | Test                                           | Build             |
+| ---- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------- | ----------------- |
+| 1    | `libs/mavlink\|mavextra/\|widgets/interpolator\|shared/lib/eventHub`                             | `helpers.spec.js`                              | yes               |
+| 1b   | `tools/(cssColor\|datetools\|download\|flightTime\|paramseeker)` + `eslint --fix src/`           | `flightTime.spec.js`                           | yes               |
+| 2    | `components/Globals\|components/ui/\|widgets/TreeMenu\|widgets/flightIndicators\|parse_mavgraph` | `helpers.spec.js`                              | yes               |
+| 3    | `widgets/\|widget.css`                                                                           | —                                              | yes               |
+| 4a   | `CesiumViewer\|CesiumSettingsWidget\|cesiumExtra`                                                | —                                              | yes               |
+| 4b   | `Plotly\|ExpressionEditor\|plotCsv\|plotTimeAxis`                                                | `plotCsv.spec.js`, `plotTimeAxis.spec.js`      | yes               |
+| 4c   | `SideBarFileManager\|parsers/\|DataExtractor`                                                    | `mavlinklogs.spec.js`, `dataflashlogs.spec.js` | yes               |
+| 4d   | `Sidebar\|SideBarMessageMenu`                                                                    | —                                              | yes               |
+| 5    | `Home\.vue\|App\.vue\|src/main\.js`                                                              | —                                              | yes + `npm start` |
+| 6    | `assets/`                                                                                        | —                                              | yes + `npm start` |
 
 Every pre-check runs with:
 

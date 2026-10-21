@@ -11,22 +11,22 @@ pending rework plan.
 
 ## Widget standardization — pending follow-ups
 
-- [x] Shared shell (`src/styles/widget.css`) is done and 7 widgets are converted
-(`Attitude`, `DeviceID`, `EkfHelper`, `MagFit`, `Message`, `Param`,
-`TxInputs`). See [`docs/widgets.md`](docs/widgets.md) for what the shared
-shell provides. The five items below are what remains.
+- [x] Shared shell (`src/features/widgets/core/widget.css`) is done and 7 widgets are converted
+      (`Attitude`, `DeviceID`, `EkfHelper`, `MagFit`, `Message`, `Param`,
+      `TxInputs`). See [`docs/widgets.md`](docs/widgets.md) for what the shared
+      shell provides. The five items below are what remains.
 
-### Pending: split `src/components/widgets/`
+### Done: split the widgets folder
 
 Move non-widgets out of the folder:
 
-- [ ] `CesiumSettingsWidget.vue` → `src/components/cesium/CesiumSettingsPanel.vue`
+- [x] `CesiumSettingsWidget.vue` → `src/features/scene/components/CesiumSettingsPanel.vue`
       (embedded overlay panel, dark theme, no `useWidget`).
-- [ ] `TreeMenu.vue` → `src/components/ui/TreeMenu.vue` (recursive sub-component).
-- [ ] `flightIndicators/AttitudeIndicator.vue` → `src/components/ui/AttitudeIndicator.vue`
+- [x] `TreeMenu.vue` → `src/shared/ui/TreeMenu.vue` (recursive sub-component).
+- [x] `flightIndicators/AttitudeIndicator.vue` → `src/shared/ui/AttitudeIndicator.vue`
       (only consumer is `AttitudeWidget.vue`).
-- [ ] Delete the empty `flightIndicators/` folder.
-- [ ] Rule afterwards: **if it calls `useWidget()`, it lives in `widgets/`;
+- [x] Delete the empty `flightIndicators/` folder.
+- [x] Rule afterwards: **if it calls `useWidget()`, it lives in `widgets/`;
       otherwise it doesn't.**
 
 ### Pending: widget registry in `Home.vue`
@@ -56,7 +56,7 @@ registration time makes that class of bug impossible by construction.
 - [x] `MagFitTool.vue`: removed the `getCompassParams`, `fitWmm` and
       `wmmErrorOnce` dumps. Kept real error paths.
 - [x] `EkfHelperTool.vue`: removed the unlabeled `{{ solutionValue }}
-      {{ closestIndex }}` readout and its two `console.log`s.
+{{ closestIndex }}` readout and its two `console.log`s.
 
 ### Pending: orphaned ids
 
@@ -157,16 +157,22 @@ registration time makes that class of bug impossible by construction.
 
 ## Later (fork issues)
 
-#1 submarine model scale · #2 camera in the URL · #3 model orientation ·
-#4 presets as objects · #5 MagFit points · #6 widget interpolation ·
-#7 MAVLink 2 signatures · #8 compass widget · #9 PX4 ULog ·
-#10 more plot axes and colours.
+- #1 submarine model scale
+- #2 camera in the URL
+- #3 model orientation
+- #4 presets as objects
+- #5 MagFit points
+- #6 widget interpolation
+- #7 MAVLink 2 signatures
+- #8 compass widget
+- #9 PX4 ULog
+- #10 more plot axes and colours
 
 ### Done
 
 - [x] Horizontal scrollbar in widgets: text wraps, no horizontal scroll,
       vertical bar clears the resize handle.
-- [x] Shared shell `src/styles/widget.css` (`__move` / `__resize` / `__close` /
+- [x] Shared shell `src/features/widgets/core/widget.css` (`__move` / `__resize` / `__close` /
       `__content`) and the seven widgets converted onto it.
 - [x] Widget handles migrated from Unicode glyphs to Font Awesome 7 icons.
 - [x] `TxInputs` → `TxInputsViewer` rename.
