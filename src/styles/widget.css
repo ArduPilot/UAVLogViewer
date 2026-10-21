@@ -30,7 +30,7 @@
     color: #fff;
     font-family: "Font Awesome 7 Free", sans-serif;
     font-size: 10px;
-    border-radius: 10px 0 0 0;
+    border-radius: 10px 0 0;
     cursor: se-resize;
     transition: background-color 0.15s ease;
     z-index: 1;
@@ -61,7 +61,7 @@
     color: #fff;
     font-family: "Font Awesome 7 Free", sans-serif;
     font-size: 12px;
-    border-radius: 0 0 10px 0;
+    border-radius: 0 0 10px;
     cursor: grab;
     transition: background-color 0.15s ease, color 0.15s ease;
     z-index: 1;
@@ -80,11 +80,10 @@
 /* scrollable content area — ends above the resize handle */
 .uav-widget__content {
     /* top padding clears the close X (4px top + 18px height + 2px gap) */
-    padding: 24px 16px 16px 16px;
+    padding: 24px 16px 16px;
     box-sizing: border-box;
     height: calc(100% - 22px);
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden auto;
     overflow-wrap: break-word;
     user-select: none;
     scrollbar-width: thin;
@@ -157,7 +156,7 @@
 
 /* Dense content: auto-height + tighter side padding for data-dense tools */
 .uav-widget__content--dense {
-    padding: 24px 10px 10px 10px;
+    padding: 24px 10px 10px;
     height: auto;
     overflow: visible;
 }

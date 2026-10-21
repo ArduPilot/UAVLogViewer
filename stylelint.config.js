@@ -1,7 +1,7 @@
 // https://stylelint.io/user-guide/configure
 // ids and classes are shared with templates and scripts (e.g. "pane" + name), so camelCase
 // and snake_case names are fine too
-const name = "^[a-z][a-zA-Z0-9]*(?:[-_][a-zA-Z0-9]+)*$";
+const name = "^[a-z][a-zA-Z0-9]*(?:[-_]{1,2}[a-zA-Z0-9]+)*$";
 
 export default {
     extends: ["stylelint-config-standard", "stylelint-config-recommended-vue"],

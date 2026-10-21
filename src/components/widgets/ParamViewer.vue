@@ -202,7 +202,7 @@ export default {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin: 0 0 10px 0;
+    margin: 0 0 10px;
 }
 
 .filter-row input#filterbox {
@@ -260,13 +260,12 @@ button:focus-visible {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 0 0 10px 0;
+    margin: 0 0 10px;
     padding: 0;
 }
 
 .param-check__box {
     appearance: none;
-    -webkit-appearance: none;
     margin: 0;
     padding: 0;
     flex: 0 0 16px;

@@ -258,7 +258,7 @@ export default {
     left: 0;
     width: 26px;
     height: 24px;
-    border-radius: 20px 0 20px 0;
+    border-radius: 20px 0;
     background: rgb(0 36 27 / 25%);
     color: rgb(255 255 255 / 92%);
     font-size: 14px;
@@ -275,7 +275,7 @@ export default {
     right: 0;
     width: 26px;
     height: 24px;
-    border-radius: 0 20px 0 20px;
+    border-radius: 0 20px;
     background: rgb(0 36 27 / 25%);
     color: rgb(255 255 255 / 92%);
     font-size: 12px;
