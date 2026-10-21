@@ -21,7 +21,7 @@ npm run lint          # ESLint (eslint.config.js); npm run lint:fix applies the 
 npm run lint:css      # Stylelint on the component styles
 npm run lint:md       # markdownlint
 npm run lint:all      # the three above + format:check
-ruff check && ruff format --check   # Python tooling (scripts/terrain, scripts/parse_mavgraph.py)
+ruff check && ruff format --check   # Python tooling (scripts/terrain, scripts/mavgraph/)
 npm run format        # prettier --write .
 npm run format:check  # prettier --check .
 npm run unit          # Vitest with coverage (vitest.config.js)
@@ -37,6 +37,7 @@ npx vitest run -t "parse"                            # filter by test name
 - `serve` is the only entry in `dependencies`; everything else, browser libraries included, is a devDependency because it is bundled at build time. Add packages with `npm install -D`, so the Docker runtime image (`npm prune --omit=dev`) keeps only the static server.
 - The Dockerfile is a two-stage build (build stage with git, runtime stage running as a non-root user with `USER_UID`/`USER_GID` build args). Keep it clean under `hadolint --failure-threshold style`; CI runs hadolint.
 - `scripts/terrain` (Python): `uv venv scripts/terrain/.venv` then `uv pip install --python scripts/terrain/.venv -r scripts/terrain/requirements.txt` also works on Windows (the rasterio wheel bundles GDAL). Pass `--coarse-dem` (from `build_coarse.py`) for the low zooms, or one worker reads gigabytes for a long time. Tiles are gzipped with the write time in the header, so compare tilesets after decompressing.
+- `scripts/mavgraph` (Python): needs `beautifulsoup4`. `uv venv scripts/mavgraph/.venv && uv pip install --python scripts/mavgraph/.venv -r scripts/mavgraph/requirements.txt`.
 - Offline use: mount a quantized-mesh tileset (built with `scripts/terrain`, see README) at `dist/quantized` in the container. `serve.json` (used by `npm start`) sends `Content-Encoding: gzip` for the gzipped `.terrain` tiles; `layer.json` is plain JSON. Icons (Font Awesome) and the offline globe imagery (Cesium's Natural Earth II in `dist/Assets`) are bundled; only analytics, a Google web font and the online check need the network.
 
 ## Module system and build
