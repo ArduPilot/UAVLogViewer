@@ -36,14 +36,14 @@ npm install
 
 Daily commands:
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Vite dev server at <http://localhost:8080> with HMR |
-| `npm run build` | Production build to `dist/` |
-| `npm start` | Serve the built `dist/` on port 8080 |
-| `npm run unit` | Vitest unit tests |
-| `npm run e2e` | Nightwatch end-to-end (headless Chrome; add `-- --env edgeHeadless` for Edge) |
-| `npm test` | Unit + e2e |
+| Command         | Purpose                                                                       |
+| --------------- | ----------------------------------------------------------------------------- |
+| `npm run dev`   | Vite dev server at <http://localhost:8080> with HMR                           |
+| `npm run build` | Production build to `dist/`                                                   |
+| `npm start`     | Serve the built `dist/` on port 8080                                          |
+| `npm run unit`  | Vitest unit tests                                                             |
+| `npm run e2e`   | Nightwatch end-to-end (headless Chrome; add `-- --env edgeHeadless` for Edge) |
+| `npm test`      | Unit + e2e                                                                    |
 
 ## Container development
 
@@ -55,16 +55,16 @@ image. Works on Linux, macOS, and Windows (via Podman machine).
 
 - Podman installed, with its machine running:
 
-  ```bash
-  podman machine start          # Windows / macOS only
-  ```
+    ```bash
+    podman machine start          # Windows / macOS only
+    ```
 
 - Submodules initialised on the **host** (they are bind-mounted, not cloned
   inside the container):
 
-  ```bash
-  git submodule update --init --recursive
-  ```
+    ```bash
+    git submodule update --init --recursive
+    ```
 
 ### Build the dev image
 
@@ -76,7 +76,7 @@ podman build -f Containerfile.dev -t uavlogviewer-dev:dev .
 
 A correct build has **8 steps** and ends with:
 
-```
+```docker
 STEP 7/8: EXPOSE 8080
 STEP 8/8: CMD ["npm","run","dev","--","--host","0.0.0.0"]
 ```
@@ -128,14 +128,14 @@ Notes on the flags:
 
 ### Daily workflow
 
-| You changed | Command |
-| --- | --- |
-| A file under `src/` | Nothing — Vite HMR reloads the browser |
+| You changed                            | Command                                                               |
+| -------------------------------------- | --------------------------------------------------------------------- |
+| A file under `src/`                    | Nothing — Vite HMR reloads the browser                                |
 | `Containerfile.dev` or `package*.json` | `podman build` again, then `podman rm -f uavlogviewer-dev` and re-run |
-| Nothing (resume) | `podman start uavlogviewer-dev` |
-| Nothing (logs) | `podman logs -f uavlogviewer-dev` |
-| Nothing (shutdown) | `podman stop uavlogviewer-dev` |
-| Nothing (delete) | `podman rm -f uavlogviewer-dev` |
+| Nothing (resume)                       | `podman start uavlogviewer-dev`                                       |
+| Nothing (logs)                         | `podman logs -f uavlogviewer-dev`                                     |
+| Nothing (shutdown)                     | `podman stop uavlogviewer-dev`                                        |
+| Nothing (delete)                       | `podman rm -f uavlogviewer-dev`                                       |
 
 ### Optional one-command dev loop
 
@@ -172,9 +172,9 @@ Two Windows-specific problems break that path:
   production `Dockerfile` (build log shows `STEP 1/9`, `EXPOSE 8080`).
 - The Docker Compose provider requires `DOCKER_HOST` in every new shell:
 
-  ```powershell
-  $env:DOCKER_HOST = "npipe:////./pipe/podman-machine-default"
-  ```
+    ```powershell
+    $env:DOCKER_HOST = "npipe:////./pipe/podman-machine-default"
+    ```
 
 The direct `podman build` / `podman run` above avoid both. Use them on Windows.
 
