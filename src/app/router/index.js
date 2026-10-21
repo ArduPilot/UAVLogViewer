@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import Home from "@/components/Home.vue";
+import Layout from "@/app/Layout.vue";
 import PlotlyPopup from "@/features/plot/components/PlotlyPopup.vue";
 
 // hash URLs (/#/, /#/plot) as with Vue Router 3's default mode
@@ -9,7 +9,7 @@ export default createRouter({
         {
             path: "/",
             name: "Home",
-            component: Home,
+            component: Layout,
         },
         {
             path: "/plot",
@@ -19,7 +19,7 @@ export default createRouter({
         {
             path: "/v/:id",
             name: "View",
-            component: Home,
+            component: Layout,
         },
     ],
 });

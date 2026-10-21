@@ -19,7 +19,7 @@ export default defineConfig((env) =>
                 provider: "v8",
                 reportsDirectory: "test/unit/coverage",
                 include: ["src/**/*.{js,vue}"],
-                exclude: ["src/main.js", "src/router/index.js"],
+                exclude: ["src/app/main.js", "src/app/router/index.js"],
             },
         },
     }),
