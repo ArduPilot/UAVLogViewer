@@ -85,14 +85,14 @@ by construction.
 - [ ] Decide `v-show` (keep state on hide) vs `v-if` (fresh widget on show).
 - [ ] Delete the per-widget `state.showX` flags.
 
-### Pending: hit zones vs. visual handles
+### Done: hit zones vs. visual handles
 
-- [ ] `useWidget.js` uses `MOVE_HANDLE = 40` and `RESIZE_HANDLE = 25` —
-      about twice the visible handle footprint. Intentional (easier to
-      grab on touchpads) but undocumented, and out of sync if the visible
-      handles grow. Pick one: (a) add a comment above the constants
-      explaining the ratio, or (b) expose the visual handle size as CSS
-      vars and read them from `useWidget.js` at mount.
+- [x] Hit zones read `--uav-handle-size` from widget.css at mount and
+      multiply it (MOVE_HIT_MULTIPLIER = 1.5, RESIZE_HIT_MULTIPLIER = 1.5).
+      At the current 20px handle size that's a 30px hit zone on each
+      corner — same feel as before on the move side, slightly tighter
+      on resize. Changing the CSS var now grows both the painted handle
+      and its hit zone together.
 
 ## UI consistency backlog
 

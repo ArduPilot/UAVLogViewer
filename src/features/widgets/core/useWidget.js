@@ -1,4 +1,4 @@
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { onMounted, ref } from "vue";
 import { eventHub } from "@/shared/lib/eventHub.js";
 
 // The floating tool windows (div#pane<name>): moved by dragging their top-left corner, resized by
@@ -9,9 +9,16 @@ export const widgetProps = {
     resizeable: { type: Boolean, default: true },
 };
 
-// the corner areas, in pixels
-const MOVE_HANDLE = 40;
-const RESIZE_HANDLE = 25;
+// Corner hit zones, as multiples of --uav-handle-size (the painted
+// handle size, defined in widget.css). At the current 20px these come
+// out to 40px (move) and 25px (resize) — larger than the painted handle
+// so a trackpad or finger can grab the corner without precision aiming.
+// If the CSS var grows, the hit zones follow.
+const MOVE_HIT_MULTIPLIER = 1.5;
+const RESIZE_HIT_MULTIPLIER = 1.5;
+const DEFAULT_HANDLE_SIZE = 20;
+
+// Smallest size a widget can be dragged or resized to, in pixels.
 const MIN_SIZE = 70;
 
 function pointer(event) {
@@ -48,6 +55,10 @@ export function useWidget(props, emit, { name, width, height, left, top }) {
     const paramsVersion = ref(0);
     const divName = `pane${name}`;
 
+    // Hit zones for this widget, resolved from CSS at mount.
+    let moveHit = DEFAULT_HANDLE_SIZE * MOVE_HIT_MULTIPLIER;
+    let resizeHit = DEFAULT_HANDLE_SIZE * RESIZE_HIT_MULTIPLIER;
+
     const onPointerDown = (event) => {
         const pane = event.currentTarget;
         const {
@@ -60,7 +71,7 @@ export function useWidget(props, emit, { name, width, height, left, top }) {
         // the pointer's distance from the bottom-right corner
         const x = l + w - pageX;
         const y = t + h - pageY;
-        if (x > w - MOVE_HANDLE && y > h - MOVE_HANDLE) {
+        if (x > w - moveHit && y > h - moveHit) {
             track((px, py) => {
                 box.top.value = Math.max(
                     0,
@@ -71,7 +82,7 @@ export function useWidget(props, emit, { name, width, height, left, top }) {
                     Math.min(px + x - w, window.innerWidth - w),
                 );
             });
-        } else if (x < RESIZE_HANDLE && y < RESIZE_HANDLE) {
+        } else if (x < resizeHit && y < resizeHit) {
             track((px, py) => {
                 if (!props.resizeable) {
                     return;
@@ -88,12 +99,17 @@ export function useWidget(props, emit, { name, width, height, left, top }) {
 
     onMounted(() => {
         const pane = document.getElementById(divName);
+
+        const handleSize =
+            Number.parseFloat(
+                getComputedStyle(pane).getPropertyValue("--uav-handle-size"),
+            ) || DEFAULT_HANDLE_SIZE;
+        moveHit = handleSize * MOVE_HIT_MULTIPLIER;
+        resizeHit = handleSize * RESIZE_HIT_MULTIPLIER;
+
         pane.addEventListener("mousedown", onPointerDown);
         pane.addEventListener("touchstart", onPointerDown);
         eventHub.$on("paramsUpdated", onParamsUpdated);
-    });
-    onBeforeUnmount(() => {
-        eventHub.$off("paramsUpdated", onParamsUpdated);
     });
 
     return {

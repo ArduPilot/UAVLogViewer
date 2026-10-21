@@ -1,6 +1,8 @@
 /* Shared shell + content rules for every floating widget (div#pane<Name>). */
 
 .uav-widget {
+    --uav-handle-size: 20px;
+
     position: absolute;
     min-width: 220px;
     min-height: 150px;
@@ -16,13 +18,13 @@
     overflow: hidden; /* ← clips scrollbar + any overflow to the rounded corners */
 }
 
-/* bottom-right resize handle — hit zone is 25px (RESIZE_HANDLE in useWidget.js) */
+/* bottom-right resize handle — hit zone is 1.25 × --uav-handle-size */
 .uav-widget__resize {
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 20px;
-    height: 20px;
+    width: var(--uav-handle-size);
+    height: var(--uav-handle-size);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -46,14 +48,13 @@
     background-color: #3a4f6b;
 }
 
-/* top-left grab handle — hit zone is 40px (MOVE_HANDLE in useWidget.js).
-   Shape mirrors .uav-widget__resize diagonally. */
+/* top-left grab handle — hit zone is 2 × --uav-handle-size */
 .uav-widget__move {
     position: absolute;
     top: 0;
     left: 0;
-    width: 20px;
-    height: 20px;
+    width: var(--uav-handle-size);
+    height: var(--uav-handle-size);
     display: flex;
     align-items: center;
     justify-content: center;
