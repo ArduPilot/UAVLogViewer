@@ -33,7 +33,7 @@
             </div>
         </div>
         <!-- opened by the gear on Cesium's toolbar; under the toolbar, on the right -->
-        <CesiumSettingsWidget v-show="settingsOpen" class="settings-panel" />
+        <CesiumSettingsPanel v-show="settingsOpen" class="settings-panel" />
         <div id="cesiumContainer"></div>
         <div v-show="scaleBarLabel" id="distanceLegend">
             <div class="distanceLegendLabel">{{ scaleBarLabel }}</div>
@@ -102,7 +102,7 @@ import { DataflashDataExtractor } from "@/tools/dataflashDataExtractor";
 import { MavlinkDataExtractor } from "@/tools/mavlinkDataExtractor";
 import { DjiDataExtractor } from "@/tools/djiDataExtractor";
 import "cesium/Build/Cesium/Widgets/widgets.css";
-import CesiumSettingsWidget from "./widgets/CesiumSettingsWidget.vue";
+import CesiumSettingsPanel from "./CesiumSettingsPanel.vue";
 import homeIcon from "@/assets/home2.png";
 import maptilerIcon from "@/assets/maptiler.png";
 import statkartIcon from "@/assets/statkart.jpg";
@@ -113,10 +113,10 @@ import quadPlusModel from "@/assets/quadp.glb";
 import quadXModel from "@/assets/quadx.glb";
 import boatModel from "@/assets/boat.glb";
 import planeModel from "@/assets/plane.glb";
-import ColorCoderMode from "./cesiumExtra/colorCoderMode.js";
-import ColorCoderRange from "./cesiumExtra/colorCoderRange.js";
-import ColorCoderPlot from "./cesiumExtra/colorCoderPlot.js";
-import { VehicleVisibility } from "./cesiumExtra/vehicleVisibility.js";
+import ColorCoderMode from "@/features/scene/lib/colorCoderMode.js";
+import ColorCoderRange from "@/features/scene/lib/colorCoderRange.js";
+import ColorCoderPlot from "@/features/scene/lib/colorCoderPlot.js";
+import { VehicleVisibility } from "@/features/scene/lib/vehicleVisibility.js";
 import { logStartTime, zoneOfFlight } from "@/shared/lib/flightTime.js";
 
 import {
@@ -125,7 +125,7 @@ import {
     interpolateToGrid,
     expandPolygon,
     isPointInPolygon,
-} from "./cesiumExtra/boundingPolygon.js";
+} from "@/features/scene/lib/boundingPolygon.js";
 
 // Self-hosted terrain + non-ion imagery: no Cesium ion token required.
 // Default imagery is keyless Esri World Imagery (reliable, no key / domain / rate limits).
@@ -231,7 +231,7 @@ function fenceWall(groundPoints, fenceAltMax, color) {
 export default {
     name: "CesiumViewer",
     components: {
-        CesiumSettingsWidget,
+        CesiumSettingsPanel,
     },
 
     data() {

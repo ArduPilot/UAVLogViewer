@@ -138,7 +138,7 @@
 import { store } from "@/shared/stores/index.js";
 
 export default {
-    name: "CesiumSettingsWidget",
+    name: "CesiumSettingsPanel",
     data() {
         return {
             state: store,
