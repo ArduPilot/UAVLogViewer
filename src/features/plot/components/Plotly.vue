@@ -18,6 +18,7 @@ import { darken } from "@/shared/lib/cssColor.js";
 import { downloadData } from "@/shared/lib/download.js";
 import { plotCsv } from "@/features/plot/lib/plotCsv.js";
 import { logStartTime } from "@/shared/lib/flightTime.js";
+import { compileExpression } from "@/features/plot/lib/expressionEvaluator.js";
 import {
     dataEnd,
     relayoutRange,
@@ -638,29 +639,6 @@ export default {
                 }
             }
         },
-        // the expression with each message name replaced by a[i], its row at each time
-        compileExpression(expression, messages) {
-            let body = expression;
-            for (const field in messages) {
-                if (Number.isNaN(Number(field))) {
-                    break;
-                }
-                // first looks for fields in the expression
-                if (body.includes(`${messages[field]}.`)) {
-                    body = body.replaceAll(
-                        `${messages[field]}.`,
-                        "a[" + field + "].",
-                    );
-                    continue;
-                }
-                // fallback to replacing message name instead
-                body = body.replaceAll(
-                    `${messages[field]}`,
-                    "a[" + field + "]",
-                );
-            }
-            return body;
-        },
         // each message's sample at (or just after) the time; timeIndexes move forward in place
         rowsAt(messages, timeIndexes, time) {
             const vals = [];
@@ -696,10 +674,9 @@ export default {
                 return { error: "message " + messages[0] + " not found" };
             }
             const x = this.expressionTimes(messages);
-            const expression = this.compileExpression(expression1, messages);
             let f;
             try {
-                f = new Function("a", "return " + expression);
+                f = compileExpression(expression1, messages);
             } catch (e) {
                 return { error: e };
             }
@@ -727,7 +704,13 @@ export default {
                 // Handles: sqrt(negative) → NaN, 1/0 → Infinity, log(-1) → NaN, 0/0 → NaN.
                 y.push(Number.isFinite(val) ? val : null);
             }
-            console.log("evaluated " + expression);
+            console.log(
+                "evaluated " +
+                    expression1 +
+                    " in " +
+                    (Date.now() - start) +
+                    "ms",
+            );
             const data = this.addGaps({
                 x,
                 y,
