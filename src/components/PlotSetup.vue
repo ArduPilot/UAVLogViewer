@@ -134,10 +134,10 @@ import {
     firstFreeAxis,
     firstFreeColor,
     clearExpressions,
-} from "./Globals.js";
+} from "@/shared/stores/index.js";
 import ExpressionEditor from "./ExpressionEditor.vue";
-import Collapse from "./ui/Collapse.vue";
-import Modal from "./ui/Modal.vue";
+import Collapse from "@/shared/ui/Collapse.vue";
+import Modal from "@/shared/ui/Modal.vue";
 
 export default {
     name: "PlotSetup",

@@ -2,7 +2,7 @@ import {
     store,
     firstFreeAxis,
     firstFreeColor,
-} from "../../../src/components/Globals.js";
+} from "@/shared/stores/index.js";
 import { Interpolator } from "@/shared/lib/interpolator.js";
 import ExpressionEditor from "../../../src/components/ExpressionEditor.vue";
 import Plotly from "../../../src/components/Plotly.vue";

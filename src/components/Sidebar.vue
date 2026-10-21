@@ -206,10 +206,10 @@
 <script>
 import Dropzone from "./SideBarFileManager.vue";
 import MessageMenu from "./SideBarMessageMenu.vue";
-import { store } from "./Globals.js";
+import { store } from "@/shared/stores/index.js";
 import { downloadData } from "@/shared/lib/download.js";
 import PlotSetup from "./PlotSetup.vue";
-import Collapse from "./ui/Collapse.vue";
+import Collapse from "@/shared/ui/Collapse.vue";
 import githubIcon from "@/assets/GitHub-Mark-64px.png";
 import wikiIcon from "@/assets/wiki.svg";
 

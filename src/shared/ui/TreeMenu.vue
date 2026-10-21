@@ -59,8 +59,8 @@
 </template>
 
 <script>
-import { store, clearExpressions } from "@/components/Globals.js";
-import Collapse from "@/components/ui/Collapse.vue";
+import { store, clearExpressions } from "@/shared/stores/index.js";
+import Collapse from "@/shared/ui/Collapse.vue";
 
 export default {
     name: "TreeMenu",

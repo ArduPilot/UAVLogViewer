@@ -116,7 +116,7 @@ import ParamViewer from "@/components/widgets/ParamViewer.vue";
 import MessageViewer from "@/components/widgets/MessageViewer.vue";
 import DeviceIDViewer from "@/components/widgets/DeviceIDViewer.vue";
 import AttitudeViewer from "@/components/widgets/AttitudeWidget.vue";
-import { keepRaw, store } from "@/components/Globals.js";
+import { keepRaw, store } from "@/shared/stores/index.js";
 import { AtomSpinner } from "epic-spinners";
 import { Color } from "cesium";
 import colormap from "colormap";

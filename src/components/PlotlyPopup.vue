@@ -8,7 +8,7 @@
 // only the scatter trace is used: the core build includes it
 import Plotly from "plotly.js/lib/core";
 import { markRaw } from "vue";
-import { store } from "./Globals.js";
+import { store } from "@/shared/stores/index.js";
 
 import { darken } from "@/shared/lib/cssColor.js";
 import { downloadData } from "@/shared/lib/download.js";

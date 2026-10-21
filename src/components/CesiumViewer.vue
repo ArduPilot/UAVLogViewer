@@ -97,7 +97,7 @@ import {
 
 import { DateTime } from "luxon";
 
-import { keepRaw, store } from "./Globals.js";
+import { keepRaw, store } from "@/shared/stores/index.js";
 import { DataflashDataExtractor } from "@/tools/dataflashDataExtractor";
 import { MavlinkDataExtractor } from "@/tools/mavlinkDataExtractor";
 import { DjiDataExtractor } from "@/tools/djiDataExtractor";

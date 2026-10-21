@@ -52,7 +52,7 @@
 import VProgress from "./SideBarFileManagerProgressBar.vue";
 import sampleLog from "@/assets/vtol.tlog";
 import { toRaw } from "vue";
-import { keepRaw, store, resetLogState } from "./Globals";
+import { keepRaw, store, resetLogState } from "@/shared/stores/index.js";
 import { downloadObjectUrl } from "@/shared/lib/download.js";
 
 // webpack 5 and Vite both bundle a worker created this way

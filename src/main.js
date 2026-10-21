@@ -6,7 +6,7 @@ import "./styles/widget.css";
 
 // Bootstrap 5 styles; the few components the app needs are in components/ui
 import "bootstrap/dist/css/bootstrap.min.css";
-import { collapseToggle } from "./components/ui/collapseToggle.js";
+import { collapseToggle } from "@/shared/ui/collapseToggle.js";
 // Icons bundled with the app (no CDN, works offline)
 import "@fortawesome/fontawesome-free/css/all.css";
 

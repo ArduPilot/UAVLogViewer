@@ -110,9 +110,9 @@
     </div>
 </template>
 <script>
-import { store } from "./Globals.js";
-import TreeMenu from "./widgets/TreeMenu.vue";
-import Collapse from "./ui/Collapse.vue";
+import { store } from "@/shared/stores/index.js";
+import TreeMenu from "@/shared/ui/TreeMenu.vue";
+import Collapse from "@/shared/ui/Collapse.vue";
 import { XMLParser } from "fast-xml-parser";
 import mavgraphs from "@/assets/mavgraphs.xml?raw";
 import mavgraphs2 from "@/assets/mavgraphs2.xml?raw";

@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import { store } from "@/components/Globals.js";
+import { store } from "@/shared/stores/index.js";
 import { useWidget, widgetProps } from "./useWidget.js";
 
 // The EKF solution status bits, bit 0 first (nav_filter_status in ArduPilot)

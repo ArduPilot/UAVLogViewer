@@ -5,7 +5,7 @@
 <script>
 // only the scatter trace is used: the core build includes it
 import Plotly from "plotly.js/lib/core";
-import { store, firstFreeAxis, firstFreeColor, keepRaw } from "./Globals.js";
+import { store, firstFreeAxis, firstFreeColor, keepRaw } from "@/shared/stores/index.js";
 import { faWindowRestore } from "@fortawesome/free-solid-svg-icons";
 import { toRaw } from "vue";
 

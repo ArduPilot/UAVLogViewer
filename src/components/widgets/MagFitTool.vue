@@ -299,7 +299,7 @@
 </template>
 
 <script>
-import { store } from "@/components/Globals.js";
+import { store } from "@/shared/stores/index.js";
 import { useWidget, widgetProps } from "./useWidget.js";
 import { Vector3 } from "@/shared/lib/mavextra/vector3";
 import { Matrix3 } from "@/shared/lib/mavextra/matrix3";
