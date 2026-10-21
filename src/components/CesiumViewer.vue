@@ -117,7 +117,7 @@ import ColorCoderMode from "./cesiumExtra/colorCoderMode.js";
 import ColorCoderRange from "./cesiumExtra/colorCoderRange.js";
 import ColorCoderPlot from "./cesiumExtra/colorCoderPlot.js";
 import { VehicleVisibility } from "./cesiumExtra/vehicleVisibility.js";
-import { logStartTime, zoneOfFlight } from "../tools/flightTime.js";
+import { logStartTime, zoneOfFlight } from "@/shared/lib/flightTime.js";
 
 import {
     generateHull,

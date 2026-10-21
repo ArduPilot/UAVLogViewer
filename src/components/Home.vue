@@ -123,7 +123,7 @@ import colormap from "colormap";
 import { DataflashDataExtractor } from "../tools/dataflashDataExtractor";
 import { MavlinkDataExtractor } from "../tools/mavlinkDataExtractor";
 import { DjiDataExtractor } from "../tools/djiDataExtractor";
-import { zoneOfFlight } from "../tools/flightTime.js";
+import { zoneOfFlight } from "@/shared/lib/flightTime.js";
 import MagFitTool from "@/components/widgets/MagFitTool.vue";
 import EkfHelperTool from "@/components/widgets/EkfHelperTool.vue";
 

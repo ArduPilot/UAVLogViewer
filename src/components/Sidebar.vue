@@ -207,7 +207,7 @@
 import Dropzone from "./SideBarFileManager.vue";
 import MessageMenu from "./SideBarMessageMenu.vue";
 import { store } from "./Globals.js";
-import { downloadData } from "../tools/download.js";
+import { downloadData } from "@/shared/lib/download.js";
 import PlotSetup from "./PlotSetup.vue";
 import Collapse from "./ui/Collapse.vue";
 import githubIcon from "../assets/GitHub-Mark-64px.png";

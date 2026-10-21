@@ -65,7 +65,7 @@
 <script>
 import { store } from "../Globals.js";
 import { useWidget, widgetProps } from "./useWidget.js";
-import { downloadData } from "../../tools/download.js";
+import { downloadData } from "@/shared/lib/download.js";
 
 export default {
     name: "ParamViewer",

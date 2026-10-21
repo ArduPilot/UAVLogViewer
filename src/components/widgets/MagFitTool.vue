@@ -303,7 +303,7 @@ import { store } from "../Globals.js";
 import { useWidget, widgetProps } from "./useWidget.js";
 import { Vector3 } from "@/shared/lib/mavextra/vector3";
 import { Matrix3 } from "@/shared/lib/mavextra/matrix3";
-import { downloadData } from "../../tools/download.js";
+import { downloadData } from "@/shared/lib/download.js";
 
 // Candidate compass message keys, in priority order. Covers tlogs (RAW_IMU,
 // SCALED_IMU*), modern dataflash instanced messages (MAG[0..2]) and older

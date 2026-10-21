@@ -1,5 +1,5 @@
-import { ParamSeeker } from "../tools/paramseeker.js";
-import extractStartTime from "./datetools.js";
+import { ParamSeeker } from "@/shared/lib/paramseeker.js";
+import extractStartTime from "@/shared/lib/datetools.js";
 
 globalThis.radians = function (a) {
     return 0.0174533 * a;

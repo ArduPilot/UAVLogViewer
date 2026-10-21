@@ -9,10 +9,10 @@ import { store, firstFreeAxis, firstFreeColor, keepRaw } from "./Globals.js";
 import { faWindowRestore } from "@fortawesome/free-solid-svg-icons";
 import { toRaw } from "vue";
 
-import { darken } from "../tools/cssColor.js";
-import { downloadData } from "../tools/download.js";
+import { darken } from "@/shared/lib/cssColor.js";
+import { downloadData } from "@/shared/lib/download.js";
 import { plotCsv } from "../tools/plotCsv.js";
-import { logStartTime } from "../tools/flightTime.js";
+import { logStartTime } from "@/shared/lib/flightTime.js";
 import {
     dataEnd,
     relayoutRange,

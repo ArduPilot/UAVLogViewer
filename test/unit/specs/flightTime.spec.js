@@ -1,5 +1,5 @@
-import { logStartTime, zoneOfFlight } from "../../../src/tools/flightTime.js";
-import extractStartTime from "../../../src/tools/datetools.js";
+import { logStartTime, zoneOfFlight } from "@/shared/lib/flightTime.js";
+import extractStartTime from "@/shared/lib/datetools.js";
 
 describe("log start time and place", () => {
     test("metadata start time as milliseconds", () => {

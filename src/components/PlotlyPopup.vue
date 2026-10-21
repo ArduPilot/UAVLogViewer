@@ -10,8 +10,8 @@ import Plotly from "plotly.js/lib/core";
 import { markRaw } from "vue";
 import { store } from "./Globals.js";
 
-import { darken } from "../tools/cssColor.js";
-import { downloadData } from "../tools/download.js";
+import { darken } from "@/shared/lib/cssColor.js";
+import { downloadData } from "@/shared/lib/download.js";
 import { plotCsv } from "../tools/plotCsv.js";
 import {
     dataEnd,
