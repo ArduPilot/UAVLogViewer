@@ -135,7 +135,7 @@
 </template>
 
 <script>
-import { store } from "../Globals.js";
+import { store } from "@/components/Globals.js";
 
 export default {
     name: "CesiumSettingsWidget",

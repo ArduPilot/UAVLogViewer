@@ -11,14 +11,14 @@ import { toRaw } from "vue";
 
 import { darken } from "@/shared/lib/cssColor.js";
 import { downloadData } from "@/shared/lib/download.js";
-import { plotCsv } from "../tools/plotCsv.js";
+import { plotCsv } from "@/tools/plotCsv.js";
 import { logStartTime } from "@/shared/lib/flightTime.js";
 import {
     dataEnd,
     relayoutRange,
     sameRange,
     timeAxis,
-} from "../tools/plotTimeAxis.js";
+} from "@/tools/plotTimeAxis.js";
 
 let annotationsEvents = [];
 const annotationsModes = [];

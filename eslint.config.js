@@ -6,6 +6,7 @@ import sonarjs from "eslint-plugin-sonarjs";
 import pluginVue from "eslint-plugin-vue";
 import globals from "globals";
 import neostandard from "neostandard";
+import noRelativeImportPaths from "eslint-plugin-no-relative-import-paths";
 
 export default [
     {
@@ -46,6 +47,22 @@ export default [
             "vue/multi-word-component-names": "off",
             "vue/no-reserved-component-names": "off",
             "vue/no-v-html": "error",
+        },
+    },
+    {
+        files: ["src/**/*.{js,vue}"],
+        plugins: { "no-relative-import-paths": noRelativeImportPaths },
+        rules: {
+            // Cross-directory imports use the @/ alias; sibling imports
+            // (./Collapse.vue) stay relative. --fix rewrites the rest.
+            "no-relative-import-paths/no-relative-import-paths": [
+                "error",
+                {
+                    allowSameFolder: true,
+                    rootDir: "src",
+                    prefix: "@",
+                },
+            ],
         },
     },
     {

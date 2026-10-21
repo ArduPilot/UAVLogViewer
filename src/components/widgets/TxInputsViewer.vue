@@ -37,7 +37,7 @@
 </template>
 
 <script>
-import { store } from "../Globals.js";
+import { store } from "@/components/Globals.js";
 import { useWidget, widgetProps } from "./useWidget.js";
 import { Interpolator } from "@/shared/lib/interpolator.js";
 

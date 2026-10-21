@@ -42,6 +42,7 @@
         "epic-spinners": "^2.0.0",
         "eslint": "^10.12.0",
         "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-no-relative-import-paths": "^1.7.3",
         "eslint-plugin-sonarjs": "^4.2.2",
         "eslint-plugin-vue": "^10.11.1",
         "events": "^3.3.0",
