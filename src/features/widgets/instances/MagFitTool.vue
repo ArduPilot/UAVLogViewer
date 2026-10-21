@@ -300,7 +300,7 @@
 
 <script>
 import { store } from "@/shared/stores/index.js";
-import { useWidget, widgetProps } from "./useWidget.js";
+import { useWidget, widgetProps } from "@/features/widgets/core/useWidget.js";
 import { Vector3 } from "@/shared/lib/mavextra/vector3";
 import { Matrix3 } from "@/shared/lib/mavextra/matrix3";
 import { downloadData } from "@/shared/lib/download.js";

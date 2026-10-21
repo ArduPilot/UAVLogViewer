@@ -24,7 +24,7 @@
 
 <script>
 import { store } from "@/shared/stores/index.js";
-import { useWidget, widgetProps } from "./useWidget.js";
+import { useWidget, widgetProps } from "@/features/widgets/core/useWidget.js";
 
 export default {
     name: "MessageViewer",
@@ -107,5 +107,5 @@ export default {
 </script>
 
 <style scoped>
-/* All shell rules live in src/styles/widget.css */
+/* All shell rules live in src/features/widgets/core/widget.css */
 </style>

@@ -111,11 +111,11 @@ import isOnline from "is-online";
 import Plotly from "@/components/Plotly.vue";
 import CesiumViewer from "@/components/CesiumViewer.vue";
 import Sidebar from "@/components/Sidebar.vue";
-import TxInputsViewer from "@/components/widgets/TxInputsViewer.vue";
-import ParamViewer from "@/components/widgets/ParamViewer.vue";
-import MessageViewer from "@/components/widgets/MessageViewer.vue";
-import DeviceIDViewer from "@/components/widgets/DeviceIDViewer.vue";
-import AttitudeViewer from "@/components/widgets/AttitudeWidget.vue";
+import TxInputsViewer from "@/features/widgets/instances/TxInputsViewer.vue";
+import ParamViewer from "@/features/widgets/instances/ParamViewer.vue";
+import MessageViewer from "@/features/widgets/instances/MessageViewer.vue";
+import DeviceIDViewer from "@/features/widgets/instances/DeviceIDViewer.vue";
+import AttitudeViewer from "@/features/widgets/instances/AttitudeWidget.vue";
 import { keepRaw, store } from "@/shared/stores/index.js";
 import { AtomSpinner } from "epic-spinners";
 import { Color } from "cesium";
@@ -124,8 +124,8 @@ import { DataflashDataExtractor } from "@/tools/dataflashDataExtractor";
 import { MavlinkDataExtractor } from "@/tools/mavlinkDataExtractor";
 import { DjiDataExtractor } from "@/tools/djiDataExtractor";
 import { zoneOfFlight } from "@/shared/lib/flightTime.js";
-import MagFitTool from "@/components/widgets/MagFitTool.vue";
-import EkfHelperTool from "@/components/widgets/EkfHelperTool.vue";
+import MagFitTool from "@/features/widgets/instances/MagFitTool.vue";
+import EkfHelperTool from "@/features/widgets/instances/EkfHelperTool.vue";
 
 // any other log type is DataFlash
 const EXTRACTORS = { tlog: MavlinkDataExtractor, dji: DjiDataExtractor };

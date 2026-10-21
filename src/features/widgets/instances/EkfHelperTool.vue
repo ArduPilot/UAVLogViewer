@@ -33,7 +33,7 @@
 
 <script>
 import { store } from "@/shared/stores/index.js";
-import { useWidget, widgetProps } from "./useWidget.js";
+import { useWidget, widgetProps } from "@/features/widgets/core/useWidget.js";
 
 // The EKF solution status bits, bit 0 first (nav_filter_status in ArduPilot)
 const SOLUTION_FLAGS = [
@@ -153,5 +153,5 @@ export default {
 
 <style scoped>
 /* All shell rules, handles, close button, and content layout come
-   from src/styles/widget.css. */
+   from src/features/widgets/core/widget.css. */
 </style>

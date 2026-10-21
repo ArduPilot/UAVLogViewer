@@ -38,7 +38,7 @@
 
 <script>
 import { store } from "@/shared/stores/index.js";
-import { useWidget, widgetProps } from "./useWidget.js";
+import { useWidget, widgetProps } from "@/features/widgets/core/useWidget.js";
 import { Interpolator } from "@/shared/lib/interpolator.js";
 
 export default {

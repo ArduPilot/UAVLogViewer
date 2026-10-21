@@ -20,7 +20,7 @@
 
 <script>
 import { store } from "@/shared/stores/index.js";
-import { useWidget, widgetProps } from "./useWidget.js";
+import { useWidget, widgetProps } from "@/features/widgets/core/useWidget.js";
 import AttitudeIndicator from "@/shared/ui/AttitudeIndicator.vue";
 import { Interpolator } from "@/shared/lib/interpolator.js";
 
@@ -97,5 +97,5 @@ export default {
 
 <style scoped>
 /* All shell rules, handles, close button, and fixed-content sizing come
-   from src/styles/widget.css. Nothing widget-specific. */
+   from src/features/widgets/core/widget.css. Nothing widget-specific. */
 </style>

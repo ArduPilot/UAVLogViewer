@@ -28,7 +28,7 @@
 
 <script>
 import { store } from "@/shared/stores/index.js";
-import { useWidget, widgetProps } from "./useWidget.js";
+import { useWidget, widgetProps } from "@/features/widgets/core/useWidget.js";
 
 const busTypes = {
     1: "I2C",
@@ -214,7 +214,7 @@ export default {
                 address,
                 devtype,
             });
-                    },
+        },
         init() {
             this.update();
         },
@@ -223,5 +223,5 @@ export default {
 </script>
 
 <style scoped>
-/* Nothing widget-specific yet — all shell rules live in src/styles/widget.css */
+/* Nothing widget-specific yet — all shell rules live in src/features/widgets/core/widget.css */
 </style>

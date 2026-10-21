@@ -13,7 +13,7 @@
     box-shadow: 9px 9px 3px -6px rgb(26 26 26 / 69.9%);
     border-radius: 5px;
     user-select: none;
-    overflow: hidden;   /* ← clips scrollbar + any overflow to the rounded corners */
+    overflow: hidden; /* ← clips scrollbar + any overflow to the rounded corners */
 }
 
 /* bottom-right resize handle — hit zone is 25px (RESIZE_HANDLE in useWidget.js) */
@@ -63,7 +63,9 @@
     font-size: 12px;
     border-radius: 0 0 10px;
     cursor: grab;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
     z-index: 1;
 }
 
@@ -114,7 +116,9 @@
     line-height: 1;
     cursor: pointer;
     border-radius: 3px;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
 }
 
 .uav-widget__close::before {

@@ -2,7 +2,7 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import { eventHub } from "@/shared/lib/eventHub.js";
-import "./styles/widget.css";
+import "@/features/widgets/core/widget.css";
 
 // Bootstrap 5 styles; the few components the app needs are in components/ui
 import "bootstrap/dist/css/bootstrap.min.css";
