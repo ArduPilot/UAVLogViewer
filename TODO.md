@@ -92,15 +92,21 @@ Feature-slice layout: `src/{app,features,shared,assets}`.
 
 ## UI consistency backlog
 
-- [ ] Main sidebar scrollbar is ugly: make it thin and dark like the
-      widgets', or hide it.
-- [ ] Button consistency: ten different corner radii today (pills of
-      15–50 px in the sidebar and plot setup, 3–5 px in the 3D view and
-      Cesium, 3–20 px in widgets and inputs). Decide one system and apply
-      it.
-- [ ] Hover animation consistency: sidebar buttons fade a glow in 0.5–1 s,
-      the 3D toolbar buttons fade colour in 1 s, Cesium's own toolbar
-      buttons change instantly. Pick one timing for all.
+- [x] Main sidebar scrollbar styled (thin, white thumb on transparent,
+      scoped to `.nav-side-menu`). White was chosen over the widget's
+      dark so it stands out against the sidebar's dark gradient.
+- [ ] Button consistency: PlotSetup buttons and the axis toggle are
+      now 4 px / 32 px / `#1a1e24`. Remaining offenders: sidebar pills
+      (15 px), 3D view / Cesium (3–5 px), widget inputs (3–20 px).
+      Standard: 4 px radius, 32 px height, `#1a1e24` surface.
+- [ ] Hover animation consistency: PlotSetup uses `background-color`
+      `0.15 s ease`. Sidebar buttons glow in 0.5–1 s, 3D toolbar buttons
+      fade colour in 1 s, Cesium's own buttons change instantly. Pick one
+      timing for all.
+- [ ] `ExpressionEditor.vue` input still has `border-radius: 20px`,
+      white background, grey border — inconsistent with the 4 px / dark
+      controls in the same row. Match to `#1a1e24` / 4 px / 32 px and
+      dark-theme the `.suggestions-box`.
 - [ ] Drop zone text: does not mention DJI `.txt` logs, and the text
       touches the box's right border.
 - [ ] Message viewer looked empty in a test with the real `.bin`: check
@@ -176,6 +182,10 @@ Feature-slice layout: `src/{app,features,shared,assets}`.
 - [ ] Tell ArduPilot that plot.ardupilot.org's nginx sends the app (about
       13 MB of JS) and the 3.5 MB terrain `layer.json` uncompressed:
       `gzip on` would cut it to about a third. Outside this repo.
+- [ ] Plot colours: `state.allColors` still drives `firstFreeColor`.
+      `ColorPicker.vue` allows a per-plot custom colour, but the
+      auto-assigned pool is unchanged. Expanding the pool is fork
+      issue #10.
 
 ## Improvements
 
@@ -183,6 +193,8 @@ Feature-slice layout: `src/{app,features,shared,assets}`.
       `GPS[0]` or `CTUN`.
 - [ ] Fix the load-file window: currently doesn't filter to `*.tlog` /
       `*.bin`.
+- [ ] Add a rule in the 3D scene view to measure distances and angles.
+- [ ] Add a linear compass visualizer in the 3D scene view for the drone.
 
 ## Later (fork issues)
 

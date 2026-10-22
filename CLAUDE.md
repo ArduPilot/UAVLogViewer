@@ -80,3 +80,4 @@ Plot series are user expressions such as `ATT.Roll * 2` or `lowpass(ATTITUDE.pit
 - Ruff (`ruff.toml`) uses its default rules and formatter for the Python tooling; use f-strings.
 - Vue 3: `:key` goes on the `<template v-for>` itself, not on the elements inside it. A component's template has one root element (a comment beside it makes a fragment in dev builds); `$el` is that element.
 - Use `Number.isNaN(Number(x))` where the old code relied on the global `isNaN` coercing strings (for...in keys, preset color indices, expression values). Plain `Number.isNaN("abc")` is `false`.
+- **UI controls** (buttons, inputs, swatches, axis toggles) share `border-radius: 4px`, `height: 2rem`, surface `#1a1e24`, border `1px solid rgb(91 100 117 / 76%)`. Do not introduce new radii or pill styles without updating this rule.
