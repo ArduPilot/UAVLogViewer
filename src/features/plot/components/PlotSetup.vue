@@ -21,43 +21,26 @@
                             <expression-editor
                                 v-model="field.name"
                                 :suggestions="completionOptions"
+                                class="expression-editor"
                             />
-                            <label
-                                :for="'plot-axis-' + index"
-                                class="visually-hidden"
-                                >Plot axis</label
+                            <button
+                                type="button"
+                                class="axis-toggle"
+                                :aria-label="
+                                    'Plot axis: ' +
+                                    field.axis +
+                                    '. Click to advance.'
+                                "
+                                title="Click to advance axis"
+                                @click="advanceAxis(field)"
                             >
-                            <select
-                                :id="'plot-axis-' + index"
-                                v-model.number="field.axis"
-                            >
-                                <option
-                                    v-for="axis in state.allAxis"
-                                    :key="'axisnumber' + axis"
-                                    :value="axis"
-                                >
-                                    {{ axis }}
-                                </option>
-                            </select>
-                            <label
-                                :for="'plot-color-' + index"
-                                class="visually-hidden"
-                                >Plot color</label
-                            >
-                            <select
-                                :id="'plot-color-' + index"
+                                {{ field.axis }}
+                            </button>
+                            <color-picker
                                 v-model="field.color"
-                                :style="{ color: field.color }"
-                            >
-                                <option
-                                    v-for="color in state.allColors"
-                                    :key="'axisColor' + color"
-                                    :value="color"
-                                    :style="{ color: color }"
-                                >
-                                    ■
-                                </option>
-                            </select>
+                                :colors="state.allColors"
+                                aria-label="Plot color"
+                            />
                             <a
                                 class="remove-button"
                                 @click="
@@ -136,6 +119,7 @@ import {
     clearExpressions,
 } from "@/shared/stores/index.js";
 import ExpressionEditor from "./ExpressionEditor.vue";
+import ColorPicker from "./ColorPicker.vue";
 import Collapse from "@/shared/ui/Collapse.vue";
 import Modal from "@/shared/ui/Modal.vue";
 
@@ -143,6 +127,7 @@ export default {
     name: "PlotSetup",
     components: {
         ExpressionEditor,
+        ColorPicker,
         Collapse,
         Modal,
     },
@@ -182,6 +167,11 @@ export default {
     },
     methods: {
         clearExpressions,
+        advanceAxis(field) {
+            const axes = this.state.allAxis;
+            const currentIndex = axes.indexOf(field.axis);
+            field.axis = axes[(currentIndex + 1) % axes.length];
+        },
         createNewExpression() {
             this.state.plotOn = true;
             this.$nextTick(() => {
@@ -218,7 +208,7 @@ export default {
     },
 };
 </script>
-<style>
+<style scoped>
 /* MAIN */
 .plot-wrapper {
     min-height: 160px;
@@ -255,60 +245,67 @@ li.field {
 }
 
 li.plotsetup {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-i {
-    margin: 5px;
-    padding: 0;
+li.plotsetup .expression-editor {
+    flex: 1;
+    min-width: 0;
 }
 
-.plotname {
-    display: inline-block;
-    line-height: 15px;
-    margin-bottom: 0;
-    font-size: 13px;
-    width: 100%;
-    border: 1px solid grey;
-    padding: 4.5px;
-    border-radius: 20px;
+li.plotsetup .axis-toggle,
+li.plotsetup .remove-button {
+    flex-shrink: 0;
 }
 
-.plotname:focus {
-    background-color: rgb(241 248 255 / 96.6%);
-    outline: none;
+li.plotsetup .remove-button {
+    display: inline-flex;
+    align-items: center;
 }
 
-select {
-    display: inline;
-    border-radius: 5px;
-    border: 1px solid rgb(156 156 156);
-    background-color: rgb(255 255 255);
-    padding: 2px 2.5px;
-    color: #4a4a4a;
+li.plotsetup .fa-trash {
+    float: none;
+    margin: 0;
 }
 
-select:focus {
-    border: 1.5px solid #d47f00;
-    outline: none;
+/* Axis toggle -- cycles through state.allAxis on click */
+
+.axis-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.75rem;
+    border: 1px solid rgb(91 100 117 / 76%);
+    border-radius: 4px;
+    background: #1a1e24;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
 }
 
-select option {
-    background-color: rgb(216 215 215);
+.axis-toggle:hover {
+    background: color-mix(in srgb, #1a1e24 92%, white);
 }
 
-select option:hover {
-    background-color: #d47f00;
+.axis-toggle:focus-visible {
+    outline: 2px solid #d47f00;
+    outline-offset: 1px;
 }
 
 .fa-trash {
-    margin: 12px 5px 10px 1px !important;
+    margin: 12px 5px 10px 1px;
     font-size: 10px;
     float: right;
 }
 
 .error {
-    color: red;
+    color: var(--bs-danger);
 }
 
 /* BUTTONS */
@@ -316,63 +313,51 @@ select option:hover {
 .btns-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin: 10px 20px;
+    gap: 0.5rem;
+    margin: 0.625rem 1.25rem;
 }
 
-/* SAVE PRESET BUTTON */
-
+.add-expression,
 .save-preset {
-    background-color: rgb(33 41 61);
-    color: #fff;
-    border-radius: 15px;
-    padding: 0 10px 0 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 2rem;
+    padding: 0 0.75rem;
     border: 1px solid rgb(91 100 117 / 76%);
-    font-size: 13px;
+    border-radius: 4px;
+    background: #1a1e24;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
 }
 
+.add-expression:hover,
 .save-preset:hover {
-    background-color: rgb(47 58 87);
-    box-shadow: 0 0 12px 0 rgb(37 78 133 / 55%);
-    transition: all 0.5s ease;
+    background: color-mix(in srgb, #1a1e24 92%, white);
 }
 
-.save-preset:focus {
-    outline: none;
+.add-expression:focus-visible,
+.save-preset:focus-visible {
+    outline: 2px solid #d47f00;
+    outline-offset: 1px;
 }
 
-/* ADD EXPRESSION BUTTON */
-
-.add-expression {
-    background-color: rgb(33 41 61);
-    color: #fff;
-    border-radius: 15px;
-    padding: 0 10px 0 0;
-    border: 1px solid rgb(91 100 117 / 76%);
-    font-size: 13px;
+.add-expression i,
+.save-preset i {
+    margin: 0;
 }
 
-.add-expression:hover {
-    background-color: rgb(47 58 87);
-    box-shadow: 0 0 12px 0 rgb(37 78 133 / 55%);
-    transition: all 0.5s ease;
+/* icon margins -- global i { margin: 5px } removed */
+
+.section .expand {
+    margin-left: 0.25rem;
 }
 
-.add-expression:focus {
-    outline: none;
-}
-
-/* MEDIA QUERIES */
-
-@media (min-width: 1000px) and (max-width: 1440px) {
-    p.plotname {
-        width: 55%;
-    }
-}
-
-@media (min-width: 2000px) {
-    p.plotname {
-        width: 60%;
-    }
+li.error i {
+    margin-right: 0.25rem;
 }
 </style>

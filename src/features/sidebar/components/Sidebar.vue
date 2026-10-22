@@ -443,18 +443,29 @@ i {
     font-size: 13px;
 }
 
-/* SCROLLBAR */
+/* SCROLLBAR -- white thumb to stand out against the dark sidebar gradient.
+   App.vue's #paneContent scrollbar (dark) handles the widgets, so these rules
+   are scoped to .nav-side-menu to leave that untouched. */
 
-::-webkit-scrollbar {
-    width: 12px;
+.nav-side-menu,
+.nav-side-menu * {
+    scrollbar-width: thin; /* Firefox: thin bar */
+    scrollbar-color: rgb(255 255 255 / 60%) transparent; /* Firefox: white thumb on empty track */
+}
+
+.nav-side-menu::-webkit-scrollbar,
+.nav-side-menu ::-webkit-scrollbar {
+    width: 12px; /* matches prior size, no layout shift */
     background-color: rgb(0 0 0 / 0%);
 }
 
-::-webkit-scrollbar-thumb {
-    border-radius: 5px;
-    box-shadow: inset 0 0 6px rgb(0 0 0 / 10%);
-    background: rgb(60 75 112);
-    background: linear-gradient(0deg, rgb(67 95 155) 51%, rgb(61 79 121) 100%);
+.nav-side-menu::-webkit-scrollbar-thumb,
+.nav-side-menu ::-webkit-scrollbar-thumb {
+    border-radius: 5px; /* matches prior radius */
+    box-shadow: inset 0 0 6px rgb(0 0 0 / 10%); /* preserves prior subtle inset */
+    background: rgb(
+        255 255 255 / 60%
+    ); /* white thumb, replacing the blue gradient */
 }
 
 /* BRAND */

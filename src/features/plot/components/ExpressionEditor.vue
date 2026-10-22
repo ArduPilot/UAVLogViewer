@@ -1,6 +1,10 @@
 <template>
     <div class="code-editor">
+        <label for="expression-editor" class="visually-hidden"
+            >Expression</label
+        >
         <input
+            id="expression-editor"
             ref="codeEditor"
             class="code-input"
             :value="modelValue"
