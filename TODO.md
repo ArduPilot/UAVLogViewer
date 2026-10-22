@@ -118,6 +118,16 @@ Feature-slice layout: `src/{app,features,shared,assets}`.
       is not workable — pick a scale.
 - [ ] Make animations consistent between sidebar menus — right now they
       all differ.
+- [ ] Scope the large `<style>` block in `Sidebar.vue`. It is currently
+      unscoped, so every rule leaks app-wide. The `.nav-side-menu li a i`
+      rule (meant for the tabholder) gives 40 px of footprint to every
+      `<li><a><i>` inside the sidebar, which broke the TreeMenu and
+      MessageMenu carets and required local `.section i` overrides. Fix:
+      first narrow that selector to `.tabholder a i`; then audit each
+      remaining rule for what it was actually meant to reach before
+      wrapping the block in `<style scoped>` — some rules may silently
+      style PlotSetup / MessageMenu / TreeMenu and were never intended
+      to. Do not convert to scoped until the audit is done.
 
 ## Phase 5 — optimize
 

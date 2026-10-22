@@ -29,6 +29,7 @@ export default {
         },
         show() {
             this.apply();
+            eventHub.$emit("collapse-state", this.name, this.show);
         },
     },
     created() {
@@ -41,6 +42,7 @@ export default {
         // Bootstrap ignores show()/hide() while a transition runs: apply the state again after it
         this.$el.addEventListener("shown.bs.collapse", this.apply);
         this.$el.addEventListener("hidden.bs.collapse", this.apply);
+        eventHub.$emit("collapse-state", this.name, this.show);
     },
     beforeUnmount() {
         eventHub.$off("collapse-toggle", this.onToggle);

@@ -5,7 +5,12 @@
                 <div v-collapse-toggle="'plotsetupcontent'">
                     <a class="section">
                         Plots Setup
-                        <i class="expand fa-solid fa-caret-down"></i>
+                        <i
+                            class="expand expand--closed fa-solid fa-caret-right"
+                        ></i>
+                        <i
+                            class="expand expand--open fa-solid fa-caret-down"
+                        ></i>
                     </a>
                 </div>
             </li>
@@ -279,7 +284,7 @@ li.plotsetup .fa-trash {
     min-width: 2rem;
     height: 2rem;
     padding: 0 0.75rem;
-    border: 1px solid rgb(91 100 117 / 76%);
+    border: 1px solid rgb(133 133 133);
     border-radius: 4px;
     background: #1a1e24;
     color: #fff;
@@ -351,10 +356,16 @@ li.plotsetup .fa-trash {
     margin: 0;
 }
 
-/* icon margins -- global i { margin: 5px } removed */
+.expand--open {
+    display: none;
+}
 
-.section .expand {
-    margin-left: 0.25rem;
+.is-open .expand--closed {
+    display: none;
+}
+
+.is-open .expand--open {
+    display: inline;
 }
 
 li.error i {

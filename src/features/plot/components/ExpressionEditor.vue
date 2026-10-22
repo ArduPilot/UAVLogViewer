@@ -197,40 +197,53 @@ export default {
 <style scoped>
 .code-editor {
     position: relative;
-    color: black;
     display: inline-block;
 }
 
 .code-input {
+    box-sizing: border-box;
     width: 100%;
+    height: 2rem;
+    padding: 0 0.75rem;
+    border: 1px solid rgb(133 133 133);
+    border-radius: 4px;
+    background-color: #fff;
+    color: #141924;
+    caret-color: #141924;
     font-family: monospace;
-    resize: none;
-    display: inline-block;
-    line-height: 15px;
-    margin-bottom: 0;
-    font-size: 13px;
-    border: 1px solid grey;
-    padding: 4.5px;
-    border-radius: 20px;
+    font-size: 0.8125rem;
+}
+
+.code-input::placeholder {
+    color: #a0a8b8;
+}
+
+.code-input:focus-visible {
+    border-color: #d47f00;
+    box-shadow: 0 0 4px 0 rgb(212 127 0 / 40%);
+    outline: none;
 }
 
 .suggestions-box {
-    text-align: left;
     position: fixed;
-    background: white;
-    border: 1px solid #ccc;
+    text-align: left;
+    max-height: 10rem;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid rgb(133 133 133);
     border-radius: 4px;
-    max-height: 150px;
+    color: #141924;
     z-index: 1000;
     box-shadow: 0 2px 10px rgb(0 0 0 / 10%);
 }
 
 .suggestion-item {
+    padding: 0.25rem 0.5rem;
+    line-height: 1.25rem;
     cursor: pointer;
-    line-height: 20px;
 }
 
 .suggestion-item.selected {
-    background-color: #f0f0f0;
+    background: color-mix(in srgb, #fff 92%, black);
 }
 </style>

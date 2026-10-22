@@ -6,7 +6,8 @@
         >
             <a class="section">
                 {{ label }}
-                <i class="fa-solid fa-caret-down"></i
+                <i class="expand--closed fa-solid fa-caret-right"></i
+                ><i class="expand--open fa-solid fa-caret-down"></i
             ></a>
         </li>
         <template v-if="nodes.length === undefined">
@@ -117,3 +118,24 @@ export default {
     },
 };
 </script>
+
+<style scoped>
+/* Neutralise Sidebar.vue's global 'li a i { width: 20px; padding-right: 20px }',
+   which gives the caret a 40px footprint that pushes it away from the label. */
+.section i {
+    display: inline-block;
+    width: auto;
+    padding: 0;
+    margin-left: 0.25rem;
+}
+
+.section .expand--open {
+    display: none;
+}
+.is-open .section .expand--closed {
+    display: none;
+}
+.is-open .section .expand--open {
+    display: inline;
+}
+</style>

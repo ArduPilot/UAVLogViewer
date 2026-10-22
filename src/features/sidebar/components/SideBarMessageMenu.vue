@@ -12,7 +12,8 @@
             <li v-collapse-toggle="'messages'">
                 <a class="section">
                     Plot Individual Field
-                    <i class="fa-solid fa-caret-down"></i
+                    <i class="expand--closed fa-solid fa-caret-right"></i>
+                    <i class="expand--open fa-solid fa-caret-down"></i
                 ></a>
             </li>
         </ul>
@@ -49,7 +50,12 @@
                                 <span v-if="messageTypes[key].isArray">{{
                                     "[...]"
                                 }}</span>
-                                <i class="expand fa-solid fa-caret-down"></i>
+                                <i
+                                    class="expand expand--closed fa-solid fa-caret-right"
+                                ></i>
+                                <i
+                                    class="expand expand--open fa-solid fa-caret-down"
+                                ></i>
                                 <span class="description">
                                     {{
                                         messageDocs[key.split("[")[0]]
@@ -111,7 +117,7 @@
 </template>
 <script>
 import { store } from "@/shared/stores/index.js";
-import TreeMenu from "@/shared/ui/TreeMenu.vue";
+import TreeMenu from "./TreeMenu.vue";
 import Collapse from "@/shared/ui/Collapse.vue";
 import { XMLParser } from "fast-xml-parser";
 import mavgraphs from "@/assets/xml/mavgraphs.xml?raw";
@@ -415,46 +421,26 @@ export default {
 };
 </script>
 <style scoped>
-i {
-    margin: 5px;
-}
-
-i.expand {
-    float: right;
-}
-
-li > div {
-    display: inline-block;
-    width: 100%;
-}
-
-li.field {
-    line-height: 29px;
-    padding-left: 40px;
-    font-size: 90%;
-    display: inline-block;
-    vertical-align: middle;
-    width: 100%;
-}
-
-li.type {
-    line-height: 30px;
-    padding-left: 10px;
-    font-size: 85%;
-}
-
-input {
-    margin: 12px 12px 15px 10px;
-    border: 2px solid #ccc;
+/* Filter input -- sidebar tier */
+#filterbox {
+    margin: 12px;
+    box-sizing: border-box;
+    height: 2rem;
+    padding: 0 0.75rem;
+    border: 1px solid rgb(133 133 133);
     border-radius: 4px;
-    background-color: rgb(255 255 255 / 89.7%);
-    color: rgb(51 51 51);
-    width: 92%;
+    background: #fff;
+    color: #141924;
+    caret-color: #141924;
+    font: inherit;
+    font-size: 0.8125rem;
+    width: calc(100% - 20px);
 }
 
-input:focus {
+#filterbox:focus-visible {
+    border-color: #d47f00;
+    box-shadow: 0 0 4px 0 rgb(212 127 0 / 40%);
     outline: none;
-    border: 2px solid #135388;
 }
 
 .input-li:hover {
@@ -463,23 +449,92 @@ input:focus {
 }
 
 ::placeholder {
-    /* Chrome, Firefox, Opera, Safari 10.1+ */
-    color: rgb(148 147 147);
-    opacity: 1; /* Firefox */
+    color: #a0a8b8;
+    opacity: 1;
 }
 
-i.remove-icon {
-    float: right;
+/* Baseline margin for standalone carets (Plot Individual Field); overridden in flex/grid rows */
+i {
+    margin: 5px;
 }
 
+/* Type row: label, [...], description, caret */
+li.type {
+    line-height: 30px;
+    padding-left: 10px;
+    font-size: 85%;
+    container-type: inline-size;
+}
+
+li.type .section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+}
+
+li.type .section > .description {
+    order: 2;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+li.type .section > i {
+    order: 3;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* Field row: label, description, trash. Trash column always reserved. */
+li.field {
+    display: grid;
+    grid-template-columns: auto 1fr 1.5rem;
+    align-items: center;
+    gap: 0.5rem;
+    line-height: 29px;
+    padding-left: 40px;
+    font-size: 90%;
+    container-type: inline-size;
+}
+
+li.field > .description {
+    grid-column: 2;
+}
+
+li.field > a:last-child {
+    grid-column: 3;
+    text-align: center;
+    margin: 0;
+}
+
+/* Description text (shared) */
 span.description {
     opacity: 0.7;
-    font-size: 80%;
+    font-size: 90%;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    display: inline-block;
-    max-width: 180px;
-    vertical-align: top;
+    min-width: 0;
+}
+
+/* Hide description when row gets narrow */
+@container (max-width: 280px) {
+    span.description {
+        display: none;
+    }
+}
+
+/* Collapse caret swap */
+.expand--open {
+    display: none;
+}
+
+.is-open .expand--closed {
+    display: none;
+}
+
+.is-open .expand--open {
+    display: inline;
 }
 </style>
