@@ -1,0 +1,13 @@
+{
+    "headers": [
+        {
+            "source": "quantized/**/*.terrain",
+            "headers": [
+                {
+                    "key": "Content-Encoding",
+                    "value": "gzip"
+                }
+            ]
+        }
+    ]
+}

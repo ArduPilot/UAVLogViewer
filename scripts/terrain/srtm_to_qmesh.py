@@ -17,6 +17,7 @@ Examples:
   ./srtm_to_qmesh.py --srtm-dir /mnt/terrain_data/data/SRTM3 \
       --out /mnt/terrain_data/data/quantized --jobs 4
 """
+
 import argparse
 import glob
 import gzip
@@ -30,12 +31,12 @@ from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 import rasterio
+from pydelatin import Delatin
+from quantized_mesh_encoder import VertexNormalsExtension, encode
 from rasterio.enums import Resampling
 from rasterio.windows import from_bounds
-from pydelatin import Delatin
-from quantized_mesh_encoder import encode, VertexNormalsExtension
 
-CELL_RE = re.compile(r'^([NS])(\d{2})([EW])(\d{3})$')
+CELL_RE = re.compile(r"^([NS])(\d{2})([EW])(\d{3})$")
 
 # Default max zoom by source resolution (tile ~ native block at that level).
 DEFAULT_MAXZOOM = {1: 13, 3: 11}
@@ -47,14 +48,15 @@ def parse_cell(name):
     if not m:
         return None
     ns, la, ew, lo = m.groups()
-    lat = int(la) * (1 if ns == 'N' else -1)
-    lon = int(lo) * (1 if ew == 'E' else -1)
+    lat = int(la) * (1 if ns == "N" else -1)
+    lon = int(lo) * (1 if ew == "E" else -1)
     return lat, lon
 
 
 def cell_name(lat0, lon0):
-    return '%s%02d%s%03d' % ('N' if lat0 >= 0 else 'S', abs(lat0),
-                             'E' if lon0 >= 0 else 'W', abs(lon0))
+    ns = "N" if lat0 >= 0 else "S"
+    ew = "E" if lon0 >= 0 else "W"
+    return f"{ns}{abs(lat0):02d}{ew}{abs(lon0):03d}"
 
 
 def tile_size_deg(z):
@@ -83,11 +85,12 @@ def tile_range_for_bbox(z, w, s, e, n):
 
 # ---------------------------------------------------------------- source / VRT
 
+
 def find_cells(srtm_dir):
     """name -> (lat0, lon0, zip_path) for every NxxExxx.hgt.zip under srtm_dir."""
     out = {}
-    for p in glob.iglob(os.path.join(srtm_dir, '**', '*.hgt.zip'), recursive=True):
-        name = os.path.basename(p)[:-len('.hgt.zip')]
+    for p in glob.iglob(os.path.join(srtm_dir, "**", "*.hgt.zip"), recursive=True):
+        name = os.path.basename(p)[: -len(".hgt.zip")]
         c = parse_cell(name)
         if c:
             out[name] = (c[0], c[1], p)
@@ -98,10 +101,10 @@ def build_vrt(cells, vrt_path):
     """Write a GDAL VRT mosaicking the given cells (list of (lat0, lon0, zip_path))."""
     # Probe the first cell for size / dtype (all SRTM cells share a grid phase).
     lat0, lon0, zp = cells[0]
-    inner = cell_name(lat0, lon0) + '.hgt'
-    with rasterio.open('/vsizip/%s/%s' % (zp, inner)) as ds:
+    inner = cell_name(lat0, lon0) + ".hgt"
+    with rasterio.open(f"/vsizip/{zp}/{inner}") as ds:
         size = ds.width  # 3601 (SRTM1) or 1201 (SRTM3)
-    ppd = size - 1      # posts per degree (3600 / 1200)
+    ppd = size - 1  # posts per degree (3600 / 1200)
     res = 1.0 / ppd
     lon0s = [c[1] for c in cells]
     lat0s = [c[0] for c in cells]
@@ -113,24 +116,25 @@ def build_vrt(cells, vrt_path):
     gleft = min_lon - 0.5 * res
     gtop = max_north + 0.5 * res
     srcs = []
-    for (la, lo, zp) in cells:
-        inner = cell_name(la, lo) + '.hgt'
+    for la, lo, zp in cells:
+        inner = cell_name(la, lo) + ".hgt"
         xoff = round((lo - min_lon) * ppd)
         yoff = round((max_north - (la + 1)) * ppd)
         srcs.append(
-            '<SimpleSource><SourceFilename relativeToVRT="0">/vsizip/%s/%s'
-            '</SourceFilename><SourceBand>1</SourceBand>'
-            '<SrcRect xOff="0" yOff="0" xSize="%d" ySize="%d"/>'
-            '<DstRect xOff="%d" yOff="%d" xSize="%d" ySize="%d"/></SimpleSource>'
-            % (zp, inner, size, size, xoff, yoff, size, size))
+            f'<SimpleSource><SourceFilename relativeToVRT="0">/vsizip/{zp}/{inner}'
+            "</SourceFilename><SourceBand>1</SourceBand>"
+            f'<SrcRect xOff="0" yOff="0" xSize="{size}" ySize="{size}"/>'
+            f'<DstRect xOff="{xoff}" yOff="{yoff}" xSize="{size}" ySize="{size}"/></SimpleSource>'
+        )
+    sources = "".join(srcs)
     xml = (
-        '<VRTDataset rasterXSize="%d" rasterYSize="%d">'
-        '<SRS>EPSG:4326</SRS>'
-        '<GeoTransform>%.10f, %.12f, 0, %.10f, 0, %.12f</GeoTransform>'
+        f'<VRTDataset rasterXSize="{rx}" rasterYSize="{ry}">'
+        "<SRS>EPSG:4326</SRS>"
+        f"<GeoTransform>{gleft:.10f}, {res:.12f}, 0, {gtop:.10f}, 0, {-res:.12f}</GeoTransform>"
         '<VRTRasterBand dataType="Int16" band="1"><NoDataValue>-32768</NoDataValue>'
-        '%s</VRTRasterBand></VRTDataset>'
-        % (rx, ry, gleft, res, gtop, -res, ''.join(srcs)))
-    with open(vrt_path, 'w') as f:
+        f"{sources}</VRTRasterBand></VRTDataset>"
+    )
+    with open(vrt_path, "w") as f:
         f.write(xml)
     return ppd
 
@@ -152,19 +156,25 @@ _GRID_IDX = None
 
 def _grid_indices(g):
     """Triangle indices for a regular g x g vertex grid (row-major)."""
-    r, c = np.mgrid[0:g - 1, 0:g - 1]
+    r, c = np.mgrid[0 : g - 1, 0 : g - 1]
     v00 = (r * g + c).ravel()
     tri1 = np.stack([v00, v00 + g, v00 + g + 1], axis=1)
     tri2 = np.stack([v00, v00 + g + 1, v00 + 1], axis=1)
     return np.concatenate([tri1, tri2]).astype(np.uint32)
 
 
-def _init_worker(vrt_path, out_dir, max_error, tile_px, force, coarse_dem,
-                 coarse_maxz, grid):
+def _init_worker(
+    vrt_path, out_dir, max_error, tile_px, force, coarse_dem, coarse_maxz, grid
+):
     global _VRT, _DS, _DS_COARSE, _COARSE_MAXZ, _OUT, _MAX_ERROR, _TILE_PX, _FORCE
     global _GRID, _GRID_IDX
-    _VRT, _OUT, _MAX_ERROR, _TILE_PX, _FORCE = \
-        vrt_path, out_dir, max_error, tile_px, force
+    _VRT, _OUT, _MAX_ERROR, _TILE_PX, _FORCE = (
+        vrt_path,
+        out_dir,
+        max_error,
+        tile_px,
+        force,
+    )
     _DS = rasterio.open(vrt_path)
     _COARSE_MAXZ = coarse_maxz
     _DS_COARSE = rasterio.open(coarse_dem) if coarse_dem else None
@@ -174,9 +184,9 @@ def _init_worker(vrt_path, out_dir, max_error, tile_px, force, coarse_dem,
 
 def render_tile(zxy):
     z, x, y = zxy
-    out_file = os.path.join(_OUT, str(z), str(x), '%d.terrain' % y)
+    out_file = os.path.join(_OUT, str(z), str(x), f"{y}.terrain")
     if not _FORCE and os.path.exists(out_file):
-        return 'skip'
+        return "skip"
     # Low zoom reads the coarse global DEM (cheap, has overviews); high zoom reads
     # full-res SRTM (each tile then covers only ~1 cell, so the window is bounded).
     ds = _DS_COARSE if (_DS_COARSE is not None and z <= _COARSE_MAXZ) else _DS
@@ -194,9 +204,14 @@ def render_tile(zxy):
         # data extent (coverage edges); interior tiles read directly (~12x faster).
         db = ds.bounds
         inside = ew >= db.left and es >= db.bottom and ee <= db.right and en <= db.top
-        arr = ds.read(1, window=from_bounds(ew, es, ee, en, ds.transform),
-                      out_shape=(g, g), resampling=Resampling.bilinear,
-                      boundless=not inside, fill_value=0).astype(np.float32)
+        arr = ds.read(
+            1,
+            window=from_bounds(ew, es, ee, en, ds.transform),
+            out_shape=(g, g),
+            resampling=Resampling.bilinear,
+            boundless=not inside,
+            fill_value=0,
+        ).astype(np.float32)
         arr[arr < -1000.0] = 0.0
         rr, cc = np.mgrid[0:g, 0:g]
         lon = west + cc.ravel() * sx
@@ -210,10 +225,10 @@ def render_tile(zxy):
         iw, ie = max(west, db.left), min(east, db.right)
         isb, itn = max(south, db.bottom), min(north, db.top)
         if ie <= iw or itn <= isb:
-            return 'empty'  # tile doesn't overlap any source data
+            return "empty"  # tile doesn't overlap any source data
         resx, resy = ds.res
-        ow = max(2, min(int(round((east - west) / resx)) + 1, _TILE_PX))
-        oh = max(2, min(int(round((north - south) / resy)) + 1, _TILE_PX))
+        ow = max(2, min(round((east - west) / resx) + 1, _TILE_PX))
+        oh = max(2, min(round((north - south) / resy) + 1, _TILE_PX))
         arr = np.zeros((oh, ow), np.float32)
         cx0 = max(0, int(np.floor((iw - west) / (east - west) * (ow - 1))))
         cx1 = min(ow - 1, int(np.ceil((ie - west) / (east - west) * (ow - 1))))
@@ -221,20 +236,25 @@ def render_tile(zxy):
         ry1 = min(oh - 1, int(np.ceil((north - isb) / (north - south) * (oh - 1))))
         sw, sh = cx1 - cx0 + 1, ry1 - ry0 + 1
         if sw < 2 or sh < 2:
-            return 'empty'
+            return "empty"
         bw = west + cx0 / (ow - 1) * (east - west)
         be = west + cx1 / (ow - 1) * (east - west)
         bn = north - ry0 / (oh - 1) * (north - south)
         bs = north - ry1 / (oh - 1) * (north - south)
-        sub = ds.read(1, window=from_bounds(bw, bs, be, bn, ds.transform),
-                      out_shape=(sh, sw), resampling=Resampling.bilinear,
-                      boundless=True, fill_value=0).astype(np.float32)
+        sub = ds.read(
+            1,
+            window=from_bounds(bw, bs, be, bn, ds.transform),
+            out_shape=(sh, sw),
+            resampling=Resampling.bilinear,
+            boundless=True,
+            fill_value=0,
+        ).astype(np.float32)
         sub[sub < -1000.0] = 0.0
-        arr[ry0:ry0 + sh, cx0:cx0 + sw] = sub
+        arr[ry0 : ry0 + sh, cx0 : cx0 + sw] = sub
         tin = Delatin(arr, max_error=_MAX_ERROR)
         verts, tris = tin.vertices, tin.triangles
         if len(tris) == 0:
-            return 'empty'
+            return "empty"
         W, H = ow, oh
         lon = west + verts[:, 0] / (W - 1) * (east - west)
         lat = north - verts[:, 1] / (H - 1) * (north - south)
@@ -244,11 +264,11 @@ def render_tile(zxy):
     buf = io.BytesIO()
     encode(buf, pos, idx, bounds=(west, south, east, north), extensions=[ext])
     os.makedirs(os.path.dirname(out_file), exist_ok=True)
-    tmp = out_file + '.tmp%d' % os.getpid()
-    with open(tmp, 'wb') as f:
+    tmp = out_file + f".tmp{os.getpid()}"
+    with open(tmp, "wb") as f:
         f.write(gzip.compress(buf.getvalue(), 6))
     os.replace(tmp, out_file)
-    return 'ok'
+    return "ok"
 
 
 # ---------------------------------------------------------------- work list
@@ -276,7 +296,7 @@ def build_worklist(cells, minzoom, maxzoom, clip=None, want_levels=True):
     (z, x, y) tile keys. `per_level` (dict z -> list of (x, y), for layer.json
     availability) is built only when want_levels — skip it for --no-layer-json runs."""
     parts = []
-    for (la, lo, _zp) in cells:
+    for la, lo, _zp in cells:
         w, s, e, n = lo, la, lo + 1, la + 1
         if clip:
             w, s = max(w, clip[0]), max(s, clip[1])
@@ -289,12 +309,14 @@ def build_worklist(cells, minzoom, maxzoom, clip=None, want_levels=True):
                 continue
             xs = np.arange(x0, x1 + 1, dtype=np.int64)
             ys = np.arange(y0, y1 + 1, dtype=np.int64)
-            parts.append(((np.int64(z) << _KEY_ZSH)
-                          | (xs[:, None] << _KEY_XSH)
-                          | ys[None, :]).ravel())
+            parts.append(
+                (
+                    (np.int64(z) << _KEY_ZSH) | (xs[:, None] << _KEY_XSH) | ys[None, :]
+                ).ravel()
+            )
     if not parts:
         return np.empty(0, dtype=np.int64), ({} if want_levels else None)
-    keys = np.unique(np.concatenate(parts))   # dedup shared cell-edge tiles + sort
+    keys = np.unique(np.concatenate(parts))  # dedup shared cell-edge tiles + sort
     per_level = None
     if want_levels:
         per_level = {}
@@ -313,15 +335,16 @@ def availability(per_level, maxzoom):
     for z in range(maxzoom + 1):
         rects = []
         rows = {}
-        for (x, y) in per_level.get(z, ()):
+        for x, y in per_level.get(z, ()):
             rows.setdefault(y, []).append(x)
         for y in sorted(rows):
             xs = sorted(rows[y])
             run_start = prev = xs[0]
             for x in xs[1:] + [None]:
                 if x is None or x != prev + 1:
-                    rects.append({'startX': run_start, 'startY': y,
-                                  'endX': prev, 'endY': y})
+                    rects.append(
+                        {"startX": run_start, "startY": y, "endX": prev, "endY": y}
+                    )
                     run_start = x
                 prev = x if x is not None else prev
         out.append(rects)
@@ -333,14 +356,15 @@ def write_layer_json(out_dir, maxzoom, per_level, min_zoom):
     the existing tileset so the base levels are kept (Cesium ORs the rectangle lists).
     A full run (min_zoom == 0) writes fresh availability so it never advertises stale
     tiles from a previous build."""
-    path = os.path.join(out_dir, 'layer.json')
+    path = os.path.join(out_dir, "layer.json")
     new_avail = availability(per_level, maxzoom)
     old_avail, old_max = [], -1
     if min_zoom > 0 and os.path.exists(path):
         try:
-            old = json.load(open(path))
-            old_avail = old.get('available', [])
-            old_max = old.get('maxzoom', len(old_avail) - 1)
+            with open(path) as fh:
+                old = json.load(fh)
+            old_avail = old.get("available", [])
+            old_max = old.get("maxzoom", len(old_avail) - 1)
         except Exception:
             pass
     final_max = max(maxzoom, old_max)
@@ -350,17 +374,24 @@ def write_layer_json(out_dir, maxzoom, per_level, min_zoom):
         b = new_avail[z] if z < len(new_avail) else []
         merged.append(a + b)
     layer = {
-        'tilejson': '2.1.0', 'format': 'quantized-mesh-1.0', 'version': '1.0.0',
-        'scheme': 'tms', 'projection': 'EPSG:4326',
-        'bounds': [-180, -90, 180, 90], 'minzoom': 0, 'maxzoom': final_max,
-        'tiles': ['{z}/{x}/{y}.terrain'], 'extensions': ['octvertexnormals'],
-        'available': merged,
+        "tilejson": "2.1.0",
+        "format": "quantized-mesh-1.0",
+        "version": "1.0.0",
+        "scheme": "tms",
+        "projection": "EPSG:4326",
+        "bounds": [-180, -90, 180, 90],
+        "minzoom": 0,
+        "maxzoom": final_max,
+        "tiles": ["{z}/{x}/{y}.terrain"],
+        "extensions": ["octvertexnormals"],
+        "available": merged,
     }
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(layer, f)
 
 
 # ---------------------------------------------------------------- main
+
 
 def bbox_from_center(lat, lon, radius_km):
     dlat = radius_km / 111.0
@@ -374,7 +405,7 @@ def select_cells(args, all_cells):
         sel = []
         for name in args.cell:
             if name not in all_cells:
-                sys.exit('cell %s not found under %s' % (name, args.srtm_dir))
+                sys.exit(f"cell {name} not found under {args.srtm_dir}")
             sel.append(all_cells[name])
         return sel, None
     clip = None
@@ -398,109 +429,175 @@ def main():
     # Bound GDAL memory so parallel workers don't accumulate unbounded block/VSI
     # cache reading from the all-cells VRT. Set in the parent; inherited by forked
     # workers (must be set before the first GDAL open in build_vrt).
-    os.environ.setdefault('GDAL_CACHEMAX', '128')              # MB block cache / proc
-    os.environ.setdefault('GDAL_MAX_DATASET_POOL_SIZE', '64')  # open /vsizip sources
+    os.environ.setdefault("GDAL_CACHEMAX", "128")  # MB block cache / proc
+    os.environ.setdefault("GDAL_MAX_DATASET_POOL_SIZE", "64")  # open /vsizip sources
 
-    ap = argparse.ArgumentParser(description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--srtm-dir', required=True, help='dir of *.hgt.zip (recursive)')
-    ap.add_argument('--out', required=True, help='output tileset dir')
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument("--srtm-dir", required=True, help="dir of *.hgt.zip (recursive)")
+    ap.add_argument("--out", required=True, help="output tileset dir")
     g = ap.add_mutually_exclusive_group()
-    g.add_argument('--cell', nargs='+', help='one or more cells, e.g. S36E149')
-    g.add_argument('--bbox', nargs=4, type=float, metavar=('W', 'S', 'E', 'N'))
-    g.add_argument('--center', nargs=2, type=float, metavar=('LAT', 'LON'),
-                   help='upgrade an area centred on lat/lon (with --radius-km)')
-    ap.add_argument('--radius-km', type=float, default=25.0,
-                    help='radius for --center (km, default 25)')
-    ap.add_argument('--srtm-res', type=int, choices=(1, 3), default=3,
-                    help='source resolution, sets default max zoom (1=SRTM1, 3=SRTM3)')
-    ap.add_argument('--max-zoom', type=int, default=None)
-    ap.add_argument('--min-zoom', type=int, default=0,
-                    help='lowest zoom to build (upgrades add only deep levels)')
-    ap.add_argument('--max-error', type=float, default=4.0,
-                    help='Delatin max vertical error (metres)')
-    ap.add_argument('--tile-px', type=int, default=256, help='max sample grid per tile')
-    ap.add_argument('--grid', type=int, default=65,
-                    help='regular NxN vertex grid per tile (crack-free); '
-                         '0 = adaptive Delatin (experimental: independent tiles can seam/crack)')
-    ap.add_argument('--force', action='store_true',
-                    help='overwrite existing tiles (default: skip = resume/upgrade)')
-    ap.add_argument('--coarse-dem', default=None,
-                    help='coarse global DEM (from build_coarse.py) for low zoom')
-    ap.add_argument('--coarse-max-zoom', type=int, default=8,
-                    help='use --coarse-dem for zoom <= this (default 8)')
-    ap.add_argument('--jobs', type=int, default=os.cpu_count())
-    ap.add_argument('--max-tasks-per-child', type=int, default=0,
-                    help='recycle each worker after this many chunks (0 = never; '
-                         'default). Avoid: a worker that errors on teardown can wedge '
-                         'the pool. Bound memory with the GDAL caps below instead.')
-    ap.add_argument('--start-index', type=int, default=0,
-                    help='skip the first N tiles of the sorted worklist (resume)')
-    ap.add_argument('--no-layer-json', action='store_true',
-                    help='do not write layer.json (preserve hand-managed availability)')
+    g.add_argument("--cell", nargs="+", help="one or more cells, e.g. S36E149")
+    g.add_argument("--bbox", nargs=4, type=float, metavar=("W", "S", "E", "N"))
+    g.add_argument(
+        "--center",
+        nargs=2,
+        type=float,
+        metavar=("LAT", "LON"),
+        help="upgrade an area centred on lat/lon (with --radius-km)",
+    )
+    ap.add_argument(
+        "--radius-km",
+        type=float,
+        default=25.0,
+        help="radius for --center (km, default 25)",
+    )
+    ap.add_argument(
+        "--srtm-res",
+        type=int,
+        choices=(1, 3),
+        default=3,
+        help="source resolution, sets default max zoom (1=SRTM1, 3=SRTM3)",
+    )
+    ap.add_argument("--max-zoom", type=int, default=None)
+    ap.add_argument(
+        "--min-zoom",
+        type=int,
+        default=0,
+        help="lowest zoom to build (upgrades add only deep levels)",
+    )
+    ap.add_argument(
+        "--max-error",
+        type=float,
+        default=4.0,
+        help="Delatin max vertical error (metres)",
+    )
+    ap.add_argument("--tile-px", type=int, default=256, help="max sample grid per tile")
+    ap.add_argument(
+        "--grid",
+        type=int,
+        default=65,
+        help="regular NxN vertex grid per tile (crack-free); "
+        "0 = adaptive Delatin (experimental: independent tiles can seam/crack)",
+    )
+    ap.add_argument(
+        "--force",
+        action="store_true",
+        help="overwrite existing tiles (default: skip = resume/upgrade)",
+    )
+    ap.add_argument(
+        "--coarse-dem",
+        default=None,
+        help="coarse global DEM (from build_coarse.py) for low zoom",
+    )
+    ap.add_argument(
+        "--coarse-max-zoom",
+        type=int,
+        default=8,
+        help="use --coarse-dem for zoom <= this (default 8)",
+    )
+    ap.add_argument("--jobs", type=int, default=os.cpu_count())
+    ap.add_argument(
+        "--max-tasks-per-child",
+        type=int,
+        default=0,
+        help="recycle each worker after this many chunks (0 = never; "
+        "default). Avoid: a worker that errors on teardown can wedge "
+        "the pool. Bound memory with the GDAL caps below instead.",
+    )
+    ap.add_argument(
+        "--start-index",
+        type=int,
+        default=0,
+        help="skip the first N tiles of the sorted worklist (resume)",
+    )
+    ap.add_argument(
+        "--no-layer-json",
+        action="store_true",
+        help="do not write layer.json (preserve hand-managed availability)",
+    )
     args = ap.parse_args()
 
-    maxzoom = args.max_zoom if args.max_zoom is not None \
-        else DEFAULT_MAXZOOM[args.srtm_res]
+    maxzoom = (
+        args.max_zoom if args.max_zoom is not None else DEFAULT_MAXZOOM[args.srtm_res]
+    )
     if maxzoom > 19:
-        sys.exit('packed worklist key supports --max-zoom <= 19 (x/y use 20 bits each)')
+        sys.exit("packed worklist key supports --max-zoom <= 19 (x/y use 20 bits each)")
 
     all_cells = find_cells(args.srtm_dir)
     if not all_cells:
-        sys.exit('no *.hgt.zip cells under %s' % args.srtm_dir)
+        sys.exit(f"no *.hgt.zip cells under {args.srtm_dir}")
     cells, clip = select_cells(args, all_cells)
     if not cells:
-        sys.exit('no cells selected')
-    print('cells=%d  zoom=%d-%d  jobs=%d  force=%s  out=%s'
-          % (len(cells), args.min_zoom, maxzoom, args.jobs, args.force, args.out),
-          flush=True)
+        sys.exit("no cells selected")
+    print(
+        f"cells={len(cells)}  zoom={args.min_zoom}-{maxzoom}  jobs={args.jobs}  "
+        f"force={args.force}  out={args.out}",
+        flush=True,
+    )
 
     os.makedirs(args.out, exist_ok=True)
-    vrt_path = os.path.join(args.out, '_source.vrt')
+    vrt_path = os.path.join(args.out, "_source.vrt")
     build_vrt(cells, vrt_path)
 
-    keys, per_level = build_worklist(cells, args.min_zoom, maxzoom, clip,
-                                     want_levels=not args.no_layer_json)
+    keys, per_level = build_worklist(
+        cells, args.min_zoom, maxzoom, clip, want_levels=not args.no_layer_json
+    )
     total = len(keys)
     offset = min(max(0, args.start_index), total)
     if offset:
-        print('resume: skipping first %d tiles' % offset, flush=True)
-    print('tiles to consider: %d' % (total - offset), flush=True)
+        print(f"resume: skipping first {offset} tiles", flush=True)
+    print(f"tiles to consider: {total - offset}", flush=True)
 
     if not args.no_layer_json:
-        write_layer_json(args.out, maxzoom, per_level, args.min_zoom)  # up-front (resume-safe)
+        write_layer_json(
+            args.out, maxzoom, per_level, args.min_zoom
+        )  # up-front (resume-safe)
     per_level = None  # availability written; not needed during rendering
 
     t0 = time.time()
-    counts = {'ok': 0, 'skip': 0, 'empty': 0}
+    counts = {"ok": 0, "skip": 0, "empty": 0}
     done = 0
     remaining = total - offset
     batch_sz = 100000
     pool_kw = {}
     if args.max_tasks_per_child > 0:
-        pool_kw['max_tasks_per_child'] = args.max_tasks_per_child
-    with ProcessPoolExecutor(max_workers=args.jobs, initializer=_init_worker,
-                             initargs=(vrt_path, args.out, args.max_error,
-                                       args.tile_px, args.force, args.coarse_dem,
-                                       args.coarse_max_zoom, args.grid),
-                             **pool_kw) as ex:
+        pool_kw["max_tasks_per_child"] = args.max_tasks_per_child
+    with ProcessPoolExecutor(
+        max_workers=args.jobs,
+        initializer=_init_worker,
+        initargs=(
+            vrt_path,
+            args.out,
+            args.max_error,
+            args.tile_px,
+            args.force,
+            args.coarse_dem,
+            args.coarse_max_zoom,
+            args.grid,
+        ),
+        **pool_kw,
+    ) as ex:
         # Feed the pool in batches: ProcessPoolExecutor.map submits its whole iterable
         # eagerly, so mapping all 12M tiles at once would re-materialise the worklist as
         # futures. Decoding one batch of keys at a time keeps the parent's memory flat.
         for b0 in range(offset, total, batch_sz):
-            batch = [_decode_key(k) for k in keys[b0:b0 + batch_sz].tolist()]
+            batch = [_decode_key(k) for k in keys[b0 : b0 + batch_sz].tolist()]
             for res in ex.map(render_tile, batch, chunksize=16):
                 counts[res] = counts.get(res, 0) + 1
                 done += 1
                 if done % 500 == 0 or done == remaining:
                     dt = time.time() - t0
                     rate = done / dt if dt else 0
-                    print('  %d/%d  ok=%d skip=%d empty=%d  %.0f tiles/s'
-                          % (done + offset, total, counts['ok'], counts['skip'],
-                             counts['empty'], rate), flush=True)
-    print('done in %.1fs: %s' % (time.time() - t0, counts))
-    print('layer.json + tiles in %s' % args.out)
+                    print(
+                        f"  {done + offset}/{total}  ok={counts['ok']} skip={counts['skip']} "
+                        f"empty={counts['empty']}  {rate:.0f} tiles/s",
+                        flush=True,
+                    )
+    print(f"done in {time.time() - t0:.1f}s: {counts}")
+    print(f"layer.json + tiles in {args.out}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

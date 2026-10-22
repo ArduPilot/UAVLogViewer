@@ -1,0 +1,1138 @@
+<template>
+    <div id="line" ref="line" style="width: 100%; height: 100%"></div>
+</template>
+
+<script>
+// only the scatter trace is used: the core build includes it
+import Plotly from "plotly.js/lib/core";
+import {
+    store,
+    firstFreeAxis,
+    firstFreeColor,
+    keepRaw,
+} from "@/shared/stores/index.js";
+import { faWindowRestore } from "@fortawesome/free-solid-svg-icons";
+import { toRaw } from "vue";
+
+import { darken } from "@/shared/lib/cssColor.js";
+import { downloadData } from "@/shared/lib/download.js";
+import { plotCsv } from "@/features/plot/lib/plotCsv.js";
+import { logStartTime } from "@/shared/lib/flightTime.js";
+import { compileExpression } from "@/features/plot/lib/expressionEvaluator.js";
+import {
+    dataEnd,
+    relayoutRange,
+    sameRange,
+    timeAxis,
+} from "@/features/plot/lib/plotTimeAxis.js";
+
+let annotationsEvents = [];
+const annotationsModes = [];
+let annotationsParams = [];
+
+const updatemenus = [
+    {
+        active: 0,
+        buttons: [
+            {
+                args: ["annotations", annotationsModes],
+                label: "Nothing",
+                method: "relayout",
+            },
+            {
+                args: [
+                    "annotations",
+                    [...annotationsEvents, ...annotationsModes],
+                ],
+                label: "Events",
+                method: "relayout",
+            },
+            {
+                args: [
+                    "annotations",
+                    [
+                        ...annotationsEvents,
+                        ...annotationsModes,
+                        ...annotationsParams,
+                    ],
+                ],
+                label: "Events + Params",
+                method: "relayout",
+            },
+        ],
+        direction: "left",
+        pad: { r: 10, t: 10 },
+        showactive: true,
+        type: "buttons",
+        x: 0.1,
+        xanchor: "left",
+        y: 1.2,
+        yanchor: "top",
+    },
+];
+
+const plotOptions = {
+    legend: {
+        x: 0.1,
+        y: 1,
+        traceorder: "normal",
+        borderwidth: 1,
+    },
+    showlegend: true,
+    plot_bgcolor: "#f8f8f8",
+    paper_bgcolor: "white",
+    // autosize: true,
+    margin: { t: 20, l: 0, b: 30, r: 10 },
+    xaxis: {
+        domain: [0.15, 0.85],
+        rangeslider: {},
+    },
+    yaxis: {
+        title: { font: { color: "#1f77b4" } },
+        tickfont: {
+            color: "#1f77b4",
+            size: 12,
+        },
+        anchor: "free",
+        position: 0.03,
+        tickmode: "auto",
+        showline: true,
+        ticklen: 3,
+        tickangle: 45,
+    },
+    // tickmode auto: Plotly 4 would sync an overlaying axis' ticks to the first axis
+    yaxis2: {
+        title: { font: { color: "#ff7f0e" } },
+        tickfont: { color: "#ff7f0e", size: 12 },
+        anchor: "free",
+        overlaying: "y",
+        side: "left",
+        position: 0.07,
+        tickmode: "auto",
+        showline: true,
+        ticklen: 3,
+        tickangle: 45,
+    },
+    yaxis3: {
+        title: { font: { color: "#2ca02c" } },
+        tickfont: { color: "#2ca02c" },
+        anchor: "free",
+        overlaying: "y",
+        side: "left",
+        position: 0.11,
+        tickmode: "auto",
+        showline: true,
+        ticklen: 3,
+        tickangle: 45,
+    },
+    yaxis4: {
+        title: { font: { color: "#d62728" } },
+        tickfont: { color: "#d62728" },
+        anchor: "free",
+        overlaying: "y",
+        side: "left",
+        position: 0.92,
+        tickmode: "auto",
+        showline: true,
+        ticklen: 3,
+        tickangle: 45,
+    },
+    yaxis5: {
+        title: { font: { color: "#9467BD" } },
+        tickfont: { color: "#9467BD" },
+        anchor: "free",
+        overlaying: "y",
+        side: "left",
+        position: 0.96,
+        tickmode: "auto",
+        showline: true,
+        ticklen: 3,
+        tickangle: 45,
+    },
+    yaxis6: {
+        title: { font: { color: "#8C564B" } },
+        tickfont: { color: "#8C564B" },
+        anchor: "free",
+        overlaying: "y",
+        side: "left",
+        position: 1,
+        tickmode: "auto",
+        showline: true,
+        ticklen: 3,
+        tickangle: 45,
+    },
+};
+
+// ?ranges=x0,x1,y0,y1,... sets the x axis range (log times, see plot()), then each y axis's
+const RANGE_AXES = ["yaxis", "yaxis2", "yaxis3", "yaxis4"];
+let urlTimeRange = null;
+function applyUrlRanges(param) {
+    const ranges = param.split(",").map((value) => Number.parseFloat(value));
+    urlTimeRange = ranges.length >= 2 ? ranges.slice(0, 2) : null;
+    // each axis when both of its values are there
+    RANGE_AXES.forEach((axis, k) => {
+        if (ranges.length >= 2 * k + 4) {
+            plotOptions[axis].range = [ranges[2 * k + 2], ranges[2 * k + 3]];
+        }
+    });
+}
+
+// instanced messages (TYPE[n]) in an expression; these are loaded on demand
+const INSTANCE_RE = /(?<!\.)\b[A-Z][A-Z0-9_]+\[\d\]/g;
+
+export default {
+    data() {
+        return {
+            gd: null,
+            plotInstance: null,
+            state: store,
+        };
+    },
+    computed: {
+        setOfModes() {
+            const set = [];
+            for (const mode of this.state.flightModeChanges) {
+                if (!set.includes(mode[1])) {
+                    set.push(mode[1]);
+                }
+            }
+            return set;
+        },
+        timeRange() {
+            if (this.state.timeRange != null) {
+                return this.state.timeRange;
+            }
+            return undefined;
+        },
+        expressions() {
+            return this.state.expressions;
+        },
+        messagesInLog() {
+            return Object.keys(this.state.messageTypes);
+        },
+        // where the time axis starts, see timeAxis()
+        timeOrigin() {
+            return {
+                start: logStartTime(this.state.metadata),
+                timeZone: this.state.metadata?.timeZone ?? null,
+                label:
+                    this.state.logType === "bin"
+                        ? "Time since boot"
+                        : "Time since log start",
+            };
+        },
+    },
+    watch: {
+        // the mode bands and labels need the modes and their colours, which can arrive (or change)
+        // after the plot was drawn: before, such a plot kept an uncoloured background
+        "state.flightModeChanges"() {
+            this.redrawModes();
+        },
+        "state.cssColors"() {
+            this.redrawModes();
+        },
+        // the log's start time and place come with its metadata, possibly after the plot was drawn
+        timeOrigin(origin) {
+            if (timeAxis(origin).key !== this.axis.key) {
+                this.plot();
+            }
+        },
+        timeRange(range) {
+            if (this.zoomInterval !== null) {
+                clearTimeout(this.zoomInterval);
+            }
+            this.updatChildrenTimeRange(this.state.timeRange);
+            this.zoomInterval = setTimeout(() => {
+                Plotly.relayout(this.gd, {
+                    "xaxis.range": range.map(this.axis.toAxis),
+                    "xaxis.domain": this.calculateXAxisDomain(),
+                });
+            }, 500);
+            return range; // make linter happy, it says this is a computed property(?)
+        },
+        expressions: {
+            deep: true,
+            handler() {
+                // Typing in an expression changes it on every key: redraw once typing pauses.
+                // Adding or removing a plot redraws at once.
+                clearTimeout(this.plotTimer);
+                const count = this.state.expressions.length;
+                if (count !== this.plottedCount) {
+                    this.plottedCount = count;
+                    this.plot();
+                    return;
+                }
+                this.plotTimer = setTimeout(() => this.plot(), 500);
+            },
+        },
+    },
+    created() {
+        this.$eventHub.$on("cesium-time-changed", this.setCursorTime);
+        this.$eventHub.$on("hoveredTime", this.setCursorTime);
+        this.$eventHub.$on("force-resize-plotly", this.resize);
+        this.$eventHub.$on("child-zoomed", this.onTimeRangeChanged);
+        this.zoomInterval = null;
+        this.axis = timeAxis(this.timeOrigin);
+    },
+    mounted() {
+        this.gd = this.$refs.line;
+        this.$nextTick(() => {
+            if (this.$route.query.ranges) {
+                applyUrlRanges(this.$route.query.ranges);
+            }
+            if (this.$route.query.plots) {
+                for (const field of this.$route.query.plots.split(",")) {
+                    this.addPlots([[field]]);
+                }
+            }
+        });
+        this.instruction = "";
+        this.$eventHub.$on("togglePlot", this.togglePlot);
+        this.$eventHub.$on("addPlots", this.addPlots);
+        this.$eventHub.$on("plot", this.plot);
+    },
+    beforeUnmount() {
+        this.$eventHub.$off("cesium-time-changed", this.setCursorTime);
+        this.$eventHub.$off("hoveredTime", this.setCursorTime);
+        this.$eventHub.$off("force-resize-plotly", this.resize);
+        this.$eventHub.$off("child-zoomed", this.onTimeRangeChanged);
+        this.$eventHub.$off("togglePlot", this.togglePlot);
+        this.$eventHub.$off("addPlots", this.addPlots);
+        this.$eventHub.$off("plot", this.plot);
+        clearInterval(this.interval);
+        clearTimeout(this.plotTimer);
+    },
+    methods: {
+        popupButton() {
+            return {
+                name: "Open in new window",
+                icon: {
+                    title: "test",
+                    name: "iconFS",
+                    // the icon's own box, so Plotly scales it to the button
+                    width: faWindowRestore.icon[0],
+                    height: faWindowRestore.icon[1],
+                    path: faWindowRestore.icon[4],
+                },
+                click: (gd) => {
+                    // const plotData = JSON.parse(JSON.stringify(gd.data))
+                    // const plotLayout = JSON.parse(JSON.stringify(gd.layout))
+                    // const plotConfig = { showLink: false, displayModeBar: true }
+
+                    // Open a new window
+                    const newWindow = window.open(
+                        "/#/plot",
+                        "_blank",
+                        "toolbar=no,scrollbars=yes,resizable=yes,top=500,left=500,width=800,height=400,allow-scripts",
+                    );
+                    const externalPlotInterval = setInterval(() => {
+                        try {
+                            console.log(newWindow);
+                            console.log(newWindow.setPlotData);
+                            newWindow.setTimeOrigin(this.timeOrigin);
+                            newWindow.setPlotData(gd.data);
+                            newWindow.setPlotOptions(gd.layout);
+                            // plain arrays: the window has its own Vue
+                            newWindow.setCssColors(toRaw(this.state.cssColors));
+                            newWindow.setFlightModeChanges(
+                                toRaw(this.state.flightModeChanges),
+                            );
+                            console.log(this.$eventHub);
+                            newWindow.setEventHub(this.$eventHub);
+                            newWindow.plot();
+                            clearInterval(externalPlotInterval);
+                        } catch (e) {
+                            console.log(e);
+                        }
+                    }, 1000);
+                    this.state.childPlots.push(newWindow);
+                    console.log(newWindow);
+                },
+            };
+        },
+        csvButton() {
+            return {
+                name: "downloadCsv",
+                title: "Download data as csv",
+                icon: Plotly.Icons.disk,
+                click: () => {
+                    downloadData(
+                        plotCsv(this.gd.data, this.axis, this.state.timeRange),
+                        "data.csv",
+                        "text/csv;charset=utf-8;",
+                    );
+                },
+            };
+        },
+        resize() {
+            Plotly.Plots.resize(this.gd);
+        },
+        waitForMessages(messages) {
+            for (const message of messages) {
+                this.$eventHub.$emit("loadType", message);
+            }
+            let interval;
+            let counter = 0;
+            return new Promise((resolve, reject) => {
+                interval = setInterval(() => {
+                    for (const message of messages) {
+                        if (!this.loadedMessages().includes(message)) {
+                            counter += 1;
+                            if (counter > 30) {
+                                // 30 * 300ms = 9 s timeout
+                                console.log("not resolving");
+                                clearInterval(interval);
+                                reject(
+                                    new Error(
+                                        `Could not load messageType ${message}`,
+                                    ),
+                                );
+                            }
+                            return;
+                        }
+                    }
+                    clearInterval(interval);
+                    resolve();
+                }, 300);
+            });
+        },
+        onRangeChanged(event) {
+            this.addMaxMinMeanToTitles();
+            const range = relayoutRange(event, this.gd, this.axis);
+            if (range) {
+                this.onTimeRangeChanged(range);
+            }
+        },
+        // a new range from this plot or a detached one
+        onTimeRangeChanged(timeRange) {
+            if (!sameRange(timeRange, this.state.timeRange)) {
+                this.state.timeRange = timeRange;
+                this.updatChildrenTimeRange(timeRange);
+            }
+        },
+        updatChildrenTimeRange(timeRange) {
+            for (const child of this.state.childPlots) {
+                child.setTimeRange(timeRange);
+            }
+        },
+        addMaxMinMeanToTitles() {
+            const average = (arr) =>
+                arr.reduce((p, c) => p + c, 0) / arr.length;
+            const gd = this.gd;
+            // the visible range as the traces' x values
+            const xRange = gd.layout.xaxis.range.map((value) =>
+                this.axis.toAxis(this.axis.fromAxis(value)),
+            );
+
+            let needsRelayout = false;
+
+            gd.data.forEach((trace) => {
+                const len = Math.min(trace.x.length, trace.y.length);
+                const yInside = [];
+
+                for (let i = 0; i < len; i++) {
+                    const x = trace.x[i];
+                    if (x > xRange[0] && x < xRange[1]) {
+                        yInside.push(trace.y[i]);
+                    }
+                }
+                const extraData = ` | Min: ${Math.min(...yInside).toFixed(2)} \
+    Max: ${Math.max(...yInside).toFixed(2)} \
+    Mean: ${average(yInside).toFixed(2)}`;
+
+                if (!trace.name.includes(extraData)) {
+                    trace.name = trace.name.split(" | ")[0] + extraData;
+                    needsRelayout = true;
+                }
+            });
+            if (needsRelayout) {
+                Plotly.relayout(this.gd, this.gd.layout);
+            }
+        },
+        isPlotted(fieldname) {
+            for (const field of this.state.expressions) {
+                if (field.name === fieldname) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        createNewField(fieldname, axis, color) {
+            if (color === undefined) {
+                color = firstFreeColor(this.state);
+            } else if (!Number.isNaN(Number(color))) {
+                color = this.state.allColors[color];
+            }
+            if (axis === undefined) {
+                axis = firstFreeAxis(this.state);
+            }
+            return {
+                name: fieldname,
+                color,
+                axis,
+            };
+        },
+
+        // instanced messages the plots need that are not loaded yet (ATT, GPS... come with the log)
+        missingInstances(plots) {
+            const requested = new Set();
+            for (const plot of plots) {
+                for (const message of plot[0].match(INSTANCE_RE) ?? []) {
+                    if (
+                        !(message in this.state.messages) &&
+                        !requested.has(message)
+                    ) {
+                        console.log("missing message type: " + message);
+                        requested.add(message);
+                    }
+                }
+            }
+            return [...requested];
+        },
+
+        addPlots(plots) {
+            this.state.plotLoading = true;
+            const requested = this.missingInstances(plots);
+            if (requested.length > 0) {
+                console.log(requested);
+                this.waitForMessages(requested)
+                    .then(() => {
+                        this.addPlots(plots);
+                    })
+                    .catch((e) => {
+                        alert(e);
+                        this.plot();
+                    });
+                return;
+            }
+            const newplots = [];
+            for (const plot of plots) {
+                const expression = plot[0];
+                if (!this.isPlotted(expression)) {
+                    newplots.push(
+                        this.createNewField(expression, plot[1], plot[2]),
+                    );
+                }
+            }
+            this.state.expressions.push(...newplots);
+        },
+        resetAxis(index) {
+            // Resets the Y axis so that the next plot autoranges
+            // unfortunately the axis are named yaxis, yaxis2, yaxis3... and so on
+            let suffix = "";
+            suffix = index === 0 ? suffix : Number.parseInt(index) + 1;
+            const key = "yaxis" + suffix;
+            const obj = {};
+            // Use older dict and set autorange to true
+            obj[key] = plotOptions[key];
+            obj[key].autorange = true;
+            Plotly.relayout(this.gd, obj);
+        },
+        togglePlot(fieldname, axis, color) {
+            if (this.isPlotted(fieldname)) {
+                let index;
+                for (const i in this.state.expressions) {
+                    if (this.state.expressions[i].name === fieldname) {
+                        index = i;
+                    }
+                }
+                this.resetAxis(this.state.expressions[index].axis);
+                this.state.expressions.splice(index, 1);
+                if (this.state.expressions.length === 0) {
+                    this.state.plotOn = false;
+                }
+                this.onRangeChanged();
+            } else {
+                this.addPlots([[fieldname, axis, color]]);
+            }
+            console.log(this.state.expressions);
+        },
+        calculateXAxisDomain() {
+            let start = 0.02;
+            let end = 0.98;
+            for (const field of this.state.expressions) {
+                if (field.axis === 0) {
+                    start = Math.max(start, 0.03);
+                } else if (field.axis === 1) {
+                    start = Math.max(start, 0.07);
+                } else if (field.axis === 2) {
+                    start = Math.max(start, 0.11);
+                } else if (field.axis === 5) {
+                    end = Math.min(end, 0.96);
+                } else if (field.axis === 4) {
+                    end = Math.min(end, 0.92);
+                } else if (field.axis === 3) {
+                    end = Math.min(end, 0.88);
+                }
+            }
+            return [start, end];
+        },
+        getAxisTitle(fieldAxis) {
+            const names = [];
+            for (const field of this.state.expressions) {
+                if (field.axis === fieldAxis) {
+                    names.push(field.name);
+                }
+            }
+            return names.join(", ");
+        },
+        findMessagesInExpression(expression) {
+            const RE =
+                /(?<!\.)\b(?<message>[A-Z][A-Z0-9_]+\b(\[[\w.]+\])?)(\.(?<field>\w+))?/g;
+            const match = [];
+            for (const m of expression.matchAll(RE)) {
+                match.push([m.groups.message, m.groups.field]);
+            }
+            return match;
+        },
+        expressionCanBePlotted(expression, reask = false) {
+            const messages = this.findMessagesInExpression(expression.name);
+
+            if (messages === null) {
+                return [true, ""];
+            }
+            for (const [message, field] of messages) {
+                if (!this.messagesInLog.includes(message)) {
+                    console.log(
+                        "ERROR: attempted to plot unavailable message: " +
+                            message,
+                    );
+                    this.state.plotLoading = false;
+                    if (reask) {
+                        this.$eventHub.$emit("loadType", message);
+                    }
+                    return [false, `invalid message: ${message}`];
+                }
+                if (field !== undefined) {
+                    if (
+                        field !== "time_boot_ms" &&
+                        !this.state.messageTypes[message].expressions.includes(
+                            field,
+                        )
+                    ) {
+                        console.log(
+                            "ERROR: attempted to plot unavailable field: " +
+                                field,
+                        );
+                        return [false, `invalid field: ${message}.${field}`];
+                    }
+                }
+                console.log(message + " is plottable");
+            }
+            return [true, ""];
+        },
+        messagesAreAvailable(messages) {
+            return messages.every((message) => message in this.state.messages);
+        },
+        // time axis of an expression: its first message's, or the attitude's when it has none
+        expressionTimes(messages) {
+            if (messages.length > 0) {
+                return this.state.messages[messages[0]].time_boot_ms;
+            }
+            try {
+                return this.state.messages.ATT.time_boot_ms;
+            } catch {
+                try {
+                    return this.state.messages.ATTITUDE.time_boot_ms;
+                } catch {
+                    return this.state.messages.osd.time_boot_ms;
+                }
+            }
+        },
+        // each message's sample at (or just after) the time; timeIndexes move forward in place
+        rowsAt(messages, timeIndexes, time) {
+            const vals = [];
+            for (const fieldIndex in timeIndexes) {
+                const data = this.state.messages[messages[fieldIndex]];
+                while (data.time_boot_ms[timeIndexes[fieldIndex]] < time) {
+                    timeIndexes[fieldIndex] += 1;
+                }
+                const newobj = {};
+                for (const key of Object.keys(data)) {
+                    newobj[key] = data[key][timeIndexes[fieldIndex]];
+                }
+                vals.push(newobj);
+            }
+            return vals;
+        },
+        evaluateExpression(expression1) {
+            const start = new Date();
+            if (expression1 in this.state.plotCache) {
+                console.log("HIT: " + expression1);
+                return this.state.plotCache[expression1];
+            }
+            console.log("MISS! evaluating : " + expression1);
+            const messages = this.findMessagesInExpression(expression1).map(
+                (field) => field[0],
+            );
+            console.log(messages);
+            if (
+                messages.length > 0 &&
+                this.state.messages[messages[0]] === undefined
+            ) {
+                console.log("ERROR: message " + messages[0] + " not found");
+                return { error: "message " + messages[0] + " not found" };
+            }
+            const x = this.expressionTimes(messages);
+            let f;
+            try {
+                f = compileExpression(expression1, messages);
+            } catch (e) {
+                return { error: e };
+            }
+            // lowpass()/delta() keep state between samples: start from a clean state
+            globalThis.resetFilterState();
+            // used to find the corresponding time indexes between messages
+            const timeIndexes = new Array(messages.length).fill(0);
+            const y = [];
+            for (const time of x) {
+                const vals = this.rowsAt(messages, timeIndexes, time);
+                let val;
+                try {
+                    val = f(vals);
+                } catch (e) {
+                    return { error: e };
+                }
+                if (typeof val !== "number") {
+                    return {
+                        error: new Error(
+                            "Expression does not result in a number",
+                        ),
+                    };
+                }
+                // NaN/Infinity → gap in the series.
+                // Handles: sqrt(negative) → NaN, 1/0 → Infinity, log(-1) → NaN, 0/0 → NaN.
+                y.push(Number.isFinite(val) ? val : null);
+            }
+            console.log(
+                "evaluated " +
+                    expression1 +
+                    " in " +
+                    (Date.now() - start) +
+                    "ms",
+            );
+            const data = this.addGaps({
+                x,
+                y,
+            });
+            this.state.plotCache[expression1] = keepRaw(data);
+            console.log("Evaluation took " + (Date.now() - start) + "ms");
+            this.cleanupCache();
+            return data;
+        },
+        cleanupCache() {
+            const keys = Object.keys(this.state.plotCache);
+            for (const key of keys) {
+                if (!this.state.expressions.map((e) => e.name).includes(key)) {
+                    delete this.state.plotCache[key];
+                }
+            }
+        },
+        addGaps(data) {
+            // Creates artifical gaps in order to break lines in plot when messages are not being received
+            const newData = { x: [], y: [], isSwissCheese: false };
+            let lastx = data.x[0];
+            const totalPoints = data.x.length;
+            let totalGaps = 0;
+            for (let i = 0; i < data.x.length; i++) {
+                if (data.x[i] - lastx > 3000) {
+                    newData.x.push(data.x[i] - 1);
+                    newData.y.push(null);
+                    totalGaps += 1;
+                }
+                newData.x.push(data.x[i]);
+                newData.y.push(data.y[i]);
+                lastx = data.x[i];
+            }
+            if (totalGaps > totalPoints / 2 || totalPoints < 100) {
+                newData.isSwissCheese = true;
+            }
+            return newData;
+        },
+        // false (and the first error recorded) when an expression can't be plotted
+        expressionsArePlottable() {
+            const errors = [];
+            for (const expression of this.state.expressions) {
+                const [canplot, error] = this.expressionCanBePlotted(
+                    expression,
+                    false,
+                );
+                if (!canplot) {
+                    errors.push(error);
+                    this.state.expressionErrors = errors;
+                    return false;
+                }
+                errors.push(null);
+            }
+            return true;
+        },
+        // Plotly trace of an expression; also records its error and titles its y axis
+        traceFor(expression) {
+            let data = this.evaluateExpression(expression.name);
+            if ("error" in data) {
+                this.state.expressionErrors.push(data.error);
+                data = { x: [], y: [] };
+            } else {
+                this.state.expressionErrors.push(null);
+            }
+            console.log(data);
+            const marker = data.isSwissCheese
+                ? {
+                      size: 5,
+                      symbol: "cross-thin",
+                      color: expression.color,
+                      line: {
+                          color: expression.color,
+                          width: 1,
+                      },
+                  }
+                : { size: 4, color: expression.color };
+            const trace = {
+                name: expression.name,
+                // type: 'scattergl',
+                mode: data.isSwissCheese ? "lines+markers" : "lines",
+                x: this.axis.toAxisArray(data.x),
+                y: data.y,
+                yaxis: "y" + (expression.axis + 1),
+                line: {
+                    color: expression.color,
+                    width: 1.5,
+                },
+                marker,
+            };
+            this.setAxisTitle(expression);
+            return trace;
+        },
+        setAxisTitle(expression) {
+            const axisname =
+                expression.axis > 0 ? "yaxis" + (expression.axis + 1) : "yaxis";
+            if (expression.axis <= 6) {
+                plotOptions[axisname].title = {
+                    text: this.getAxisTitle(expression.axis),
+                    font: {
+                        color: expression.color,
+                    },
+                };
+                plotOptions[axisname].tickfont.color = expression.color;
+                /* if (this.state.messageTypes[msgtype].complexFields[msgfield].units !== '?') {
+                     plotOptions[axisname].title.text +=
+                        ' (' + this.state.messageTypes[msgtype].complexFields[msgfield].units + ')'
+                } */
+            }
+        },
+        plot() {
+            console.log("plot()");
+            if (this.state.expressions.length === 0) {
+                console.log("no expressions to plot");
+                // e.g. the only requested plot's message could not be loaded
+                this.state.plotLoading = false;
+                return;
+            }
+            plotOptions.title = { text: this.state.file };
+            this.state.expressionErrors = [];
+            if (!this.expressionsArePlottable()) {
+                return;
+            }
+
+            const messages = this.state.expressions.flatMap((expression) =>
+                this.findMessagesInExpression(expression.name).map(
+                    (message) => message[0],
+                ),
+            );
+            if (!this.messagesAreAvailable(messages)) {
+                this.waitForMessages(messages)
+                    .then(this.plot)
+                    .catch((e) => {
+                        alert(e);
+                        this.plot();
+                    });
+            }
+
+            const previous = this.axis;
+            this.axis = timeAxis(this.timeOrigin);
+            const datasets = this.state.expressions.map((expression) =>
+                this.traceFor(expression),
+            );
+            let start = new Date();
+            console.log("starting plotting itself...");
+
+            const plotData = datasets;
+
+            plotOptions.xaxis = {
+                ...this.axis.layout(this.axis.fromAxis(dataEnd(plotData))),
+                rangeslider: {},
+                domain: this.calculateXAxisDomain(),
+            };
+            const config = {
+                modeBarButtonsToAdd: [this.csvButton(), this.popupButton()],
+                scrollZoom: true,
+                editable: true,
+                // the mode bands are background: titles and legend stay editable, the bands do not move
+                edits: { shapePosition: false },
+                responsive: true,
+                // Plotly 4 shows an "upload to cloud" button by default
+                showSendToCloud: false,
+            };
+            if (this.plotInstance === null) {
+                if (urlTimeRange) {
+                    plotOptions.xaxis.range = urlTimeRange.map(
+                        this.axis.toAxis,
+                    );
+                    urlTimeRange = null;
+                }
+                this.plotInstance = Plotly.newPlot(
+                    this.gd,
+                    plotData,
+                    plotOptions,
+                    config,
+                );
+            } else {
+                // the same times, also when the axis changed (the log's start time arrived)
+                plotOptions.xaxis.range = this.gd._fullLayout.xaxis.range.map(
+                    (value) => this.axis.toAxis(previous.fromAxis(value)),
+                );
+                Plotly.newPlot(this.gd, plotData, plotOptions, config);
+            }
+            console.log("plotting done in " + (Date.now() - start) + "ms");
+            start = new Date();
+            this.gd.on("plotly_relayout", this.onRangeChanged);
+            this.gd.on("plotly_hover", (data) => {
+                this.$eventHub.$emit(
+                    "hoveredTime",
+                    this.axis.fromAxis(data.points[0].x),
+                );
+            });
+
+            this.addModeShapes();
+            this.addEvents();
+            this.addParamChanges();
+
+            this.state.plotLoading = false;
+
+            this.addCursorLine();
+            console.log("layout done in " + (Date.now() - start) + "ms");
+        },
+        // vertical line on the plot background that follows the time cursor
+        addCursorLine() {
+            const bglayer = document.getElementsByClassName("bglayer")[0];
+            const rect = bglayer.childNodes[0];
+            this.cursor = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "line",
+            );
+            const x = rect.getAttribute("x");
+            const y = rect.getAttribute("y");
+            const y2 =
+                Number.parseInt(y) +
+                Number.parseInt(rect.getAttribute("height"));
+            this.cursor.setAttribute("id", "batata");
+            this.cursor.setAttribute("x1", x);
+            this.cursor.setAttribute("y1", y);
+            this.cursor.setAttribute("x2", x);
+            this.cursor.setAttribute("y2", y2);
+            this.cursor.setAttribute("stroke-width", 1);
+            this.cursor.setAttribute("stroke", "black");
+            bglayer.append(this.cursor);
+        },
+        setCursorTime(time) {
+            console.log("master got hover event at " + time + "ms");
+            try {
+                const bglayer = document.getElementsByClassName("bglayer")[0];
+                const rect = bglayer.childNodes[0];
+                const x = Number.parseInt(rect.getAttribute("x"));
+                const width = Number.parseInt(rect.getAttribute("width"));
+                const [first, last] = this.gd.layout.xaxis.range.map(
+                    this.axis.fromAxis,
+                );
+                const percTime = (time - first) / (last - first);
+                const newx = x + width * percTime;
+                this.cursor.setAttribute("x1", newx);
+                this.cursor.setAttribute("x2", newx);
+            } catch (err) {
+                console.log(err);
+            }
+        },
+        getMode(time) {
+            for (const mode in this.state.flightModeChanges) {
+                if (this.state.flightModeChanges[mode][0] > time) {
+                    if (mode - 1 < 0) {
+                        return this.state.flightModeChanges[0][1];
+                    }
+                    return this.state.flightModeChanges[mode - 1][1];
+                }
+            }
+            return this.state.flightModeChanges[
+                this.state.flightModeChanges.length - 1
+            ][1];
+        },
+        getModeColor(time) {
+            return this.state.cssColors[
+                this.setOfModes.indexOf(this.getMode(time))
+            ];
+        },
+        darker(color) {
+            return darken(color, 0.2);
+        },
+        redrawModes() {
+            if (this.gd?.data?.length) {
+                this.addModeShapes();
+                this.addEvents();
+            }
+        },
+        addModeShapes() {
+            const shapes = [];
+            const modeChanges = [...this.state.flightModeChanges];
+            modeChanges.push([this.axis.fromAxis(dataEnd(this.gd.data)), null]);
+
+            for (let i = 0; i < modeChanges.length - 1; i++) {
+                shapes.push({
+                    type: "rect",
+                    // x-reference is assigned to the x-values
+                    xref: "x",
+                    // y-reference is assigned to the plot paper [0,1]
+                    yref: "paper",
+                    x0: this.axis.toAxis(modeChanges[i][0]),
+                    y0: 0,
+                    x1: this.axis.toAxis(modeChanges[i + 1][0]),
+                    y1: 1,
+                    fillcolor: this.getModeColor(modeChanges[i][0] + 1),
+                    opacity: 0.15,
+                    line: {
+                        width: 0,
+                    },
+                });
+            }
+            Plotly.relayout(this.gd, {
+                shapes,
+            });
+        },
+        addEvents() {
+            annotationsEvents = [];
+            annotationsModes.length = 0;
+            let i = -300;
+            for (const event of this.state.events) {
+                annotationsEvents.push({
+                    xref: "x",
+                    yref: "paper",
+                    x: this.axis.toAxis(event[0]),
+                    y: 0,
+                    yanchor: "bottom",
+                    text: event[1].toLowerCase(),
+                    showarrow: true,
+                    arrowwidth: 1,
+                    arrowcolor: "#999999",
+                    ay: i,
+                    ax: 0,
+                });
+                i += 23;
+                if (i > 0) {
+                    i = -300;
+                }
+            }
+            const modeChanges = [...this.state.flightModeChanges];
+            modeChanges.push([this.axis.fromAxis(dataEnd(this.gd.data)), null]);
+            for (let i = 0; i < modeChanges.length - 1; i++) {
+                annotationsModes.push({
+                    xref: "x",
+                    // y-reference is assigned to the plot paper [0,1]
+                    yref: "paper",
+                    x: this.axis.toAxis(modeChanges[i][0]),
+                    xanchor: "left",
+                    y: 0,
+                    textangle: 90,
+                    text: "<b>" + modeChanges[i][1] + "</b>",
+                    showarrow: false,
+                    font: {
+                        color: this.darker(
+                            this.getModeColor(modeChanges[i][0] + 1),
+                        ),
+                    },
+                    opacity: 1,
+                });
+            }
+            Plotly.relayout(this.gd, {
+                annotations: annotationsModes,
+                updatemenus,
+            });
+            updatemenus[0].buttons[0].args = ["annotations", annotationsModes];
+            updatemenus[0].buttons[1].args = [
+                "annotations",
+                [...annotationsEvents, ...annotationsModes],
+            ];
+            updatemenus[0].buttons[2].args = [
+                "annotations",
+                [
+                    ...annotationsEvents,
+                    ...annotationsModes,
+                    ...annotationsParams,
+                ],
+            ];
+        },
+        addParamChanges() {
+            if (!this.state.params) {
+                return;
+            }
+            let i = -300;
+            annotationsParams = [];
+            const firstFetch = new Set();
+            let startAt = null;
+            for (const change of this.state.params.changeArray) {
+                if (firstFetch.has(change[1])) {
+                    startAt = change[0];
+                    break;
+                } else {
+                    firstFetch.add(change[1]);
+                }
+            }
+            let last = [0, 0];
+            for (const change of this.state.params.changeArray) {
+                if (change[0] < startAt) {
+                    continue;
+                }
+                // This takes care of repeated param changed logs we get for some reason
+                if (change[2] === last[2] && change[1] === last[1]) {
+                    continue;
+                }
+                // Filter some "noisy" parameters
+                if (["STAT_FLTTIME", "STAT_RUNTIME"].includes(change[1])) {
+                    continue;
+                }
+                last = change;
+                annotationsParams.push({
+                    xref: "x",
+                    yref: "paper",
+                    x: this.axis.toAxis(change[0]),
+                    y: 0,
+                    yanchor: "bottom",
+                    text: change[1] + "->" + change[2].toFixed(4),
+                    showarrow: true,
+                    arrowwidth: 1,
+                    arrowcolor: "#999999",
+                    ay: i,
+                    ax: 0,
+                });
+                i += 23;
+                if (i > 0) {
+                    i = -300;
+                }
+            }
+            updatemenus[0].active = 0;
+            Plotly.relayout(this.gd, {
+                annotations: [...annotationsModes],
+                updatemenus,
+            });
+            updatemenus[0].buttons[2].args = [
+                "annotations",
+                [
+                    ...annotationsEvents,
+                    ...annotationsModes,
+                    ...annotationsParams,
+                ],
+            ];
+        },
+        loadedMessages() {
+            return Object.keys(this.state.messages);
+        },
+    },
+};
+</script>

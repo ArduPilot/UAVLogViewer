@@ -1,36 +1,59 @@
-import { MavlinkDataExtractor } from '../../../src/tools/mavlinkDataExtractor'
-const mavlinkparser = require('../../../src/tools/parsers/mavlinkParser.js')
-const glob = require('glob')
+import fs from "node:fs";
+import { MavlinkDataExtractor } from "@/features/loader/extractors/mavlinkDataExtractor.js";
+import { MavlinkParser } from "@/features/loader/parsers/mavlinkParser.js";
+import { findTestLogs } from "../testlogs.js";
 
-// options is optional
-let files = glob.sync('/tmp/testlogs/*.tlog')
-files = files.length > 0 ? files : glob.sync('test/testlogfiles/*.tlog')
-console.log('Testing MAVLink files:')
-console.log(files)
-describe('parse tlogs', () => {
-    test.each(files)('parse %s', (a) => {
-        const fs = require('fs')
-        const logfile = fs.readFileSync(a)
-        const parser = new mavlinkparser.MavlinkParser()
-        // Hide these two
-        parser.mavlinkParser.on = () => {
-        }
-        self.postMessage = function (a) {
-        }
-        const result = parser.processData(logfile)
-        const messageTypes = result.types
-        const messages = result.messages
-        expect(Object.keys(messageTypes)).toContain('HEARTBEAT')
-        expect(MavlinkDataExtractor.extractEvents(messages).length).toBeGreaterThan(0)
-        expect(Object.keys(MavlinkDataExtractor.extractAttitudes(messages)).length).toBeGreaterThan(50)
-        expect(MavlinkDataExtractor.extractFlightModes(messages).length).toBeGreaterThan(0)
+const files = findTestLogs(["tlog"]);
+console.log("Testing MAVLink files:", files);
 
-        expect(MavlinkDataExtractor.extractParams(messages)).toBeDefined()
+const suite = files.length > 0 ? describe : describe.skip;
+suite("parse tlogs", () => {
+    test.each(files.length > 0 ? files : ["(no .tlog logs found)"])(
+        "parse %s",
+        (a) => {
+            const logfile = fs.readFileSync(a);
+            const parser = new MavlinkParser();
+            // Hide progress messages meant for the web worker
+            self.postMessage = function () {};
+            const result = parser.processData(logfile);
+            const messageTypes = result.types;
+            const messages = result.messages;
+            expect(Object.keys(messageTypes)).toContain("HEARTBEAT");
+            expect(
+                MavlinkDataExtractor.extractEvents(messages).length,
+            ).toBeGreaterThan(0);
+            const attitude = MavlinkDataExtractor.extractAttitude(
+                messages,
+                "ATTITUDE",
+            );
+            expect(Object.keys(attitude).length).toBeGreaterThan(50);
+            expect(
+                MavlinkDataExtractor.extractFlightModes(messages).length,
+            ).toBeGreaterThan(0);
 
-        expect(MavlinkDataExtractor.extractTextMessages(messages).length).toBeGreaterThan(0)
-        const trajectory = MavlinkDataExtractor.extractTrajectory(messages)
-        expect(Object.keys(trajectory).length).toBeGreaterThan(1)
-        const firstItem = Object.keys(trajectory)[0]
-        expect(trajectory[firstItem].trajectory.length).toBeGreaterThan(10)
-    })
-})
+            expect(MavlinkDataExtractor.extractParams(messages)).toBeDefined();
+
+            expect(
+                MavlinkDataExtractor.extractTextMessages(messages).length,
+            ).toBeGreaterThan(0);
+            const sources =
+                MavlinkDataExtractor.extractTrajectorySources(messages);
+            expect(sources.length).toBeGreaterThan(0);
+            const trajectory = MavlinkDataExtractor.extractTrajectory(
+                messages,
+                sources[0],
+            );
+            expect(Object.keys(trajectory)).toContain(sources[0]);
+            expect(trajectory[sources[0]].trajectory.length).toBeGreaterThan(
+                10,
+            );
+            // one value per message in every column
+            for (const [type, columns] of Object.entries(messages)) {
+                const count = columns.time_boot_ms.length;
+                for (const [field, values] of Object.entries(columns)) {
+                    expect(values.length, `${type}.${field}`).toBe(count);
+                }
+            }
+        },
+    );
+});

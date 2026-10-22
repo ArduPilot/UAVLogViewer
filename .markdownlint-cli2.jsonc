@@ -1,0 +1,18 @@
+// https://github.com/DavidAnson/markdownlint-cli2
+{
+    "globs": [
+        "**/*.md"
+    ],
+    "ignores": [
+        "node_modules/**",
+        "dist/**",
+        "test/e2e/reports/**",
+        // Python virtual environments
+        "**/.venv/**",
+        "src/features/loader/parsers/JsDataflashParser/**"
+    ],
+    "config": {
+        // prettier owns line wrapping
+        "MD013": false
+    }
+}

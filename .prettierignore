@@ -1,0 +1,11 @@
+dist/
+node_modules/
+src/features/loader/parsers/JsDataflashParser/
+src/shared/lib/mavlink.js
+test/unit/coverage/
+test/e2e/reports/
+src/assets/xml/**/*.xml
+package-lock.json
+runtime-config.js
+.idea/
+.markdownlint-cli2.jsonc

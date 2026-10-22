@@ -1,0 +1,344 @@
+<template>
+    <div>
+        <li v-if="file == null && !sampleLoaded">
+            <a class="section" @click="onLoadSample('sample')"
+                ><i class="fa-solid fa-play"></i> Open Sample
+            </a>
+        </li>
+        <li v-if="url">
+            <a class="section" @click="share"
+                ><i class="fa-solid fa-share-nodes"></i>
+                {{ shared ? "Copied to clipboard!" : "Share link" }}</a
+            >
+        </li>
+        <li v-if="url">
+            <a :href="'/uploaded/' + url" class="section" target="_blank"
+                ><i class="fa-solid fa-download"></i> Download</a
+            >
+        </li>
+        <div
+            v-if="file == null && uploadpercentage === -1 && !sampleLoaded"
+            id="drop_zone"
+            @click="browse"
+            @dragover.prevent
+            @drop="onDrop"
+        >
+            <p>Drop *.tlog or *.bin file here or click to browse</p>
+            <!-- the drop zone opens the file picker; screen readers get the input with its label -->
+            <label for="choosefile" class="visually-hidden"
+                >Choose a log file</label
+            >
+            <input
+                id="choosefile"
+                class="visually-hidden"
+                type="file"
+                @change="onChange"
+            />
+        </div>
+        <VProgress
+            v-if="uploadpercentage > -1"
+            :complete="transferMessage"
+            :percent="uploadpercentage"
+        >
+        </VProgress>
+        <VProgress
+            v-if="state.processPercentage > -1"
+            :complete="state.processStatus"
+            :percent="state.processPercentage"
+        ></VProgress>
+    </div>
+</template>
+<script>
+import VProgress from "./SideBarFileManagerProgressBar.vue";
+import sampleLog from "@/assets/samples/vtol.tlog";
+import { toRaw } from "vue";
+import { keepRaw, store, resetLogState } from "@/shared/stores/index.js";
+import { downloadObjectUrl } from "@/shared/lib/download.js";
+
+// webpack 5 and Vite both bundle a worker created this way
+const worker = new Worker(
+    new URL("../parsers/parser.worker.js", import.meta.url),
+    { type: "module" },
+);
+
+// Start parsing a log; clears everything left from a previous log first
+function parseLog(file, { isTlog, isDji }) {
+    resetLogState();
+    worker.postMessage({ action: "parse", file, isTlog, isDji });
+}
+
+// The worker lives as long as the page, but this component only exists while the sidebar shows
+// its home tab. Forward on-demand requests to the worker from one app-wide listener, registered
+// the first time the component is created and never removed (per-instance listeners would either
+// stop working once the component is destroyed or pile up each time it is recreated).
+let workerRequestsForwarded = false;
+// A ?file= log loads once per page: this component mounts again each time the home tab shows,
+// and loading it again would discard the plots and reset the widgets
+let urlFileLoaded = false;
+function forwardWorkerRequests(eventHub) {
+    if (workerRequestsForwarded) {
+        return;
+    }
+    workerRequestsForwarded = true;
+    // logs sent by an embedding page
+    window.addEventListener("message", (event) => {
+        if (event.data.type === "arrayBuffer") {
+            // embedding pages send DataFlash logs; the previous log may have been a tlog
+            store.logType = "bin";
+            parseLog(event.data.data, { isTlog: false, isDji: false });
+        }
+    });
+    eventHub.$on("loadType", (type) => {
+        worker.postMessage({ action: "loadType", type });
+    });
+    eventHub.$on("trimFile", () => {
+        // a plain array: the worker can't receive Vue's proxy of it
+        worker.postMessage({
+            action: "trimFile",
+            time: toRaw(store.timeRange),
+        });
+    });
+}
+
+export default {
+    name: "Dropzone",
+    components: {
+        VProgress,
+    },
+    data: function () {
+        return {
+            uploadpercentage: -1,
+            sampleLoaded: false,
+            shared: false,
+            url: null,
+            transferMessage: "",
+            state: store,
+            file: null,
+            uploadStarted: false,
+        };
+    },
+    created() {
+        forwardWorkerRequests(this.$eventHub);
+    },
+    mounted() {
+        worker.onmessage = (event) => {
+            if (event.data.percentage) {
+                this.state.processPercentage = event.data.percentage;
+            } else if (event.data.availableMessages) {
+                this.$eventHub.$emit(
+                    "messageTypes",
+                    event.data.availableMessages,
+                );
+            } else if (event.data.metadata) {
+                this.state.metadata = event.data.metadata;
+            } else if (event.data.messages) {
+                this.state.messages = keepRaw(event.data.messages);
+                this.$eventHub.$emit("messages");
+            } else if (event.data.messagesDoneLoading) {
+                this.$eventHub.$emit("messagesDoneLoading");
+            } else if (event.data.messageType) {
+                this.state.messages[event.data.messageType] =
+                    event.data.messageList;
+                this.$eventHub.$emit("messages");
+            } else if (event.data.files) {
+                this.state.files = keepRaw(event.data.files);
+                this.$eventHub.$emit("messages");
+            } else if (event.data.url) {
+                this.downloadFileFromURL(event.data.url);
+            }
+        };
+        const url = document.location.search.split("?file=")[1];
+        if (url && !urlFileLoaded) {
+            urlFileLoaded = true;
+            this.onLoadSample(decodeURIComponent(url));
+        }
+    },
+    methods: {
+        onLoadSample(file) {
+            let url;
+            if (file === "sample") {
+                this.state.file = "sample";
+                url = sampleLog;
+                this.state.logType = "tlog";
+            } else {
+                url = file;
+                // Set the file name for display purposes
+                const urlParts = url.split("/");
+                this.state.file = urlParts[urlParts.length - 1];
+            }
+            const oReq = new XMLHttpRequest();
+            console.log(`loading file from ${url}`);
+
+            // Set the log type based on file extension
+            this.state.logType = url.indexOf(".tlog") > 0 ? "tlog" : "bin";
+            if (url.indexOf(".txt") > 0) {
+                this.state.logType = "dji";
+            }
+
+            oReq.open("GET", url, true);
+            oReq.responseType = "arraybuffer";
+
+            // Use arrow function to preserve 'this' context
+            oReq.onload = () => {
+                const arrayBuffer = oReq.response;
+
+                this.transferMessage = "Download Done";
+                this.sampleLoaded = true;
+                parseLog(arrayBuffer, {
+                    isTlog: url.indexOf(".tlog") > 0,
+                    isDji: url.indexOf(".txt") > 0,
+                });
+            };
+            oReq.addEventListener(
+                "progress",
+                (e) => {
+                    if (e.lengthComputable) {
+                        this.uploadpercentage = (100 * e.loaded) / e.total;
+                    }
+                },
+                false,
+            );
+            oReq.onerror = (error) => {
+                alert(
+                    "unable to fetch remote file, check CORS settings in the target server",
+                );
+                console.log(error);
+            };
+
+            oReq.send();
+        },
+        onChange() {
+            const fileinput = document.getElementById("choosefile");
+            this.process(fileinput.files[0]);
+        },
+        onDrop(ev) {
+            // Prevent default behavior (Prevent file from being opened)
+            ev.preventDefault();
+            if (ev.dataTransfer.items) {
+                // Use DataTransferItemList interface to access the file(s)
+                for (const element of ev.dataTransfer.items) {
+                    // If dropped items aren't files, reject them
+                    if (element.kind === "file") {
+                        const file = element.getAsFile();
+                        this.process(file);
+                    }
+                }
+            } else {
+                // Use DataTransfer interface to access the file(s)
+                for (let i = 0; i < ev.dataTransfer.files.length; i++) {
+                    console.log(
+                        "... file[" +
+                            i +
+                            "].name = " +
+                            ev.dataTransfer.files[i].name,
+                    );
+                    console.log(ev.dataTransfer.files[i]);
+                }
+            }
+        },
+        process: async function (file) {
+            this.state.file = file.name;
+            this.state.processStatus = "Pre-processing...";
+            this.state.processPercentage = 100;
+            this.file = file;
+            this.state.logType = file.name.endsWith("tlog") ? "tlog" : "bin";
+            if (file.name.endsWith(".txt")) {
+                this.state.logType = "dji";
+            }
+            let data;
+            try {
+                data = await file.arrayBuffer();
+            } catch (error) {
+                console.error("Failed to read file", error);
+                this.state.processStatus =
+                    "Error reading file: " + (error?.message ?? error);
+                return;
+            }
+            parseLog(data, {
+                isTlog: file.name.endsWith("tlog"),
+                isDji: file.name.endsWith("txt"),
+            });
+        },
+        uploadFile() {
+            this.uploadStarted = true;
+            this.transferMessage = "Upload Done!";
+            this.uploadpercentage = 0;
+            const formData = new FormData();
+            formData.append("file", this.file);
+
+            const request = new XMLHttpRequest();
+            request.onload = () => {
+                if (request.status >= 200 && request.status < 400) {
+                    this.uploadpercentage = 100;
+                    this.url = request.responseText;
+                } else {
+                    alert("error! " + request.status);
+                    this.uploadpercentage = 100;
+                    this.transferMessage = "Error Uploading";
+                    console.log(request);
+                }
+            };
+            request.upload.addEventListener(
+                "progress",
+                (e) => {
+                    if (e.lengthComputable) {
+                        this.uploadpercentage = (100 * e.loaded) / e.total;
+                    }
+                },
+                false,
+            );
+            request.open("POST", "/upload");
+            request.send(formData);
+        },
+        fixData(message) {
+            if (message.name === "GLOBAL_POSITION_INT") {
+                message.lat = message.lat / 10000000;
+                message.lon = message.lon / 10000000;
+                message.relative_alt = message.relative_alt / 1000;
+            }
+            return message;
+        },
+        browse() {
+            document.getElementById("choosefile").click();
+        },
+        share() {
+            const el = document.createElement("textarea");
+            el.value = globalThis.location.host + "/#/v/" + this.url;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand("copy");
+            el.remove();
+            this.shared = true;
+        },
+        downloadFileFromURL(url) {
+            downloadObjectUrl(
+                url,
+                this.state.file + "-trimmed." + this.state.logType,
+            );
+        },
+    },
+};
+</script>
+<style scoped>
+/* NAVBAR */
+
+#drop_zone {
+    padding-top: 25px;
+    padding-left: 10px;
+    border: 2px dashed #434b52da;
+    width: auto;
+    height: 100px;
+    margin: 20px;
+    border-radius: 5px;
+    cursor: default;
+    background-color: rgb(0 0 0 / 0%);
+}
+
+#drop_zone:hover {
+    background-color: #171e2450;
+}
+
+.uploadCheckbox {
+    margin-left: 20px;
+}
+</style>

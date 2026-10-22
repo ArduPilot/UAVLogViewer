@@ -1,36 +1,31 @@
-<!DOCTYPE html>
-<html lang="en" style="height: 100%;">
-  <head>
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
-    <meta charset="utf-8">
-    <meta name="description" content="online viewer for UAV log files">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UAV Log Viewer</title>
-    <script>
-      window.__APP_CONFIG__ = window.__APP_CONFIG__ || {};
-    </script>
-    <script src="./runtime-config.js"></script>
-  </head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CVQXD7KT3F"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-CVQXD7KT3F');
-  </script>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YTKXG38B06"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-YTKXG38B06');
-  </script>
-  <body style="background-color: black; height: 100%">
-    <div id="app"></div>
-    <!-- built files will be auto injected -->
-  </body>
+<!doctype html>
+<html lang="en" style="height: 100%">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="description" content="online viewer for UAV log files" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>UAV Log Viewer</title>
+        <!-- no icon yet: without this the browser requests a /favicon.ico that does not exist -->
+        <link rel="icon" href="data:," />
+        <!-- Google tag (gtag.js): one loader, one config call per property -->
+        <script
+            async
+            src="https://www.googletagmanager.com/gtag/js?id=G-CVQXD7KT3F"
+        ></script>
+        <script>
+            globalThis.dataLayer = globalThis.dataLayer || [];
+            function gtag() {
+                // gtag.js reads the arguments object itself; an array does not work
+                globalThis.dataLayer.push(arguments);
+            }
+            gtag("js", new Date());
+            gtag("config", "G-CVQXD7KT3F");
+            gtag("config", "G-YTKXG38B06");
+        </script>
+    </head>
+    <!-- inline, so that Bootstrap's body background does not override it -->
+    <body style="background-color: black; height: 100%">
+        <div id="app"></div>
+        <script type="module" src="/src/app/main.js"></script>
+    </body>
 </html>

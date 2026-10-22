@@ -1,0 +1,1477 @@
+<template>
+    <div
+        :id="getDivName()"
+        class="uav-widget uav-widget--no-resize uav-widget--auto"
+        :style="{ top: top + 'px', left: left + 'px' }"
+    >
+        <span class="uav-widget__move"></span>
+        <span class="uav-widget__resize"></span>
+        <span class="uav-widget__close" @click="close()"></span>
+        <div class="uav-widget__content uav-widget__content--dense">
+            <div class="header">
+                <h5>Mag Fit Tool</h5>
+            </div>
+            <div class="section">
+                <h6>Location</h6>
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Field</th>
+                            <th scope="col">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-if="GpsPosition">
+                            <td><label for="gps-position-lat">Lat</label></td>
+                            <td>
+                                <input
+                                    id="gps-position-lat"
+                                    v-model="GpsPosition.lat"
+                                    type="text"
+                                    disabled
+                                    readonly
+                                    size="10"
+                                />
+                            </td>
+                        </tr>
+                        <tr v-if="GpsPosition">
+                            <td><label for="gps-position-lon">Lon</label></td>
+                            <td>
+                                <input
+                                    id="gps-position-lon"
+                                    v-model="GpsPosition.lon"
+                                    type="text"
+                                    disabled
+                                    readonly
+                                    size="10"
+                                />
+                            </td>
+                        </tr>
+                        <tr v-if="!GpsPosition">
+                            <td><label for="user-lat">Lat</label></td>
+                            <td>
+                                <input
+                                    id="user-lat"
+                                    v-model="userLat"
+                                    type="text"
+                                    size="10"
+                                />
+                            </td>
+                        </tr>
+                        <tr v-if="!GpsPosition">
+                            <td><label for="user-lon">Lon</label></td>
+                            <td>
+                                <input
+                                    id="user-lon"
+                                    v-model="userLon"
+                                    type="text"
+                                    size="10"
+                                />
+                            </td>
+                        </tr>
+                        <tr v-if="!GpsPosition">
+                            <td></td>
+                            <td>
+                                <button
+                                    :disabled="fetchingLocation"
+                                    @click="getLocationFromIp()"
+                                >
+                                    {{
+                                        fetchingLocation
+                                            ? "Locating..."
+                                            : "Get from IP"
+                                    }}
+                                </button>
+                            </td>
+                        </tr>
+                        <tr v-if="!GpsPosition && locationError">
+                            <td></td>
+                            <td style="color: #b00">{{ locationError }}</td>
+                        </tr>
+                        <tr v-if="!positionValid">
+                            <td></td>
+                            <td class="hint">
+                                Enter lat/lon to enable fitting
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Earth Field</td>
+                            <td>{{ printEarthField }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section">
+                <h6>Compasses</h6>
+                <table
+                    v-if="Object.keys(compassOffsets).length"
+                    class="results"
+                >
+                    <thead>
+                        <tr>
+                            <th>Compass</th>
+                            <th>ofsx</th>
+                            <th>ofsy</th>
+                            <th>ofsz</th>
+                            <th>scale</th>
+                            <th>Fitness</th>
+                            <th colspan="3"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="(value, index) in compassOffsets"
+                            :key="'param' + index"
+                        >
+                            <td>{{ index }}</td>
+                            <td>{{ value.offsets.x.toFixed(2) }}</td>
+                            <td>{{ value.offsets.y.toFixed(2) }}</td>
+                            <td>{{ value.offsets.z.toFixed(2) }}</td>
+                            <td>{{ value.scaling.toFixed(2) }}</td>
+                            <td>
+                                {{ fitnessesPreCalibration[index].toFixed(0) }}
+                            </td>
+                            <td class="actions">
+                                <button
+                                    :disabled="processing || !positionValid"
+                                    :title="
+                                        positionValid
+                                            ? ''
+                                            : 'Enter a latitude and longitude first'
+                                    "
+                                    @click="fitWmm(index)"
+                                >
+                                    <i
+                                        v-if="
+                                            processing &&
+                                            processingInstance === index
+                                        "
+                                        class="fa-solid fa-spinner fa-spin"
+                                    ></i>
+                                    <span v-else>Fit</span>
+                                </button>
+                            </td>
+                            <td class="actions">
+                                <button
+                                    v-if="value?.offsets"
+                                    @click="plotOldRaw(index)"
+                                >
+                                    Plot Raw
+                                </button>
+                            </td>
+                            <td class="actions">
+                                <button
+                                    v-if="value?.offsets"
+                                    @click="plotOldHeading(index)"
+                                >
+                                    Plot Heading
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <i v-else class="fa-solid fa-spinner fa-spin"> </i>
+            </div>
+            <div v-if="compassMessageNames.length >= 2" class="section">
+                <h6>Consistency</h6>
+                <div style="margin-bottom: 6px">
+                    <label for="diff-compass-a">Compare</label>
+                    <select id="diff-compass-a" v-model.number="diffCompassA">
+                        <option
+                            v-for="(compassName, index) in compassMessageNames"
+                            :key="'a' + index"
+                            :value="index"
+                        >
+                            {{ index }}
+                        </option>
+                    </select>
+                    <label for="diff-compass-b">vs</label>
+                    <select id="diff-compass-b" v-model.number="diffCompassB">
+                        <option
+                            v-for="(compassName, index) in compassMessageNames"
+                            :key="'b' + index"
+                            :value="index"
+                        >
+                            {{ index }}
+                        </option>
+                    </select>
+                </div>
+                <button
+                    :disabled="diffCompassA === diffCompassB"
+                    @click="plotOldHeadingDiff(diffCompassA, diffCompassB)"
+                >
+                    Plot heading diff (raw)
+                </button>
+                <button
+                    v-if="
+                        newCorrections[diffCompassA] &&
+                        newCorrections[diffCompassB]
+                    "
+                    :disabled="diffCompassA === diffCompassB"
+                    @click="plotNewHeadingDiff(diffCompassA, diffCompassB)"
+                >
+                    Plot heading diff (fitted)
+                </button>
+            </div>
+            <div v-if="processing" class="section">
+                <h6>Optimizer fitness</h6>
+                <svg
+                    class="fitness-chart"
+                    :width="chartWidth"
+                    :height="chartHeight"
+                >
+                    <polyline
+                        :points="fitnessPoints"
+                        fill="none"
+                        stroke="#2E3F54"
+                        stroke-width="1.5"
+                    />
+                </svg>
+                <div class="chart-caption">
+                    gen {{ fitnessHistory.length }} / {{ maxGenerations }}
+                    <span v-if="bestFitness !== null"
+                        >&middot; best {{ bestFitness.toFixed(1) }}</span
+                    >
+                </div>
+            </div>
+            <div v-if="newCorrections.length > 0 || processing" class="section">
+                <h6>New</h6>
+                <table class="results">
+                    <thead>
+                        <tr>
+                            <th>Compass</th>
+                            <th>ofsx</th>
+                            <th>ofsy</th>
+                            <th>ofsz</th>
+                            <th>scale</th>
+                            <th>fitness</th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="(value, index) in newCorrections"
+                            :key="'param' + index"
+                        >
+                            <td>{{ index }}</td>
+                            <td>{{ value?.offsets?.x?.toFixed(2) }}</td>
+                            <td>{{ value?.offsets?.y?.toFixed(2) }}</td>
+                            <td>{{ value?.offsets?.z?.toFixed(2) }}</td>
+                            <td>{{ value?.scaling?.toFixed(2) }}</td>
+                            <td :class="fitnessClass(index)">
+                                {{
+                                    fitnessesPostCalibration[index]?.toFixed(
+                                        0,
+                                    ) ?? "--"
+                                }}
+                            </td>
+                            <td class="actions">
+                                <button
+                                    v-if="value?.offsets"
+                                    @click="plotRaw(index)"
+                                >
+                                    Plot Raw
+                                </button>
+                            </td>
+                            <td class="actions">
+                                <button
+                                    v-if="value?.offsets"
+                                    @click="plotNewHeading(index)"
+                                >
+                                    Plot Heading
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="section-footer">
+                    <span v-if="processing"
+                        ><i class="fa-solid fa-spinner fa-spin"></i>
+                        Fitting...</span
+                    >
+                    <button v-else @click="downloadParams()">
+                        Download Params file
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import { store } from "@/shared/stores/index.js";
+import { useWidget, widgetProps } from "@/features/widgets/core/useWidget.js";
+import { Vector3 } from "@/shared/lib/mavextra/vector3";
+import { Matrix3 } from "@/shared/lib/mavextra/matrix3";
+import { downloadData } from "@/shared/lib/download.js";
+
+// Candidate compass message keys, in priority order. Covers tlogs (RAW_IMU,
+// SCALED_IMU*), modern dataflash instanced messages (MAG[0..2]) and older
+// dataflash logs (MAG, MAG2, MAG3). compassData and compassMessageNames are
+// both derived from this list so their indices stay aligned.
+const COMPASS_MESSAGE_CANDIDATES = [
+    "RAW_IMU",
+    "SCALED_IMU2",
+    "SCALED_IMU3",
+    "MAG[0]",
+    "MAG[1]",
+    "MAG[2]",
+    "MAG",
+    "MAG2",
+    "MAG3",
+];
+
+async function geneticOptimizer(
+    f,
+    xStart,
+    bounds,
+    {
+        populationSize = 100,
+        mutationRate = 0.01,
+        maxGenerations = 100,
+        mutationSize = 0.05,
+        onProgress = null,
+    } = {},
+) {
+    let population = new Array(populationSize - 1)
+        .fill()
+        .map(() =>
+            bounds.map(
+                (bound) => optimizerRandom() * (bound[1] - bound[0]) + bound[0],
+            ),
+        );
+    population.push(xStart);
+
+    function runGeneration(generation) {
+        if (generation >= maxGenerations) {
+            return Promise.resolve();
+        }
+
+        const scores = population.map(f);
+        const minScore = Math.min(...scores);
+        const maxScore = Math.max(...scores);
+        if (onProgress) {
+            onProgress(minScore, generation, maxGenerations);
+        }
+        const fitness = scores.map(
+            (score) => (maxScore - score) / (maxScore - minScore),
+        );
+        const totalFitness = fitness.reduce((a, b) => a + b, 0);
+        const probs = fitness.map((fit) => fit / totalFitness);
+
+        const newPopulation = Array.from({ length: populationSize }, () => {
+            const parents = selectParents(population, probs);
+
+            // Crossover
+            const point = Math.floor(optimizerRandom() * bounds.length);
+            let child = [
+                ...parents[0].slice(0, point),
+                ...parents[1].slice(point),
+            ];
+
+            // Mutation
+            child = child.map((val, index) => {
+                if (optimizerRandom() < mutationRate) {
+                    const delta =
+                        (optimizerRandom() - 0.5) *
+                        mutationSize *
+                        (bounds[index][1] - bounds[index][0]);
+                    return Math.min(
+                        Math.max(val + delta, bounds[index][0]),
+                        bounds[index][1],
+                    );
+                } else {
+                    return val;
+                }
+            });
+
+            return child;
+        });
+
+        population = newPopulation;
+        if (generation < maxGenerations - 1) {
+            return sleep(10).then(() => runGeneration(generation + 1));
+        }
+        return Promise.resolve();
+    }
+
+    await runGeneration(0);
+
+    const bestIndex = population
+        .map(f)
+        .reduce((iMax, x, i, arr) => (x < arr[iMax] ? i : iMax), 0);
+    return population[bestIndex];
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function optimizerRandom() {
+    return Math.random(); // NOSONAR - randomness is only used for optimization, not security.
+}
+
+function selectParents(population, probs) {
+    return [selectParent(population, probs), selectParent(population, probs)];
+}
+
+function selectParent(population, probs) {
+    let r = optimizerRandom();
+    let index = 0;
+    while (index < probs.length - 1 && (r -= probs[index]) > 0) index++;
+    return population[index];
+}
+export default {
+    name: "MagFitTool",
+    props: widgetProps,
+    emits: ["close"],
+    setup(props, { emit }) {
+        return useWidget(props, emit, {
+            name: "MagFitTool",
+            width: 580,
+            height: 680,
+            left: 432,
+            top: 12,
+        });
+    },
+    data() {
+        return {
+            state: store,
+            numberOfPoints: 1000, // not settable in the widget yet: https://github.com/igoutta/UAVLogViewer/issues/5
+            newParamFormat: true,
+            forceScale: false,
+            maxOffset: 1000,
+            maxScale: 1.01,
+            minScale: 0.99,
+            compassData: [],
+            compassMessageNames: [],
+            newCorrections: [],
+            processing: false,
+            processingInstance: null,
+            fitnessHistory: [],
+            maxGenerations: 100,
+            chartWidth: 240,
+            chartHeight: 70,
+            fitnesses: {},
+            userLat: 0,
+            userLon: 0,
+            fetchingLocation: false,
+            locationError: null,
+            diffCompassA: 0,
+            diffCompassB: 1,
+        };
+    },
+    computed: {
+        bestFitness() {
+            const n = this.fitnessHistory.length;
+            return n ? this.fitnessHistory[n - 1] : null;
+        },
+        fitnessPoints() {
+            // build the SVG polyline for the live optimizer fitness chart
+            const history = this.fitnessHistory;
+            const n = history.length;
+            if (n === 0) {
+                return "";
+            }
+            const pad = 3;
+            const w = this.chartWidth;
+            const h = this.chartHeight;
+            const min = Math.min(...history);
+            const max = Math.max(...history);
+            const range = max - min || 1;
+            return history
+                .map((value, i) => {
+                    const x =
+                        n === 1 ? w / 2 : pad + (i / (n - 1)) * (w - 2 * pad);
+                    const y = pad + (1 - (value - min) / range) * (h - 2 * pad);
+                    return `${x.toFixed(1)},${y.toFixed(1)}`;
+                })
+                .join(" ");
+        },
+        fitnessesPreCalibration() {
+            const ret = [];
+            for (const instance in this.compassDataAugmentedWithATT) {
+                ret.push(
+                    this.wmmErrorOnce(
+                        this.compassDataAugmentedWithATT[instance],
+                        this.compassOffsets[instance],
+                    ),
+                );
+            }
+            return ret;
+        },
+        fitnessesPostCalibration() {
+            return this.newCorrections.map((c, i) => {
+                return this.wmmErrorOnce(
+                    this.compassDataAugmentedWithATT[i],
+                    c,
+                );
+            });
+        },
+        GpsPosition() {
+            const pos =
+                Object.values(this.state.trajectories)[0]?.trajectory[0] ??
+                null;
+            if (pos === null) return null;
+            return {
+                lon: pos[0],
+                lat: pos[1],
+            };
+        },
+        position() {
+            return this.GpsPosition || this.userPosition;
+        },
+        userPosition() {
+            return {
+                lat: this.userLat,
+                lon: this.userLon,
+            };
+        },
+        positionValid() {
+            // a fit needs a location to compute the expected earth field. Either
+            // the log has GPS, or the user must have entered valid lat/lon.
+            if (this.GpsPosition) {
+                return true;
+            }
+            const lat = Number.parseFloat(this.userLat);
+            const lon = Number.parseFloat(this.userLon);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+                return false;
+            }
+            if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+                return false;
+            }
+            // treat the untouched (0, 0) default as "not entered yet"
+            return !(lat === 0 && lon === 0);
+        },
+        // next three come from mavextra.js
+        intensity() {
+            return window.interpolate_table(
+                window.intensity_table,
+                this.position.lat,
+                this.position.lon,
+            );
+        },
+        declination() {
+            return window.interpolate_table(
+                window.declination_table,
+                this.position.lat,
+                this.position.lon,
+            );
+        },
+        inclination() {
+            return window.interpolate_table(
+                window.inclination_table,
+                this.position.lat,
+                this.position.lon,
+            );
+        },
+        earthField() {
+            const fieldVar = window.get_mag_field_ef(
+                this.position.lat,
+                this.position.lon,
+            );
+            let magEf = new Vector3(fieldVar[2] * 1000.0, 0.0, 0.0);
+            const R = new Matrix3();
+            R.fromEuler(
+                0.0,
+                -window.radians(fieldVar[1]),
+                window.radians(fieldVar[0]),
+            );
+            magEf = R.times(magEf);
+            return magEf;
+            // This has been verified to match MAGFIT_WMM.py
+        },
+        printEarthField() {
+            return (
+                `( ${this.earthField.x.toFixed(0)}, ${this.earthField.y.toFixed(0)}, ` +
+                ` ${this.earthField.z.toFixed(0)})`
+            );
+        },
+        filteredCompassData() {
+            // returns the compassData, but with the data filtered to only include the data that is used
+            // that means we will only pass through the following fields (MAVLink, then DataFlash):
+            const wantedFields = new Set([
+                "time_boot_ms",
+                "xmag",
+                "ymag",
+                "zmag",
+                "MagX",
+                "MagY",
+                "MagZ",
+            ]);
+            const filtered = [];
+            const nameMap = {
+                xmag: "xmag",
+                ymag: "ymag",
+                zmag: "zmag",
+                MagX: "xmag",
+                MagY: "ymag",
+                MagZ: "zmag",
+                time_boot_ms: "time_boot_ms",
+            };
+            for (const message of this.compassData) {
+                const filteredMessage = {};
+                // for each key, value in message, filter it down:
+                for (const [key, values] of Object.entries(message)) {
+                    if (wantedFields.has(key)) {
+                        filteredMessage[nameMap[key]] = values;
+                    }
+                }
+                filtered.push(filteredMessage);
+            }
+            return filtered;
+        },
+        sampledCompassData() {
+            // returns this.compassData, but sampled down in a way that every array child of each message
+            // has at most this.numberOfPoints
+            const sampled = [];
+            for (const message of this.filteredCompassData) {
+                const messageLength = Object.values(message)[0].length;
+                const sampleRate =
+                    Math.floor(messageLength / this.numberOfPoints) || 1;
+                const sampledMessage = {};
+                // for each key, value in message, sample value down:
+                for (const [key, values] of Object.entries(message)) {
+                    const sampledValue = [];
+                    for (let i = 0; i < values.length; i += sampleRate) {
+                        sampledValue.push(values[i]);
+                    }
+                    sampledMessage[key] = sampledValue;
+                }
+                sampled.push(sampledMessage);
+            }
+            return sampled;
+        },
+        compassOffsets() {
+            const offsets = [];
+            if (this.sampledCompassData.length === 0) {
+                console.log("no compass data");
+                return offsets;
+            }
+            for (const compass in this.sampledCompassData) {
+                offsets.push(
+                    this.getCompassParams(Number.parseFloat(compass) + 1),
+                );
+            }
+            return offsets;
+        },
+        compassDataRemovedOffsets() {
+            // returns this.compassData, but with the offsets removed
+            const data = [];
+            for (const [compass, message] of Object.entries(
+                this.sampledCompassData,
+            )) {
+                data.push(
+                    this.removeOffsets(message, this.compassOffsets[compass]),
+                );
+            }
+            return data;
+        },
+        attitudeMessageName() {
+            if ("ATT" in this.state.messages) {
+                return "ATT";
+            }
+            return "ATTITUDE";
+        },
+        isTlog() {
+            return this.state.logType === "tlog";
+        },
+        attitudeMessages() {
+            if ("ATT" in this.state.messages) {
+                return this.state.messages.ATT;
+            }
+            return this.state.messages.ATTITUDE;
+        },
+        compassDataAugmentedWithATT() {
+            // iterates on index of compassDataRemovedOffsets.time_boot_ms, finds the nearest ATT message
+            // with the closes time_boot_ms, and adds that to the compassDataRemovedOffsets message
+            return this.compassDataRemovedOffsets.map((message) => {
+                const augmentedMessage = { ...message };
+                augmentedMessage.roll = [];
+                augmentedMessage.pitch = [];
+                augmentedMessage.yaw = [];
+                let attIndex = 0;
+                for (const time of message.time) {
+                    while (
+                        this.attitudeMessages.time_boot_ms[attIndex] < time
+                    ) {
+                        attIndex++;
+                    }
+                    if ("Roll" in this.attitudeMessages) {
+                        augmentedMessage.roll.push(
+                            this.attitudeMessages.Roll[attIndex],
+                        );
+                        augmentedMessage.pitch.push(
+                            this.attitudeMessages.Pitch[attIndex],
+                        );
+                        augmentedMessage.yaw.push(
+                            this.attitudeMessages.Yaw[attIndex],
+                        );
+                    } else {
+                        augmentedMessage.roll.push(
+                            this.attitudeMessages.roll[attIndex],
+                        );
+                        augmentedMessage.pitch.push(
+                            this.attitudeMessages.pitch[attIndex],
+                        );
+                        augmentedMessage.yaw.push(
+                            this.attitudeMessages.yaw[attIndex],
+                        );
+                    }
+                }
+                return augmentedMessage;
+            });
+        },
+        parameters() {
+            return this.state.params?.values ?? {};
+        },
+    },
+    mounted() {
+        this.init();
+    },
+    methods: {
+        downloadParams() {
+            const params = [];
+            for (let [index, corr] of Object.entries(this.newCorrections)) {
+                if (!corr) {
+                    // filtering weird data coming though... we should switch to TS
+                    continue;
+                }
+                index = Number.parseFloat(index);
+                params.push(
+                    [this.paramName("OFS", index + 1) + "_X", corr.offsets.x],
+                    [this.paramName("OFS", index + 1) + "_Y", corr.offsets.y],
+                    [this.paramName("OFS", index + 1) + "_Z", corr.offsets.z],
+                    [this.paramName("SCALE", index + 1), corr.scaling],
+                );
+            }
+
+            let content = "";
+            content += `# Compass-fit params from file: ${this.state.file}\n`;
+            content += `# Date: ${new Date()}\n`;
+
+            const fileName = `${this.state.file}.params`;
+
+            for (const param of params) {
+                // Calculate space between name and value to make it pretty
+                content += `${param[0]}, ${param[1]}\n`;
+            }
+
+            downloadData(content, `${fileName}-compassfit.txt`, "text/plain");
+        },
+        plotRaw(instance) {
+            this.state.plotOn = true;
+            this.$nextTick(() => {
+                this.$eventHub.$emit(
+                    "togglePlot",
+                    "MAGFIT" + instance + ".MagX",
+                    0,
+                );
+                this.$eventHub.$emit(
+                    "togglePlot",
+                    "MAGFIT" + instance + ".MagY",
+                    0,
+                );
+                this.$eventHub.$emit(
+                    "togglePlot",
+                    "MAGFIT" + instance + ".MagZ",
+                    0,
+                );
+            });
+        },
+        plotNewHeading(instance) {
+            this.state.plotOn = true;
+            this.$nextTick(() => {
+                const headingFunction = this.isTlog
+                    ? "mag_heading"
+                    : "mag_heading_df";
+                const attitudeMessage = this.isTlog ? "ATTITUDE" : "ATT";
+                const compassMessage = "MAGFIT" + instance;
+                this.$eventHub.$emit(
+                    "togglePlot",
+                    `${headingFunction}(${compassMessage}, ${attitudeMessage})`,
+                    1,
+                );
+            });
+        },
+        plotOldRaw(i) {
+            this.state.plotOn = true;
+            this.$nextTick(() => {
+                if (this.isTlog) {
+                    this.$eventHub.$emit(
+                        "togglePlot",
+                        this.compassMessageNames[i] + ".xmag",
+                        0,
+                    );
+                    this.$eventHub.$emit(
+                        "togglePlot",
+                        this.compassMessageNames[i] + ".ymag",
+                        0,
+                    );
+                    this.$eventHub.$emit(
+                        "togglePlot",
+                        this.compassMessageNames[i] + ".zmag",
+                        0,
+                    );
+                } else {
+                    this.$eventHub.$emit(
+                        "togglePlot",
+                        this.compassMessageNames[i] + ".MagX",
+                        0,
+                    );
+                    this.$eventHub.$emit(
+                        "togglePlot",
+                        this.compassMessageNames[i] + ".MagY",
+                        0,
+                    );
+                    this.$eventHub.$emit(
+                        "togglePlot",
+                        this.compassMessageNames[i] + ".MagZ",
+                        0,
+                    );
+                }
+            });
+        },
+        plotOldHeading(i) {
+            this.state.plotOn = true;
+            this.$nextTick(() => {
+                this.$nextTick(() => {
+                    const headingFunction = this.isTlog
+                        ? "mag_heading"
+                        : "mag_heading_df";
+                    const attitudeMessage = this.isTlog ? "ATTITUDE" : "ATT";
+                    const compassMessage = this.compassMessageNames[i];
+                    this.$eventHub.$emit(
+                        "togglePlot",
+                        `${headingFunction}(${compassMessage}, ${attitudeMessage})`,
+                        1,
+                    );
+                });
+            });
+        },
+        init() {
+            this.loadRequiredData();
+        },
+        async getLocationFromIp() {
+            // fetch approximate coordinates from a geo-IP service when the log
+            // has no position. Used to estimate the earth's magnetic field.
+            this.fetchingLocation = true;
+            this.locationError = null;
+            const sources = ["https://ipapi.co/json/", "https://ipwho.is/"];
+            for (const url of sources) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        continue;
+                    }
+                    const data = await response.json();
+                    // both services expose latitude/longitude as numbers
+                    const lat = Number(data.latitude);
+                    const lon = Number(data.longitude);
+                    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+                        this.userLat = lat;
+                        this.userLon = lon;
+                        this.fetchingLocation = false;
+                        return;
+                    }
+                } catch (error) {
+                    console.log("geo-ip lookup failed for", url, error);
+                }
+            }
+            this.locationError = "Could not determine location from IP";
+            this.fetchingLocation = false;
+        },
+        loadedMessages() {
+            return Object.keys(this.state.messages);
+        },
+        waitForMessages(messages) {
+            for (const message of messages) {
+                this.$eventHub.$emit("loadType", message);
+            }
+            let interval;
+            let counter = 0;
+            return new Promise((resolve, reject) => {
+                interval = setInterval(() => {
+                    for (const message of messages) {
+                        if (
+                            !this.loadedMessages().includes(
+                                message.split("[")[0],
+                            )
+                        ) {
+                            counter += 1;
+                            if (counter > 10) {
+                                // 10 * 300ms = 3 s timeout
+                                console.log("not resolving");
+                                clearInterval(interval);
+                                console.warn(
+                                    `Message type not in log: ${message} (continuing)`,
+                                );
+                                resolve(); // resolve, don't reject — missing optional messages are normal
+                            }
+                            return;
+                        }
+                    }
+                    clearInterval(interval);
+                    resolve();
+                }, 300);
+            });
+        },
+        loadRequiredData() {
+            // sends loadType messages for all of the following tyoes:
+            // this includes both dataflash and telemetry logs
+            const requiredTypes =
+                this.state.logType === "tlog"
+                    ? ["RAW_IMU", "SCALED_IMU2", "SCALED_IMU3", "ATTITUDE"]
+                    : ["ATT", "MAG", "MAG2", "MAG3"];
+            this.waitForMessages(requiredTypes)
+                .finally(() => {
+                    this.computeData();
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+        },
+        computeData() {
+            // Only include messages that actually have compass fields. Messages
+            // without any of them filter down to `{}` and crash sampledCompassData.
+            const wantedFields = [
+                "time_boot_ms",
+                "xmag",
+                "ymag",
+                "zmag",
+                "MagX",
+                "MagY",
+                "MagZ",
+            ];
+            this.compassData = [];
+            this.compassMessageNames = [];
+            for (const message of COMPASS_MESSAGE_CANDIDATES) {
+                const m = this.state.messages[message];
+                if (!m) continue;
+                if (!wantedFields.some((field) => field in m)) {
+                    console.log(
+                        "skipping message without compass fields:",
+                        message,
+                    );
+                    continue;
+                }
+                this.compassData.push(m);
+                this.compassMessageNames.push(message);
+            }
+        },
+        removeOffsets(data, offsets) {
+            /* remove all corrections to get raw sensor data */
+            let correctionMatrix = new Matrix3(
+                new Vector3(
+                    offsets.diag.x,
+                    offsets.offdiag.x,
+                    offsets.offdiag.y,
+                ),
+                new Vector3(
+                    offsets.offdiag.x,
+                    offsets.diag.y,
+                    offsets.offdiag.z,
+                ),
+                new Vector3(
+                    offsets.offdiag.y,
+                    offsets.offdiag.z,
+                    offsets.diag.z,
+                ),
+            );
+            // Matrix3.invert() returns null (it does not throw) for a singular
+            // matrix, so guard against that to avoid a null dereference below.
+            correctionMatrix = correctionMatrix.invert();
+            if (correctionMatrix === null) {
+                console.log(
+                    "singular correction matrix, cannot remove offsets",
+                );
+                return false;
+            }
+
+            const newData = {
+                magX: [],
+                magY: [],
+                magZ: [],
+                time: [],
+            };
+            const length = Object.values(data)[0].length;
+            for (let index = 0; index < length; index++) {
+                let field = new Vector3(
+                    data.xmag[index],
+                    data.ymag[index],
+                    data.zmag[index],
+                );
+                // console.log(field)
+                field = correctionMatrix.times(field);
+                // console.log(field)
+                field.multiply(1.0 / offsets.scaling);
+                field.subtract(offsets.offsets);
+                newData.magX.push(field.x);
+                newData.magY.push(field.y);
+                newData.magZ.push(field.z);
+                newData.time.push(data.time_boot_ms[index]);
+            }
+            return newData;
+        },
+        paramName(name, index) {
+            if (this.newParamFormat) {
+                return `COMPASS${index}_${name}`;
+            }
+
+            if (index === 1) {
+                return `COMPASS_${name}`;
+            }
+            return `COMPASS_${name}${index}`;
+        },
+        getCompassParams(compassIndex) {
+            const oldCorrections = {};
+            if ("COMPASS_OFS_X" in this.parameters) {
+                this.newParamFormat = false;
+            } else if ("COMPASS1_OFS_X" in this.parameters) {
+                this.newParamFormat = true;
+            }
+            oldCorrections.offsets = new Vector3(
+                this.parameters[this.paramName("OFS", compassIndex) + "_X"] ||
+                    0.0,
+                this.parameters[this.paramName("OFS", compassIndex) + "_Y"] ||
+                    0.0,
+                this.parameters[this.paramName("OFS", compassIndex) + "_Z"] ||
+                    0.0,
+            );
+            oldCorrections.diag = new Vector3(
+                this.parameters[this.paramName("DIA", compassIndex) + "_X"] ||
+                    1.0,
+                this.parameters[this.paramName("DIA", compassIndex) + "_Y"] ||
+                    1.0,
+                this.parameters[this.paramName("DIA", compassIndex) + "_Z"] ||
+                    1.0,
+            );
+
+            if (oldCorrections.diag.equals(new Vector3(0, 0, 0))) {
+                oldCorrections.diag = new Vector3(1, 1, 1);
+            }
+
+            oldCorrections.offdiag = new Vector3(
+                this.parameters[this.paramName("ODI", compassIndex) + "_X"] ||
+                    0.0,
+                this.parameters[this.paramName("ODI", compassIndex) + "_Y"] ||
+                    0.0,
+                this.parameters[this.paramName("ODI", compassIndex) + "_Z"] ||
+                    0.0,
+            );
+
+            // oldCorrections.cmot_mode = this.parameters['COMPASS_MOTCT', CMOT_MODE_NONE)
+            oldCorrections.cmot = new Vector3(
+                this.parameters[this.paramName("MOT", compassIndex) + "_X"] ||
+                    0.0,
+                this.parameters[this.paramName("MOT", compassIndex) + "_Y"] ||
+                    0.0,
+                this.parameters[this.paramName("MOT", compassIndex) + "_Z"] ||
+                    0.0,
+            );
+
+            oldCorrections.scaling =
+                this.parameters[this.paramName("SCALE", compassIndex)] || null;
+
+            if (
+                oldCorrections.scaling === null ||
+                oldCorrections.scaling < 0.1
+            ) {
+                this.forceScale = false;
+                oldCorrections.scaling = 1.0;
+            } else {
+                this.forceScale = true;
+            }
+            return oldCorrections;
+        },
+
+        getYaw(ATT, mag, corr) {
+            /* calculate heading from raw magnetometer and new offsets */
+
+            // Go via a DCM matrix to match the APM calculation
+            mag = this.correct(mag, null, corr);
+            // verified to match magfit_wmm.py
+            const dcmMatrix = new Matrix3().fromEuler(
+                window.radians(ATT.roll),
+                window.radians(ATT.pitch),
+                window.radians(ATT.yaw),
+            );
+            const cosPitchSq = 1.0 - dcmMatrix.c.x * dcmMatrix.c.x;
+            const headY = mag.y * dcmMatrix.c.z - mag.z * dcmMatrix.c.y;
+            const headX =
+                mag.x * cosPitchSq -
+                dcmMatrix.c.x * (mag.y * dcmMatrix.c.y + mag.z * dcmMatrix.c.z);
+
+            let yaw =
+                window.degrees(Math.atan2(-headY, headX)) + this.declination;
+            if (yaw < 0) {
+                yaw += 360;
+            }
+            return yaw;
+        },
+        expectedField(ATT, yaw) {
+            // return expected magnetic field for attitude
+
+            const roll = ATT.roll;
+            const pitch = ATT.pitch;
+
+            const rot = new Matrix3();
+            rot.fromEuler(
+                window.radians(roll),
+                window.radians(pitch),
+                window.radians(yaw),
+            );
+
+            const field = rot.transposed().times(this.earthField);
+
+            return field;
+        },
+        wmmErrorOnce(origdata, corrections) {
+            const data = { ...origdata };
+
+            let ret = 0;
+            for (let i = 0; i < data.time.length; i++) {
+                const MAG = {
+                    x: data.magX[i],
+                    y: data.magY[i],
+                    z: data.magZ[i],
+                };
+                const ATT = {
+                    roll: data.roll[i],
+                    pitch: data.pitch[i],
+                    yaw: data.yaw[i],
+                };
+                const BAT = null;
+                if (ATT.roll === undefined) {
+                    console.log("skipping bad data", ATT);
+                    continue;
+                }
+                const yaw = this.getYaw(ATT, MAG, corrections); // matches
+                // console.log('yaw: ', yaw)
+                const expected = this.expectedField(ATT, yaw); // matches
+                // console.log('expected: ', expected)
+                const observed = this.correct(MAG, BAT, corrections); // matches
+                // console.log('observed: ', observed)
+                const error = expected.subtract(observed).length();
+                ret += error;
+            }
+            ret /= data.magX.length;
+            return ret;
+        },
+
+        wmmError(corrections, data) {
+            // console.log(corrections)
+            const corr = {};
+            corr.offsets = new Vector3(
+                corrections[0],
+                corrections[1],
+                corrections[2],
+            );
+            corr.scaling = corrections[3];
+
+            corr.diag = new Vector3(1.0, 1.0, 1.0);
+            corr.offdiag = new Vector3(0.0, 0.0, 0.0);
+
+            let ret = 0;
+            for (let i = 0; i < data.time.length; i++) {
+                const MAG = {
+                    x: data.magX[i],
+                    y: data.magY[i],
+                    z: data.magZ[i],
+                };
+                const ATT = {
+                    roll: data.roll[i],
+                    pitch: data.pitch[i],
+                    yaw: data.yaw[i],
+                };
+                if (ATT.roll === undefined) {
+                    console.log("skipping bad data", ATT);
+                    continue;
+                }
+                const BAT = null;
+                const yaw = this.getYaw(ATT, MAG, corr); // matches
+                // console.log('yaw: ', yaw)
+                const expected = this.expectedField(ATT, yaw); // matches
+                // console.log('expected: ', expected)
+                const observed = this.correct(MAG, BAT, corr); // matches
+                // console.log('observed: ', observed)
+                const error = expected.subtract(observed).length();
+                ret += error;
+            }
+
+            ret /= data.magX.length;
+            return ret;
+        },
+
+        correct(MAG, BAT, c) {
+            // console.log('uncorrected mag: ', MAG)
+            /* correct a mag sample, returning a Vector3 */
+            let mag = new Vector3(MAG.x, MAG.y, MAG.z);
+            // add the given offsets
+            mag.add(c.offsets);
+            // multiply by scale factor
+            mag.multiply(c.scaling);
+            // apply elliptical corrections
+            const mat = new Matrix3(
+                new Vector3(c.diag.x, c.offdiag.x, c.offdiag.y),
+                new Vector3(c.offdiag.x, c.diag.y, c.offdiag.z),
+                new Vector3(c.offdiag.y, c.offdiag.z, c.diag.z),
+            );
+
+            mag = mat.times(mag);
+            // apply compassmot corrections
+            // if (BAT !== null && BAT.Curr !== undefined && !isNaN(BAT.Curr)) {
+            //     mag.add(c.cmot.multiply(BAT.Curr))
+            // }
+            // console.log('corrected mag: ', mag)
+            return mag;
+        },
+        async fitWmm(instance) {
+            // the optimizer is async (it yields between generations), so refuse
+            // to start a second fit while one is running. Concurrent fits would
+            // otherwise interleave and corrupt each other's results.
+            if (this.processing || !this.positionValid) {
+                return;
+            }
+            this.processing = true;
+            this.processingInstance = instance;
+            this.fitnessHistory = [];
+            try {
+                const data = this.compassDataAugmentedWithATT[instance];
+                const oldCorrections = this.compassOffsets[instance];
+                const corr = { ...oldCorrections };
+                const optimizationParams = [
+                    corr.offsets.x,
+                    corr.offsets.y,
+                    corr.offsets.z,
+                    corr.scaling,
+                ];
+
+                const ofs = this.maxOffset;
+                const bounds = [
+                    [-ofs, ofs],
+                    [-ofs, ofs],
+                    [-ofs, ofs],
+                    [this.minScale, this.maxScale],
+                ];
+
+                const result = await geneticOptimizer(
+                    (corrections) => this.wmmError(corrections, data),
+                    optimizationParams,
+                    bounds,
+                    {
+                        maxGenerations: this.maxGenerations,
+                        onProgress: (score) => {
+                            this.fitnessHistory.push(score);
+                        },
+                    },
+                );
+                const c = { ...oldCorrections };
+                c.offsets = new Vector3(result[0], result[1], result[2]);
+                c.scaling = result[3];
+                c.diag = new Vector3(1.0, 1.0, 1.0);
+                c.offdiag = new Vector3(0.0, 0.0, 0.0);
+                c.cmot = new Vector3(0.0, 0.0, 0.0);
+                this.newCorrections[instance] = c;
+
+                const newMessage = {
+                    time_boot_ms: [],
+                    MagX: [],
+                    MagY: [],
+                    MagZ: [],
+                };
+                for (const i in this.compassDataAugmentedWithATT[instance]
+                    .time) {
+                    const msg = this.compassDataAugmentedWithATT[instance];
+                    newMessage.time_boot_ms.push(msg.time[i]);
+                    const mag = this.correct(
+                        {
+                            x: msg.magX[i],
+                            y: msg.magY[i],
+                            z: msg.magZ[i],
+                        },
+                        null,
+                        c,
+                    );
+                    newMessage.MagX.push(mag.x);
+                    newMessage.MagY.push(mag.y);
+                    newMessage.MagZ.push(mag.z);
+                }
+                this.state.messages["MAGFIT" + instance] = newMessage;
+                const newtype = {
+                    expressions: ["MagX", "MagY", "MagZ"],
+                    units: null,
+                    multipliers: null,
+                    complexFields: {
+                        magX: {
+                            name: "MagX",
+                            units: "?",
+                            multiplier: 1,
+                        },
+                        magY: {
+                            name: "MagY",
+                            units: "?",
+                            multiplier: 1,
+                        },
+                        magZ: {
+                            name: "MagZ",
+                            units: "?",
+                            multiplier: 1,
+                        },
+                    },
+                };
+                const availableMessages = this.state.messageTypes;
+                availableMessages["MAGFIT" + instance] = newtype;
+                this.$eventHub.$emit("messageTypes", availableMessages);
+                return c;
+            } finally {
+                this.processing = false;
+                this.processingInstance = null;
+            }
+        },
+        headingDiffExpression(compass0, compass1) {
+            // build an angle_diff() expression comparing the headings of two compasses
+            const headingFunction = this.isTlog
+                ? "mag_heading"
+                : "mag_heading_df";
+            const attitudeMessage = this.isTlog ? "ATTITUDE" : "ATT";
+            const h0 = `${headingFunction}(${compass0}, ${attitudeMessage})`;
+            const h1 = `${headingFunction}(${compass1}, ${attitudeMessage})`;
+            return `abs(angle_diff(${h0}, ${h1}))`;
+        },
+        plotOldHeadingDiff(i, j) {
+            this.state.plotOn = true;
+            this.$nextTick(() => {
+                const expression = this.headingDiffExpression(
+                    this.compassMessageNames[i],
+                    this.compassMessageNames[j],
+                );
+                this.$eventHub.$emit("togglePlot", expression, 1);
+            });
+        },
+        plotNewHeadingDiff(i, j) {
+            this.state.plotOn = true;
+            this.$nextTick(() => {
+                const expression = this.headingDiffExpression(
+                    "MAGFIT" + i,
+                    "MAGFIT" + j,
+                );
+                this.$eventHub.$emit("togglePlot", expression, 1);
+            });
+        },
+        fitnessClass(index) {
+            // colour the post-fit fitness green/red depending on whether the fit
+            // improved (lowered) the error compared to the original calibration
+            const post = this.fitnessesPostCalibration[index];
+            const pre = this.fitnessesPreCalibration[index];
+            if (post == null || pre == null) {
+                return "";
+            }
+            return post <= pre ? "fitness-better" : "fitness-worse";
+        },
+    },
+};
+</script>
+
+<style scoped>
+.header {
+    display: flex;
+    align-items: center;
+    margin: 0 0 8px;
+    padding-left: 16px;
+}
+
+h5 {
+    margin: 0;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+h6 {
+    margin: 0 0 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid #d2d6dc;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: #2e3f54;
+}
+
+div.section {
+    border: 1px solid #d2d6dc;
+    border-radius: 4px;
+    width: fit-content;
+    max-width: 100%;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+    background: rgb(255 255 255 / 45%);
+}
+
+table {
+    border-collapse: collapse;
+}
+
+th,
+td {
+    white-space: nowrap;
+}
+
+td {
+    padding: 2px;
+    padding-left: 6px;
+}
+
+table.results th,
+table.results td {
+    padding: 3px 8px;
+    text-align: right;
+}
+
+table.results th {
+    border-bottom: 1px solid #d2d6dc;
+    font-weight: 700;
+    color: #4b5563;
+}
+
+table.results th:first-child,
+table.results td:first-child {
+    text-align: center;
+}
+
+table.results td.actions {
+    text-align: center;
+    padding: 2px 3px;
+}
+
+.fitness-better {
+    color: #1a7f37;
+    font-weight: 700;
+}
+
+.fitness-worse {
+    color: #b00;
+    font-weight: 700;
+}
+
+.section-footer {
+    margin-top: 6px;
+}
+
+.hint {
+    color: #9a6700;
+    font-style: italic;
+}
+
+.fitness-chart {
+    display: block;
+    background: #f3f5f8;
+    border: 1px solid #d2d6dc;
+    border-radius: 3px;
+}
+
+.chart-caption {
+    margin-top: 3px;
+    color: #4b5563;
+}
+</style>
