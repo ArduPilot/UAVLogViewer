@@ -223,39 +223,6 @@ input#filterbox:focus {
     border: 1px solid #162442;
 }
 
-button {
-    padding: 0 10px;
-    height: 26px;
-    box-sizing: border-box;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #263547;
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    font-family: inherit;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-}
-
-button:hover {
-    background-color: #3a4f6b;
-}
-
-button:active {
-    background-color: #162442;
-}
-
-button:focus-visible {
-    outline: 2px solid #162442;
-    outline-offset: 2px;
-}
-
 .param-check {
     display: flex;
     align-items: center;

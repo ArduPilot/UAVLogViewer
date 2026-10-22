@@ -199,6 +199,8 @@ Feature-slice layout: `src/{app,features,shared,assets}`.
 
 ## Improvements
 
+- [ ] EKF helper: highlight boolean true/false values with a red/green background box (visual aid; today the state is plain text)
+
 - [ ] Search tool should allow searching through instance indices like
       `GPS[0]` or `CTUN`.
 - [ ] Fix the load-file window: currently doesn't filter to `*.tlog` /

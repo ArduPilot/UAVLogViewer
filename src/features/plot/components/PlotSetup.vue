@@ -294,8 +294,8 @@ li.plotsetup .remove-button {
 }
 
 .axis-toggle:focus-visible {
-    outline: 2px solid #d47f00;
-    outline-offset: 1px;
+    box-shadow: inset 0 0 0 2px rgb(212 127 0 / 60%);
+    outline: none;
 }
 
 .error {
@@ -336,8 +336,8 @@ li.plotsetup .remove-button {
 
 .add-expression:focus-visible,
 .save-preset:focus-visible {
-    outline: 2px solid #d47f00;
-    outline-offset: 1px;
+    box-shadow: inset 0 0 0 2px rgb(212 127 0 / 60%);
+    outline: none;
 }
 
 .add-expression i,

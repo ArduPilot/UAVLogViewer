@@ -128,3 +128,17 @@ The wrapper element receives .is-open from v-collapse-toggle (see collapseToggle
 - Element layout (flex, grid, gap) — per-component.
 - Widget shell geometry (position, min-size, shadow) — see widget.css.
 - Cesium's own toolbar — third-party, untouched.
+
+## Implementation map
+
+Sidebar tier — declared per file:
+
+- `PlotSetup.vue` — buttons (`.add-expression`, `.save-preset`), axis toggle (`.axis-toggle`)
+- `ColorPicker.vue` — trigger, item cells
+- `SideBarMessageMenu.vue` — `#filterbox`
+- `ExpressionEditor.vue` — `.code-input`
+
+Widget tier — declared once, shared:
+
+- `features/widgets/core/widget.css` — `.uav-widget button`, `.uav-widget input[type="text"]`, `.uav-widget select`
+- Per-widget `<style scoped>` blocks must not override height, padding, radius, background, colour or focus. Strip them when found; the shared rule wins.

@@ -1474,49 +1474,4 @@ table.results td.actions {
     margin-top: 3px;
     color: #4b5563;
 }
-
-button {
-    white-space: nowrap;
-    padding: 3px 8px;
-    margin: 1px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: #fff;
-    background: #2e3f54;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: background 0.15s ease;
-}
-
-button:hover:not(:disabled) {
-    background: #3f5573;
-}
-
-button:disabled {
-    background: #b8c0cc;
-    cursor: not-allowed;
-}
-
-input[type="text"] {
-    border: 1px solid #aab;
-    border-radius: 3px;
-    padding: 2px 5px;
-    font-size: 11px;
-}
-
-input[type="text"]:disabled {
-    background: #eef0f3;
-    color: #555;
-}
-
-select {
-    border: 1px solid #aab;
-    border-radius: 3px;
-    padding: 1px 3px;
-    font-size: 11px;
-    background: #fff;
-    cursor: pointer;
-}
 </style>

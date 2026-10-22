@@ -120,8 +120,8 @@ export default {
 }
 
 .color-picker-trigger:focus-visible {
-    outline: 2px solid #d47f00;
-    outline-offset: 1px;
+    box-shadow: inset 0 0 0 2px rgb(212 127 0 / 60%);
+    outline: none;
 }
 
 .color-picker-swatch {
@@ -173,8 +173,8 @@ export default {
 }
 
 .color-picker-item:focus-visible {
-    outline: 2px solid #d47f00;
-    outline-offset: 1px;
+    box-shadow: inset 0 0 0 2px rgb(212 127 0 / 60%);
+    outline: none;
 }
 
 .color-picker-custom {
