@@ -270,11 +270,6 @@ li.plotsetup .remove-button {
     align-items: center;
 }
 
-li.plotsetup .fa-trash {
-    float: none;
-    margin: 0;
-}
-
 /* Axis toggle -- cycles through state.allAxis on click */
 
 .axis-toggle {
@@ -301,12 +296,6 @@ li.plotsetup .fa-trash {
 .axis-toggle:focus-visible {
     outline: 2px solid #d47f00;
     outline-offset: 1px;
-}
-
-.fa-trash {
-    margin: 12px 5px 10px 1px;
-    font-size: 10px;
-    float: right;
 }
 
 .error {

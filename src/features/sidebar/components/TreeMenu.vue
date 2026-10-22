@@ -132,9 +132,11 @@ export default {
 .section .expand--open {
     display: none;
 }
+
 .is-open .section .expand--closed {
     display: none;
 }
+
 .is-open .section .expand--open {
     display: inline;
 }
