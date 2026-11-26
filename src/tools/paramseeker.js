@@ -8,8 +8,16 @@ export class ParamSeeker {
         this.changeArray = changeArray
         this.currentIndex = changeArray.length - 1
         this.values = {}
+        // values at the end of the log, independent of the seek position
+        this.lastValues = {}
+        // parameters that took more than one value during the log
+        this.changedParams = new Set()
         for (const change of changeArray) {
             this.values[change[1]] = change[2]
+            if (change[1] in this.lastValues && this.lastValues[change[1]] !== change[2]) {
+                this.changedParams.add(change[1])
+            }
+            this.lastValues[change[1]] = change[2]
         }
         this.seek(0)
         // export to window so the mavextra functions can access them
@@ -37,6 +45,14 @@ export class ParamSeeker {
 
     get (param) {
         return this.values[param]
+    }
+
+    getLast (param) {
+        return this.lastValues[param]
+    }
+
+    changedDuringLog (param) {
+        return this.changedParams.has(param)
     }
 
     // We will look at static and subclassed methods shortly
