@@ -159,7 +159,11 @@ Attitude: logged EKF yaw, which was itself estimated using the compass.">
               <table class="results" v-if="fittedIndices.length">
                   <tr>
                       <th>Param</th>
-                      <th v-for="index in fittedIndices" :key="'head' + index">Compass {{ index + 1 }}</th>
+                      <th v-for="index in fittedIndices" :key="'head' + index">
+                        Compass {{ index + 1 }}
+                        <span v-if="!fits[index].valid" class="invalid-fit"
+                              title="Parameters out of range, this fit can't be downloaded">(invalid)</span>
+                      </th>
                   </tr>
                   <tr>
                     <td>Fit</td>
@@ -196,13 +200,15 @@ Attitude: logged EKF yaw, which was itself estimated using the compass.">
                     </td>
                   </tr>
               </table>
-              <ul class="notes warnings" v-if="fitFailures.length || fitWarnings.length">
+              <ul class="notes warnings" v-if="fitFailures.length || invalidFits.length || fitWarnings.length">
                 <li v-for="message in fitFailures" :key="message">{{ message }}</li>
+                <li v-for="message in invalidFits" :key="message">{{ message }}</li>
                 <li v-for="warning in fitWarnings" :key="warning">{{ warning }}</li>
               </ul>
               <div class="section-footer">
                 <span v-if="processing"><i class="fas fa-spinner fa-spin"></i> Fitting...</span>
-                <button v-else-if="fittedIndices.length" @click="downloadParams()">Download Params file</button>
+                <button v-else-if="validIndices.length" @click="downloadParams()">Download Params file</button>
+                <span v-else-if="fittedIndices.length" class="invalid-fit">No valid fit to download</span>
               </div>
           </div>
         </div>
@@ -223,7 +229,6 @@ import {
     calibrationError,
     fitCalibration,
     interpolate,
-    rangeWarnings,
     removeCalibration,
     scaleValid
 } from '../../tools/magfit'
@@ -300,9 +305,14 @@ export default {
         },
         downloadParams () {
             const lines = []
-            const warnings = [...this.fitWarnings]
-            let motorFitted = false
+            const warnings = this.validIndices.flatMap(index => this.convergenceWarning(index) || [])
             for (const index of this.fittedIndices) {
+                if (!this.fits[index].valid) {
+                    warnings.push(`Compass ${index + 1} is not included, its fit is invalid`)
+                }
+            }
+            let motorFitted = false
+            for (const index of this.validIndices) {
                 const fit = this.fits[index]
                 const compassNumber = index + 1
                 lines.push(`# Compass ${compassNumber} (${this.compassMessageNames[index]}): ` +
@@ -319,13 +329,13 @@ export default {
             const oldMotorCompType = this.parameters.COMPASS_MOTCT || 0
             if (oldMotorCompType !== motorCompType) {
                 this.compassParams.forEach((params, index) => {
-                    if (!this.isFitted(index) && params.motor.some(v => v !== 0)) {
+                    if (!this.isValidFit(index) && params.motor.some(v => v !== 0)) {
                         warnings.push(`COMPASS_MOTCT changes from ${oldMotorCompType} to ${motorCompType}, ` +
                             `but compass ${index + 1} was not fitted and has non-zero MOT params`)
                     }
                 })
             }
-            if (this.parameters.COMPASS_PMOT_EN && this.isFitted(0)) {
+            if (this.parameters.COMPASS_PMOT_EN && this.isValidFit(0)) {
                 // per-motor compensation replaces COMPASS_MOT on the first compass
                 lines.push('COMPASS_PMOT_EN,0')
             }
@@ -731,6 +741,17 @@ export default {
         isFitted (index) {
             return Boolean(this.fits[index]?.ok)
         },
+        isValidFit (index) {
+            return Boolean(this.fits[index]?.ok && this.fits[index].valid)
+        },
+        convergenceWarning (index) {
+            const fit = this.fits[index]
+            if (fit.converged) {
+                return null
+            }
+            return `Compass ${index + 1}: fit stopped after ${fit.iterations} passes without ` +
+                'converging, the log may not have enough attitude variation to determine this calibration'
+        },
         fitDescription (fit) {
             let description = FIT_TYPES[fit.fitType]
             if (fit.fitMotor) {
@@ -756,7 +777,7 @@ export default {
             return `${format(comparison.before)} → ${format(comparison.after)}`
         },
         outOfRange (index, key) {
-            return (this.rangeWarningsByCompass[index] || []).some(warning => warning.name === key)
+            return (this.fits[index]?.violations || []).some(violation => violation.name === key)
         },
         headingDiffExpression (compass0, compass1) {
             // build an angle_diff() expression comparing the headings of two compasses
@@ -784,7 +805,8 @@ export default {
             // colour the post-fit error green/red depending on whether the fit
             // improved (lowered) the error compared to the original calibration
             const comparison = this.errorComparison[index]
-            if (!comparison || !Number.isFinite(comparison.before) || !Number.isFinite(comparison.after)) {
+            if (!this.isValidFit(index) || !comparison ||
+                !Number.isFinite(comparison.before) || !Number.isFinite(comparison.after)) {
                 return ''
             }
             return comparison.after <= comparison.before ? 'fitness-better' : 'fitness-worse'
@@ -981,29 +1003,20 @@ export default {
             })
             return failures
         },
-        rangeWarningsByCompass () {
-            return this.fits.map(fit => fit && fit.ok ? rangeWarnings(fit.cal) : [])
+        validIndices () {
+            return this.fittedIndices.filter(index => this.fits[index].valid)
         },
-        allRangeWarnings () {
-            const warnings = []
-            this.rangeWarningsByCompass.forEach((list, index) => {
-                for (const warning of list) {
-                    warnings.push(`${this.fullParamName(warning.name, index + 1)} ${warning.value.toFixed(3)} ` +
-                        `outside typical range ${warning.range[0]} to ${warning.range[1]}`)
-                }
+        invalidFits () {
+            // like WebTools, fits with params out of range are not used
+            return this.fittedIndices.filter(index => !this.fits[index].valid).map(index => {
+                const reasons = this.fits[index].violations.map(violation =>
+                    `${this.fullParamName(violation.name, index + 1)} ${violation.value.toFixed(3)} ` +
+                    `outside ${violation.range[0]} to ${violation.range[1]}`)
+                return `Compass ${index + 1}: invalid fit, not used for download: ${reasons.join(', ')}`
             })
-            return warnings
         },
         fitWarnings () {
-            const warnings = []
-            for (const index of this.fittedIndices) {
-                const fit = this.fits[index]
-                if (!fit.converged) {
-                    warnings.push(`Compass ${index + 1}: fit stopped after ${fit.iterations} passes without ` +
-                        'converging, the log may not have enough attitude variation to determine this calibration')
-                }
-            }
-            return warnings.concat(this.allRangeWarnings)
+            return this.validIndices.map(index => this.convergenceWarning(index)).filter(warning => warning)
         },
         residualPlot () {
             // per-sample field error of the existing and new calibration, bucket averaged
@@ -1166,7 +1179,7 @@ export default {
     .legend-after {
       color: #1a7f37;
     }
-    .out-of-range {
+    .out-of-range, .invalid-fit {
       color: #b00;
       font-weight: 700;
     }

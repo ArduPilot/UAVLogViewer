@@ -24,12 +24,17 @@ export const YAW_SOURCES = {
     att: 'Attitude (EKF) yaw'
 }
 
-// Typical parameter ranges, same as WebTools MAGFit
+// Fits with any parameter outside of these (open) ranges are invalid. Offsets
+// to scale are the WebTools MAGFit limits, motor is the COMPASS_MOT_* param
+// range. All are inside the firmware limits: |OFS| < COMPASS_OFFS_MAX (default
+// 1800), the compass calibrator accepts DIA in (0.2, 5) and |ODI| < 1, and
+// SCALE is only applied within [1/1.5, 1.5].
 export const PARAM_RANGES = {
     offsets: [-1500, 1500],
     diagonals: [0.8, 1.2],
     offDiagonals: [-0.2, 0.2],
-    scale: [0.8, 1.2]
+    scale: [0.8, 1.2],
+    motor: [-1000, 1000]
 }
 
 // COMPASS_MOTCT value for current based motor compensation
@@ -39,7 +44,10 @@ const MAX_SCALE_FACTOR = 1.5
 const MIN_SAMPLES = 30
 const MIN_CURRENT_RANGE = 0.5
 const AXES = ['x', 'y', 'z']
+const UNOBSERVABLE = 'Fit failed: the data does not constrain all parameters ' +
+    '(not enough attitude or current variation)'
 
+// Whether the firmware applies a COMPASS_SCALE value (it ignores others, 0 = unset)
 export function scaleValid (scale) {
     return Number.isFinite(scale) && scale >= 1 / MAX_SCALE_FACTOR && scale <= MAX_SCALE_FACTOR
 }
@@ -118,8 +126,9 @@ function emptyField (n) {
 
 // Undo the calibration the vehicle applied to a logged field, returning the
 // raw sensor field. offsets and motorOffsets may be per-sample (as logged in
-// MAG.OfsX and MAG.MOX) or constant. Returns null if the iron matrix cannot be
-// inverted.
+// MAG.OfsX and MAG.MOX) or constant. A scale the firmware ignores (e.g. 0,
+// unset) is treated as 1, as the firmware did. Returns null if the iron matrix
+// cannot be inverted.
 export function removeCalibration (field, { offsets, motorOffsets, diagonals, offDiagonals, scale }) {
     let invIron = null
     if (diagonals && ironApplies(diagonals)) {
@@ -148,10 +157,15 @@ export function removeCalibration (field, { offsets, motorOffsets, diagonals, of
 }
 
 // Apply a calibration to a raw field, the same way the firmware does.
-// current is only needed if the calibration has motor compensation.
+// current is only needed if the calibration has motor compensation. The scale
+// must be one the firmware applies, otherwise the result would not be what the
+// vehicle does with these params.
 export function applyCalibration (raw, cal, current) {
+    if (!scaleValid(cal.scale)) {
+        throw new Error(`Scale ${cal.scale} is outside the range the firmware applies`)
+    }
     const iron = ironApplies(cal.diagonals) ? ironMatrix(cal.diagonals, cal.offDiagonals) : null
-    const scale = scaleValid(cal.scale) ? cal.scale : 1
+    const scale = cal.scale
     const motor = cal.motor || [0, 0, 0]
     const hasMotor = motor[0] !== 0 || motor[1] !== 0 || motor[2] !== 0
     const n = raw.x.length
@@ -496,7 +510,7 @@ function solveLinear (raw, expected, current, indices, fitType, fitMotor, down =
 
     const x = solveLeastSquares(A, b, rows, cols)
     if (x === null) {
-        return null
+        return { error: UNOBSERVABLE }
     }
 
     const cal = identityCalibration()
@@ -507,8 +521,12 @@ function solveLinear (raw, expected, current, indices, fitType, fitMotor, down =
         cal.offsets = x.slice(0, 3)
     } else if (fitType === 'scale') {
         const scale = x[3]
-        if (!(scale > 0)) {
-            return null
+        if (!scaleValid(scale)) {
+            return {
+                error: `Fit failed: the best fit scale (${scale.toFixed(3)}) is outside the range the firmware ` +
+                    `applies (${(1 / MAX_SCALE_FACTOR).toFixed(3)} to ${MAX_SCALE_FACTOR}), the expected field ` +
+                    'does not match the data (check the location and yaw source)'
+            }
         }
         cal.scale = scale
         cal.offsets = x.slice(0, 3).map(v => v / scale)
@@ -517,19 +535,19 @@ function solveLinear (raw, expected, current, indices, fitType, fitMotor, down =
         const offDiagonals = x.slice(6, 9)
         const inv = invert3(ironMatrix(diagonals, offDiagonals))
         if (inv === null) {
-            return null
+            return { error: UNOBSERVABLE }
         }
         cal.offsets = mul3(inv, x[0], x[1], x[2])
-        // Normalise the iron matrix into the scale param
+        // Normalise the iron matrix into the scale param like WebTools, unless
+        // the firmware would then ignore the scale: keep it all in DIA/ODI so the
+        // params still give the fitted correction
         const scale = (diagonals[0] + diagonals[1] + diagonals[2]) / 3
-        if (!(scale > 0)) {
-            return null
-        }
-        cal.scale = scale
-        cal.diagonals = diagonals.map(v => v / scale)
-        cal.offDiagonals = offDiagonals.map(v => v / scale)
+        const norm = scaleValid(scale) ? scale : 1
+        cal.scale = norm
+        cal.diagonals = diagonals.map(v => v / norm)
+        cal.offDiagonals = offDiagonals.map(v => v / norm)
     }
-    return cal
+    return { cal }
 }
 
 function subsetField (field, indices) {
@@ -577,6 +595,10 @@ function failure (message) {
 // with the heading from the latest solution until the cost stops improving.
 // Each pass takes a Gauss-Newton step, or if that doesn't reduce the cost,
 // re-solves with the heading held fixed, so the cost never increases.
+//
+// Returns { ok: false, message } if no fit is possible, otherwise { ok: true,
+// valid, violations, cal, ... } where valid is false if any param is outside
+// PARAM_RANGES (listed in violations).
 export function fitCalibration ({
     raw, roll, pitch, yaw, current, earthField,
     fitType = 'offsets', fitMotor = false, yawSource = 'mag',
@@ -672,11 +694,11 @@ export function fitCalibration ({
         expected = expectedFromYaw(earthField, rollSel, pitchSel, startYaw)
     }
 
-    let cal = solveLinear(rawSel, expected, currentSel, all, fitType, fitMotor)
-    if (cal === null) {
-        return failure('Fit failed: the data does not constrain all parameters ' +
-            '(not enough attitude or current variation)')
+    const initial = solveLinear(rawSel, expected, currentSel, all, fitType, fitMotor)
+    if (initial.error) {
+        return failure(initial.error)
     }
+    let cal = initial.cal
     let state = evaluate(cal)
     let iterations = 1
     let converged = useAttYaw
@@ -688,10 +710,11 @@ export function fitCalibration ({
             let next = null
             let nextState = null
             for (const projection of [down, null]) {
-                const candidate = solveLinear(rawSel, state.expected, currentSel, all, fitType, fitMotor, projection)
-                if (candidate === null) {
+                const solution = solveLinear(rawSel, state.expected, currentSel, all, fitType, fitMotor, projection)
+                if (solution.error) {
                     continue
                 }
+                const candidate = solution.cal
                 const candidateState = evaluate(candidate)
                 if (candidateState.cost <= state.cost) {
                     next = candidate
@@ -715,8 +738,13 @@ export function fitCalibration ({
         }
     }
 
+    // Like WebTools, a fit with any param out of range is invalid. It is still
+    // returned so the values can be shown.
+    const violations = rangeViolations(cal)
     return {
         ok: true,
+        valid: violations.length === 0,
+        violations,
         cal,
         rmsError: Math.sqrt(state.cost / indices.length),
         numSamples: indices.length,
@@ -725,13 +753,13 @@ export function fitCalibration ({
     }
 }
 
-// Parameters outside of their typical range: [{ name, value, range }] where name
-// is the param suffix (OFS_X, DIA_Y, ODI_Z, SCALE)
-export function rangeWarnings (cal) {
-    const warnings = []
+// Parameters outside of PARAM_RANGES: [{ name, value, range }] where name is
+// the param suffix (OFS_X, DIA_Y, ODI_Z, SCALE, MOT_X)
+export function rangeViolations (cal) {
+    const violations = []
     const check = (name, value, range) => {
-        if (!(value >= range[0] && value <= range[1])) {
-            warnings.push({ name, value, range })
+        if (!(value > range[0] && value < range[1])) {
+            violations.push({ name, value, range })
         }
     }
     for (let i = 0; i < 3; i++) {
@@ -741,5 +769,8 @@ export function rangeWarnings (cal) {
         check(`ODI_${axis}`, cal.offDiagonals[i], PARAM_RANGES.offDiagonals)
     }
     check('SCALE', cal.scale, PARAM_RANGES.scale)
-    return warnings
+    for (let i = 0; i < 3; i++) {
+        check(`MOT_${AXES[i].toUpperCase()}`, cal.motor[i], PARAM_RANGES.motor)
+    }
+    return violations
 }

@@ -8,7 +8,7 @@ import {
     identityCalibration,
     interpolate,
     magHeading,
-    rangeWarnings,
+    rangeViolations,
     removeCalibration,
     solveLeastSquares
 } from '../../../src/tools/magfit'
@@ -132,12 +132,19 @@ describe('calibration model', () => {
         expect(out.x[0]).toBeCloseTo((2 + 10) * 1.25 * 2 + 3, 9)
     })
 
-    test('firmware ignores invalid scale and zero diagonals', () => {
+    test('logged scale the firmware ignores and zero diagonals are not removed', () => {
         const cal = { offsets: [1, 2, 3], diagonals: [0, 0, 0], offDiagonals: [0, 0, 0], scale: 0, motor: [0, 0, 0] }
-        const out = applyCalibration({ x: [1], y: [1], z: [1] }, cal)
-        expectClose([out.x[0], out.y[0], out.z[0]], [2, 3, 4], 1e-12)
-        const back = removeCalibration(out, cal)
+        const back = removeCalibration({ x: [2], y: [3], z: [4] }, cal)
         expectClose([back.x[0], back.y[0], back.z[0]], [1, 1, 1], 1e-12)
+        const out = applyCalibration(back, { ...cal, scale: 1 })
+        expectClose([out.x[0], out.y[0], out.z[0]], [2, 3, 4], 1e-12)
+    })
+
+    test('applyCalibration refuses a scale the firmware would ignore', () => {
+        const raw = { x: [1], y: [1], z: [1] }
+        for (const scale of [0, 0.6, 1.6, NaN]) {
+            expect(() => applyCalibration(raw, { ...identityCalibration(), scale })).toThrow()
+        }
     })
 
     test('singular iron matrix cannot be removed', () => {
@@ -185,6 +192,8 @@ describe('fitCalibration', () => {
             const flight = syntheticFlight(cal)
             const result = fitCalibration({ ...flight, earthField: EARTH_FIELD, fitType, fitMotor, yawSource })
             expect(result.ok).toBe(true)
+            expect(result.valid).toBe(true)
+            expect(result.violations).toEqual([])
             expect(result.converged).toBe(true)
             expect(result.rmsError).toBeLessThan(0.05)
             expectClose(result.cal.offsets, cal.offsets, 0.05)
@@ -283,6 +292,61 @@ describe('fitCalibration', () => {
         expect(fitCalibration({ ...steady, earthField: [NaN, 0, 0] }).ok).toBe(false)
         expect(fitCalibration({ ...steady, earthField: EARTH_FIELD, fitType: 'bogus' }).ok).toBe(false)
     })
+
+    // Data that needs the field shrunk by factor: raw = expected / factor - offsets
+    function shrunkFlight (factor) {
+        const flight = syntheticFlight(identityCalibration())
+        const offsets = [40, -30, 60]
+        flight.raw = {
+            x: flight.expected.x.map(v => v / factor - offsets[0]),
+            y: flight.expected.y.map(v => v / factor - offsets[1]),
+            z: flight.expected.z.map(v => v / factor - offsets[2])
+        }
+        return { flight, offsets }
+    }
+
+    test('scale fit outside of the typical range is invalid but reported', () => {
+        const { flight, offsets } = shrunkFlight(0.75)
+        for (const yawSource of ['att', 'mag']) {
+            const result = fitCalibration({ ...flight, earthField: EARTH_FIELD, fitType: 'scale', yawSource })
+            expect(result.ok).toBe(true)
+            expect(result.valid).toBe(false)
+            expect(result.violations.map(v => v.name)).toEqual(['SCALE'])
+            expect(Math.abs(result.cal.scale - 0.75)).toBeLessThan(1e-4)
+            expectClose(result.cal.offsets, offsets, 0.05)
+            // the reported error is the error of the params as written
+            expect(result.rmsError).toBeLessThan(0.05)
+        }
+    })
+
+    test('scale the firmware would ignore is never returned', () => {
+        const { flight, offsets } = shrunkFlight(0.6)
+        for (const yawSource of ['att', 'mag']) {
+            const options = { ...flight, earthField: EARTH_FIELD, yawSource }
+            const scale = fitCalibration({ ...options, fitType: 'scale' })
+            expect(scale.ok).toBe(false)
+            expect(scale.message).toMatch(/scale \(0\.600\)/)
+
+            // iron can't be normalised into SCALE 0.6, so it stays in DIA with
+            // SCALE 1 and the params still give the fitted correction
+            const iron = fitCalibration({ ...options, fitType: 'iron' })
+            expect(iron.ok).toBe(true)
+            expect(iron.valid).toBe(false)
+            expect(iron.cal.scale).toBe(1)
+            expectClose(iron.cal.diagonals, [0.6, 0.6, 0.6], 1e-4)
+            expectClose(iron.cal.offsets, offsets, 0.05)
+            expect(iron.rmsError).toBeLessThan(0.05)
+            expect(iron.violations.map(v => v.name)).toEqual(['DIA_X', 'DIA_Y', 'DIA_Z'])
+        }
+    })
+
+    test('iron in the firmware scale range is normalised into SCALE', () => {
+        const { flight } = shrunkFlight(0.9)
+        const result = fitCalibration({ ...flight, earthField: EARTH_FIELD, fitType: 'iron', yawSource: 'att' })
+        expect(result.valid).toBe(true)
+        expect(Math.abs(result.cal.scale - 0.9)).toBeLessThan(1e-4)
+        expectClose(result.cal.diagonals, [1, 1, 1], 1e-4)
+    })
 })
 
 describe('calibrationError', () => {
@@ -296,17 +360,19 @@ describe('calibrationError', () => {
     })
 })
 
-describe('rangeWarnings', () => {
-    test('flags values outside the typical ranges', () => {
-        expect(rangeWarnings(identityCalibration())).toEqual([])
+describe('rangeViolations', () => {
+    test('flags values outside the valid ranges', () => {
+        expect(rangeViolations(identityCalibration())).toEqual([])
         const cal = {
             offsets: [1600, 0, -1501],
             diagonals: [1, 0.7, 1],
             offDiagonals: [0, 0, 0.25],
             scale: 1.3,
-            motor: [0, 0, 0]
+            motor: [0, 1200, 0]
         }
-        expect(rangeWarnings(cal).map(w => w.name)).toEqual(['OFS_X', 'DIA_Y', 'OFS_Z', 'ODI_Z', 'SCALE'])
-        expect(rangeWarnings({ ...identityCalibration(), scale: NaN }).map(w => w.name)).toEqual(['SCALE'])
+        expect(rangeViolations(cal).map(w => w.name)).toEqual(['OFS_X', 'DIA_Y', 'OFS_Z', 'ODI_Z', 'SCALE', 'MOT_Y'])
+        expect(rangeViolations({ ...identityCalibration(), scale: NaN }).map(w => w.name)).toEqual(['SCALE'])
+        // the limits themselves are out of range, like WebTools
+        expect(rangeViolations({ ...identityCalibration(), scale: 0.8 }).map(w => w.name)).toEqual(['SCALE'])
     })
 })
