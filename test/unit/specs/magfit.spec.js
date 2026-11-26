@@ -155,6 +155,34 @@ describe('calibration model', () => {
         }
     })
 
+    test('removeCalibration undoes params that change per sample', () => {
+        const raw = { x: [100, -250, 30, 75], y: [12, 400, -90, 5], z: [-300, 50, 610, -20] }
+        const calA = { ...TRUE_CAL, motor: [0, 0, 0], scale: 0.954 }
+        const calB = { ...calA, scale: 1.0055, diagonals: [1.02, 0.98, 1.0], offDiagonals: [0, 0.01, 0] }
+        const cals = [calA, calA, calB, calB]
+        const logged = { x: [], y: [], z: [] }
+        cals.forEach((cal, i) => {
+            const out = applyCalibration({ x: [raw.x[i]], y: [raw.y[i]], z: [raw.z[i]] }, cal)
+            logged.x.push(out.x[0])
+            logged.y.push(out.y[0])
+            logged.z.push(out.z[0])
+        })
+        const perSample = key => ({
+            x: cals.map(c => c[key][0]),
+            y: cals.map(c => c[key][1]),
+            z: cals.map(c => c[key][2])
+        })
+        const back = removeCalibration(logged, {
+            offsets: calA.offsets,
+            diagonals: perSample('diagonals'),
+            offDiagonals: perSample('offDiagonals'),
+            scale: cals.map(c => c.scale)
+        })
+        expectClose(back.x, raw.x, 1e-9)
+        expectClose(back.y, raw.y, 1e-9)
+        expectClose(back.z, raw.z, 1e-9)
+    })
+
     test('singular iron matrix cannot be removed', () => {
         const cal = { offsets: [0, 0, 0], diagonals: [1, 1, 0], offDiagonals: [0, 0, 0], scale: 1 }
         expect(removeCalibration({ x: [1], y: [1], z: [1] }, cal)).toBeNull()
@@ -381,6 +409,33 @@ describe('fitCalibration', () => {
             expect(Math.abs(result.cal.scale - TRUE_CAL.scale)).toBeLessThan(0.005)
             expectClose(result.cal.motor, TRUE_CAL.motor, 0.05)
         }
+    })
+
+    test('a SCALE change during the log is undone per sample', () => {
+        // the vehicle used COMPASS_SCALE 0.954 for the first half and 1.0055 after
+        const flight = syntheticFlight(TRUE_CAL, { noise: 1, seed: 9 })
+        const n = flight.raw.x.length
+        const vehicleScale = flight.raw.x.map((v, i) => i < n / 2 ? 0.954 : 1.0055)
+        const vehicleCal = { ...identityCalibration(), offsets: [10, -5, 20] }
+        const logged = applyCalibration(flight.raw, vehicleCal)
+        for (let i = 0; i < n; i++) {
+            for (const axis of ['x', 'y', 'z']) {
+                logged[axis][i] *= vehicleScale[i]
+            }
+        }
+        const fit = raw => fitCalibration({
+            ...flight, raw, earthField: EARTH_FIELD, fitType: 'iron', fitMotor: true, yawSource: 'mag'
+        })
+
+        const perSample = fit(removeCalibration(logged, { offsets: vehicleCal.offsets, scale: vehicleScale }))
+        expect(perSample.ok).toBe(true)
+        expect(perSample.rmsError).toBeLessThan(3)
+        expectClose(perSample.cal.offsets, TRUE_CAL.offsets, 0.5)
+        expect(Math.abs(perSample.cal.scale - TRUE_CAL.scale)).toBeLessThan(0.002)
+
+        // with the end of log value for the whole log, half the data is 5% off
+        const lastValue = fit(removeCalibration(logged, { offsets: vehicleCal.offsets, scale: 1.0055 }))
+        expect(lastValue.rmsError).toBeGreaterThan(5 * perSample.rmsError)
     })
 
     // Data that needs the field shrunk by factor: raw = expected / factor - offsets

@@ -555,14 +555,17 @@ export default {
                 y: Array.from(message[fieldNames[1]]),
                 z: Array.from(message[fieldNames[2]])
             }
-            const params = this.compassParams[index]
+            const compassNumber = index + 1
             const current = this.currentSource
                 ? interpolate(this.currentSource.time, this.currentSource.current, time)
                 : null
 
-            // Dataflash MAG messages log the offsets and motor compensation that were applied
+            // Dataflash MAG messages log the offsets and motor compensation that were
+            // applied, everything else uses the param values in use at each sample
             const loggedOffsets = !this.isTlog && message.OfsX !== undefined
-            const offsets = loggedOffsets ? { x: message.OfsX, y: message.OfsY, z: message.OfsZ } : params.offsets
+            const offsets = loggedOffsets
+                ? { x: message.OfsX, y: message.OfsY, z: message.OfsZ }
+                : this.vectorSeries('OFS', compassNumber, time, 0)
             let motorOffsets = null
             let motorRemoved = true
             const motorFields = ['MOX', 'MOY', 'MOZ'].every(field => message[field] !== undefined)
@@ -571,24 +574,16 @@ export default {
             const loggedMotor = !this.isTlog && motorFields.every(field => message[field] !== undefined)
             if (loggedMotor) {
                 motorOffsets = { x: message[motorFields[0]], y: message[motorFields[1]], z: message[motorFields[2]] }
-            } else if (this.motorCompType !== 0 && params.motor.some(v => v !== 0)) {
-                if (this.motorCompType === MOT_COMP_CURRENT && current) {
-                    motorOffsets = {
-                        x: current.map(amps => amps * params.motor[0]),
-                        y: current.map(amps => amps * params.motor[1]),
-                        z: current.map(amps => amps * params.motor[2])
-                    }
-                } else {
-                    motorRemoved = false
-                }
+            } else {
+                ({ motorOffsets, motorRemoved } = this.motorSeries(compassNumber, time, current))
             }
 
             const raw = removeCalibration(logged, {
                 offsets,
                 motorOffsets,
-                diagonals: params.diagonals,
-                offDiagonals: params.offDiagonals,
-                scale: params.scale
+                diagonals: this.vectorSeries('DIA', compassNumber, time, 1),
+                offDiagonals: this.vectorSeries('ODI', compassNumber, time, 0),
+                scale: this.paramSeries(this.paramName('SCALE', compassNumber), time, 0)
             })
 
             const att = this.attitude
@@ -606,6 +601,55 @@ export default {
                 motorRemoved,
                 error: raw === null ? 'Existing iron calibration (DIA/ODI) is singular, cannot remove it' : null
             })
+        },
+        paramSeries (name, time, fallback) {
+            // value in use at each sample time if the param changed during the log,
+            // otherwise the (constant) last value
+            const params = this.state.params
+            if (params && params.changedDuringLog(name)) {
+                return params.valuesAt(name, time).map(value => Number.isFinite(value) ? value : fallback)
+            }
+            const value = this.parameters[name]
+            return Number.isFinite(value) ? value : fallback
+        },
+        vectorSeries (name, compassNumber, time, fallback) {
+            // [x, y, z] if constant, otherwise per sample { x: [], y: [], z: [] }
+            const axes = AXES.map(axis => this.paramSeries(`${this.paramName(name, compassNumber)}_${axis}`,
+                time, fallback))
+            if (axes.every(value => typeof value === 'number')) {
+                return axes
+            }
+            const perSample = value => typeof value === 'number' ? new Array(time.length).fill(value) : value
+            return { x: perSample(axes[0]), y: perSample(axes[1]), z: perSample(axes[2]) }
+        },
+        motorSeries (compassNumber, time, current) {
+            // motor compensation the firmware applied at each sample, from the MOT and
+            // MOTCT params in use at the time. Only current based compensation can
+            // be removed.
+            const motor = this.vectorSeries('MOT', compassNumber, time, 0)
+            const motorType = this.paramSeries('COMPASS_MOTCT', time, 0)
+            const constant = Array.isArray(motor) && typeof motorType === 'number'
+            if (constant && (motorType === 0 || motor.every(v => v === 0))) {
+                return { motorOffsets: null, motorRemoved: true }
+            }
+            let motorRemoved = true
+            const motorOffsets = { x: new Array(time.length), y: new Array(time.length), z: new Array(time.length) }
+            for (let i = 0; i < time.length; i++) {
+                const m = Array.isArray(motor) ? motor : [motor.x[i], motor.y[i], motor.z[i]]
+                const type = typeof motorType === 'number' ? motorType : motorType[i]
+                let amps = 0
+                if (type !== 0 && m.some(v => v !== 0)) {
+                    if (type === MOT_COMP_CURRENT && current) {
+                        amps = current[i]
+                    } else {
+                        motorRemoved = false
+                    }
+                }
+                motorOffsets.x[i] = amps * m[0]
+                motorOffsets.y[i] = amps * m[1]
+                motorOffsets.z[i] = amps * m[2]
+            }
+            return { motorOffsets, motorRemoved }
         },
         paramName (name, index) {
             if (this.newParamFormat) {
@@ -912,15 +956,17 @@ export default {
             }
             if (inputs.every(input => input.loggedOffsets && input.loggedMotor)) {
                 notes.push('Existing calibration removed per sample using the logged offsets (MAG.OfsX/Y/Z) ' +
-                    'and motor compensation (MAG.MOX/Y/Z). Iron (DIA/ODI) and scale use the last values in the log.')
+                    'and motor compensation (MAG.MOX/Y/Z), and the iron (DIA/ODI) and scale params in use at ' +
+                    'each sample.')
             } else if (!this.isTlog) {
                 notes.push('Some MAG messages do not log the applied offsets or motor compensation, those are ' +
-                    'removed using the last parameter values in the log. Iron (DIA/ODI) and scale also use the ' +
-                    'last values in the log.')
+                    'removed using the params in use at each sample (OFS, MOT and COMPASS_MOTCT), as are iron ' +
+                    '(DIA/ODI) and scale.')
             } else {
                 notes.push('Telemetry log: compass messages do not include the applied calibration, so it is ' +
-                    'removed using the last parameter values in the log (OFS, DIA, ODI, SCALE and, for current ' +
-                    'based compensation, MOT). The fit is only valid if these were in use for the whole log.')
+                    'removed using the param values in the log at each sample (OFS, DIA, ODI, SCALE and, for ' +
+                    'current based compensation, MOT). A telemetry log only has the values the ground station ' +
+                    'received, so the fit is only valid if these match what the vehicle used.')
             }
             if (!this.attitude) {
                 notes.push('No attitude messages in log, fitting is not possible.')
@@ -935,13 +981,12 @@ export default {
                 }
             })
             if (this.state.params) {
-                const changeable = this.isTlog ? null : ['DIA', 'ODI', 'SCALE']
                 const changed = inputs.flatMap((input, index) => this.compassParamNames(index + 1))
-                    .concat(this.isTlog ? ['COMPASS_MOTCT'] : [])
-                    .filter(name => !changeable || changeable.some(base => name.includes(base)))
+                    .concat(['COMPASS_MOTCT'])
                     .filter(name => this.state.params.changedDuringLog(name))
                 if (changed.length > 0) {
-                    notes.push(`Changed during the log (last value used): ${changed.join(', ')}.`)
+                    notes.push('Changed during the log, removed per sample using the value in use at the time: ' +
+                        `${changed.join(', ')}.`)
                 }
             }
             return notes

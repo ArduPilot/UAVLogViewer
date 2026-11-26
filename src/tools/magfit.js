@@ -134,22 +134,34 @@ function emptyField (n) {
 }
 
 // Undo the calibration the vehicle applied to a logged field, returning the
-// raw sensor field. offsets and motorOffsets may be per-sample (as logged in
-// MAG.OfsX and MAG.MOX) or constant. A scale the firmware ignores (e.g. 0,
-// unset) is treated as 1, as the firmware did. Returns null if the iron matrix
-// cannot be inverted.
+// raw sensor field. Each of offsets, motorOffsets, diagonals and offDiagonals
+// may be constant [x, y, z] or per-sample (as logged in MAG.OfsX and MAG.MOX,
+// or the param values in use at each sample), and scale a number or an array.
+// A scale the firmware ignores (e.g. 0, unset) is treated as 1, as the
+// firmware did. Returns null if an iron matrix cannot be inverted.
 export function removeCalibration (field, { offsets, motorOffsets, diagonals, offDiagonals, scale }) {
-    let invIron = null
-    if (diagonals && ironApplies(diagonals)) {
-        invIron = invert3(ironMatrix(diagonals, offDiagonals || [0, 0, 0]))
-        if (invIron === null) {
-            return null
-        }
-    }
-    const invScale = scaleValid(scale) ? 1 / scale : 1
     const n = field.x.length
     const raw = emptyField(n)
+    let iron = null
+    let invIron = null
     for (let i = 0; i < n; i++) {
+        const d = diagonals ? [0, 1, 2].map(k => valueAt(diagonals, k, i)) : null
+        if (d !== null && ironApplies(d)) {
+            const o = [0, 1, 2].map(k => valueAt(offDiagonals, k, i))
+            const m = d.concat(o)
+            if (iron === null || m.some((v, k) => v !== iron[k])) {
+                iron = m
+                invIron = invert3(ironMatrix(d, o))
+                if (invIron === null) {
+                    return null
+                }
+            }
+        } else {
+            iron = null
+            invIron = null
+        }
+        const s = typeof scale === 'number' || scale == null ? scale : scale[i]
+        const invScale = scaleValid(s) ? 1 / s : 1
         let v = [
             field.x[i] - valueAt(motorOffsets, 0, i),
             field.y[i] - valueAt(motorOffsets, 1, i),
