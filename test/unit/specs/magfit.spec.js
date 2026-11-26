@@ -1,18 +1,24 @@
 import {
     applyCalibration,
+    binnedSubset,
+    binWeights,
     bodyFrameField,
     calibrationError,
     declinationOf,
     expectedFromYaw,
+    fieldBins,
     fieldExcitation,
     fitCalibration,
     identityCalibration,
     interpolate,
     magHeading,
     MIN_IRON_EXCITATION,
+    NUM_BINS,
     rangeViolations,
     removeCalibration,
-    solveLeastSquares
+    solveLeastSquares,
+    strideIndices,
+    weightedRms
 } from '../../../src/tools/magfit'
 
 // NED earth field in mGauss, roughly Canberra (SITL default location)
@@ -318,6 +324,65 @@ describe('fitCalibration', () => {
         }
     })
 
+    // A long, mostly level flight with full yaw rotation and low current, then a
+    // short segment with lots of tilt and current
+    function levelThenTilted (cal, { nLevel = 50000, nTilted = 400, noise = 3, seed = 21 } = {}) {
+        const random = makeRandom(seed)
+        const roll = []
+        const pitch = []
+        const yaw = []
+        const current = []
+        for (let i = 0; i < nLevel; i++) {
+            roll.push(gaussian(random) * Math.PI / 180)
+            pitch.push(gaussian(random) * Math.PI / 180)
+            yaw.push((i / nLevel) * 12 * Math.PI % (2 * Math.PI) - Math.PI)
+            current.push(3 + Math.sin(i / 700))
+        }
+        for (let i = 0; i < nTilted; i++) {
+            roll.push((random() * 2 - 1) * 45 * Math.PI / 180)
+            pitch.push((random() * 2 - 1) * 45 * Math.PI / 180)
+            yaw.push((random() * 2 - 1) * Math.PI)
+            current.push(5 + 25 * Math.abs(Math.sin(i / 20)))
+        }
+        const expected = expectedFromYaw(EARTH_FIELD, roll, pitch, yaw)
+        const measured = {
+            x: expected.x.map(v => v + noise * gaussian(random)),
+            y: expected.y.map(v => v + noise * gaussian(random)),
+            z: expected.z.map(v => v + noise * gaussian(random))
+        }
+        const motorOffsets = {
+            x: current.map(a => a * cal.motor[0]),
+            y: current.map(a => a * cal.motor[1]),
+            z: current.map(a => a * cal.motor[2])
+        }
+        const raw = removeCalibration(measured, { ...cal, motorOffsets })
+        return { raw, roll, pitch, yaw, current, expected }
+    }
+
+    test('binning keeps a short tilted segment of a long level log', () => {
+        const flight = levelThenTilted(TRUE_CAL)
+        // thinning evenly in time keeps too little tilt for the iron check
+        const thinned = strideIndices([...flight.roll.keys()], 4000)
+        const thinnedExpected = expectedFromYaw(EARTH_FIELD, flight.roll, flight.pitch, flight.yaw, thinned)
+        expect(fieldExcitation(thinnedExpected)).toBeLessThan(MIN_IRON_EXCITATION)
+
+        for (const yawSource of ['att', 'mag']) {
+            const result = fitCalibration({
+                ...flight, earthField: EARTH_FIELD, fitType: 'iron', fitMotor: true, yawSource, maxSamples: 4000
+            })
+            expect(result.ok).toBe(true)
+            expect(result.valid).toBe(true)
+            expect(result.numSamples).toBeLessThanOrEqual(4000)
+            expect(result.excitation).toBeGreaterThan(4 * MIN_IRON_EXCITATION)
+            expect(result.coverage).toBeGreaterThan(0.3)
+            expectClose(result.cal.offsets, TRUE_CAL.offsets, 2)
+            expectClose(result.cal.diagonals, TRUE_CAL.diagonals, 0.005)
+            expectClose(result.cal.offDiagonals, TRUE_CAL.offDiagonals, 0.005)
+            expect(Math.abs(result.cal.scale - TRUE_CAL.scale)).toBeLessThan(0.005)
+            expectClose(result.cal.motor, TRUE_CAL.motor, 0.05)
+        }
+    })
+
     // Data that needs the field shrunk by factor: raw = expected / factor - offsets
     function shrunkFlight (factor) {
         const flight = syntheticFlight(identityCalibration())
@@ -382,6 +447,47 @@ describe('calibrationError', () => {
             const error = calibrationError({ corrected, ...flight, earthField: EARTH_FIELD, yawSource })
             expect(error.rms).toBeLessThan(1e-6)
         }
+    })
+})
+
+describe('binning', () => {
+    test('every lattice direction is its own bin and the bins cover the sphere', () => {
+        const bins = new Set()
+        const random = makeRandom(4)
+        for (let i = 0; i < 20000; i++) {
+            const v = [gaussian(random), gaussian(random), gaussian(random)]
+            bins.add(fieldBins({
+                raw: { x: [0], y: [0], z: [0] },
+                roll: [0],
+                pitch: [0],
+                yaw: [0],
+                earthField: v
+            })[0])
+        }
+        expect(bins.size).toBe(NUM_BINS)
+        expect(Math.min(...bins)).toBe(0)
+        expect(Math.max(...bins)).toBe(NUM_BINS - 1)
+    })
+
+    test('weights give each occupied bin the same total, with a mean of 1', () => {
+        const { weights, coverage } = binWeights([3, 3, 3, 7, -1])
+        expectClose(weights, [2 / 3, 2 / 3, 2 / 3, 2, 0], 1e-12)
+        expect(coverage).toBe(2 / NUM_BINS)
+        // rare bins count as much as common ones
+        expect(weightedRms([1, 1, 1, 3, 100], [3, 3, 3, 7, -1])).toBeCloseTo(Math.sqrt((3 * 2 / 3 + 9 * 2) / 4), 12)
+        expect(weightedRms([1, NaN, 1, 3], [3, 3, 3, 7])).toBeCloseTo(Math.sqrt(5), 12)
+    })
+
+    test('subset keeps small bins whole and thins large ones evenly', () => {
+        const bins = [...new Array(1000).fill(0), 1, 1, 1, ...new Array(10).fill(2)]
+        const picked = binnedSubset(bins, 100)
+        expect(picked.length).toBeLessThanOrEqual(100)
+        const counts = [0, 1, 2].map(b => picked.filter(k => bins[k] === b).length)
+        expect(counts).toEqual([87, 3, 10])
+        // spread over the whole of the large bin
+        expect(picked[0]).toBe(0)
+        expect(picked[86]).toBeGreaterThan(980)
+        expect(binnedSubset([0, 1, 2], 100)).toEqual([0, 1, 2])
     })
 })
 

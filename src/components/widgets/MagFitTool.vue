@@ -84,7 +84,10 @@ Attitude: logged EKF yaw, which was itself estimated using the compass.">
                       <th>ofsy</th>
                       <th>ofsz</th>
                       <th>scale</th>
-                      <th title="RMS difference between the logged field and the expected earth field">
+                      <th title="Fraction of all vehicle orientations (including upside down) present in the log,
+greater than 30% is good. Samples are weighted so every orientation counts the same.">coverage</th>
+                      <th title="RMS difference between the logged field and the expected earth field,
+weighted by orientation">
                         error (mGauss)</th>
                       <th colspan="3"></th>
                   </tr>
@@ -95,6 +98,7 @@ Attitude: logged EKF yaw, which was itself estimated using the compass.">
                     <td>{{ params.offsets[1].toFixed(1) }}</td>
                     <td>{{ params.offsets[2].toFixed(1) }}</td>
                     <td>{{ formatScale(params.scale) }}</td>
+                    <td>{{ formatCoverage(compassCoverage[index]) }}</td>
                     <td>{{ formatError(preErrors[index]) }}</td>
                     <td class="actions">
                       <button :disabled="processing || !positionValid"
@@ -178,7 +182,8 @@ Attitude: logged EKF yaw, which was itself estimated using the compass.">
                     </td>
                   </tr>
                   <tr>
-                    <td title="RMS corrected vs expected field (selected yaw source), existing vs new">
+                    <td title="RMS corrected vs expected field (selected yaw source, weighted by orientation),
+existing vs new">
                       error (mGauss)</td>
                     <td v-for="index in fittedIndices" :key="'error' + index" :class="fitnessClass(index)">
                       {{ formatComparison(index) }}
@@ -226,11 +231,14 @@ import {
     MOT_COMP_CURRENT,
     YAW_SOURCES,
     applyCalibration,
+    binWeights,
     calibrationError,
+    fieldBins,
     fitCalibration,
     interpolate,
     removeCalibration,
-    scaleValid
+    scaleValid,
+    weightedRms
 } from '../../tools/magfit'
 
 // Candidate compass message keys, in priority order. Covers tlogs (RAW_IMU,
@@ -765,6 +773,9 @@ export default {
         formatScale (scale) {
             return scaleValid(scale) ? scale.toFixed(3) : 'unset'
         },
+        formatCoverage (coverage) {
+            return Number.isFinite(coverage) ? `${(coverage * 100).toFixed(0)}%` : '--'
+        },
         formatError (error) {
             return error && Number.isFinite(error.rms) ? error.rms.toFixed(1) : '--'
         },
@@ -935,18 +946,31 @@ export default {
             }
             return notes
         },
+        compassBins () {
+            // orientation bin of each sample, the same binning the fit uses
+            if (!this.earthField) {
+                return []
+            }
+            return this.compassInputs.map(input => input.raw === null
+                ? null
+                : Object.freeze(fieldBins({ ...input, earthField: this.earthField })))
+        },
+        compassCoverage () {
+            return this.compassBins.map(bins => bins ? binWeights(bins).coverage : NaN)
+        },
         preErrors () {
             // error of the logged (existing calibration) field
             if (!this.earthField) {
                 return []
             }
-            return this.compassInputs.map(input => calibrationError({
+            return this.compassInputs.map((input, index) => calibrationError({
                 corrected: input.logged,
                 roll: input.roll,
                 pitch: input.pitch,
                 yaw: input.yaw,
                 earthField: this.earthField,
-                yawSource: this.yawSource
+                yawSource: this.yawSource,
+                bins: this.compassBins[index]
             }))
         },
         postErrors () {
@@ -964,31 +988,25 @@ export default {
                     pitch: input.pitch,
                     yaw: input.yaw,
                     earthField: this.earthField,
-                    yawSource: this.yawSource
+                    yawSource: this.yawSource,
+                    bins: this.compassBins[index]
                 })
             })
         },
         errorComparison () {
-            // RMS error before and after over the samples where both are valid
+            // bin weighted RMS error before and after over the samples where both are valid
             return this.postErrors.map((post, index) => {
                 const pre = this.preErrors[index]
-                if (!post || !pre) {
+                const bins = this.compassBins[index]
+                if (!post || !pre || !bins) {
                     return null
                 }
-                let before = 0
-                let after = 0
-                let count = 0
-                for (let i = 0; i < post.errors.length; i++) {
-                    if (Number.isFinite(post.errors[i]) && Number.isFinite(pre.errors[i])) {
-                        before += pre.errors[i] ** 2
-                        after += post.errors[i] ** 2
-                        count++
-                    }
-                }
-                if (count === 0) {
+                const common = Array.from(bins, (bin, i) =>
+                    Number.isFinite(post.errors[i]) && Number.isFinite(pre.errors[i]) ? bin : -1)
+                if (!common.some(bin => bin >= 0)) {
                     return null
                 }
-                return { before: Math.sqrt(before / count), after: Math.sqrt(after / count) }
+                return { before: weightedRms(pre.errors, common), after: weightedRms(post.errors, common) }
             })
         },
         fittedIndices () {

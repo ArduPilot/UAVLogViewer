@@ -332,13 +332,14 @@ export function rms (values) {
 }
 
 // Error of an already corrected field against the expected field for the
-// given yaw source. Returns { rms, errors, expected }.
-export function calibrationError ({ corrected, roll, pitch, yaw, earthField, yawSource }) {
+// given yaw source. Returns { rms, errors, expected }, rms is bin weighted if
+// bins (from fieldBins) are given.
+export function calibrationError ({ corrected, roll, pitch, yaw, earthField, yawSource, bins = null }) {
     const expected = yawSource === 'att'
         ? expectedFromYaw(earthField, roll, pitch, yaw)
         : expectedFromMagYaw(earthField, corrected, roll, pitch)
     const errors = fieldErrors(corrected, expected)
-    return { rms: rms(errors), errors, expected }
+    return { rms: bins ? weightedRms(errors, bins) : rms(errors), errors, expected }
 }
 
 // Solve min |A x - b| with Householder QR. A is column-major (A[col * rows + row])
@@ -448,7 +449,10 @@ function numColumns (fitType, fitMotor) {
 // the Gauss-Newton step for the compass yaw cost, where the heading follows
 // the calibrated field so only horizontal magnitude and vertical component
 // are constrained.
-function solveLinear (raw, expected, current, indices, fitType, fitMotor, down = null) {
+//
+// Each sample's equations are scaled by sqrtWeights (the square root of its
+// bin weight).
+function solveLinear (raw, expected, current, sqrtWeights, indices, fitType, fitMotor, down = null) {
     const n = indices.length
     const perSample = down ? 2 : 3
     const rows = n * perSample
@@ -491,13 +495,14 @@ function solveLinear (raw, expected, current, indices, fitType, fitMotor, down =
             }
         }
 
+        const w = sqrtWeights[i]
         if (down === null) {
             for (let k = 0; k < 3; k++) {
                 const row = j * 3 + k
                 for (let c = 0; c < cols; c++) {
-                    A[c * rows + row] = block[k][c]
+                    A[c * rows + row] = w * block[k][c]
                 }
-                b[row] = rhs[k]
+                b[row] = w * rhs[k]
             }
             continue
         }
@@ -511,9 +516,9 @@ function solveLinear (raw, expected, current, indices, fitType, fitMotor, down =
             const u = directions[k]
             const row = j * 2 + k
             for (let c = 0; c < cols; c++) {
-                A[c * rows + row] = u[0] * block[0][c] + u[1] * block[1][c] + u[2] * block[2][c]
+                A[c * rows + row] = w * (u[0] * block[0][c] + u[1] * block[1][c] + u[2] * block[2][c])
             }
-            b[row] = u[0] * rhs[0] + u[1] * rhs[1] + u[2] * rhs[2]
+            b[row] = w * (u[0] * rhs[0] + u[1] * rhs[1] + u[2] * rhs[2])
         }
     }
 
@@ -559,6 +564,118 @@ function solveLinear (raw, expected, current, indices, fitType, fitMotor, down =
     return { cal }
 }
 
+// Attitude coverage bins, as in WebTools MAGFit: a Fibonacci lattice of
+// directions, each sample goes in the bin nearest its expected field direction
+export const NUM_BINS = 80
+const BIN_DIRECTIONS = (() => {
+    const out = []
+    for (let i = 0; i < NUM_BINS; i++) {
+        const k = i + 0.5
+        const phi = Math.acos(1 - 2 * k / NUM_BINS)
+        const theta = Math.PI * (1 + Math.sqrt(5)) * k
+        out.push([Math.cos(theta) * Math.sin(phi), Math.sin(theta) * Math.sin(phi), Math.cos(phi)])
+    }
+    return out
+})()
+
+function nearestBin (x, y, z) {
+    let best = -1
+    let bestDot = -Infinity
+    for (let k = 0; k < NUM_BINS; k++) {
+        const d = BIN_DIRECTIONS[k]
+        const dot = d[0] * x + d[1] * y + d[2] * z
+        if (dot > bestDot) {
+            bestDot = dot
+            best = k
+        }
+    }
+    return best
+}
+
+// Starting yaw for a sample: attitude yaw if available, otherwise the heading
+// of the raw field
+function startingYaw (earthField, raw, roll, pitch, yaw, i) {
+    if (yaw && Number.isFinite(yaw[i])) {
+        return yaw[i]
+    }
+    return magHeading(raw.x[i], raw.y[i], raw.z[i], roll[i], pitch[i]) + declinationOf(earthField)
+}
+
+// Bin of each sample's expected field direction (using the attitude yaw where
+// available, otherwise the raw heading), -1 where the sample is not usable
+export function fieldBins ({ raw, roll, pitch, yaw, earthField }) {
+    return Array.from(raw.x, (v, i) => sampleBin(earthField, raw, roll, pitch, yaw, i))
+}
+
+function sampleBin (earthField, raw, roll, pitch, yaw, i) {
+    const v = bodyFrameField(earthField, roll[i], pitch[i], startingYaw(earthField, raw, roll, pitch, yaw, i))
+    const len = Math.hypot(v[0], v[1], v[2])
+    return len > 0 ? nearestBin(v[0] / len, v[1] / len, v[2] / len) : -1
+}
+
+// WebTools weighting: each occupied bin gets the same total weight, scaled so
+// the mean weight is 1. Samples with bin -1 get weight 0. coverage is the
+// fraction of bins with samples.
+export function binWeights (bins) {
+    const count = new Array(NUM_BINS).fill(0)
+    let total = 0
+    let occupied = 0
+    for (const b of bins) {
+        if (b >= 0) {
+            if (count[b] === 0) {
+                occupied++
+            }
+            count[b]++
+            total++
+        }
+    }
+    const meanBinSize = occupied > 0 ? total / occupied : 0
+    return {
+        weights: Array.from(bins, b => b >= 0 ? meanBinSize / count[b] : 0),
+        coverage: occupied / NUM_BINS
+    }
+}
+
+// Bin weighted RMS of errors, skipping non-finite errors
+export function weightedRms (errors, bins) {
+    const used = Array.from(bins, (b, i) => Number.isFinite(errors[i]) ? b : -1)
+    const { weights } = binWeights(used)
+    let sum = 0
+    let count = 0
+    for (let i = 0; i < used.length; i++) {
+        if (used[i] >= 0) {
+            sum += weights[i] * errors[i] ** 2
+            count++
+        }
+    }
+    return count > 0 ? Math.sqrt(sum / count) : NaN
+}
+
+// Positions of at most max samples (or one per occupied bin, if more), taking
+// the same number from every bin that has enough, spread evenly in time within
+// the bin, and all samples of the bins that don't. With the bin weighting this
+// keeps every bin's share of the cost while rare attitudes survive.
+export function binnedSubset (bins, max) {
+    if (!(bins.length > max)) {
+        return [...bins.keys()]
+    }
+    const members = Array.from({ length: NUM_BINS }, () => [])
+    bins.forEach((b, k) => members[b].push(k))
+    const sizes = members.map(m => m.length).filter(size => size > 0).sort((a, b) => a - b)
+    let remaining = max
+    let left = sizes.length
+    let cap = 1
+    for (const size of sizes) {
+        if (size * left > remaining) {
+            cap = Math.max(1, Math.floor(remaining / left))
+            break
+        }
+        remaining -= size
+        left--
+    }
+    return members.flatMap(m => strideIndices(m, cap)).sort((a, b) => a - b)
+}
+
 // Smallest eigenvalue of a symmetric 3x3 matrix (closed form)
 function minEigenvalue3 (m) {
     const p1 = m[0][1] ** 2 + m[0][2] ** 2 + m[1][2] ** 2
@@ -574,28 +691,34 @@ function minEigenvalue3 (m) {
 
 // How much the direction of the expected (body frame) field varies: the
 // standard deviation of the unit field vector in the direction it varies
-// least. About 0 for level flight, where only the yaw changes.
-export function fieldExcitation (expected) {
+// least. About 0 for level flight, where only the yaw changes. Samples are
+// weighted by weights if given (the same weighting as the fit).
+export function fieldExcitation (expected, weights = null) {
     const n = expected.x.length
     const units = []
+    const unitWeights = []
     for (let j = 0; j < n; j++) {
         const len = Math.hypot(expected.x[j], expected.y[j], expected.z[j])
-        if (len > 0) {
+        const w = weights ? weights[j] : 1
+        if (len > 0 && w > 0) {
             units.push([expected.x[j] / len, expected.y[j] / len, expected.z[j] / len])
+            unitWeights.push(w)
         }
     }
     if (units.length < 2) {
         return 0
     }
-    const mean = [0, 1, 2].map(k => units.reduce((sum, u) => sum + u[k], 0) / units.length)
+    const totalWeight = unitWeights.reduce((sum, w) => sum + w, 0)
+    const mean = [0, 1, 2].map(k => units.reduce((sum, u, j) => sum + unitWeights[j] * u[k], 0) / totalWeight)
     const cov = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-    for (const u of units) {
+    units.forEach((u, j) => {
+        const w = unitWeights[j] / totalWeight
         for (let a = 0; a < 3; a++) {
             for (let b = 0; b < 3; b++) {
-                cov[a][b] += (u[a] - mean[a]) * (u[b] - mean[b]) / units.length
+                cov[a][b] += w * (u[a] - mean[a]) * (u[b] - mean[b])
             }
         }
-    }
+    })
     return Math.sqrt(Math.max(0, minEigenvalue3(cov)))
 }
 
@@ -645,6 +768,11 @@ function failure (message) {
 // Each pass takes a Gauss-Newton step, or if that doesn't reduce the cost,
 // re-solves with the heading held fixed, so the cost never increases.
 //
+// Like WebTools, samples are binned by expected field direction and weighted
+// so every occupied bin counts the same, otherwise a long level log swamps
+// the few tilted samples that make iron observable. The cost, reported error
+// and excitation check all use these weights.
+//
 // Returns { ok: false, message } if no fit is possible, otherwise { ok: true,
 // valid, violations, cal, ... } where valid is false if any param is outside
 // PARAM_RANGES (listed in violations).
@@ -675,6 +803,7 @@ export function fitCalibration ({
     }
 
     const valid = []
+    const validBins = []
     for (let i = 0; i < raw.x.length; i++) {
         if (!Number.isFinite(raw.x[i]) || !Number.isFinite(raw.y[i]) || !Number.isFinite(raw.z[i])) {
             continue
@@ -688,13 +817,23 @@ export function fitCalibration ({
         if (fitMotor && !Number.isFinite(current[i])) {
             continue
         }
+        const bin = sampleBin(earthField, raw, roll, pitch, yaw, i)
+        if (bin < 0) {
+            continue
+        }
         valid.push(i)
+        validBins.push(bin)
     }
     const minSamples = Math.max(MIN_SAMPLES, numColumns(fitType, fitMotor))
     if (valid.length < minSamples) {
         return failure(`Not enough valid samples (${valid.length}, need ${minSamples})`)
     }
-    const indices = strideIndices(valid, maxSamples)
+    // Decimate by attitude bin rather than in time, so a short manoeuvre in a
+    // long level log is not thinned out
+    const picked = binnedSubset(validBins, maxSamples)
+    const indices = picked.map(k => valid[k])
+    const { weights, coverage } = binWeights(picked.map(k => validBins[k]))
+    const sqrtWeights = weights.map(Math.sqrt)
 
     if (fitMotor) {
         let min = Infinity
@@ -722,29 +861,19 @@ export function fitCalibration ({
             ? expectedFromYaw(earthField, rollSel, pitchSel, yawSel)
             : expectedFromMagYaw(earthField, corrected, rollSel, pitchSel)
         let cost = 0
-        for (const e of fieldErrors(corrected, expected)) {
-            cost += e * e
-        }
+        fieldErrors(corrected, expected).forEach((e, j) => {
+            cost += weights[j] * e * e
+        })
         return { cost, expected }
     }
 
-    // Starting point: attitude yaw if available, otherwise the uncalibrated heading
-    let expected
-    if (useAttYaw) {
-        expected = expectedFromYaw(earthField, rollSel, pitchSel, yawSel)
-    } else {
-        const startYaw = all.map(j => {
-            if (yawSel && Number.isFinite(yawSel[j])) {
-                return yawSel[j]
-            }
-            return magHeading(rawSel.x[j], rawSel.y[j], rawSel.z[j], rollSel[j], pitchSel[j]) +
-                declinationOf(earthField)
-        })
-        expected = expectedFromYaw(earthField, rollSel, pitchSel, startYaw)
-    }
+    // Starting point (and binning direction): attitude yaw if available,
+    // otherwise the uncalibrated heading
+    const startYaw = all.map(j => startingYaw(earthField, rawSel, rollSel, pitchSel, yawSel, j))
+    const expected = expectedFromYaw(earthField, rollSel, pitchSel, startYaw)
 
+    const excitation = fieldExcitation(expected, weights)
     if (fitType === 'iron') {
-        const excitation = fieldExcitation(expected)
         if (!(excitation >= MIN_IRON_EXCITATION)) {
             return failure('Not enough attitude variation to fit iron: the field direction varies by ' +
                 `${(excitation * 100).toFixed(1)}% in its least varied direction, need ` +
@@ -753,7 +882,7 @@ export function fitCalibration ({
         }
     }
 
-    const initial = solveLinear(rawSel, expected, currentSel, all, fitType, fitMotor)
+    const initial = solveLinear(rawSel, expected, currentSel, sqrtWeights, all, fitType, fitMotor)
     if (initial.error) {
         return failure(initial.error)
     }
@@ -769,7 +898,8 @@ export function fitCalibration ({
             let next = null
             let nextState = null
             for (const projection of [down, null]) {
-                const solution = solveLinear(rawSel, state.expected, currentSel, all, fitType, fitMotor, projection)
+                const solution = solveLinear(rawSel, state.expected, currentSel, sqrtWeights, all,
+                    fitType, fitMotor, projection)
                 if (solution.error) {
                     continue
                 }
@@ -805,8 +935,11 @@ export function fitCalibration ({
         valid: violations.length === 0,
         violations,
         cal,
+        // bin weighted, the mean weight is 1
         rmsError: Math.sqrt(state.cost / indices.length),
         numSamples: indices.length,
+        coverage,
+        excitation,
         iterations,
         converged
     }
