@@ -174,7 +174,7 @@ Attitude: logged EKF yaw, which was itself estimated using the compass.">
                     </td>
                   </tr>
                   <tr>
-                    <td title="RMS difference between the corrected and expected field, existing vs new">
+                    <td title="RMS corrected vs expected field (selected yaw source), existing vs new">
                       error (mGauss)</td>
                     <td v-for="index in fittedIndices" :key="'error' + index" :class="fitnessClass(index)">
                       {{ formatComparison(index) }}
@@ -423,7 +423,7 @@ export default {
             this.fetchingLocation = false
         },
         messageLoaded (name) {
-            if (this.state.messages[name]) {
+            if (this.state.messages[name] || this.state.messages[name.split('[')[0]]) {
                 return true
             }
             const instances = this.state.messageTypes?.[name]?.instances
@@ -454,8 +454,11 @@ export default {
             const wanted = this.isTlog
                 ? ['RAW_IMU', 'SCALED_IMU2', 'SCALED_IMU3', 'ATTITUDE', 'SYS_STATUS']
                 : ['ATT', 'MAG', 'MAG2', 'MAG3', 'BAT']
+            // instanced types are listed as e.g. MAG[0], the worker loads all instances
             const available = Object.keys(this.state.messageTypes || {})
-            const requiredTypes = available.length ? wanted.filter(type => available.includes(type)) : wanted
+            const requiredTypes = available.length
+                ? available.filter(type => wanted.includes(type.split('[')[0]))
+                : wanted
             this.waitForMessages(requiredTypes).then(() => {
                 this.computeData()
             })
@@ -732,6 +735,9 @@ export default {
             let description = FIT_TYPES[fit.fitType]
             if (fit.fitMotor) {
                 description += ' + motor'
+            }
+            if (fit.yawSource !== this.yawSource) {
+                description += ` (fitted with ${YAW_SOURCES[fit.yawSource].toLowerCase()})`
             }
             return description
         },
