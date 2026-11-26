@@ -1,5 +1,9 @@
 const path = require('path')
 
+// The top-level babel-jest (28.x) is incompatible with jest 24, so use the
+// babel-jest that jest-config itself depends on.
+const babelJest = require.resolve('babel-jest', { paths: [require.resolve('jest-config')] })
+
 module.exports = {
     rootDir: path.resolve(__dirname, '../../'),
     moduleFileExtensions: [
@@ -11,7 +15,7 @@ module.exports = {
         '^@/(.*)$': '<rootDir>/src/$1'
     },
     transform: {
-        '^.+\\.js$': '<rootDir>/node_modules/babel-jest',
+        '^.+\\.js$': babelJest,
         '.*\\.(vue)$': '<rootDir>/node_modules/vue-jest'
     },
     testPathIgnorePatterns: [
