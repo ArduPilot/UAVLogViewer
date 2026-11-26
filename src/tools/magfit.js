@@ -40,6 +40,11 @@ export const PARAM_RANGES = {
 // COMPASS_MOTCT value for current based motor compensation
 export const MOT_COMP_CURRENT = 2
 
+// Minimum variation of the expected field direction, in the direction it
+// varies least, for an iron fit. Below this (mostly level flight) the Z
+// diagonal can't be separated from the Z offset.
+export const MIN_IRON_EXCITATION = 0.05
+
 const MAX_SCALE_FACTOR = 1.5
 const MIN_SAMPLES = 30
 const MIN_CURRENT_RANGE = 0.5
@@ -70,10 +75,14 @@ export function ironMatrix (diagonals, offDiagonals) {
     ]
 }
 
-export function invert3 (m) {
-    const det = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
+function determinant3 (m) {
+    return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
         m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
         m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])
+}
+
+export function invert3 (m) {
+    const det = determinant3(m)
     if (!Number.isFinite(det) || Math.abs(det) < 1e-12) {
         return null
     }
@@ -550,6 +559,46 @@ function solveLinear (raw, expected, current, indices, fitType, fitMotor, down =
     return { cal }
 }
 
+// Smallest eigenvalue of a symmetric 3x3 matrix (closed form)
+function minEigenvalue3 (m) {
+    const p1 = m[0][1] ** 2 + m[0][2] ** 2 + m[1][2] ** 2
+    if (p1 === 0) {
+        return Math.min(m[0][0], m[1][1], m[2][2])
+    }
+    const q = (m[0][0] + m[1][1] + m[2][2]) / 3
+    const p = Math.sqrt(((m[0][0] - q) ** 2 + (m[1][1] - q) ** 2 + (m[2][2] - q) ** 2 + 2 * p1) / 6)
+    const shifted = m.map((row, i) => row.map((v, j) => (v - (i === j ? q : 0)) / p))
+    const r = Math.min(1, Math.max(-1, determinant3(shifted) / 2))
+    return q + 2 * p * Math.cos(Math.acos(r) / 3 + 2 * Math.PI / 3)
+}
+
+// How much the direction of the expected (body frame) field varies: the
+// standard deviation of the unit field vector in the direction it varies
+// least. About 0 for level flight, where only the yaw changes.
+export function fieldExcitation (expected) {
+    const n = expected.x.length
+    const units = []
+    for (let j = 0; j < n; j++) {
+        const len = Math.hypot(expected.x[j], expected.y[j], expected.z[j])
+        if (len > 0) {
+            units.push([expected.x[j] / len, expected.y[j] / len, expected.z[j] / len])
+        }
+    }
+    if (units.length < 2) {
+        return 0
+    }
+    const mean = [0, 1, 2].map(k => units.reduce((sum, u) => sum + u[k], 0) / units.length)
+    const cov = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+    for (const u of units) {
+        for (let a = 0; a < 3; a++) {
+            for (let b = 0; b < 3; b++) {
+                cov[a][b] += (u[a] - mean[a]) * (u[b] - mean[b]) / units.length
+            }
+        }
+    }
+    return Math.sqrt(Math.max(0, minEigenvalue3(cov)))
+}
+
 function subsetField (field, indices) {
     const out = emptyField(indices.length)
     for (let j = 0; j < indices.length; j++) {
@@ -692,6 +741,16 @@ export function fitCalibration ({
                 declinationOf(earthField)
         })
         expected = expectedFromYaw(earthField, rollSel, pitchSel, startYaw)
+    }
+
+    if (fitType === 'iron') {
+        const excitation = fieldExcitation(expected)
+        if (!(excitation >= MIN_IRON_EXCITATION)) {
+            return failure('Not enough attitude variation to fit iron: the field direction varies by ' +
+                `${(excitation * 100).toFixed(1)}% in its least varied direction, need ` +
+                `${MIN_IRON_EXCITATION * 100}% (mostly level flight). Fit offsets or scale instead, ` +
+                'or use a log with more tilt')
+        }
     }
 
     const initial = solveLinear(rawSel, expected, currentSel, all, fitType, fitMotor)

@@ -4,10 +4,12 @@ import {
     calibrationError,
     declinationOf,
     expectedFromYaw,
+    fieldExcitation,
     fitCalibration,
     identityCalibration,
     interpolate,
     magHeading,
+    MIN_IRON_EXCITATION,
     rangeViolations,
     removeCalibration,
     solveLeastSquares
@@ -291,6 +293,29 @@ describe('fitCalibration', () => {
         expect(fitCalibration({ ...steady, earthField: EARTH_FIELD, fitMotor: true, current: null }).ok).toBe(false)
         expect(fitCalibration({ ...steady, earthField: [NaN, 0, 0] }).ok).toBe(false)
         expect(fitCalibration({ ...steady, earthField: EARTH_FIELD, fitType: 'bogus' }).ok).toBe(false)
+    })
+
+    test('rejects iron fits on low tilt data, offsets and scale still work', () => {
+        // +-7 deg of roll and pitch with full yaw rotation, the Z diagonal and
+        // offset can't be separated
+        const cal = { ...identityCalibration(), offsets: [120, -85, 240], scale: 1.05 }
+        const flight = syntheticFlight(cal, { noise: 3, seed: 5, maxTilt: 7 })
+        const expected = expectedFromYaw(EARTH_FIELD, flight.roll, flight.pitch, flight.yaw)
+        expect(fieldExcitation(expected)).toBeLessThan(MIN_IRON_EXCITATION)
+        expect(fieldExcitation(syntheticFlight(cal).expected)).toBeGreaterThan(MIN_IRON_EXCITATION)
+        for (const yawSource of ['att', 'mag']) {
+            for (const fitMotor of [false, true]) {
+                const options = { ...flight, earthField: EARTH_FIELD, fitMotor, yawSource }
+                const iron = fitCalibration({ ...options, fitType: 'iron' })
+                expect(iron.ok).toBe(false)
+                expect(iron.message).toMatch(/attitude variation/)
+                const scale = fitCalibration({ ...options, fitType: 'scale' })
+                expect(scale.ok).toBe(true)
+                expect(scale.valid).toBe(true)
+                expect(Math.abs(scale.cal.scale - 1.05)).toBeLessThan(0.01)
+                expectClose(scale.cal.offsets, cal.offsets, 10)
+            }
+        }
     })
 
     // Data that needs the field shrunk by factor: raw = expected / factor - offsets
