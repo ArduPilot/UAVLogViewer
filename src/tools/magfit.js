@@ -45,6 +45,12 @@ export const MOT_COMP_CURRENT = 2
 // diagonal can't be separated from the Z offset.
 export const MIN_IRON_EXCITATION = 0.05
 
+// Minimum fraction of the attitude bins with samples for an iron fit, the
+// WebTools coverage hint. With fewer, the field varies enough in a few
+// directions to pass the excitation check but the matrix is still poorly
+// determined.
+export const MIN_IRON_COVERAGE = 0.3
+
 const MAX_SCALE_FACTOR = 1.5
 const MIN_SAMPLES = 30
 const MIN_CURRENT_RANGE = 0.5
@@ -891,6 +897,12 @@ export function fitCalibration ({
                 `${(excitation * 100).toFixed(1)}% in its least varied direction, need ` +
                 `${MIN_IRON_EXCITATION * 100}% (mostly level flight). Fit offsets or scale instead, ` +
                 'or use a log with more tilt')
+        }
+        if (!(coverage >= MIN_IRON_COVERAGE)) {
+            return failure('Not enough attitude coverage to fit iron: the log covers ' +
+                `${(coverage * 100).toFixed(0)}% of orientations (${Math.round(coverage * NUM_BINS)} of ` +
+                `${NUM_BINS} bins), need ${MIN_IRON_COVERAGE * 100}%. Fit offsets or scale instead, ` +
+                'or use a log with more varied attitudes')
         }
     }
 

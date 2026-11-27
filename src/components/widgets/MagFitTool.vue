@@ -85,7 +85,8 @@ Attitude: logged EKF yaw, which was itself estimated using the compass.">
                       <th>ofsz</th>
                       <th>scale</th>
                       <th title="Fraction of all vehicle orientations (including upside down) present in the log,
-greater than 30% is good. Samples are weighted so every orientation counts the same.">coverage</th>
+greater than 30% is good and is needed to fit iron. Samples are weighted so every orientation counts the
+same.">coverage</th>
                       <th title="RMS difference between the logged field and the expected earth field,
 weighted by orientation">
                         error (mGauss)</th>

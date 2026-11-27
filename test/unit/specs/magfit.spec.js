@@ -12,6 +12,7 @@ import {
     identityCalibration,
     interpolate,
     magHeading,
+    MIN_IRON_COVERAGE,
     MIN_IRON_EXCITATION,
     NUM_BINS,
     rangeViolations,
@@ -47,7 +48,7 @@ const TRUE_CAL = {
 
 // Build a flight with varied attitude, the raw sensor field the given calibration
 // would correct to the expected field, and the battery current.
-function syntheticFlight (cal, { n = 1500, noise = 0, seed = 1, maxTilt = 60 } = {}) {
+function syntheticFlight (cal, { n = 1500, noise = 0, seed = 1, maxTilt = 60, maxYaw = 180 } = {}) {
     const random = makeRandom(seed)
     const roll = []
     const pitch = []
@@ -56,7 +57,7 @@ function syntheticFlight (cal, { n = 1500, noise = 0, seed = 1, maxTilt = 60 } =
     for (let i = 0; i < n; i++) {
         roll.push((random() * 2 - 1) * maxTilt * Math.PI / 180)
         pitch.push((random() * 2 - 1) * maxTilt * Math.PI / 180)
-        yaw.push((random() * 2 - 1) * Math.PI)
+        yaw.push((random() * 2 - 1) * maxYaw * Math.PI / 180)
         current.push(5 + 25 * Math.abs(Math.sin(i / 50)))
     }
     const expected = expectedFromYaw(EARTH_FIELD, roll, pitch, yaw)
@@ -348,6 +349,29 @@ describe('fitCalibration', () => {
                 expect(scale.valid).toBe(true)
                 expect(Math.abs(scale.cal.scale - 1.05)).toBeLessThan(0.01)
                 expectClose(scale.cal.offsets, cal.offsets, 10)
+            }
+        }
+    })
+
+    test('rejects iron fits with too little attitude coverage, even with enough tilt', () => {
+        // +-30 deg of roll and pitch but only +-60 deg of yaw: the field direction
+        // varies enough, but only in a few directions
+        const cal = { ...identityCalibration(), offsets: [120, -85, 240], scale: 1.05 }
+        const flight = syntheticFlight(cal, { noise: 3, seed: 3, maxTilt: 30, maxYaw: 60 })
+        for (const yawSource of ['att', 'mag']) {
+            for (const fitMotor of [false, true]) {
+                const options = { ...flight, earthField: EARTH_FIELD, fitMotor, yawSource }
+                const offsets = fitCalibration({ ...options, fitType: 'offsets' })
+                expect(offsets.ok).toBe(true)
+                expect(offsets.coverage).toBeLessThan(MIN_IRON_COVERAGE)
+                expect(offsets.excitation).toBeGreaterThan(2 * MIN_IRON_EXCITATION)
+                const iron = fitCalibration({ ...options, fitType: 'iron' })
+                expect(iron.ok).toBe(false)
+                expect(iron.message).toMatch(/coverage.* \d+% of orientations .*need 30%.*offsets or scale/)
+                const scale = fitCalibration({ ...options, fitType: 'scale' })
+                expect(scale.ok).toBe(true)
+                expect(scale.valid).toBe(true)
+                expect(Math.abs(scale.cal.scale - 1.05)).toBeLessThan(0.01)
             }
         }
     })
